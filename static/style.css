@@ -12,8 +12,10 @@
     --purple: #7c3aed;
     --cyan: #06b6d4;
     --green: #10b981;
+    --green-light: #34d399;
     --red: #ef4444;
     --yellow: #fbbf24;
+    --pink: #ec4899;
 }
 
 body {
@@ -22,7 +24,10 @@ body {
     color: var(--fg);
     min-height: 100vh;
     padding: 20px;
+    transition: background 0.4s;
 }
+
+body.decode-mode { background: #081a1a; }
 
 /* Header */
 .header { text-align: center; padding: 30px 20px 20px; }
@@ -35,11 +40,17 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+body.decode-mode .logo h1 {
+    background: linear-gradient(90deg, var(--green), var(--green-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 .subtitle { color: var(--fg-dim); margin-top: 10px; font-size: 15px; }
 
 /* Toggle */
 .toggle-container {
-    display: flex; justify-content: center; gap: 0;
+    display: flex; justify-content: center;
     margin: 24px auto; max-width: 360px;
     background: var(--bg3); border-radius: 30px;
     padding: 6px; border: 2px solid var(--border);
@@ -50,10 +61,15 @@ body {
     font-size: 14px; font-weight: 700; cursor: pointer;
     border-radius: 24px; transition: all 0.3s;
 }
-.toggle-btn.active {
+.toggle-btn.active[data-mode="encode"] {
     background: linear-gradient(135deg, var(--blue), var(--purple));
     color: white;
     box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+}
+.toggle-btn.active[data-mode="decode"] {
+    background: linear-gradient(135deg, var(--green), var(--green-light));
+    color: white;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
 }
 
 /* Main panels */
@@ -63,6 +79,7 @@ body {
     gap: 20px;
     max-width: 1400px;
     margin: 0 auto 20px;
+    transition: all 0.4s;
 }
 @media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
 
@@ -72,7 +89,12 @@ body {
     border-radius: 16px;
     padding: 18px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s;
 }
+body.decode-mode .panel:first-child {
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
 .panel-header {
     display: flex; align-items: center; gap: 10px;
     margin-bottom: 12px; padding-bottom: 10px;
@@ -103,6 +125,7 @@ textarea {
     transition: border 0.2s;
 }
 textarea:focus { border-color: var(--cyan); }
+body.decode-mode textarea:focus { border-color: var(--green); }
 
 /* Controls */
 .controls {
@@ -120,8 +143,9 @@ textarea:focus { border-color: var(--cyan); }
     border-radius: 12px;
     padding: 14px;
     display: flex; align-items: center; gap: 12px;
-    cursor: pointer; transition: all 0.2s;
+    transition: all 0.2s;
 }
+.algo-picker { cursor: pointer; }
 .algo-picker:hover { border-color: var(--blue-light); }
 .algo-picker .icon, .key-input .icon { font-size: 22px; }
 .picker-info, .key-info { flex: 1; }
@@ -134,7 +158,6 @@ textarea:focus { border-color: var(--cyan); }
 }
 .arrow { color: var(--fg-dim); font-size: 12px; }
 
-.key-input { cursor: default; }
 .key-input input {
     background: transparent; border: none;
     color: var(--fg); font-size: 14px; font-weight: 700;
@@ -149,7 +172,7 @@ textarea:focus { border-color: var(--cyan); }
 .action-btn {
     padding: 18px 24px; border: none; border-radius: 12px;
     font-size: 15px; font-weight: 700; cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s;
     color: white;
 }
 .action-btn:hover { transform: translateY(-2px); }
@@ -158,6 +181,10 @@ textarea:focus { border-color: var(--cyan); }
 .action-btn.primary {
     background: linear-gradient(135deg, var(--blue), var(--purple));
     box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+}
+body.decode-mode .action-btn.primary {
+    background: linear-gradient(135deg, var(--green), var(--green-light));
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
 }
 .action-btn.cyan {
     background: linear-gradient(135deg, var(--cyan), var(--blue-light));
@@ -198,7 +225,13 @@ textarea:focus { border-color: var(--cyan); }
     max-height: 85vh;
     display: flex; flex-direction: column;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalIn 0.3s ease;
 }
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
 .modal-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 20px 24px;
@@ -283,3 +316,89 @@ textarea:focus { border-color: var(--cyan); }
     animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   SLIDER CHUYỂN CẢNH
+   ============================================================ */
+.transition-slider {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.transition-slider.active {
+    animation: sliderSweep 0.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+@keyframes sliderSweep {
+    0% { left: -100%; }
+    50% { left: 0; }
+    100% { left: 100%; }
+}
+
+.slider-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+}
+
+.slider-bg.green {
+    background: linear-gradient(135deg, var(--green), var(--green-light));
+}
+
+.slider-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: white;
+    opacity: 0;
+}
+
+.transition-slider.active .slider-content {
+    animation: contentSlide 0.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+@keyframes contentSlide {
+    0%, 30% { opacity: 0; transform: translateX(40px); }
+    50%, 70% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(-40px); }
+}
+
+.slider-icon {
+    font-size: 80px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.3));
+}
+
+.slider-text {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.slider-subtext {
+    font-size: 14px;
+    margin-top: 8px;
+    opacity: 0.85;
+    letter-spacing: 1px;
+}
+
+.main.switching {
+    animation: panelFade 0.8s ease;
+}
+@keyframes panelFade {
+    0%, 50% { opacity: 1; }
+    60% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
