@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Crypto utilities - tập hợp 40+ hàm mã hóa
-"""
+"""Crypto utilities - 40+ hàm mã hóa"""
 import base64, codecs, unicodedata, urllib.parse, html, hashlib, os
 import zlib, gzip
 
@@ -94,7 +92,6 @@ VIQR_MAP = {
 }
 VIQR_REVERSE = {v: k for k, v in VIQR_MAP.items()}
 
-# ===== Hàm helper =====
 def strip_viet(t):
     t = t.replace('đ', 'd').replace('Đ', 'D')
     return ''.join(c for c in unicodedata.normalize('NFD', t)
@@ -103,7 +100,6 @@ def strip_viet(t):
 def no_encrypt(t, k): return t
 def no_decrypt(t, k): return t
 
-# ===== Base =====
 def to_binary(t, k): return " ".join(f"{b:08b}" for b in t.encode("utf-8"))
 def from_binary(d, k):
     d = d.replace(" ", "").replace("\n", "")
@@ -125,7 +121,6 @@ def from_hex(d, k):
     d = d.replace(" ","").replace("\n","").replace("0x","").replace("0X","")
     return bytes.fromhex(d).decode("utf-8")
 
-# ===== Cổ điển =====
 def rot13_fn(t, k=None): return codecs.encode(t, 'rot_13')
 def rot47(t, k=None):
     out = []
@@ -269,7 +264,6 @@ def columnar_dec(t, k):
         for c in range(n): result.append(cols[c][r])
     return ''.join(result).rstrip()
 
-# ===== Ký tự =====
 def to_unicode(t, k): return " ".join(f"U+{ord(c):04X}" for c in t)
 def from_unicode(d, k):
     return "".join(chr(int(p.replace("U+","").replace("u+",""), 16))
@@ -281,14 +275,11 @@ def to_morse(t, k):
 def from_morse(d, k):
     return " ".join("".join(MORSE_REVERSE.get(c, '?') for c in w.split())
                     for w in d.strip().split(" / "))
-
-# ===== Web =====
 def to_url(t, k): return urllib.parse.quote(t, safe="")
 def from_url(d, k): return urllib.parse.unquote(d)
 def to_html_fn(t, k): return html.escape(t)
 def from_html_fn(d, k): return html.unescape(d)
 
-# ===== Tiếng Việt =====
 def _to_syl(t, m): return "".join(m.get(c, c) for c in t)
 def _from_syl(t, rm):
     keys = sorted(rm.keys(), key=len, reverse=True)
@@ -314,7 +305,6 @@ def from_viqr(t, k): return _from_syl(t, VIQR_REVERSE)
 def to_no_accent(t, k): return strip_viet(t)
 def from_no_accent(d, k): raise ValueError("Không thể giải mã 'không dấu'!")
 
-# ===== Hash =====
 def hash_md5(t, k): return hashlib.md5(t.encode("utf-8")).hexdigest()
 def hash_sha1(t, k): return hashlib.sha1(t.encode("utf-8")).hexdigest()
 def hash_sha256(t, k): return hashlib.sha256(t.encode("utf-8")).hexdigest()
@@ -337,7 +327,6 @@ def pbkdf2_hash(t, k):
     return base64.b64encode(salt + dk).decode("ascii")
 def pbkdf2_err(d, k): raise ValueError("PBKDF2 một chiều!")
 
-# ===== Nén =====
 def gzip_encode(t, k):
     return base64.b64encode(gzip.compress(t.encode("utf-8"))).decode("ascii")
 def gzip_decode(d, k):
@@ -347,7 +336,6 @@ def zlib_encode(t, k):
 def zlib_decode(d, k):
     return zlib.decompress(base64.b64decode(d.strip())).decode("utf-8")
 
-# ===== AES =====
 def aes_encrypt(text, key):
     if not CRYPTO_OK: raise ValueError("Cần cryptography!")
     if not key: raise ValueError("Nhập khóa!")
@@ -371,7 +359,6 @@ def aes_decrypt(data, key):
         return (unpadder.update(padded) + unpadder.finalize()).decode("utf-8")
     except Exception: raise ValueError("Khóa sai!")
 
-# ===== DES / 3DES / Blowfish / RC4 / ChaCha20 =====
 def _mk8(key): return hashlib.sha256(key.encode("utf-8")).digest()[:8]
 def _mk16(key): return hashlib.sha256(key.encode("utf-8")).digest()[:16]
 def _mk24(key): return hashlib.sha256(key.encode("utf-8")).digest()[:24]
@@ -449,7 +436,6 @@ def chacha_decrypt(data, key):
     c = ChaCha20.new(key=k, nonce=nonce)
     return c.decrypt(ct).decode("utf-8")
 
-# ===== RSA =====
 _RSA = {"priv": None, "pub": None}
 def rsa_gen():
     if not CRYPTO_OK: raise ValueError("Cần cryptography!")
@@ -471,7 +457,6 @@ def rsa_decrypt(data, key):
                           algorithm=hashes.SHA256(), label=None))
     return pt.decode("utf-8")
 
-# ===== XOR & PWD =====
 def xor_encrypt(text, key):
     if not key: raise ValueError("Nhập khóa!")
     kb = key.encode("utf-8"); tb = text.encode("utf-8")
@@ -487,7 +472,7 @@ def pwd_decrypt(data, key):
     return aes_decrypt(data[5:], key)
 
 # ============================================================
-# ENCODERS MAP
+# ENCODERS
 # ============================================================
 ENCODERS = {
     "none":     ("⭕ Không mã hóa",  "Không mã hóa", no_encrypt,    no_decrypt),
@@ -540,7 +525,6 @@ GROUP_ORDER = ["Không mã hóa", "Cơ bản", "Cổ điển", "Ký tự", "Web"
                "Tiếng Việt", "Hash", "Bảo mật", "Nén"]
 
 def get_grouped():
-    """Trả về dict nhóm → list thuật toán cho frontend."""
     result = {}
     for key, (label, group, _, _) in ENCODERS.items():
         if group not in result:
