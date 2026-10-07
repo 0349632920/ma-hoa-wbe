@@ -3,27 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔐 Mã Hóa Chữ - Web</title>
+    <title>🔐 Mã Hóa Chữ</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="logo">
             <span class="icon">🔒</span>
             <h1>MÃ HÓA CHỮ</h1>
         </div>
-        <p class="subtitle">Bảo vệ thông tin của bạn • <span id="algo-count">0</span> thuật toán</p>
+        <p class="subtitle">
+            Bảo vệ thông tin của bạn • <span id="algo-count">0</span> thuật toán
+        </p>
     </header>
 
-    <!-- Toggle -->
     <div class="toggle-container">
         <button class="toggle-btn active" data-mode="encode">🔒 MÃ HÓA</button>
         <button class="toggle-btn" data-mode="decode">🔓 GIẢI MÃ</button>
     </div>
 
-    <!-- Main panels -->
     <div class="main">
         <div class="panel">
             <div class="panel-header">
@@ -44,17 +43,14 @@
         </div>
     </div>
 
-    <!-- Controls -->
     <div class="controls">
         <div class="algo-picker" id="algo-picker">
-            <div class="picker-header">
-                <span class="icon">🎯</span>
-                <div class="picker-info">
-                    <div class="picker-label">Thuật toán</div>
-                    <div class="picker-value" id="current-algo">📦 Base64</div>
-                </div>
-                <span class="arrow">▶</span>
+            <span class="icon">🎯</span>
+            <div class="picker-info">
+                <div class="picker-label">Thuật toán</div>
+                <div class="picker-value" id="current-algo">📦 Base64</div>
             </div>
+            <span class="arrow">▶</span>
         </div>
 
         <div class="key-input">
@@ -71,13 +67,12 @@
         </button>
     </div>
 
-    <!-- Action row 2 -->
     <div class="controls-row2">
         <button class="action-btn cyan" id="btn-swap">🔁 ĐẢO CHIỀU</button>
         <button class="action-btn danger" id="btn-clear">🗑 XÓA TẤT CẢ</button>
     </div>
 
-    <!-- Modal chọn thuật toán -->
+    <!-- Modal chọn algo -->
     <div class="modal" id="algo-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -92,7 +87,16 @@
         </div>
     </div>
 
-    <!-- Toast -->
+    <!-- Slider chuyển cảnh -->
+    <div class="transition-slider" id="transition-slider">
+        <div class="slider-bg" id="slider-bg"></div>
+        <div class="slider-content">
+            <div class="slider-icon" id="slider-icon">🔒</div>
+            <div class="slider-text" id="slider-text">ĐANG CHUYỂN...</div>
+            <div class="slider-subtext" id="slider-subtext">Vui lòng chờ</div>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script src="/static/script.js"></script>
