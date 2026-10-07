@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Mã Hóa Chữ - Web</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <span class="icon">🔒</span>
+            <h1>MÃ HÓA CHỮ</h1>
+        </div>
+        <p class="subtitle">Bảo vệ thông tin của bạn • <span id="algo-count">0</span> thuật toán</p>
+    </header>
+
+    <!-- Toggle -->
+    <div class="toggle-container">
+        <button class="toggle-btn active" data-mode="encode">🔒 MÃ HÓA</button>
+        <button class="toggle-btn" data-mode="decode">🔓 GIẢI MÃ</button>
+    </div>
+
+    <!-- Main panels -->
+    <div class="main">
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-icon">📄</span>
+                <span class="panel-title">Văn bản gốc</span>
+                <span class="char-count" id="count-in">0</span>
+            </div>
+            <textarea id="input" placeholder="Nhập văn bản cần mã hóa..."></textarea>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-icon">🔓</span>
+                <span class="panel-title">Kết quả</span>
+                <button class="copy-btn" id="copy-out">📋 Sao chép</button>
+            </div>
+            <textarea id="output" readonly placeholder="Kết quả sẽ hiện ở đây..."></textarea>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <div class="algo-picker" id="algo-picker">
+            <div class="picker-header">
+                <span class="icon">🎯</span>
+                <div class="picker-info">
+                    <div class="picker-label">Thuật toán</div>
+                    <div class="picker-value" id="current-algo">📦 Base64</div>
+                </div>
+                <span class="arrow">▶</span>
+            </div>
+        </div>
+
+        <div class="key-input">
+            <span class="icon">🔑</span>
+            <div class="key-info">
+                <div class="key-label">Khóa bí mật</div>
+                <input type="password" id="key" value="matkhau123" placeholder="Nhập khóa...">
+            </div>
+            <button class="eye-btn" id="toggle-key">👁</button>
+        </div>
+
+        <button class="action-btn primary" id="btn-run">
+            <span id="btn-run-text">⚙ MÃ HÓA</span>
+        </button>
+    </div>
+
+    <!-- Action row 2 -->
+    <div class="controls-row2">
+        <button class="action-btn cyan" id="btn-swap">🔁 ĐẢO CHIỀU</button>
+        <button class="action-btn danger" id="btn-clear">🗑 XÓA TẤT CẢ</button>
+    </div>
+
+    <!-- Modal chọn thuật toán -->
+    <div class="modal" id="algo-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎯 Chọn thuật toán</h2>
+                <button class="close-btn" id="close-modal">✕</button>
+            </div>
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="search" placeholder="Tìm: aes, base, morse...">
+            </div>
+            <div class="algo-list" id="algo-list"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
