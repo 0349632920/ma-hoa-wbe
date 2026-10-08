@@ -31,30 +31,25 @@ async function loadAlgos() {
 // BIND EVENTS
 // ============================================================
 function bindEvents() {
-    // Toggle mode
+    // Toggle mode với hiệu ứng slider
     document.querySelectorAll(".toggle-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            state.mode = btn.dataset.mode;
-            document.getElementById("btn-run-text").textContent =
-                state.mode === "encode" ? "⚙ MÃ HÓA" : "🔓 GIẢI MÃ";
+            const newMode = btn.dataset.mode;
+            if (newMode === state.mode) return;
+            switchMode(newMode);
         });
     });
 
-    // Mở modal chọn algo
     document.getElementById("algo-picker").addEventListener("click", openModal);
     document.getElementById("close-modal").addEventListener("click", closeModal);
     document.getElementById("algo-modal").addEventListener("click", (e) => {
         if (e.target.id === "algo-modal") closeModal();
     });
 
-    // Search
     document.getElementById("search").addEventListener("input", (e) => {
         renderAlgoList(e.target.value.toLowerCase());
     });
 
-    // Toggle hiện/ẩn khóa
     document.getElementById("toggle-key").addEventListener("click", () => {
         const inp = document.getElementById("key");
         const btn = document.getElementById("toggle-key");
@@ -67,10 +62,8 @@ function bindEvents() {
         }
     });
 
-    // Nút MÃ HÓA / GIẢI MÃ
     document.getElementById("btn-run").addEventListener("click", runProcess);
 
-    // Đảo chiều
     document.getElementById("btn-swap").addEventListener("click", () => {
         const inp = document.getElementById("input");
         const out = document.getElementById("output");
@@ -79,14 +72,12 @@ function bindEvents() {
         updateCount();
     });
 
-    // Xóa
     document.getElementById("btn-clear").addEventListener("click", () => {
         document.getElementById("input").value = "";
         document.getElementById("output").value = "";
         updateCount();
     });
 
-    // Copy kết quả
     document.getElementById("copy-out").addEventListener("click", () => {
         const out = document.getElementById("output");
         if (out.value) {
@@ -95,10 +86,8 @@ function bindEvents() {
         }
     });
 
-    // Count ký tự
     document.getElementById("input").addEventListener("input", updateCount);
 
-    // Phím tắt Ctrl+Enter để chạy
     document.addEventListener("keydown", (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
             e.preventDefault();
@@ -111,6 +100,87 @@ function bindEvents() {
 function updateCount() {
     const t = document.getElementById("input").value;
     document.getElementById("count-in").textContent = `${t.length} ký tự`;
+}
+
+// ============================================================
+// CHUYỂN MODE VỚI HIỆU ỨNG SLIDER
+// ============================================================
+function switchMode(newMode) {
+    const slider = document.getElementById("transition-slider");
+    const sliderBg = document.getElementById("slider-bg");
+    const sliderIcon = document.getElementById("slider-icon");
+    const sliderText = document.getElementById("slider-text");
+    const sliderSubtext = document.getElementById("slider-subtext");
+    const main = document.querySelector(".main");
+
+    // Cấu hình theo mode mới
+    if (newMode === "decode") {
+        sliderBg.classList.add("green");
+        sliderIcon.textContent = "🔓";
+        sliderText.textContent = "GIẢI MÃ";
+        sliderSubtext.textContent = "Đang chuyển sang chế độ giải mã...";
+    } else {
+        sliderBg.classList.remove("green");
+        sliderIcon.textContent = "🔒";
+        sliderText.textContent = "MÃ HÓA";
+        sliderSubtext.textContent = "Đang chuyển sang chế độ mã hóa...";
+    }
+
+    // Reset animation
+    slider.classList.remove("active");
+    void slider.offsetWidth;
+    slider.classList.add("active");
+
+    // Đổi UI khi slider đang che (400ms)
+    setTimeout(() => {
+        state.mode = newMode;
+
+        // Đổi nút toggle active
+        document.querySelectorAll(".toggle-btn").forEach(b => {
+            b.classList.toggle("active", b.dataset.mode === newMode);
+        });
+
+        // Đổi text nút chính
+        document.getElementById("btn-run-text").textContent =
+            newMode === "encode" ? "⚙ MÃ HÓA" : "🔓 GIẢI MÃ";
+
+        // Đổi class body → CSS tự đổi màu
+        document.body.classList.toggle("decode-mode", newMode === "decode");
+
+        // Đổi placeholder
+        document.getElementById("input").placeholder =
+            newMode === "encode"
+                ? "Nhập văn bản cần mã hóa..."
+                : "Dán nội dung cần giải mã vào đây...";
+
+        // Đổi tiêu đề panel
+        const titles = document.querySelectorAll(".panel-title");
+        if (newMode === "encode") {
+            titles[0].textContent = "Văn bản gốc";
+            titles[1].textContent = "Kết quả";
+        } else {
+            titles[0].textContent = "Văn bản đã mã hóa";
+            titles[1].textContent = "Kết quả giải mã";
+        }
+
+        // Hiệu ứng panel
+        main.classList.add("switching");
+        setTimeout(() => main.classList.remove("switching"), 800);
+
+        // Đưa kết quả cũ lên input nếu input trống
+        const inp = document.getElementById("input");
+        const out = document.getElementById("output");
+        if (out.value && !inp.value) {
+            inp.value = out.value;
+            out.value = "";
+            updateCount();
+        }
+    }, 400);
+
+    // Xóa class sau khi animation xong
+    setTimeout(() => {
+        slider.classList.remove("active");
+    }, 800);
 }
 
 // ============================================================
@@ -184,7 +254,6 @@ async function runProcess() {
         return;
     }
 
-    // Loading
     btn.disabled = true;
     const originalText = document.getElementById("btn-run-text").textContent;
     document.getElementById("btn-run-text").innerHTML =
