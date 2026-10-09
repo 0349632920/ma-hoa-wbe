@@ -1389,3 +1389,339 @@ body.decode-mode .action-btn.primary {
     .confirm-icon { font-size: 44px; }
     .confirm-title { font-size: 18px; }
 }
+/* ============================================================
+   BANNED PAGE
+   ============================================================ */
+.banned-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0a;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.banned-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 520px;
+}
+
+.banned-card {
+    background: linear-gradient(135deg, #1a0a0a, #2a0a0a);
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    border-radius: 20px;
+    padding: 48px 40px 32px;
+    text-align: center;
+    box-shadow: 0 20px 80px rgba(239, 68, 68, 0.15),
+                0 0 0 1px rgba(239, 68, 68, 0.1);
+    position: relative;
+    overflow: hidden;
+    animation: bannedCardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes bannedCardIn {
+    from { opacity: 0; transform: scale(0.9) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.banned-card::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.35), transparent 65%);
+    pointer-events: none;
+    animation: bannedPulse 3s ease-in-out infinite;
+}
+
+@keyframes bannedPulse {
+    0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.15); }
+}
+
+.banned-icon-wrap {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.banned-icon-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.5), transparent 65%);
+    animation: bannedGlow 2s ease-in-out infinite;
+}
+
+@keyframes bannedGlow {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.25); opacity: 1; }
+}
+
+.banned-icon {
+    position: relative;
+    font-size: 72px;
+    filter: drop-shadow(0 4px 30px rgba(239, 68, 68, 0.7));
+    animation: bannedIconShake 0.6s ease;
+}
+
+@keyframes bannedIconShake {
+    0%, 100% { transform: rotate(0deg); }
+    15% { transform: rotate(-10deg) scale(1.1); }
+    30% { transform: rotate(10deg) scale(1.1); }
+    45% { transform: rotate(-8deg); }
+    60% { transform: rotate(8deg); }
+    75% { transform: rotate(-4deg); }
+}
+
+.banned-title {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    background: linear-gradient(90deg, #ef4444, #f97316, #ef4444);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: bannedTitleGlow 3s linear infinite;
+    text-transform: uppercase;
+}
+
+@keyframes bannedTitleGlow {
+    to { background-position: 200% center; }
+}
+
+.banned-username {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.banned-username-label {
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.banned-username-value {
+    color: #ef4444;
+    font-size: 15px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+}
+
+.banned-duration {
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.banned-duration.permanent {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.banned-duration-label {
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.banned-duration-value {
+    font-size: 24px;
+    font-weight: 900;
+    color: #fbbf24;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 4px;
+}
+
+.banned-duration.permanent .banned-duration-value {
+    color: #ef4444;
+}
+
+.banned-duration-value.expired {
+    color: #10b981;
+}
+
+.banned-until {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.banned-until b {
+    color: #fbbf24;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.banned-reason {
+    display: flex;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.banned-reason-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.banned-reason-content { flex: 1; }
+
+.banned-reason-label {
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.banned-reason-text {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+.banned-code {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.banned-code code {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.banned-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.banned-btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.25s;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.banned-btn.logout {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+    min-width: 200px;
+}
+
+.banned-btn.logout:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.6);
+}
+
+.banned-btn.logout:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.banned-footer {
+    font-size: 11px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(239, 68, 68, 0.1);
+}
+
+.banned-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.banned-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.2;
+}
+
+.banned-blob-1 {
+    width: 500px;
+    height: 500px;
+    background: #ef4444;
+    top: -200px;
+    left: -200px;
+    animation: bannedFloat 15s ease-in-out infinite;
+}
+
+.banned-blob-2 {
+    width: 400px;
+    height: 400px;
+    background: #dc2626;
+    bottom: -150px;
+    right: -150px;
+    animation: bannedFloat 20s ease-in-out infinite reverse;
+}
+
+@keyframes bannedFloat {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(60px, -40px); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .banned-card { padding: 36px 24px 24px; }
+    .banned-title { font-size: 20px; letter-spacing: 1px; }
+    .banned-icon { font-size: 56px; }
+    .banned-icon-wrap { width: 90px; height: 90px; }
+    .banned-duration-value { font-size: 20px; }
+    .banned-btn.logout { min-width: auto; width: 100%; }
+}
