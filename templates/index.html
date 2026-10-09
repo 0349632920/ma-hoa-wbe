@@ -10,9 +10,13 @@
 <body>
     <!-- User bar -->
     <div class="user-bar">
-        <div class="user-avatar" id="user-avatar">U</div>
+        <div class="user-avatar" id="user-avatar">K</div>
         <div class="user-name" id="user-name">{{ username }}</div>
-        <button class="btn-logout" id="btn-logout">🚪 Đăng xuất</button>
+        {% if username == "Khách" %}
+            <button class="btn-logout" id="btn-top-login" style="background: rgba(37, 99, 235, 0.12); border-color: rgba(37, 99, 235, 0.3); color: var(--blue-light);">🔑 Đăng nhập</button>
+        {% else %}
+            <button class="btn-logout" id="btn-logout">🚪 Đăng xuất</button>
+        {% endif %}
     </div>
 
     <header class="header">
@@ -99,6 +103,19 @@
             <div class="slider-icon" id="slider-icon">🔒</div>
             <div class="slider-text" id="slider-text">ĐANG CHUYỂN...</div>
             <div class="slider-subtext" id="slider-subtext">Vui lòng chờ</div>
+        </div>
+    </div>
+
+    <!-- Modal yêu cầu đăng nhập -->
+    <div class="confirm-modal" id="login-required-modal">
+        <div class="confirm-box">
+            <div class="confirm-icon">🔐</div>
+            <h3 class="confirm-title">Cần đăng nhập</h3>
+            <p class="confirm-text">Bạn cần đăng nhập để sử dụng tính năng mã hóa / giải mã.</p>
+            <div class="confirm-actions">
+                <button class="confirm-btn cancel" id="btn-cancel-login">Hủy</button>
+                <button class="confirm-btn primary" id="btn-go-login">Đăng nhập</button>
+            </div>
         </div>
     </div>
 
