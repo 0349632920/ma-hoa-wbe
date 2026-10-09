@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- User bar đơn giản -->
+    <!-- User bar -->
     <div class="user-bar">
         <div class="user-avatar" id="user-avatar">U</div>
         <div class="user-name" id="user-name">{{ username }}</div>
@@ -99,6 +99,19 @@
             <div class="slider-icon" id="slider-icon">🔒</div>
             <div class="slider-text" id="slider-text">ĐANG CHUYỂN...</div>
             <div class="slider-subtext" id="slider-subtext">Vui lòng chờ</div>
+        </div>
+    </div>
+
+    <!-- Modal xác nhận đăng xuất -->
+    <div class="confirm-modal" id="logout-modal">
+        <div class="confirm-box">
+            <div class="confirm-icon">🚪</div>
+            <h3 class="confirm-title">Đăng xuất?</h3>
+            <p class="confirm-text">Bạn có chắc muốn đăng xuất khỏi tài khoản <b id="confirm-username"></b>?</p>
+            <div class="confirm-actions">
+                <button class="confirm-btn cancel" id="btn-cancel-logout">Hủy</button>
+                <button class="confirm-btn danger" id="btn-confirm-logout">Đăng xuất</button>
+            </div>
         </div>
     </div>
 
