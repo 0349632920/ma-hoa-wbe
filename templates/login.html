@@ -60,12 +60,17 @@
                 <button type="submit" class="login-submit register">✨ TẠO TÀI KHOẢN</button>
             </form>
 
+            <div class="guest-divider"><span>hoặc</span></div>
+
+            <button type="button" class="guest-btn" id="btn-guest">
+                🚀 Dùng thử không cần đăng nhập
+            </button>
+
             <div class="login-footer">
                 <span>🚀 Hơn <b>40 thuật toán</b> mã hóa</span>
             </div>
         </div>
 
-        <!-- Trang trí nền -->
         <div class="bg-decoration">
             <div class="blob blob-1"></div>
             <div class="blob blob-2"></div>
@@ -74,39 +79,27 @@
     </div>
 
     <script>
-    // ============================================================
-    // TOGGLE TABS
-    // ============================================================
     document.querySelectorAll(".login-tab").forEach(tab => {
         tab.addEventListener("click", () => {
             document.querySelectorAll(".login-tab").forEach(t => t.classList.remove("active"));
             tab.classList.add("active");
-
             const target = tab.dataset.tab;
             document.getElementById("login-form").classList.toggle("hidden", target !== "login");
             document.getElementById("register-form").classList.toggle("hidden", target !== "register");
         });
     });
 
-    // ============================================================
-    // TOGGLE PASSWORD
-    // ============================================================
     document.querySelectorAll(".eye-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             const inp = document.getElementById(btn.dataset.target);
             if (inp.type === "password") {
-                inp.type = "text";
-                btn.textContent = "🙈";
+                inp.type = "text"; btn.textContent = "🙈";
             } else {
-                inp.type = "password";
-                btn.textContent = "👁";
+                inp.type = "password"; btn.textContent = "👁";
             }
         });
     });
 
-    // ============================================================
-    // LOGIN
-    // ============================================================
     document.getElementById("login-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const username = document.getElementById("login-username").value.trim();
@@ -115,10 +108,7 @@
         const btn = e.target.querySelector(".login-submit");
 
         errEl.textContent = "";
-        if (!username || !password) {
-            errEl.textContent = "⚠ Vui lòng nhập đầy đủ";
-            return;
-        }
+        if (!username || !password) { errEl.textContent = "⚠ Vui lòng nhập đầy đủ"; return; }
 
         btn.disabled = true;
         btn.textContent = "⏳ Đang đăng nhập...";
@@ -130,7 +120,6 @@
                 body: JSON.stringify({username, password})
             });
             const data = await res.json();
-
             if (data.success) {
                 btn.textContent = "✅ Thành công!";
                 setTimeout(() => window.location.href = "/", 500);
@@ -146,9 +135,6 @@
         }
     });
 
-    // ============================================================
-    // REGISTER
-    // ============================================================
     document.getElementById("register-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const username = document.getElementById("reg-username").value.trim();
@@ -158,14 +144,8 @@
         const btn = e.target.querySelector(".login-submit");
 
         errEl.textContent = "";
-        if (!username || !password || !password2) {
-            errEl.textContent = "⚠ Vui lòng nhập đầy đủ";
-            return;
-        }
-        if (password !== password2) {
-            errEl.textContent = "❌ Mật khẩu nhập lại không khớp";
-            return;
-        }
+        if (!username || !password || !password2) { errEl.textContent = "⚠ Vui lòng nhập đầy đủ"; return; }
+        if (password !== password2) { errEl.textContent = "❌ Mật khẩu nhập lại không khớp"; return; }
 
         btn.disabled = true;
         btn.textContent = "⏳ Đang tạo...";
@@ -177,7 +157,6 @@
                 body: JSON.stringify({username, password})
             });
             const data = await res.json();
-
             if (data.success) {
                 btn.textContent = "✅ Thành công!";
                 setTimeout(() => window.location.href = "/", 500);
@@ -193,7 +172,28 @@
         }
     });
 
-    // Enter để submit
+    document.getElementById("btn-guest").addEventListener("click", async () => {
+        const btn = document.getElementById("btn-guest");
+        btn.disabled = true;
+        btn.textContent = "⏳ Đang tạo tài khoản...";
+        try {
+            const res = await fetch("/api/guest", { method: "POST" });
+            const data = await res.json();
+            if (data.success) {
+                btn.textContent = "✅ Thành công!";
+                setTimeout(() => window.location.href = "/", 500);
+            } else {
+                btn.textContent = "❌ " + (data.error || "Lỗi");
+                btn.disabled = false;
+                setTimeout(() => btn.textContent = "🚀 Dùng thử không cần đăng nhập", 2000);
+            }
+        } catch (err) {
+            btn.textContent = "❌ Lỗi kết nối";
+            btn.disabled = false;
+            setTimeout(() => btn.textContent = "🚀 Dùng thử không cần đăng nhập", 2000);
+        }
+    });
+
     document.getElementById("login-password").addEventListener("keypress", (e) => {
         if (e.key === "Enter") document.getElementById("login-form").requestSubmit();
     });
