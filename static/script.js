@@ -54,9 +54,11 @@ function bindEvents() {
         const inp = document.getElementById("key");
         const btn = document.getElementById("toggle-key");
         if (inp.type === "password") {
-            inp.type = "text"; btn.textContent = "🙈";
+            inp.type = "text";
+            btn.textContent = "🙈";
         } else {
-            inp.type = "password"; btn.textContent = "👁";
+            inp.type = "password";
+            btn.textContent = "👁";
         }
     });
 
@@ -223,7 +225,7 @@ function renderAlgoList(query) {
     }
 
     if (container.children.length === 0) {
-        container.innerHTML = `<p style="text-align:center;color:#7a9bc4;padding:40px 0;">❌ Không tìm thấy</p>`;
+        container.innerHTML = `<p style="text-align:center;color:#7a9bc4;padding:40px 0;">❌ Không tìm thấy thuật toán nào</p>`;
     }
 }
 
@@ -242,7 +244,79 @@ async function runProcess() {
 
     btn.disabled = true;
     const originalText = document.getElementById("btn-run-text").textContent;
-    document.getElementById("btn-run-text").innerHTML = `<span class="loading"></span> Đang xử lý...`;
+    document.getElementById("btn-run-text").innerHTML =
+        `<span class="loading"></span> Đang xử lý...`;
 
     try {
-        const res = await fetch("/api/
+        const res = await fetch("/api/process", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                mode: state.mode,
+                algo: state.algo,
+                text: text,
+                key: key,
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById("output").value = data.result;
+            showToast(`✅ ${state.mode === "encode" ? "Mã hóa" : "Giải mã"} thành công!`);
+        } else {
+            showToast(`❌ ${data.error}`, true);
+        }
+    } catch (e) {
+        showToast(`❌ Lỗi kết nối: ${e.message}`, true);
+    } finally {
+        btn.disabled = false;
+        document.getElementById("btn-run-text").textContent = originalText;
+    }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer = null;
+function showToast(msg, isError = false) {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.classList.toggle("error", isError);
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2500);
+}
+
+// ============================================================
+// USER / LOGOUT
+// ============================================================
+function initUserMenu() {
+    // Hiện chữ cái đầu của username
+    const nameEl = document.getElementById("user-name");
+    const avatarEl = document.getElementById("user-avatar");
+    if (nameEl && avatarEl) {
+        const name = nameEl.textContent.trim();
+        avatarEl.textContent = name.charAt(0).toUpperCase();
+    }
+
+    // Nút đăng xuất
+    const logoutBtn = document.getElementById("btn-logout");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+            if (!confirm("Bạn có chắc muốn đăng xuất?")) return;
+
+            logoutBtn.disabled = true;
+            logoutBtn.textContent = "⏳ Đang thoát...";
+
+            try {
+                await fetch("/api/logout", { method: "POST" });
+                window.location.href = "/login";
+            } catch (e) {
+                alert("Lỗi đăng xuất");
+                logoutBtn.disabled = false;
+                logoutBtn.textContent = "🚪 Đăng xuất";
+            }
+        });
+    }
+}
