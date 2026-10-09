@@ -732,7 +732,7 @@ body.decode-mode .action-btn.primary {
 }
 
 /* ============================================================
-   USER BAR + LOGOUT BUTTON (đẹp)
+   USER BAR + LOGOUT
    ============================================================ */
 .user-bar {
     position: fixed;
@@ -786,7 +786,6 @@ body.decode-mode .action-btn.primary {
     padding: 0 6px;
 }
 
-/* Nút đăng xuất — gradient đỏ khi hover */
 .btn-logout {
     background: rgba(239, 68, 68, 0.12);
     border: 1px solid rgba(239, 68, 68, 0.3);
@@ -839,6 +838,142 @@ body.decode-mode .action-btn.primary {
 }
 
 /* ============================================================
+   CONFIRM MODAL
+   ============================================================ */
+.confirm-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 20, 40, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+}
+
+.confirm-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.confirm-box {
+    background: linear-gradient(135deg, #0f1e38, #142850);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px 28px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(239, 68, 68, 0.15);
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.confirm-modal.show .confirm-box {
+    transform: scale(1) translateY(0);
+}
+
+.confirm-box::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.3), transparent 70%);
+    pointer-events: none;
+}
+
+.confirm-icon {
+    font-size: 56px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 4px 16px rgba(239, 68, 68, 0.4));
+    animation: iconShake 0.5s ease;
+}
+
+@keyframes iconShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px) rotate(-5deg); }
+    75% { transform: translateX(8px) rotate(5deg); }
+}
+
+.confirm-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--fg);
+    margin-bottom: 8px;
+}
+
+.confirm-text {
+    font-size: 14px;
+    color: var(--fg-dim);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.confirm-text b {
+    color: var(--red);
+    font-weight: 700;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.confirm-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.confirm-btn.cancel {
+    background: var(--bg3);
+    color: var(--fg);
+    border: 1px solid var(--border);
+}
+
+.confirm-btn.cancel:hover {
+    background: var(--bg2);
+    border-color: var(--fg-dim);
+    transform: translateY(-1px);
+}
+
+.confirm-btn.danger {
+    background: linear-gradient(135deg, var(--red), #dc2626);
+    color: white;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+.confirm-btn.danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(239, 68, 68, 0.6);
+}
+
+.confirm-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    transform: none;
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 600px) {
@@ -865,4 +1000,7 @@ body.decode-mode .action-btn.primary {
     }
     .logo h1 { font-size: 32px; }
     .controls-row2 { grid-template-columns: 1fr; }
+    .confirm-box { padding: 28px 20px 22px; }
+    .confirm-icon { font-size: 44px; }
+    .confirm-title { font-size: 18px; }
 }
