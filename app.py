@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Mã Hóa Chữ - Web App với Admin Panel
+Mã Hóa Chữ - Web App với Admin Panel + Ban có thời hạn
 """
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
+from datetime import datetime, timedelta
 import os
 import bcrypt
 import secrets
@@ -66,13 +67,16 @@ def init_db():
                 password_hash TEXT NOT NULL,
                 is_admin BOOLEAN DEFAULT FALSE,
                 is_banned BOOLEAN DEFAULT FALSE,
+                banned_until TIMESTAMP,
+                ban_reason TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # Thêm cột nếu DB đã tồn tại từ trước
         try:
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE")
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT FALSE")
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_until TIMESTAMP")
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT")
         except Exception:
             pass
 
@@ -90,7 +94,6 @@ def init_db():
         c.execute("CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id, id DESC)")
         conn.commit()
 
-        # Tạo admin mặc định nếu chưa có
         c.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(%s)", (ADMIN_USERNAME,))
         if not c.fetchone():
             pwd_hash = bcrypt.hashpw(ADMIN_PASSWORD.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
@@ -108,7 +111,7 @@ def init_db():
 init_db()
 
 # ============================================================
-# AUTH
+# AUTH HELPERS
 # ============================================================
 def is_logged_in():
     return "user_id" in session
@@ -137,23 +140,63 @@ def admin_required_api(f):
         return f(*args, **kwargs)
     return decorated
 
-def check_banned(user_id):
-    """Trả về True nếu user bị cấm."""
+def get_ban_info(user_id):
+    """Trả về dict thông tin ban."""
     try:
         conn = get_db()
-        c = conn.cursor()
-        c.execute("SELECT is_banned FROM users WHERE id = %s", (user_id,))
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT is_banned, banned_until, ban_reason FROM users WHERE id = %s", (user_id,))
         row = c.fetchone()
         c.close(); conn.close()
-        return row and row[0]
-    except Exception:
-        return False
+
+        if not row or not row["is_banned"]:
+            return {"is_banned": False}
+
+        if row["banned_until"]:
+            now = datetime.now()
+            if row["banned_until"] <= now:
+                # Tự động mở ban khi hết hạn
+                try:
+                    conn = get_db()
+                    c = conn.cursor()
+                    c.execute("UPDATE users SET is_banned = FALSE, banned_until = NULL, ban_reason = NULL WHERE id = %s", (user_id,))
+                    conn.commit()
+                    c.close(); conn.close()
+                except Exception:
+                    pass
+                return {"is_banned": False}
+
+            remaining = int((row["banned_until"] - now).total_seconds())
+            return {
+                "is_banned": True,
+                "banned_until": row["banned_until"].strftime("%Y-%m-%d %H:%M:%S"),
+                "ban_reason": row["ban_reason"] or "",
+                "remaining_seconds": remaining,
+                "permanent": False,
+            }
+        else:
+            return {
+                "is_banned": True,
+                "banned_until": None,
+                "ban_reason": row["ban_reason"] or "",
+                "remaining_seconds": None,
+                "permanent": True,
+            }
+    except Exception as e:
+        print(f"Lỗi get_ban_info: {e}")
+        return {"is_banned": False}
+
+def check_banned(user_id):
+    return get_ban_info(user_id).get("is_banned", False)
 
 # ============================================================
 # PAGES
 # ============================================================
 @app.route("/")
 def index():
+    if is_logged_in():
+        if check_banned(session["user_id"]):
+            return redirect(url_for("banned_page"))
     return render_template("index.html", username=get_username())
 
 @app.route("/login")
@@ -162,12 +205,25 @@ def login_page():
         return redirect(url_for("index"))
     return render_template("login.html")
 
+@app.route("/banned")
+def banned_page():
+    if not is_logged_in():
+        return redirect(url_for("login_page"))
+    ban_info = get_ban_info(session["user_id"])
+    if not ban_info.get("is_banned"):
+        return redirect(url_for("index"))
+    return render_template("banned.html",
+                            username=session.get("username", "User"),
+                            ban_info=ban_info)
+
 @app.route("/admin")
 def admin_page():
+    """Trang admin — chặn nếu không phải admin."""
     if not is_logged_in():
         return redirect(url_for("login_page"))
     if not is_admin():
-        return redirect(url_for("index"))
+        # Chuyển về trang chủ + thông báo không có quyền
+        return redirect(url_for("index") + "?error=no_permission")
     return render_template("admin.html", username=get_username())
 
 # ============================================================
@@ -229,7 +285,7 @@ def api_login():
     try:
         conn = get_db()
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        c.execute("SELECT id, username, password_hash, is_admin, is_banned FROM users WHERE LOWER(username) = LOWER(%s)",
+        c.execute("SELECT id, username, password_hash, is_admin FROM users WHERE LOWER(username) = LOWER(%s)",
                   (username,))
         user = c.fetchone()
         c.close(); conn.close()
@@ -238,14 +294,18 @@ def api_login():
             return jsonify({"error": "Sai tên đăng nhập hoặc mật khẩu"}), 401
         if not bcrypt.checkpw(password.encode("utf-8"), user["password_hash"].encode("utf-8")):
             return jsonify({"error": "Sai tên đăng nhập hoặc mật khẩu"}), 401
-        if user["is_banned"]:
-            return jsonify({"error": "Tài khoản đã bị cấm"}), 403
 
         session.permanent = True
         session["user_id"] = user["id"]
         session["username"] = user["username"]
         session["is_admin"] = bool(user["is_admin"])
-        return jsonify({"success": True, "username": user["username"], "is_admin": bool(user["is_admin"])})
+
+        return jsonify({
+            "success": True,
+            "username": user["username"],
+            "is_admin": bool(user["is_admin"]),
+            "is_banned": check_banned(user["id"])
+        })
     except Exception as e:
         return jsonify({"error": f"Lỗi: {e}"}), 500
 
@@ -284,12 +344,26 @@ def api_logout():
 def api_me():
     if not is_logged_in():
         return jsonify({"logged_in": False, "username": "Khách"})
+    ban_info = get_ban_info(session["user_id"])
     return jsonify({
         "logged_in": True,
         "user_id": session["user_id"],
         "username": session["username"],
         "is_guest": session.get("is_guest", False),
         "is_admin": is_admin(),
+        "is_banned": ban_info.get("is_banned", False),
+        "ban_info": ban_info,
+    })
+
+@app.route("/api/ban-status")
+def api_ban_status():
+    if not is_logged_in():
+        return jsonify({"logged_in": False})
+    ban_info = get_ban_info(session["user_id"])
+    return jsonify({
+        "logged_in": True,
+        "username": session["username"],
+        "ban_info": ban_info,
     })
 
 # ============================================================
@@ -306,9 +380,9 @@ def api_algos():
 @app.route("/api/process", methods=["POST"])
 @login_required_api
 def api_process():
-    # Kiểm tra banned
-    if check_banned(session["user_id"]):
-        return jsonify({"error": "Tài khoản đã bị cấm"}), 403
+    ban_info = get_ban_info(session["user_id"])
+    if ban_info.get("is_banned"):
+        return jsonify({"error": "Tài khoản đã bị cấm", "banned": True, "ban_info": ban_info}), 403
 
     data = request.get_json()
     if not data:
@@ -370,7 +444,6 @@ def api_history():
 @app.route("/api/admin/stats")
 @admin_required_api
 def api_admin_stats():
-    """Thống kê tổng quan."""
     try:
         conn = get_db()
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -413,7 +486,6 @@ def api_admin_stats():
 @app.route("/api/admin/users")
 @admin_required_api
 def api_admin_users():
-    """Danh sách tất cả users."""
     try:
         search = request.args.get("search", "").strip().lower()
         conn = get_db()
@@ -421,7 +493,7 @@ def api_admin_users():
 
         if search:
             c.execute("""
-                SELECT id, username, is_admin, is_banned, created_at,
+                SELECT id, username, is_admin, is_banned, banned_until, ban_reason, created_at,
                        (SELECT COUNT(*) FROM history WHERE user_id = users.id) as op_count
                 FROM users
                 WHERE LOWER(username) LIKE %s
@@ -429,7 +501,7 @@ def api_admin_users():
             """, (f"%{search}%",))
         else:
             c.execute("""
-                SELECT id, username, is_admin, is_banned, created_at,
+                SELECT id, username, is_admin, is_banned, banned_until, ban_reason, created_at,
                        (SELECT COUNT(*) FROM history WHERE user_id = users.id) as op_count
                 FROM users
                 ORDER BY id DESC
@@ -443,6 +515,8 @@ def api_admin_users():
             d = dict(r)
             if d.get("created_at"):
                 d["created_at"] = d["created_at"].strftime("%Y-%m-%d %H:%M:%S")
+            if d.get("banned_until"):
+                d["banned_until"] = d["banned_until"].strftime("%Y-%m-%d %H:%M:%S")
             result.append(d)
         return jsonify(result)
     except Exception as e:
@@ -451,38 +525,66 @@ def api_admin_users():
 @app.route("/api/admin/users/<int:user_id>/ban", methods=["POST"])
 @admin_required_api
 def api_admin_ban(user_id):
-    """Cấm/mở cấm user."""
-    # Không cho cấm chính mình
     if user_id == session["user_id"]:
         return jsonify({"error": "Không thể tự cấm chính mình"}), 400
 
     data = request.get_json() or {}
-    ban = data.get("ban", True)
+    duration = data.get("duration", "permanent")
+    reason = (data.get("reason") or "").strip()[:500]
+
+    duration_map = {
+        "1h": timedelta(hours=1),
+        "1d": timedelta(days=1),
+        "7d": timedelta(days=7),
+        "30d": timedelta(days=30),
+    }
+
+    banned_until = None
+    if duration in duration_map:
+        banned_until = datetime.now() + duration_map[duration]
+    elif duration == "permanent":
+        banned_until = None
+    else:
+        return jsonify({"error": "Thời hạn không hợp lệ"}), 400
 
     try:
         conn = get_db()
         c = conn.cursor()
-        # Không cho cấm admin khác
         c.execute("SELECT is_admin, username FROM users WHERE id = %s", (user_id,))
         row = c.fetchone()
         if not row:
             c.close(); conn.close()
             return jsonify({"error": "Không tìm thấy user"}), 404
-        if row[0] and ban:
+        if row[0]:
             c.close(); conn.close()
             return jsonify({"error": "Không thể cấm admin khác"}), 400
 
-        c.execute("UPDATE users SET is_banned = %s WHERE id = %s", (ban, user_id))
+        c.execute(
+            "UPDATE users SET is_banned = TRUE, banned_until = %s, ban_reason = %s WHERE id = %s",
+            (banned_until, reason, user_id)
+        )
         conn.commit()
         c.close(); conn.close()
-        return jsonify({"success": True, "banned": ban, "username": row[1]})
+        return jsonify({"success": True, "username": row[1], "duration": duration})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/admin/users/<int:user_id>/unban", methods=["POST"])
+@admin_required_api
+def api_admin_unban(user_id):
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("UPDATE users SET is_banned = FALSE, banned_until = NULL, ban_reason = NULL WHERE id = %s", (user_id,))
+        conn.commit()
+        c.close(); conn.close()
+        return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
 @admin_required_api
 def api_admin_delete_user(user_id):
-    """Xóa user."""
     if user_id == session["user_id"]:
         return jsonify({"error": "Không thể tự xóa chính mình"}), 400
 
@@ -508,7 +610,6 @@ def api_admin_delete_user(user_id):
 @app.route("/api/admin/history")
 @admin_required_api
 def api_admin_history():
-    """Xem lịch sử tất cả users."""
     try:
         mode_filter = request.args.get("mode", "").strip()
         user_filter = request.args.get("username", "").strip()
@@ -554,7 +655,6 @@ def api_admin_history():
 @app.route("/api/admin/history/clear", methods=["POST"])
 @admin_required_api
 def api_admin_history_clear():
-    """Xóa toàn bộ lịch sử."""
     try:
         conn = get_db()
         c = conn.cursor()
