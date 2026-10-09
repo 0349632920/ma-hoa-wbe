@@ -7,6 +7,7 @@ let state = {
     algoLabel: "📦 Base64",
     algos: null,
     isLoggedIn: false,
+    loginChecked: false,
 };
 
 // ============================================================
@@ -24,10 +25,18 @@ async function checkLogin() {
         const res = await fetch("/api/me", { credentials: "include" });
         const data = await res.json();
         state.isLoggedIn = data.logged_in;
+        state.loginChecked = true;
     } catch (e) {
         console.error("Lỗi check login:", e);
         state.isLoggedIn = false;
+        state.loginChecked = true;
     }
+}
+
+async function ensureLogin() {
+    if (state.loginChecked) return state.isLoggedIn;
+    await checkLogin();
+    return state.isLoggedIn;
 }
 
 async function loadAlgos() {
@@ -243,7 +252,7 @@ function renderAlgoList(query) {
 }
 
 // ============================================================
-// PROCESS
+// PROCESS — Kiểm tra login TRƯỚC KHI hiện loading
 // ============================================================
 async function runProcess() {
     const text = document.getElementById("input").value;
@@ -255,13 +264,16 @@ async function runProcess() {
         return;
     }
 
-    // Kiểm tra đăng nhập trước
-    await checkLogin();
-    if (!state.isLoggedIn) {
+    // ===== BƯỚC 1: Kiểm tra login TRƯỚC =====
+    const loggedIn = await ensureLogin();
+
+    if (!loggedIn) {
+        // Chưa login → hiện modal NGAY, KHÔNG hiện "Đang xử lý"
         openLoginRequiredModal();
         return;
     }
 
+    // ===== BƯỚC 2: Đã login → hiện loading rồi xử lý =====
     btn.disabled = true;
     const originalText = document.getElementById("btn-run-text").textContent;
     document.getElementById("btn-run-text").innerHTML =
@@ -280,7 +292,11 @@ async function runProcess() {
             })
         });
 
+        // Session hết hạn giữa lúc bấm → hiện modal login
         if (res.status === 401) {
+            btn.disabled = false;
+            document.getElementById("btn-run-text").textContent = originalText;
+            state.loginChecked = false;  // Reset để check lại lần sau
             openLoginRequiredModal();
             return;
         }
