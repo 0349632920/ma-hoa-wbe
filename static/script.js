@@ -21,7 +21,6 @@ async function loadAlgos() {
     try {
         const res = await fetch("/api/algos");
         if (res.status === 401) {
-            // Session hết hạn → về login
             window.location.href = "/login";
             return;
         }
@@ -302,6 +301,7 @@ function showToast(msg, isError = false) {
 // USER / LOGOUT
 // ============================================================
 function initUserMenu() {
+    // Hiện chữ cái đầu của username
     const nameEl = document.getElementById("user-name");
     const avatarEl = document.getElementById("user-avatar");
     if (nameEl && avatarEl) {
@@ -309,22 +309,59 @@ function initUserMenu() {
         avatarEl.textContent = name.charAt(0).toUpperCase();
     }
 
+    // ===== MODAL ĐĂNG XUẤT =====
+    const logoutModal = document.getElementById("logout-modal");
+    const confirmUsername = document.getElementById("confirm-username");
     const logoutBtn = document.getElementById("btn-logout");
+    const cancelBtn = document.getElementById("btn-cancel-logout");
+    const confirmBtn = document.getElementById("btn-confirm-logout");
+
+    function openLogoutModal() {
+        const name = nameEl ? nameEl.textContent.trim() : "bạn";
+        if (confirmUsername) confirmUsername.textContent = name;
+        logoutModal.classList.add("show");
+        setTimeout(() => cancelBtn.focus(), 100);
+    }
+
+    function closeLogoutModal() {
+        logoutModal.classList.remove("show");
+    }
+
+    async function doLogout() {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = "⏳ Đang thoát...";
+
+        try {
+            await fetch("/api/logout", { method: "POST" });
+            window.location.href = "/login";
+        } catch (e) {
+            alert("Lỗi đăng xuất");
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "Đăng xuất";
+        }
+    }
+
     if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
-            if (!confirm("Bạn có chắc muốn đăng xuất?")) return;
+        logoutBtn.addEventListener("click", openLogoutModal);
+    }
 
-            logoutBtn.disabled = true;
-            logoutBtn.textContent = "⏳ Đang thoát...";
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", closeLogoutModal);
+    }
 
-            try {
-                await fetch("/api/logout", { method: "POST" });
-                window.location.href = "/login";
-            } catch (e) {
-                alert("Lỗi đăng xuất");
-                logoutBtn.disabled = false;
-                logoutBtn.textContent = "🚪 Đăng xuất";
-            }
+    if (confirmBtn) {
+        confirmBtn.addEventListener("click", doLogout);
+    }
+
+    if (logoutModal) {
+        logoutModal.addEventListener("click", (e) => {
+            if (e.target === logoutModal) closeLogoutModal();
         });
     }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && logoutModal.classList.contains("show")) {
+            closeLogoutModal();
+        }
+    });
 }
