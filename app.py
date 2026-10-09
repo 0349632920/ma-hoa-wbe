@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Mã Hóa Chữ - Web App với Admin Panel + Ban có thời hạn
-Fixed: 500 error khi user bị ban đăng nhập
+Mã Hóa Chữ - Web App với Admin Panel (ban vĩnh viễn)
 """
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
-from datetime import datetime, timedelta
 import os
 import bcrypt
 import secrets
@@ -68,17 +66,16 @@ def init_db():
                 password_hash TEXT NOT NULL,
                 is_admin BOOLEAN DEFAULT FALSE,
                 is_banned BOOLEAN DEFAULT FALSE,
-                banned_until TIMESTAMP,
                 ban_reason TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # Migration — thêm cột nếu thiếu
+        # Migration
         try:
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE")
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT FALSE")
-            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_until TIMESTAMP")
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT")
+            c.execute("ALTER TABLE users DROP COLUMN IF EXISTS banned_until")
         except Exception as e:
             print(f"⚠ Migration: {e}")
 
@@ -144,60 +141,26 @@ def admin_required_api(f):
     return decorated
 
 def get_ban_info(user_id):
-    """Trả về dict thông tin ban — JSON-safe, KHÔNG bao giờ crash."""
+    """Trả về dict thông tin ban — chỉ ban vĩnh viễn."""
     try:
         conn = get_db()
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        c.execute("SELECT is_banned, banned_until, ban_reason FROM users WHERE id = %s", (user_id,))
+        c.execute("SELECT is_banned, ban_reason FROM users WHERE id = %s", (user_id,))
         row = c.fetchone()
         c.close(); conn.close()
 
         if not row:
             return {"is_banned": False}
 
-        # Đảm bảo is_banned là bool
         is_banned = bool(row["is_banned"]) if row["is_banned"] is not None else False
-
         if not is_banned:
             return {"is_banned": False}
 
-        banned_until = row["banned_until"]
-        ban_reason = str(row["ban_reason"]) if row["ban_reason"] else ""
-
-        # Nếu có banned_until → kiểm tra hết hạn
-        if banned_until:
-            now = datetime.now()
-            if banned_until <= now:
-                # Tự động mở ban khi hết hạn
-                try:
-                    conn = get_db()
-                    c = conn.cursor()
-                    c.execute(
-                        "UPDATE users SET is_banned = FALSE, banned_until = NULL, ban_reason = NULL WHERE id = %s",
-                        (user_id,)
-                    )
-                    conn.commit()
-                    c.close(); conn.close()
-                except Exception as e:
-                    print(f"Lỗi auto-unban: {e}")
-                return {"is_banned": False}
-
-            remaining = int((banned_until - now).total_seconds())
-            return {
-                "is_banned": True,
-                "banned_until": banned_until.strftime("%Y-%m-%d %H:%M:%S"),  # string
-                "ban_reason": ban_reason,
-                "remaining_seconds": remaining,
-                "permanent": False,
-            }
-        else:
-            return {
-                "is_banned": True,
-                "banned_until": None,
-                "ban_reason": ban_reason,
-                "remaining_seconds": None,
-                "permanent": True,
-            }
+        return {
+            "is_banned": True,
+            "ban_reason": str(row["ban_reason"]) if row["ban_reason"] else "",
+            "permanent": True,
+        }
     except Exception as e:
         print(f"❌ Lỗi get_ban_info: {e}")
         return {"is_banned": False}
@@ -228,28 +191,15 @@ def login_page():
 def banned_page():
     if not is_logged_in():
         return redirect(url_for("login_page"))
-
     try:
         ban_info = get_ban_info(session["user_id"])
-    except Exception as e:
-        print(f"Lỗi get_ban_info ở /banned: {e}")
+    except Exception:
         return redirect(url_for("index"))
-
     if not ban_info.get("is_banned"):
         return redirect(url_for("index"))
-
-    # Đảm bảo ban_info là dict sạch
-    safe_ban_info = {
-        "is_banned": True,
-        "banned_until": str(ban_info.get("banned_until")) if ban_info.get("banned_until") else None,
-        "ban_reason": str(ban_info.get("ban_reason", "")),
-        "remaining_seconds": int(ban_info.get("remaining_seconds") or 0),
-        "permanent": bool(ban_info.get("permanent", False)),
-    }
-
     return render_template("banned.html",
                             username=session.get("username", "User"),
-                            ban_info=safe_ban_info)
+                            ban_info=ban_info)
 
 @app.route("/admin")
 def admin_page():
@@ -301,7 +251,6 @@ def api_register():
         session["is_admin"] = False
         return jsonify({"success": True, "username": username})
     except Exception as e:
-        print(f"Lỗi api_register: {e}")
         return jsonify({"error": f"Lỗi: {e}"}), 500
 
 @app.route("/api/login", methods=["POST"])
@@ -336,33 +285,22 @@ def api_login():
         session["username"] = user["username"]
         session["is_admin"] = bool(user["is_admin"])
 
-        # Kiểm tra ban — bọc try để không crash
         is_banned = False
         ban_info = {"is_banned": False}
         try:
             ban_info = get_ban_info(user["id"])
             is_banned = bool(ban_info.get("is_banned", False))
-        except Exception as e:
-            print(f"Lỗi check banned trong api_login: {e}")
-
-        # Đảm bảo ban_info là JSON-safe
-        safe_ban_info = {
-            "is_banned": is_banned,
-            "banned_until": str(ban_info.get("banned_until")) if ban_info.get("banned_until") else None,
-            "ban_reason": str(ban_info.get("ban_reason", "")),
-            "remaining_seconds": int(ban_info["remaining_seconds"]) if ban_info.get("remaining_seconds") is not None else None,
-            "permanent": bool(ban_info.get("permanent", False)),
-        }
+        except Exception:
+            pass
 
         return jsonify({
             "success": True,
             "username": user["username"],
             "is_admin": bool(user["is_admin"]),
             "is_banned": is_banned,
-            "ban_info": safe_ban_info,
+            "ban_info": ban_info,
         })
     except Exception as e:
-        print(f"Lỗi api_login: {e}")
         return jsonify({"error": f"Lỗi server: {str(e)}"}), 500
 
 @app.route("/api/guest", methods=["POST"])
@@ -389,7 +327,6 @@ def api_guest():
 
         return jsonify({"success": True, "username": row["username"], "is_guest": True})
     except Exception as e:
-        print(f"Lỗi api_guest: {e}")
         return jsonify({"error": f"Lỗi: {e}"}), 500
 
 @app.route("/api/logout", methods=["POST"])
@@ -402,20 +339,10 @@ def api_me():
     if not is_logged_in():
         return jsonify({"logged_in": False, "username": "Khách"})
 
-    # Lấy ban_info an toàn
     try:
         ban_info = get_ban_info(session["user_id"])
-    except Exception as e:
-        print(f"Lỗi get_ban_info ở api_me: {e}")
+    except Exception:
         ban_info = {"is_banned": False}
-
-    safe_ban_info = {
-        "is_banned": bool(ban_info.get("is_banned", False)),
-        "banned_until": str(ban_info.get("banned_until")) if ban_info.get("banned_until") else None,
-        "ban_reason": str(ban_info.get("ban_reason", "")),
-        "remaining_seconds": int(ban_info["remaining_seconds"]) if ban_info.get("remaining_seconds") is not None else None,
-        "permanent": bool(ban_info.get("permanent", False)),
-    }
 
     return jsonify({
         "logged_in": True,
@@ -423,33 +350,8 @@ def api_me():
         "username": session["username"],
         "is_guest": session.get("is_guest", False),
         "is_admin": is_admin(),
-        "is_banned": safe_ban_info["is_banned"],
-        "ban_info": safe_ban_info,
-    })
-
-@app.route("/api/ban-status")
-def api_ban_status():
-    if not is_logged_in():
-        return jsonify({"logged_in": False})
-
-    try:
-        ban_info = get_ban_info(session["user_id"])
-    except Exception as e:
-        print(f"Lỗi api_ban_status: {e}")
-        ban_info = {"is_banned": False}
-
-    safe_ban_info = {
-        "is_banned": bool(ban_info.get("is_banned", False)),
-        "banned_until": str(ban_info.get("banned_until")) if ban_info.get("banned_until") else None,
-        "ban_reason": str(ban_info.get("ban_reason", "")),
-        "remaining_seconds": int(ban_info["remaining_seconds"]) if ban_info.get("remaining_seconds") is not None else None,
-        "permanent": bool(ban_info.get("permanent", False)),
-    }
-
-    return jsonify({
-        "logged_in": True,
-        "username": session["username"],
-        "ban_info": safe_ban_info,
+        "is_banned": ban_info.get("is_banned", False),
+        "ban_info": ban_info,
     })
 
 # ============================================================
@@ -466,25 +368,17 @@ def api_algos():
 @app.route("/api/process", methods=["POST"])
 @login_required_api
 def api_process():
-    # Kiểm tra ban
     ban_info = {"is_banned": False}
     try:
         ban_info = get_ban_info(session["user_id"])
-    except Exception as e:
-        print(f"Lỗi check ban ở process: {e}")
+    except Exception:
+        pass
 
     if ban_info.get("is_banned"):
-        safe_ban_info = {
-            "is_banned": True,
-            "banned_until": str(ban_info.get("banned_until")) if ban_info.get("banned_until") else None,
-            "ban_reason": str(ban_info.get("ban_reason", "")),
-            "remaining_seconds": int(ban_info["remaining_seconds"]) if ban_info.get("remaining_seconds") is not None else None,
-            "permanent": bool(ban_info.get("permanent", False)),
-        }
         return jsonify({
             "error": "Tài khoản đã bị cấm",
             "banned": True,
-            "ban_info": safe_ban_info
+            "ban_info": ban_info
         }), 403
 
     data = request.get_json()
@@ -600,7 +494,7 @@ def api_admin_users():
 
         if search:
             c.execute("""
-                SELECT id, username, is_admin, is_banned, banned_until, ban_reason, created_at,
+                SELECT id, username, is_admin, is_banned, ban_reason, created_at,
                        (SELECT COUNT(*) FROM history WHERE user_id = users.id) as op_count
                 FROM users
                 WHERE LOWER(username) LIKE %s
@@ -608,7 +502,7 @@ def api_admin_users():
             """, (f"%{search}%",))
         else:
             c.execute("""
-                SELECT id, username, is_admin, is_banned, banned_until, ban_reason, created_at,
+                SELECT id, username, is_admin, is_banned, ban_reason, created_at,
                        (SELECT COUNT(*) FROM history WHERE user_id = users.id) as op_count
                 FROM users
                 ORDER BY id DESC
@@ -622,8 +516,6 @@ def api_admin_users():
             d = dict(r)
             if d.get("created_at"):
                 d["created_at"] = d["created_at"].strftime("%Y-%m-%d %H:%M:%S")
-            if d.get("banned_until"):
-                d["banned_until"] = d["banned_until"].strftime("%Y-%m-%d %H:%M:%S")
             result.append(d)
         return jsonify(result)
     except Exception as e:
@@ -636,23 +528,7 @@ def api_admin_ban(user_id):
         return jsonify({"error": "Không thể tự cấm chính mình"}), 400
 
     data = request.get_json() or {}
-    duration = data.get("duration", "permanent")
     reason = (data.get("reason") or "").strip()[:500]
-
-    duration_map = {
-        "1h": timedelta(hours=1),
-        "1d": timedelta(days=1),
-        "7d": timedelta(days=7),
-        "30d": timedelta(days=30),
-    }
-
-    banned_until = None
-    if duration in duration_map:
-        banned_until = datetime.now() + duration_map[duration]
-    elif duration == "permanent":
-        banned_until = None
-    else:
-        return jsonify({"error": "Thời hạn không hợp lệ"}), 400
 
     try:
         conn = get_db()
@@ -667,12 +543,12 @@ def api_admin_ban(user_id):
             return jsonify({"error": "Không thể cấm admin khác"}), 400
 
         c.execute(
-            "UPDATE users SET is_banned = TRUE, banned_until = %s, ban_reason = %s WHERE id = %s",
-            (banned_until, reason, user_id)
+            "UPDATE users SET is_banned = TRUE, ban_reason = %s WHERE id = %s",
+            (reason, user_id)
         )
         conn.commit()
         c.close(); conn.close()
-        return jsonify({"success": True, "username": row[1], "duration": duration})
+        return jsonify({"success": True, "username": row[1]})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -683,7 +559,7 @@ def api_admin_unban(user_id):
         conn = get_db()
         c = conn.cursor()
         c.execute(
-            "UPDATE users SET is_banned = FALSE, banned_until = NULL, ban_reason = NULL WHERE id = %s",
+            "UPDATE users SET is_banned = FALSE, ban_reason = NULL WHERE id = %s",
             (user_id,)
         )
         conn.commit()
@@ -775,9 +651,6 @@ def api_admin_history_clear():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ============================================================
-# HEALTH
-# ============================================================
 @app.route("/api/health")
 def health():
     db_ok = False
