@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Mã Hóa Chữ - Web App với PostgreSQL
+Mã Hóa Chữ - Web App với PostgreSQL + Guest Login
 """
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
@@ -9,9 +9,7 @@ import bcrypt
 import secrets
 import psycopg2
 import psycopg2.extras
-from urllib.parse import urlparse
 
-# Load .env nếu có
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -20,27 +18,27 @@ except ImportError:
 
 from crypto_utils import ENCODERS, GROUP_ORDER, get_grouped
 
-app = Flask(__name__)
+app = Flask(__name__,
+            template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"),
+            static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "static"))
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
 # ============================================================
-# DATABASE CONFIG
+# DATABASE
 # ============================================================
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
-
-# Render cung cấp URL dạng postgres://... (cần đổi thành postgresql://)
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 def get_db():
-    """Kết nối PostgreSQL."""
     if not DATABASE_URL:
         raise RuntimeError("Chưa cấu hình DATABASE_URL")
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
+    url = DATABASE_URL
+    if "sslmode" not in url:
+        url += "?sslmode=require" if "?" not in url else "&sslmode=require"
+    return psycopg2.connect(url)
 
 def init_db():
-    """Tạo bảng nếu chưa có."""
     if not DATABASE_URL:
         print("⚠ Chưa có DATABASE_URL — bỏ qua init_db")
         return
@@ -67,10 +65,7 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        c.execute("""
-            CREATE INDEX IF NOT EXISTS idx_history_user
-            ON history(user_id, id DESC)
-        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id, id DESC)")
         conn.commit()
         c.close()
         conn.close()
@@ -81,7 +76,7 @@ def init_db():
 init_db()
 
 # ============================================================
-# AUTH DECORATOR
+# AUTH
 # ============================================================
 def login_required(f):
     @wraps(f)
@@ -94,7 +89,7 @@ def login_required(f):
     return decorated
 
 # ============================================================
-# ROUTES - PAGES
+# PAGES
 # ============================================================
 @app.route("/login")
 def login_page():
@@ -109,7 +104,7 @@ def index():
                             username=session.get("username", "User"))
 
 # ============================================================
-# ROUTES - AUTH API
+# AUTH API
 # ============================================================
 @app.route("/api/register", methods=["POST"])
 def api_register():
@@ -132,31 +127,20 @@ def api_register():
     try:
         conn = get_db()
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        # Check trùng
         c.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(%s)", (username,))
         if c.fetchone():
             c.close(); conn.close()
             return jsonify({"error": "Tên đăng nhập đã tồn tại"}), 400
 
-        # Hash
-        pwd_hash = bcrypt.hashpw(password.encode("utf-8"),
-                                  bcrypt.gensalt()).decode("utf-8")
-
-        # Insert
-        c.execute(
-            "INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id",
-            (username, pwd_hash)
-        )
+        pwd_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        c.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id",
+                  (username, pwd_hash))
         user_id = c.fetchone()["id"]
         conn.commit()
-        c.close()
-        conn.close()
+        c.close(); conn.close()
 
-        # Auto login
         session["user_id"] = user_id
         session["username"] = username
-
         return jsonify({"success": True, "username": username})
     except Exception as e:
         return jsonify({"error": f"Lỗi: {e}"}), 500
@@ -176,25 +160,44 @@ def api_login():
     try:
         conn = get_db()
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        c.execute(
-            "SELECT id, username, password_hash FROM users WHERE LOWER(username) = LOWER(%s)",
-            (username,)
-        )
+        c.execute("SELECT id, username, password_hash FROM users WHERE LOWER(username) = LOWER(%s)",
+                  (username,))
         user = c.fetchone()
-        c.close()
-        conn.close()
+        c.close(); conn.close()
 
         if not user:
             return jsonify({"error": "Sai tên đăng nhập hoặc mật khẩu"}), 401
-
-        if not bcrypt.checkpw(password.encode("utf-8"),
-                              user["password_hash"].encode("utf-8")):
+        if not bcrypt.checkpw(password.encode("utf-8"), user["password_hash"].encode("utf-8")):
             return jsonify({"error": "Sai tên đăng nhập hoặc mật khẩu"}), 401
 
         session["user_id"] = user["id"]
         session["username"] = user["username"]
-
         return jsonify({"success": True, "username": user["username"]})
+    except Exception as e:
+        return jsonify({"error": f"Lỗi: {e}"}), 500
+
+@app.route("/api/guest", methods=["POST"])
+def api_guest():
+    """Đăng nhập ẩn danh."""
+    try:
+        guest_name = f"guest_{secrets.token_hex(4)}"
+        conn = get_db()
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        fake_pwd = secrets.token_hex(16)
+        pwd_hash = bcrypt.hashpw(fake_pwd.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+        c.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id, username",
+                  (guest_name, pwd_hash))
+        row = c.fetchone()
+        conn.commit()
+        c.close(); conn.close()
+
+        session["user_id"] = row["id"]
+        session["username"] = row["username"]
+        session["is_guest"] = True
+
+        return jsonify({"success": True, "username": row["username"], "is_guest": True})
     except Exception as e:
         return jsonify({"error": f"Lỗi: {e}"}), 500
 
@@ -211,10 +214,11 @@ def api_me():
         "logged_in": True,
         "user_id": session["user_id"],
         "username": session["username"],
+        "is_guest": session.get("is_guest", False),
     })
 
 # ============================================================
-# ROUTES - APP API
+# APP API
 # ============================================================
 @app.route("/api/algos")
 @login_required
@@ -247,28 +251,17 @@ def api_process():
 
     try:
         result = fn(text, key)
-
-        # Lưu lịch sử
         try:
             conn = get_db()
             c = conn.cursor()
-            c.execute(
-                "INSERT INTO history (user_id, mode, algo, input_text, output_text) "
-                "VALUES (%s, %s, %s, %s, %s)",
-                (session["user_id"], mode, algo, text[:500], result[:500])
-            )
+            c.execute("INSERT INTO history (user_id, mode, algo, input_text, output_text) VALUES (%s, %s, %s, %s, %s)",
+                      (session["user_id"], mode, algo, text[:500], result[:500]))
             conn.commit()
-            c.close()
-            conn.close()
+            c.close(); conn.close()
         except Exception as e:
             print(f"Lỗi lưu history: {e}")
 
-        return jsonify({
-            "success": True,
-            "result": result,
-            "algo_label": label,
-            "mode": mode,
-        })
+        return jsonify({"success": True, "result": result, "algo_label": label, "mode": mode})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
@@ -278,16 +271,11 @@ def api_history():
     try:
         conn = get_db()
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        c.execute(
-            "SELECT mode, algo, input_text, output_text, created_at "
-            "FROM history WHERE user_id = %s ORDER BY id DESC LIMIT 50",
-            (session["user_id"],)
-        )
+        c.execute("SELECT mode, algo, input_text, output_text, created_at FROM history WHERE user_id = %s ORDER BY id DESC LIMIT 50",
+                  (session["user_id"],))
         rows = c.fetchall()
-        c.close()
-        conn.close()
+        c.close(); conn.close()
 
-        # Convert timestamp → string
         result = []
         for r in rows:
             d = dict(r)
@@ -306,8 +294,7 @@ def api_history_clear():
         c = conn.cursor()
         c.execute("DELETE FROM history WHERE user_id = %s", (session["user_id"],))
         conn.commit()
-        c.close()
-        conn.close()
+        c.close(); conn.close()
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -316,16 +303,11 @@ def api_history_clear():
 def health():
     db_ok = False
     try:
-        conn = get_db()
-        conn.close()
-        db_ok = True
+        conn = get_db(); conn.close(); db_ok = True
     except Exception:
         pass
-    return jsonify({
-        "status": "ok",
-        "algos": len(ENCODERS),
-        "db": "connected" if db_ok else "disconnected"
-    })
+    return jsonify({"status": "ok", "algos": len(ENCODERS),
+                    "db": "connected" if db_ok else "disconnected"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
