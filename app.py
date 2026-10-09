@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Mã Hóa Chữ - Web App với PostgreSQL + Guest Login
+Mã Hóa Chữ - Web App với PostgreSQL + Session ổn định
 """
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
@@ -9,6 +9,7 @@ import bcrypt
 import secrets
 import psycopg2
 import psycopg2.extras
+from urllib.parse import urlparse
 
 try:
     from dotenv import load_dotenv
@@ -18,10 +19,27 @@ except ImportError:
 
 from crypto_utils import ENCODERS, GROUP_ORDER, get_grouped
 
+# ============================================================
+# FLASK APP
+# ============================================================
 app = Flask(__name__,
             template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"),
             static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "static"))
-app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+
+# SECRET_KEY CỐ ĐỊNH — không đổi sau mỗi lần deploy
+app.secret_key = os.environ.get("SECRET_KEY", "mahoa-chu-secret-key-2024-fixed-do-not-change")
+
+# Cấu hình session
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=86400 * 7,  # 7 ngày
+)
+
+# ProxyFix cho HTTPS proxy của Render
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_for=1)
 
 # ============================================================
 # DATABASE
@@ -139,6 +157,7 @@ def api_register():
         conn.commit()
         c.close(); conn.close()
 
+        session.permanent = True
         session["user_id"] = user_id
         session["username"] = username
         return jsonify({"success": True, "username": username})
@@ -170,6 +189,7 @@ def api_login():
         if not bcrypt.checkpw(password.encode("utf-8"), user["password_hash"].encode("utf-8")):
             return jsonify({"error": "Sai tên đăng nhập hoặc mật khẩu"}), 401
 
+        session.permanent = True
         session["user_id"] = user["id"]
         session["username"] = user["username"]
         return jsonify({"success": True, "username": user["username"]})
@@ -193,6 +213,7 @@ def api_guest():
         conn.commit()
         c.close(); conn.close()
 
+        session.permanent = True
         session["user_id"] = row["id"]
         session["username"] = row["username"]
         session["is_guest"] = True
