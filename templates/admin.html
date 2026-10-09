@@ -8,135 +8,151 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body class="admin-page">
-    <div class="user-bar">
-        <div class="user-avatar" id="user-avatar">A</div>
-        <div class="user-name">{{ username }}</div>
-        <a href="/" class="btn-logout" style="text-decoration: none;">🏠 Về trang chủ</a>
-    </div>
-
-    <header class="header">
-        <div class="logo">
-            <span class="icon">🛡</span>
-            <h1>ADMIN PANEL</h1>
-        </div>
-        <p class="subtitle">Quản lý người dùng và lịch sử</p>
-    </header>
-
-    <!-- Stats -->
-    <div class="admin-stats">
-        <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <div class="stat-info">
-                <div class="stat-value" id="stat-total-users">0</div>
-                <div class="stat-label">Tổng users</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🚫</div>
-            <div class="stat-info">
-                <div class="stat-value" id="stat-banned">0</div>
-                <div class="stat-label">Đã cấm</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">👑</div>
-            <div class="stat-info">
-                <div class="stat-value" id="stat-admins">0</div>
-                <div class="stat-label">Admins</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">👤</div>
-            <div class="stat-info">
-                <div class="stat-value" id="stat-guests">0</div>
-                <div class="stat-label">Guests</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🔒</div>
-            <div class="stat-info">
-                <div class="stat-value" id="stat-encodes">0</div>
-                <div class="stat-label">Lần mã hóa</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🔓</div>
-            <div class="stat-info">
-                <div class="stat-value" id="stat-decodes">0</div>
-                <div class="stat-label">Lần giải mã</div>
+    <!-- Loading Screen -->
+    <div class="admin-loading" id="admin-loading">
+        <div class="admin-loading-card">
+            <div class="admin-loading-icon">🛡</div>
+            <div class="admin-loading-spinner"></div>
+            <div class="admin-loading-text">Đang tải trang quản trị...</div>
+            <div class="admin-loading-subtext">Vui lòng chờ trong giây lát</div>
+            <div class="admin-loading-progress">
+                <div class="admin-loading-bar" id="loading-bar"></div>
             </div>
         </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="admin-tabs">
-        <button class="admin-tab active" data-tab="users">👥 Người dùng</button>
-        <button class="admin-tab" data-tab="history">📜 Lịch sử</button>
-    </div>
+    <!-- Nội dung admin (ẩn ban đầu) -->
+    <div class="admin-content" id="admin-content" style="display: none;">
+        <div class="user-bar">
+            <div class="user-avatar" id="user-avatar">A</div>
+            <div class="user-name">{{ username }}</div>
+            <a href="/" class="btn-logout" style="text-decoration: none;">🏠 Về trang chủ</a>
+        </div>
 
-    <!-- Tab Users -->
-    <div class="admin-panel" id="tab-users">
-        <div class="admin-toolbar">
-            <div class="search-box">
-                <span>🔍</span>
-                <input type="text" id="user-search" placeholder="Tìm username...">
+        <header class="header">
+            <div class="logo">
+                <span class="icon">🛡</span>
+                <h1>ADMIN PANEL</h1>
             </div>
-            <button class="action-btn primary" id="btn-refresh-users">🔄 Làm mới</button>
-        </div>
+            <p class="subtitle">Quản lý người dùng và lịch sử</p>
+        </header>
 
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Username</th>
-                        <th>Vai trò</th>
-                        <th>Trạng thái</th>
-                        <th>Số lần dùng</th>
-                        <th>Ngày tạo</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody id="users-tbody">
-                    <tr><td colspan="7" class="empty-row">Đang tải...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Tab History -->
-    <div class="admin-panel hidden" id="tab-history">
-        <div class="admin-toolbar">
-            <div class="search-box">
-                <span>🔍</span>
-                <input type="text" id="history-search" placeholder="Tìm username...">
+        <!-- Stats -->
+        <div class="admin-stats">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="stat-total-users">0</div>
+                    <div class="stat-label">Tổng users</div>
+                </div>
             </div>
-            <select id="history-mode" class="admin-select">
-                <option value="">Tất cả</option>
-                <option value="encode">🔒 Mã hóa</option>
-                <option value="decode">🔓 Giải mã</option>
-            </select>
-            <button class="action-btn primary" id="btn-refresh-history">🔄 Làm mới</button>
-            <button class="action-btn danger" id="btn-clear-history">🗑 Xóa hết</button>
+            <div class="stat-card">
+                <div class="stat-icon">🚫</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="stat-banned">0</div>
+                    <div class="stat-label">Đã cấm</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👑</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="stat-admins">0</div>
+                    <div class="stat-label">Admins</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👤</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="stat-guests">0</div>
+                    <div class="stat-label">Guests</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔒</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="stat-encodes">0</div>
+                    <div class="stat-label">Lần mã hóa</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔓</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="stat-decodes">0</div>
+                    <div class="stat-label">Lần giải mã</div>
+                </div>
+            </div>
         </div>
 
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>User</th>
-                        <th>Mode</th>
-                        <th>Thuật toán</th>
-                        <th>Input</th>
-                        <th>Output</th>
-                        <th>Thời gian</th>
-                    </tr>
-                </thead>
-                <tbody id="history-tbody">
-                    <tr><td colspan="7" class="empty-row">Đang tải...</td></tr>
-                </tbody>
-            </table>
+        <!-- Tabs -->
+        <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="users">👥 Người dùng</button>
+            <button class="admin-tab" data-tab="history">📜 Lịch sử</button>
+        </div>
+
+        <!-- Tab Users -->
+        <div class="admin-panel" id="tab-users">
+            <div class="admin-toolbar">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="user-search" placeholder="Tìm username...">
+                </div>
+                <button class="action-btn primary" id="btn-refresh-users">🔄 Làm mới</button>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th>Số lần dùng</th>
+                            <th>Ngày tạo</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <tr><td colspan="7" class="empty-row">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab History -->
+        <div class="admin-panel hidden" id="tab-history">
+            <div class="admin-toolbar">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="history-search" placeholder="Tìm username...">
+                </div>
+                <select id="history-mode" class="admin-select">
+                    <option value="">Tất cả</option>
+                    <option value="encode">🔒 Mã hóa</option>
+                    <option value="decode">🔓 Giải mã</option>
+                </select>
+                <button class="action-btn primary" id="btn-refresh-history">🔄 Làm mới</button>
+                <button class="action-btn danger" id="btn-clear-history">🗑 Xóa hết</button>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Mode</th>
+                            <th>Thuật toán</th>
+                            <th>Input</th>
+                            <th>Output</th>
+                            <th>Thời gian</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <tr><td colspan="7" class="empty-row">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
