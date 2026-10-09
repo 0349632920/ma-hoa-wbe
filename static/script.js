@@ -6,24 +6,33 @@ let state = {
     algo: "base64",
     algoLabel: "📦 Base64",
     algos: null,
+    isLoggedIn: false,
 };
 
 // ============================================================
 // KHỞI TẠO
 // ============================================================
 document.addEventListener("DOMContentLoaded", async () => {
+    await checkLogin();
     await loadAlgos();
     bindEvents();
     initUserMenu();
 });
 
+async function checkLogin() {
+    try {
+        const res = await fetch("/api/me", { credentials: "include" });
+        const data = await res.json();
+        state.isLoggedIn = data.logged_in;
+    } catch (e) {
+        console.error("Lỗi check login:", e);
+        state.isLoggedIn = false;
+    }
+}
+
 async function loadAlgos() {
     try {
-        const res = await fetch("/api/algos");
-        if (res.status === 401) {
-            window.location.href = "/login";
-            return;
-        }
+        const res = await fetch("/api/algos", { credentials: "include" });
         const data = await res.json();
         state.algos = data;
         document.getElementById("algo-count").textContent = data.total;
@@ -177,7 +186,7 @@ function switchMode(newMode) {
 }
 
 // ============================================================
-// MODAL
+// MODAL CHỌN THUẬT TOÁN
 // ============================================================
 function openModal() {
     document.getElementById("algo-modal").classList.add("show");
@@ -246,6 +255,13 @@ async function runProcess() {
         return;
     }
 
+    // Kiểm tra đăng nhập trước
+    await checkLogin();
+    if (!state.isLoggedIn) {
+        openLoginRequiredModal();
+        return;
+    }
+
     btn.disabled = true;
     const originalText = document.getElementById("btn-run-text").textContent;
     document.getElementById("btn-run-text").innerHTML =
@@ -254,6 +270,7 @@ async function runProcess() {
     try {
         const res = await fetch("/api/process", {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 mode: state.mode,
@@ -264,7 +281,7 @@ async function runProcess() {
         });
 
         if (res.status === 401) {
-            window.location.href = "/login";
+            openLoginRequiredModal();
             return;
         }
 
@@ -298,15 +315,36 @@ function showToast(msg, isError = false) {
 }
 
 // ============================================================
-// USER / LOGOUT
+// LOGIN REQUIRED MODAL
+// ============================================================
+function openLoginRequiredModal() {
+    const modal = document.getElementById("login-required-modal");
+    if (modal) modal.classList.add("show");
+}
+
+function closeLoginRequiredModal() {
+    const modal = document.getElementById("login-required-modal");
+    if (modal) modal.classList.remove("show");
+}
+
+// ============================================================
+// USER MENU
 // ============================================================
 function initUserMenu() {
-    // Hiện chữ cái đầu của username
+    // Avatar
     const nameEl = document.getElementById("user-name");
     const avatarEl = document.getElementById("user-avatar");
     if (nameEl && avatarEl) {
         const name = nameEl.textContent.trim();
         avatarEl.textContent = name.charAt(0).toUpperCase();
+    }
+
+    // Nút đăng nhập ở top (nếu là khách)
+    const topLoginBtn = document.getElementById("btn-top-login");
+    if (topLoginBtn) {
+        topLoginBtn.addEventListener("click", () => {
+            window.location.href = "/login";
+        });
     }
 
     // ===== MODAL ĐĂNG XUẤT =====
@@ -319,49 +357,66 @@ function initUserMenu() {
     function openLogoutModal() {
         const name = nameEl ? nameEl.textContent.trim() : "bạn";
         if (confirmUsername) confirmUsername.textContent = name;
-        logoutModal.classList.add("show");
-        setTimeout(() => cancelBtn.focus(), 100);
+        if (logoutModal) logoutModal.classList.add("show");
+        if (cancelBtn) setTimeout(() => cancelBtn.focus(), 100);
     }
 
     function closeLogoutModal() {
-        logoutModal.classList.remove("show");
+        if (logoutModal) logoutModal.classList.remove("show");
     }
 
     async function doLogout() {
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = "⏳ Đang thoát...";
-
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = "⏳ Đang thoát...";
+        }
         try {
-            await fetch("/api/logout", { method: "POST" });
-            window.location.href = "/login";
+            await fetch("/api/logout", { method: "POST", credentials: "include" });
+            window.location.href = "/";
         } catch (e) {
             alert("Lỗi đăng xuất");
-            confirmBtn.disabled = false;
-            confirmBtn.textContent = "Đăng xuất";
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = "Đăng xuất";
+            }
         }
     }
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", openLogoutModal);
-    }
-
-    if (cancelBtn) {
-        cancelBtn.addEventListener("click", closeLogoutModal);
-    }
-
-    if (confirmBtn) {
-        confirmBtn.addEventListener("click", doLogout);
-    }
-
+    if (logoutBtn) logoutBtn.addEventListener("click", openLogoutModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeLogoutModal);
+    if (confirmBtn) confirmBtn.addEventListener("click", doLogout);
     if (logoutModal) {
         logoutModal.addEventListener("click", (e) => {
             if (e.target === logoutModal) closeLogoutModal();
         });
     }
 
+    // ===== MODAL YÊU CẦU ĐĂNG NHẬP =====
+    const loginRequiredModal = document.getElementById("login-required-modal");
+    const cancelLoginBtn = document.getElementById("btn-cancel-login");
+    const goLoginBtn = document.getElementById("btn-go-login");
+
+    if (cancelLoginBtn) {
+        cancelLoginBtn.addEventListener("click", closeLoginRequiredModal);
+    }
+    if (goLoginBtn) {
+        goLoginBtn.addEventListener("click", () => {
+            window.location.href = "/login";
+        });
+    }
+    if (loginRequiredModal) {
+        loginRequiredModal.addEventListener("click", (e) => {
+            if (e.target === loginRequiredModal) closeLoginRequiredModal();
+        });
+    }
+
+    // Esc đóng modal
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && logoutModal.classList.contains("show")) {
-            closeLogoutModal();
+        if (e.key === "Escape") {
+            if (logoutModal && logoutModal.classList.contains("show")) closeLogoutModal();
+            if (loginRequiredModal && loginRequiredModal.classList.contains("show")) {
+                closeLoginRequiredModal();
+            }
         }
     });
 }
