@@ -14,6 +14,7 @@ let state = {
 document.addEventListener("DOMContentLoaded", async () => {
     await loadAlgos();
     bindEvents();
+    initUserMenu();
 });
 
 async function loadAlgos() {
@@ -31,7 +32,6 @@ async function loadAlgos() {
 // BIND EVENTS
 // ============================================================
 function bindEvents() {
-    // Toggle mode với hiệu ứng slider
     document.querySelectorAll(".toggle-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             const newMode = btn.dataset.mode;
@@ -54,11 +54,9 @@ function bindEvents() {
         const inp = document.getElementById("key");
         const btn = document.getElementById("toggle-key");
         if (inp.type === "password") {
-            inp.type = "text";
-            btn.textContent = "🙈";
+            inp.type = "text"; btn.textContent = "🙈";
         } else {
-            inp.type = "password";
-            btn.textContent = "👁";
+            inp.type = "password"; btn.textContent = "👁";
         }
     });
 
@@ -103,7 +101,7 @@ function updateCount() {
 }
 
 // ============================================================
-// CHUYỂN MODE VỚI HIỆU ỨNG SLIDER
+// SWITCH MODE
 // ============================================================
 function switchMode(newMode) {
     const slider = document.getElementById("transition-slider");
@@ -113,7 +111,6 @@ function switchMode(newMode) {
     const sliderSubtext = document.getElementById("slider-subtext");
     const main = document.querySelector(".main");
 
-    // Cấu hình theo mode mới
     if (newMode === "decode") {
         sliderBg.classList.add("green");
         sliderIcon.textContent = "🔓";
@@ -126,34 +123,27 @@ function switchMode(newMode) {
         sliderSubtext.textContent = "Đang chuyển sang chế độ mã hóa...";
     }
 
-    // Reset animation
     slider.classList.remove("active");
     void slider.offsetWidth;
     slider.classList.add("active");
 
-    // Đổi UI khi slider đang che (400ms)
     setTimeout(() => {
         state.mode = newMode;
 
-        // Đổi nút toggle active
         document.querySelectorAll(".toggle-btn").forEach(b => {
             b.classList.toggle("active", b.dataset.mode === newMode);
         });
 
-        // Đổi text nút chính
         document.getElementById("btn-run-text").textContent =
             newMode === "encode" ? "⚙ MÃ HÓA" : "🔓 GIẢI MÃ";
 
-        // Đổi class body → CSS tự đổi màu
         document.body.classList.toggle("decode-mode", newMode === "decode");
 
-        // Đổi placeholder
         document.getElementById("input").placeholder =
             newMode === "encode"
                 ? "Nhập văn bản cần mã hóa..."
                 : "Dán nội dung cần giải mã vào đây...";
 
-        // Đổi tiêu đề panel
         const titles = document.querySelectorAll(".panel-title");
         if (newMode === "encode") {
             titles[0].textContent = "Văn bản gốc";
@@ -163,11 +153,9 @@ function switchMode(newMode) {
             titles[1].textContent = "Kết quả giải mã";
         }
 
-        // Hiệu ứng panel
         main.classList.add("switching");
         setTimeout(() => main.classList.remove("switching"), 800);
 
-        // Đưa kết quả cũ lên input nếu input trống
         const inp = document.getElementById("input");
         const out = document.getElementById("output");
         if (out.value && !inp.value) {
@@ -177,7 +165,6 @@ function switchMode(newMode) {
         }
     }, 400);
 
-    // Xóa class sau khi animation xong
     setTimeout(() => {
         slider.classList.remove("active");
     }, 800);
@@ -200,7 +187,6 @@ function closeModal() {
 function renderAlgoList(query) {
     const container = document.getElementById("algo-list");
     container.innerHTML = "";
-
     if (!state.algos) return;
 
     const { grouped, order } = state.algos;
@@ -237,12 +223,12 @@ function renderAlgoList(query) {
     }
 
     if (container.children.length === 0) {
-        container.innerHTML = `<p style="text-align:center;color:#7a9bc4;padding:40px 0;">❌ Không tìm thấy thuật toán nào</p>`;
+        container.innerHTML = `<p style="text-align:center;color:#7a9bc4;padding:40px 0;">❌ Không tìm thấy</p>`;
     }
 }
 
 // ============================================================
-// XỬ LÝ
+// PROCESS
 // ============================================================
 async function runProcess() {
     const text = document.getElementById("input").value;
@@ -256,46 +242,7 @@ async function runProcess() {
 
     btn.disabled = true;
     const originalText = document.getElementById("btn-run-text").textContent;
-    document.getElementById("btn-run-text").innerHTML =
-        `<span class="loading"></span> Đang xử lý...`;
+    document.getElementById("btn-run-text").innerHTML = `<span class="loading"></span> Đang xử lý...`;
 
     try {
-        const res = await fetch("/api/process", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                mode: state.mode,
-                algo: state.algo,
-                text: text,
-                key: key,
-            })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-            document.getElementById("output").value = data.result;
-            showToast(`✅ ${state.mode === "encode" ? "Mã hóa" : "Giải mã"} thành công!`);
-        } else {
-            showToast(`❌ ${data.error}`, true);
-        }
-    } catch (e) {
-        showToast(`❌ Lỗi kết nối: ${e.message}`, true);
-    } finally {
-        btn.disabled = false;
-        document.getElementById("btn-run-text").textContent = originalText;
-    }
-}
-
-// ============================================================
-// TOAST
-// ============================================================
-let toastTimer = null;
-function showToast(msg, isError = false) {
-    const toast = document.getElementById("toast");
-    toast.textContent = msg;
-    toast.classList.toggle("error", isError);
-    toast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("show"), 2500);
-}
+        const res = await fetch("/api/
