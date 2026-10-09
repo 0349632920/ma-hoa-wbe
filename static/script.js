@@ -20,6 +20,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadAlgos() {
     try {
         const res = await fetch("/api/algos");
+        if (res.status === 401) {
+            // Session hết hạn → về login
+            window.location.href = "/login";
+            return;
+        }
         const data = await res.json();
         state.algos = data;
         document.getElementById("algo-count").textContent = data.total;
@@ -259,6 +264,11 @@ async function runProcess() {
             })
         });
 
+        if (res.status === 401) {
+            window.location.href = "/login";
+            return;
+        }
+
         const data = await res.json();
 
         if (data.success) {
@@ -292,7 +302,6 @@ function showToast(msg, isError = false) {
 // USER / LOGOUT
 // ============================================================
 function initUserMenu() {
-    // Hiện chữ cái đầu của username
     const nameEl = document.getElementById("user-name");
     const avatarEl = document.getElementById("user-avatar");
     if (nameEl && avatarEl) {
@@ -300,7 +309,6 @@ function initUserMenu() {
         avatarEl.textContent = name.charAt(0).toUpperCase();
     }
 
-    // Nút đăng xuất
     const logoutBtn = document.getElementById("btn-logout");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
