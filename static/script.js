@@ -13,14 +13,70 @@ let state = {
 };
 
 // ============================================================
+// LOADING SCREEN
+// ============================================================
+let siteLoadingInterval = null;
+
+function startSiteLoading() {
+    const bar = document.getElementById("site-loading-bar");
+    if (!bar) return;
+
+    let progress = 0;
+    siteLoadingInterval = setInterval(() => {
+        progress += Math.random() * 15 + 5;
+        if (progress > 90) progress = 90;
+        bar.style.width = progress + "%";
+    }, 150);
+}
+
+function hideSiteLoading() {
+    const loading = document.getElementById("site-loading");
+    const content = document.getElementById("site-content");
+    const bar = document.getElementById("site-loading-bar");
+
+    if (bar) bar.style.width = "100%";
+
+    if (siteLoadingInterval) {
+        clearInterval(siteLoadingInterval);
+    }
+
+    setTimeout(() => {
+        if (loading) {
+            loading.classList.add("fade-out");
+            setTimeout(() => {
+                loading.style.display = "none";
+            }, 500);
+        }
+
+        if (content) {
+            content.style.display = "block";
+            content.classList.add("fade-in");
+        }
+    }, 400);
+}
+
+// ============================================================
 // KHỞI TẠO
 // ============================================================
 document.addEventListener("DOMContentLoaded", async () => {
-    await checkLogin();
-    await loadAlgos();
+    startSiteLoading();
+
+    try {
+        await Promise.all([
+            checkLogin(),
+            loadAlgos(),
+        ]);
+    } catch (e) {
+        console.error("Lỗi khởi tạo:", e);
+    }
+
     bindEvents();
     initUserMenu();
     initErrorToast();
+
+    setTimeout(() => {
+        hideSiteLoading();
+    }, 800);
 });
 
 // ============================================================
@@ -38,6 +94,13 @@ async function checkLogin() {
         clearTimeout(timeoutId);
 
         const data = await res.json();
+
+        // Nếu user bị xóa → hiện màn hình deleted
+        if (data.deleted) {
+            showAccountDeletedScreen(data.username, data.deleted_by);
+            return;
+        }
+
         state.isLoggedIn = data.logged_in;
         state.isAdmin = data.is_admin || false;
         state.isBanned = data.is_banned || false;
@@ -86,7 +149,6 @@ async function loadAlgos() {
         document.getElementById("algo-count").textContent = data.total;
     } catch (e) {
         console.error("Lỗi load algos:", e);
-        // Fallback: dùng danh sách mặc định nếu API lỗi
         state.algos = {
             grouped: {
                 "Cơ bản": [
@@ -316,7 +378,7 @@ function renderAlgoList(query) {
 }
 
 // ============================================================
-// RUN PROCESS — có timeout, không bao giờ treo
+// RUN PROCESS
 // ============================================================
 async function runProcess() {
     const text = document.getElementById("input").value;
@@ -328,16 +390,13 @@ async function runProcess() {
         return;
     }
 
-    // Lưu text gốc của nút
     const originalText = document.getElementById("btn-run-text").textContent;
 
-    // Hiện loading NGAY
     btn.disabled = true;
     document.getElementById("btn-run-text").innerHTML =
         `<span class="loading"></span> Đang xử lý...`;
 
     try {
-        // ===== Kiểm tra login với timeout 5s =====
         let loggedIn = false;
         try {
             const controller = new AbortController();
@@ -350,22 +409,27 @@ async function runProcess() {
             clearTimeout(timeoutId);
 
             const meData = await meRes.json();
+
+            if (meData.deleted) {
+                btn.disabled = false;
+                document.getElementById("btn-run-text").textContent = originalText;
+                showAccountDeletedScreen(meData.username, meData.deleted_by);
+                return;
+            }
+
             loggedIn = meData.logged_in;
             state.isLoggedIn = loggedIn;
             state.isAdmin = meData.is_admin || false;
             state.loginChecked = true;
 
-            // Nếu bị ban → chuyển đến trang banned
             if (meData.is_banned) {
                 window.location.href = "/banned";
                 return;
             }
         } catch (e) {
-            console.error("Lỗi check login:", e);
             loggedIn = state.isLoggedIn;
         }
 
-        // Nếu chưa login → hiện modal
         if (!loggedIn) {
             btn.disabled = false;
             document.getElementById("btn-run-text").textContent = originalText;
@@ -373,7 +437,6 @@ async function runProcess() {
             return;
         }
 
-        // ===== Gọi API process với timeout 15s =====
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -395,7 +458,6 @@ async function runProcess() {
             clearTimeout(timeoutId);
         }
 
-        // Session hết hạn
         if (res.status === 401) {
             btn.disabled = false;
             document.getElementById("btn-run-text").textContent = originalText;
@@ -404,7 +466,6 @@ async function runProcess() {
             return;
         }
 
-        // Bị cấm
         if (res.status === 403) {
             const data = await res.json();
             if (data.banned) {
@@ -413,6 +474,14 @@ async function runProcess() {
             }
             showToast(`❌ ${data.error || "Không có quyền"}`, true);
             return;
+        }
+
+        if (res.status === 404) {
+            const data = await res.json();
+            if (data.deleted) {
+                showAccountDeletedScreen("", "Admin");
+                return;
+            }
         }
 
         const data = await res.json();
@@ -432,7 +501,6 @@ async function runProcess() {
         }
         console.error("runProcess error:", e);
     } finally {
-        // ===== LUÔN LUÔN RESET NÚT =====
         btn.disabled = false;
         document.getElementById("btn-run-text").textContent = originalText;
     }
@@ -465,7 +533,7 @@ function closeLoginRequiredModal() {
 }
 
 // ============================================================
-// ERROR TOAST (không có quyền)
+// ERROR TOAST
 // ============================================================
 function initErrorToast() {
     const errorToast = document.getElementById("error-toast");
@@ -486,7 +554,6 @@ function initErrorToast() {
 // USER MENU
 // ============================================================
 async function initUserMenu() {
-    // Avatar
     const nameEl = document.getElementById("user-name");
     const avatarEl = document.getElementById("user-avatar");
     if (nameEl && avatarEl) {
@@ -494,7 +561,6 @@ async function initUserMenu() {
         avatarEl.textContent = name.charAt(0).toUpperCase();
     }
 
-    // Nút đăng nhập ở top (nếu là khách)
     const topLoginBtn = document.getElementById("btn-top-login");
     if (topLoginBtn) {
         topLoginBtn.addEventListener("click", () => {
@@ -502,7 +568,6 @@ async function initUserMenu() {
         });
     }
 
-    // ===== NÚT ADMIN =====
     const adminBtn = document.getElementById("btn-admin");
     if (adminBtn && state.isAdmin) {
         adminBtn.style.display = "flex";
@@ -511,7 +576,7 @@ async function initUserMenu() {
         });
     }
 
-    // ===== MODAL ĐĂNG XUẤT =====
+    // Modal đăng xuất
     const logoutModal = document.getElementById("logout-modal");
     const confirmUsername = document.getElementById("confirm-username");
     const logoutBtn = document.getElementById("btn-logout");
@@ -555,14 +620,12 @@ async function initUserMenu() {
         });
     }
 
-    // ===== MODAL YÊU CẦU ĐĂNG NHẬP =====
+    // Modal login required
     const loginRequiredModal = document.getElementById("login-required-modal");
     const cancelLoginBtn = document.getElementById("btn-cancel-login");
     const goLoginBtn = document.getElementById("btn-go-login");
 
-    if (cancelLoginBtn) {
-        cancelLoginBtn.addEventListener("click", closeLoginRequiredModal);
-    }
+    if (cancelLoginBtn) cancelLoginBtn.addEventListener("click", closeLoginRequiredModal);
     if (goLoginBtn) {
         goLoginBtn.addEventListener("click", () => {
             window.location.href = "/login";
@@ -574,7 +637,6 @@ async function initUserMenu() {
         });
     }
 
-    // Esc đóng modal
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             if (logoutModal && logoutModal.classList.contains("show")) closeLogoutModal();
@@ -584,6 +646,7 @@ async function initUserMenu() {
         }
     });
 }
+
 // ============================================================
 // ACCOUNT DELETED OVERLAY
 // ============================================================
@@ -627,7 +690,6 @@ function showAccountDeletedScreen(username, deletedBy) {
 // POLLING — kiểm tra tài khoản còn tồn tại không
 // ============================================================
 (function startAccountCheck() {
-    // Chỉ chạy khi đã login (không phải khách)
     setTimeout(async () => {
         try {
             const meRes = await fetch("/api/me", { credentials: "include" });
@@ -635,7 +697,6 @@ function showAccountDeletedScreen(username, deletedBy) {
 
             if (!meData.logged_in) return;
 
-            // Bắt đầu polling
             setInterval(async () => {
                 try {
                     const res = await fetch("/api/check-user-exists", {
@@ -644,14 +705,10 @@ function showAccountDeletedScreen(username, deletedBy) {
                     const data = await res.json();
 
                     if (data.deleted) {
-                        showAccountDeletedScreen(
-                            data.username,
-                            data.deleted_by
-                        );
+                        showAccountDeletedScreen(data.username, data.deleted_by);
                     }
                 } catch (e) {}
             }, 5000);
-
         } catch (e) {}
     }, 2000);
 })();
