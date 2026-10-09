@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Mã Hóa Chữ - Web App với Admin Panel (ban vĩnh viễn)
++ Tự động logout khi tài khoản bị xóa
 """
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
@@ -91,6 +92,16 @@ def init_db():
             )
         """)
         c.execute("CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id, id DESC)")
+
+        # Bảng lưu log user bị xóa
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS deleted_users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(30) NOT NULL,
+                deleted_by VARCHAR(30) NOT NULL,
+                deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         conn.commit()
 
         # Tạo admin mặc định
@@ -171,12 +182,27 @@ def check_banned(user_id):
     except Exception:
         return False
 
+def user_exists(user_id):
+    """Kiểm tra user còn trong DB không."""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT id FROM users WHERE id = %s", (user_id,))
+        row = c.fetchone()
+        c.close(); conn.close()
+        return row is not None
+    except Exception:
+        return True  # Nếu lỗi DB → coi như còn tồn tại
+
 # ============================================================
 # PAGES
 # ============================================================
 @app.route("/")
 def index():
     if is_logged_in():
+        if not user_exists(session["user_id"]):
+            session.clear()
+            return redirect(url_for("login_page"))
         if check_banned(session["user_id"]):
             return redirect(url_for("banned_page"))
     return render_template("index.html", username=get_username())
@@ -184,12 +210,18 @@ def index():
 @app.route("/login")
 def login_page():
     if is_logged_in():
-        return redirect(url_for("index"))
+        if not user_exists(session["user_id"]):
+            session.clear()
+        else:
+            return redirect(url_for("index"))
     return render_template("login.html")
 
 @app.route("/banned")
 def banned_page():
     if not is_logged_in():
+        return redirect(url_for("login_page"))
+    if not user_exists(session["user_id"]):
+        session.clear()
         return redirect(url_for("login_page"))
     try:
         ban_info = get_ban_info(session["user_id"])
@@ -204,6 +236,9 @@ def banned_page():
 @app.route("/admin")
 def admin_page():
     if not is_logged_in():
+        return redirect(url_for("login_page"))
+    if not user_exists(session["user_id"]):
+        session.clear()
         return redirect(url_for("login_page"))
     if not is_admin():
         return redirect(url_for("index") + "?error=no_permission")
@@ -339,20 +374,87 @@ def api_me():
     if not is_logged_in():
         return jsonify({"logged_in": False, "username": "Khách"})
 
+    # Kiểm tra user có bị xóa không
     try:
-        ban_info = get_ban_info(session["user_id"])
-    except Exception:
-        ban_info = {"is_banned": False}
+        conn = get_db()
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT id FROM users WHERE id = %s", (session["user_id"],))
+        exists = c.fetchone()
 
-    return jsonify({
-        "logged_in": True,
-        "user_id": session["user_id"],
-        "username": session["username"],
-        "is_guest": session.get("is_guest", False),
-        "is_admin": is_admin(),
-        "is_banned": ban_info.get("is_banned", False),
-        "ban_info": ban_info,
-    })
+        if not exists:
+            username = session.get("username", "User")
+            c.execute(
+                "SELECT deleted_by FROM deleted_users WHERE username = %s ORDER BY id DESC LIMIT 1",
+                (username,)
+            )
+            log = c.fetchone()
+            deleted_by = log["deleted_by"] if log else "Admin"
+            c.close(); conn.close()
+
+            session.clear()
+            return jsonify({
+                "logged_in": False,
+                "deleted": True,
+                "username": username,
+                "deleted_by": deleted_by,
+            })
+
+        ban_info = get_ban_info(session["user_id"])
+        c.close(); conn.close()
+
+        return jsonify({
+            "logged_in": True,
+            "user_id": session["user_id"],
+            "username": session["username"],
+            "is_guest": session.get("is_guest", False),
+            "is_admin": is_admin(),
+            "is_banned": ban_info.get("is_banned", False),
+            "ban_info": ban_info,
+        })
+    except Exception as e:
+        print(f"Lỗi api_me: {e}")
+        return jsonify({"logged_in": False})
+
+@app.route("/api/check-user-exists")
+def api_check_user_exists():
+    """Kiểm tra user hiện tại còn tồn tại không — dùng cho polling."""
+    if not is_logged_in():
+        return jsonify({"exists": False, "logged_in": False})
+
+    try:
+        conn = get_db()
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT id, username FROM users WHERE id = %s", (session["user_id"],))
+        row = c.fetchone()
+
+        if not row:
+            # Tài khoản đã bị xóa → tìm admin nào xóa
+            username = session.get("username", "User")
+            c.execute(
+                "SELECT deleted_by FROM deleted_users WHERE username = %s ORDER BY id DESC LIMIT 1",
+                (username,)
+            )
+            log = c.fetchone()
+            deleted_by = log["deleted_by"] if log else "Admin"
+            c.close(); conn.close()
+
+            session.clear()
+            return jsonify({
+                "exists": False,
+                "logged_in": False,
+                "deleted": True,
+                "username": username,
+                "deleted_by": deleted_by,
+            })
+
+        c.close(); conn.close()
+        return jsonify({
+            "exists": True,
+            "logged_in": True,
+            "username": row["username"]
+        })
+    except Exception as e:
+        return jsonify({"exists": True, "error": str(e)})
 
 # ============================================================
 # APP API
@@ -368,6 +470,14 @@ def api_algos():
 @app.route("/api/process", methods=["POST"])
 @login_required_api
 def api_process():
+    # Kiểm tra user có bị xóa không
+    if not user_exists(session["user_id"]):
+        session.clear()
+        return jsonify({
+            "error": "Tài khoản đã bị xóa",
+            "deleted": True
+        }), 404
+
     ban_info = {"is_banned": False}
     try:
         ban_info = get_ban_info(session["user_id"])
@@ -577,7 +687,7 @@ def api_admin_delete_user(user_id):
     try:
         conn = get_db()
         c = conn.cursor()
-        c.execute("SELECT is_admin FROM users WHERE id = %s", (user_id,))
+        c.execute("SELECT is_admin, username FROM users WHERE id = %s", (user_id,))
         row = c.fetchone()
         if not row:
             c.close(); conn.close()
@@ -586,10 +696,25 @@ def api_admin_delete_user(user_id):
             c.close(); conn.close()
             return jsonify({"error": "Không thể xóa admin khác"}), 400
 
+        username = row[1]
+        admin_name = session.get("username", "Admin")
+
+        # Lưu log xóa
+        c.execute(
+            "INSERT INTO deleted_users (username, deleted_by) VALUES (%s, %s)",
+            (username, admin_name)
+        )
+
+        # Xóa user
         c.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()
         c.close(); conn.close()
-        return jsonify({"success": True})
+
+        return jsonify({
+            "success": True,
+            "username": username,
+            "deleted_by": admin_name
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
