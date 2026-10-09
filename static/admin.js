@@ -32,7 +32,6 @@ function initAvatar() {
 // BIND EVENTS
 // ============================================================
 function bindEvents() {
-    // Tabs
     document.querySelectorAll(".admin-tab").forEach(tab => {
         tab.addEventListener("click", () => {
             const target = tab.dataset.tab;
@@ -46,22 +45,18 @@ function bindEvents() {
         });
     });
 
-    // User search
     document.getElementById("user-search").addEventListener("input", (e) => {
         filterUsers(e.target.value.toLowerCase());
     });
 
-    // History search
     document.getElementById("history-search").addEventListener("input", () => {
         loadHistory();
     });
 
-    // History mode filter
     document.getElementById("history-mode").addEventListener("change", () => {
         loadHistory();
     });
 
-    // Refresh buttons
     document.getElementById("btn-refresh-users").addEventListener("click", loadUsers);
     document.getElementById("btn-refresh-history").addEventListener("click", loadHistory);
     document.getElementById("btn-clear-history").addEventListener("click", () => {
@@ -101,20 +96,12 @@ function bindEvents() {
     });
 
     // ===== BAN MODAL =====
-    document.querySelectorAll(".ban-duration-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".ban-duration-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            adminState.banDuration = btn.dataset.duration;
-        });
-    });
     document.getElementById("ban-cancel").addEventListener("click", closeBanModal);
     document.getElementById("ban-confirm").addEventListener("click", confirmBan);
     document.getElementById("ban-modal").addEventListener("click", (e) => {
         if (e.target.id === "ban-modal") closeBanModal();
     });
 
-    // Esc
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             closeConfirm();
@@ -129,10 +116,7 @@ function bindEvents() {
 async function loadStats() {
     try {
         const res = await fetch("/api/admin/stats", { credentials: "include" });
-        if (!res.ok) {
-            console.error("Lỗi load stats:", res.status);
-            return;
-        }
+        if (!res.ok) return;
         const data = await res.json();
 
         document.getElementById("stat-total-users").textContent = data.total_users || 0;
@@ -163,7 +147,6 @@ async function loadUsers() {
         renderUsers(adminState.users);
     } catch (e) {
         tbody.innerHTML = '<tr><td colspan="7" class="empty-row">❌ Lỗi kết nối</td></tr>';
-        console.error("Lỗi load users:", e);
     }
 }
 
@@ -190,19 +173,16 @@ function renderUsers(users) {
     for (const u of users) {
         const tr = document.createElement("tr");
 
-        // ID
         const tdId = document.createElement("td");
         tdId.textContent = u.id;
         tdId.className = "td-id";
         tr.appendChild(tdId);
 
-        // Username
         const tdUser = document.createElement("td");
         tdUser.textContent = u.username;
         tdUser.className = "td-username";
         tr.appendChild(tdUser);
 
-        // Vai trò
         const tdRole = document.createElement("td");
         if (u.is_admin) {
             tdRole.innerHTML = '<span class="badge badge-admin">👑 Admin</span>';
@@ -213,46 +193,34 @@ function renderUsers(users) {
         }
         tr.appendChild(tdRole);
 
-        // Trạng thái
         const tdStatus = document.createElement("td");
         if (u.is_banned) {
-            let banText = "🚫 Đã cấm";
-            if (u.banned_until) {
-                banText = "⏱ Cấm đến " + u.banned_until;
-            } else {
-                banText = "🚫 Cấm vĩnh viễn";
-            }
-            tdStatus.innerHTML = `<span class="badge badge-banned">${banText}</span>`;
+            tdStatus.innerHTML = '<span class="badge badge-banned">🚫 Cấm vĩnh viễn</span>';
         } else {
             tdStatus.innerHTML = '<span class="badge badge-active">✅ Hoạt động</span>';
         }
         tr.appendChild(tdStatus);
 
-        // Số lần dùng
         const tdCount = document.createElement("td");
         tdCount.textContent = u.op_count || 0;
         tr.appendChild(tdCount);
 
-        // Ngày tạo
         const tdDate = document.createElement("td");
         tdDate.textContent = u.created_at || "-";
         tdDate.className = "td-date";
         tr.appendChild(tdDate);
 
-        // Actions
         const tdActions = document.createElement("td");
         tdActions.className = "td-actions";
 
         if (!u.is_admin) {
             if (u.is_banned) {
-                // Nút mở cấm
                 const btnUnban = document.createElement("button");
                 btnUnban.className = "admin-action-btn unban";
                 btnUnban.textContent = "✅ Mở cấm";
                 btnUnban.addEventListener("click", () => unbanUser(u.id, u.username));
                 tdActions.appendChild(btnUnban);
             } else {
-                // Nút cấm
                 const btnBan = document.createElement("button");
                 btnBan.className = "admin-action-btn ban";
                 btnBan.textContent = "🚫 Cấm";
@@ -260,7 +228,6 @@ function renderUsers(users) {
                 tdActions.appendChild(btnBan);
             }
 
-            // Nút xóa
             const btnDel = document.createElement("button");
             btnDel.className = "admin-action-btn delete";
             btnDel.textContent = "🗑 Xóa";
@@ -268,7 +235,6 @@ function renderUsers(users) {
             tdActions.appendChild(btnDel);
         }
 
-        // Nút xem lịch sử
         const btnHistory = document.createElement("button");
         btnHistory.className = "admin-action-btn history";
         btnHistory.textContent = "📜 Lịch sử";
@@ -281,20 +247,12 @@ function renderUsers(users) {
 }
 
 // ============================================================
-// BAN USER — Mở modal
+// BAN USER — Chỉ vĩnh viễn
 // ============================================================
 function openBanModal(userId, username) {
     adminState.banTarget = { userId, username };
-    adminState.banDuration = "1d";
-
     document.getElementById("ban-username").textContent = username;
     document.getElementById("ban-reason").value = "";
-
-    // Reset duration buttons
-    document.querySelectorAll(".ban-duration-btn").forEach(b => {
-        b.classList.toggle("active", b.dataset.duration === "1d");
-    });
-
     document.getElementById("ban-modal").classList.add("show");
 }
 
@@ -307,7 +265,6 @@ async function confirmBan() {
     if (!adminState.banTarget) return;
 
     const { userId, username } = adminState.banTarget;
-    const duration = adminState.banDuration || "1d";
     const reason = document.getElementById("ban-reason").value.trim();
 
     const confirmBtn = document.getElementById("ban-confirm");
@@ -319,13 +276,13 @@ async function confirmBan() {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ duration, reason })
+            body: JSON.stringify({ reason })
         });
 
         const data = await res.json();
 
         if (res.ok && data.success) {
-            showToast(`✅ Đã cấm user "${username}"`);
+            showToast(`✅ Đã cấm user "${username}" vĩnh viễn`);
             closeBanModal();
             await loadUsers();
             await loadStats();
@@ -336,7 +293,7 @@ async function confirmBan() {
         showToast("❌ Lỗi kết nối: " + e.message, true);
     } finally {
         confirmBtn.disabled = false;
-        confirmBtn.textContent = "🚫 Cấm";
+        confirmBtn.textContent = "🚫 Cấm vĩnh viễn";
     }
 }
 
