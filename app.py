@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Mã Hóa Chữ - Web App với PostgreSQL + Session ổn định
+Mã Hóa Chữ - Web App với PostgreSQL
+Đã fix: vòng lặp redirect vô tận
 """
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
@@ -9,7 +10,6 @@ import bcrypt
 import secrets
 import psycopg2
 import psycopg2.extras
-from urllib.parse import urlparse
 
 try:
     from dotenv import load_dotenv
@@ -26,18 +26,18 @@ app = Flask(__name__,
             template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"),
             static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "static"))
 
-# SECRET_KEY CỐ ĐỊNH — không đổi sau mỗi lần deploy
+# SECRET_KEY CỐ ĐỊNH
 app.secret_key = os.environ.get("SECRET_KEY", "mahoa-chu-secret-key-2024-fixed-do-not-change")
 
-# Cấu hình session
+# Session config
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
-    PERMANENT_SESSION_LIFETIME=86400 * 7,  # 7 ngày
+    PERMANENT_SESSION_LIFETIME=86400 * 7,
 )
 
-# ProxyFix cho HTTPS proxy của Render
+# ProxyFix cho HTTPS proxy Render
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_for=1)
 
@@ -102,6 +102,7 @@ def login_required(f):
         if "user_id" not in session:
             if request.path.startswith("/api/"):
                 return jsonify({"error": "Chưa đăng nhập"}), 401
+            session.clear()
             return redirect(url_for("login_page"))
         return f(*args, **kwargs)
     return decorated
@@ -111,8 +112,8 @@ def login_required(f):
 # ============================================================
 @app.route("/login")
 def login_page():
-    if "user_id" in session:
-        return redirect(url_for("index"))
+    # LUÔN xóa session khi vào login — tránh vòng lặp redirect
+    session.clear()
     return render_template("login.html")
 
 @app.route("/")
@@ -198,7 +199,6 @@ def api_login():
 
 @app.route("/api/guest", methods=["POST"])
 def api_guest():
-    """Đăng nhập ẩn danh."""
     try:
         guest_name = f"guest_{secrets.token_hex(4)}"
         conn = get_db()
