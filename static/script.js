@@ -7,6 +7,8 @@ let state = {
     algoLabel: "📦 Base64",
     algos: null,
     isLoggedIn: false,
+    isAdmin: false,
+    isBanned: false,
     loginChecked: false,
 };
 
@@ -18,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadAlgos();
     bindEvents();
     initUserMenu();
+    initErrorToast();
 });
 
 async function checkLogin() {
@@ -25,7 +28,13 @@ async function checkLogin() {
         const res = await fetch("/api/me", { credentials: "include" });
         const data = await res.json();
         state.isLoggedIn = data.logged_in;
+        state.isAdmin = data.is_admin || false;
+        state.isBanned = data.is_banned || false;
         state.loginChecked = true;
+
+        if (state.isLoggedIn && state.isBanned) {
+            window.location.href = "/banned";
+        }
     } catch (e) {
         console.error("Lỗi check login:", e);
         state.isLoggedIn = false;
@@ -252,7 +261,7 @@ function renderAlgoList(query) {
 }
 
 // ============================================================
-// PROCESS — Kiểm tra login TRƯỚC KHI hiện loading
+// PROCESS
 // ============================================================
 async function runProcess() {
     const text = document.getElementById("input").value;
@@ -264,16 +273,12 @@ async function runProcess() {
         return;
     }
 
-    // ===== BƯỚC 1: Kiểm tra login TRƯỚC =====
     const loggedIn = await ensureLogin();
-
     if (!loggedIn) {
-        // Chưa login → hiện modal NGAY, KHÔNG hiện "Đang xử lý"
         openLoginRequiredModal();
         return;
     }
 
-    // ===== BƯỚC 2: Đã login → hiện loading rồi xử lý =====
     btn.disabled = true;
     const originalText = document.getElementById("btn-run-text").textContent;
     document.getElementById("btn-run-text").innerHTML =
@@ -292,13 +297,20 @@ async function runProcess() {
             })
         });
 
-        // Session hết hạn giữa lúc bấm → hiện modal login
         if (res.status === 401) {
             btn.disabled = false;
             document.getElementById("btn-run-text").textContent = originalText;
-            state.loginChecked = false;  // Reset để check lại lần sau
+            state.loginChecked = false;
             openLoginRequiredModal();
             return;
+        }
+
+        if (res.status === 403) {
+            const data = await res.json();
+            if (data.banned) {
+                window.location.href = "/banned";
+                return;
+            }
         }
 
         const data = await res.json();
@@ -344,9 +356,25 @@ function closeLoginRequiredModal() {
 }
 
 // ============================================================
+// ERROR TOAST (không có quyền)
+// ============================================================
+function initErrorToast() {
+    const errorToast = document.getElementById("error-toast");
+    if (errorToast) {
+        setTimeout(() => {
+            errorToast.classList.add("show");
+        }, 100);
+        setTimeout(() => {
+            errorToast.classList.remove("show");
+            setTimeout(() => errorToast.remove(), 300);
+        }, 4000);
+    }
+}
+
+// ============================================================
 // USER MENU
 // ============================================================
-function initUserMenu() {
+async function initUserMenu() {
     // Avatar
     const nameEl = document.getElementById("user-name");
     const avatarEl = document.getElementById("user-avatar");
@@ -360,6 +388,15 @@ function initUserMenu() {
     if (topLoginBtn) {
         topLoginBtn.addEventListener("click", () => {
             window.location.href = "/login";
+        });
+    }
+
+    // ===== NÚT ADMIN =====
+    const adminBtn = document.getElementById("btn-admin");
+    if (adminBtn && state.isAdmin) {
+        adminBtn.style.display = "flex";
+        adminBtn.addEventListener("click", () => {
+            window.location.href = "/admin";
         });
     }
 
