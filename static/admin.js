@@ -6,6 +6,7 @@ let adminState = {
     history: [],
     currentTab: "users",
     confirmCallback: null,
+    banTarget: null,
 };
 
 // ============================================================
@@ -55,7 +56,7 @@ function bindEvents() {
         loadHistory();
     });
 
-    // History mode
+    // History mode filter
     document.getElementById("history-mode").addEventListener("change", () => {
         loadHistory();
     });
@@ -64,26 +65,31 @@ function bindEvents() {
     document.getElementById("btn-refresh-users").addEventListener("click", loadUsers);
     document.getElementById("btn-refresh-history").addEventListener("click", loadHistory);
     document.getElementById("btn-clear-history").addEventListener("click", () => {
-        showConfirm("🗑 Xóa hết lịch sử?", "Toàn bộ lịch sử mã hóa của tất cả users sẽ bị xóa. Không thể hoàn tác!", async () => {
-            try {
-                const res = await fetch("/api/admin/history/clear", {
-                    method: "POST",
-                    credentials: "include"
-                });
-                if (res.ok) {
-                    showToast("✅ Đã xóa toàn bộ lịch sử");
-                    loadHistory();
-                    loadStats();
-                } else {
-                    showToast("❌ Lỗi xóa lịch sử", true);
+        showConfirm(
+            "🗑 Xóa hết lịch sử?",
+            "Toàn bộ lịch sử mã hóa của tất cả users sẽ bị xóa. Không thể hoàn tác!",
+            async () => {
+                try {
+                    const res = await fetch("/api/admin/history/clear", {
+                        method: "POST",
+                        credentials: "include"
+                    });
+                    if (res.ok) {
+                        showToast("✅ Đã xóa toàn bộ lịch sử");
+                        loadHistory();
+                        loadStats();
+                    } else {
+                        const data = await res.json();
+                        showToast("❌ " + (data.error || "Lỗi xóa"), true);
+                    }
+                } catch (e) {
+                    showToast("❌ Lỗi kết nối", true);
                 }
-            } catch (e) {
-                showToast("❌ Lỗi kết nối", true);
             }
-        });
+        );
     });
 
-    // Confirm modal
+    // ===== CONFIRM MODAL =====
     document.getElementById("confirm-cancel").addEventListener("click", closeConfirm);
     document.getElementById("confirm-ok").addEventListener("click", () => {
         const cb = adminState.confirmCallback;
@@ -94,8 +100,26 @@ function bindEvents() {
         if (e.target.id === "confirm-modal") closeConfirm();
     });
 
+    // ===== BAN MODAL =====
+    document.querySelectorAll(".ban-duration-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".ban-duration-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            adminState.banDuration = btn.dataset.duration;
+        });
+    });
+    document.getElementById("ban-cancel").addEventListener("click", closeBanModal);
+    document.getElementById("ban-confirm").addEventListener("click", confirmBan);
+    document.getElementById("ban-modal").addEventListener("click", (e) => {
+        if (e.target.id === "ban-modal") closeBanModal();
+    });
+
+    // Esc
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeConfirm();
+        if (e.key === "Escape") {
+            closeConfirm();
+            closeBanModal();
+        }
     });
 }
 
@@ -105,7 +129,10 @@ function bindEvents() {
 async function loadStats() {
     try {
         const res = await fetch("/api/admin/stats", { credentials: "include" });
-        if (!res.ok) return;
+        if (!res.ok) {
+            console.error("Lỗi load stats:", res.status);
+            return;
+        }
         const data = await res.json();
 
         document.getElementById("stat-total-users").textContent = data.total_users || 0;
@@ -136,6 +163,7 @@ async function loadUsers() {
         renderUsers(adminState.users);
     } catch (e) {
         tbody.innerHTML = '<tr><td colspan="7" class="empty-row">❌ Lỗi kết nối</td></tr>';
+        console.error("Lỗi load users:", e);
     }
 }
 
@@ -188,7 +216,13 @@ function renderUsers(users) {
         // Trạng thái
         const tdStatus = document.createElement("td");
         if (u.is_banned) {
-            tdStatus.innerHTML = '<span class="badge badge-banned">🚫 Đã cấm</span>';
+            let banText = "🚫 Đã cấm";
+            if (u.banned_until) {
+                banText = "⏱ Cấm đến " + u.banned_until;
+            } else {
+                banText = "🚫 Cấm vĩnh viễn";
+            }
+            tdStatus.innerHTML = `<span class="badge badge-banned">${banText}</span>`;
         } else {
             tdStatus.innerHTML = '<span class="badge badge-active">✅ Hoạt động</span>';
         }
@@ -209,17 +243,24 @@ function renderUsers(users) {
         const tdActions = document.createElement("td");
         tdActions.className = "td-actions";
 
-        // Nút ban/unban
         if (!u.is_admin) {
-            const btnBan = document.createElement("button");
-            btnBan.className = "admin-action-btn " + (u.is_banned ? "unban" : "ban");
-            btnBan.textContent = u.is_banned ? "✅ Mở cấm" : "🚫 Cấm";
-            btnBan.addEventListener("click", () => toggleBan(u.id, u.username, !u.is_banned));
-            tdActions.appendChild(btnBan);
-        }
+            if (u.is_banned) {
+                // Nút mở cấm
+                const btnUnban = document.createElement("button");
+                btnUnban.className = "admin-action-btn unban";
+                btnUnban.textContent = "✅ Mở cấm";
+                btnUnban.addEventListener("click", () => unbanUser(u.id, u.username));
+                tdActions.appendChild(btnUnban);
+            } else {
+                // Nút cấm
+                const btnBan = document.createElement("button");
+                btnBan.className = "admin-action-btn ban";
+                btnBan.textContent = "🚫 Cấm";
+                btnBan.addEventListener("click", () => openBanModal(u.id, u.username));
+                tdActions.appendChild(btnBan);
+            }
 
-        // Nút xóa
-        if (!u.is_admin) {
+            // Nút xóa
             const btnDel = document.createElement("button");
             btnDel.className = "admin-action-btn delete";
             btnDel.textContent = "🗑 Xóa";
@@ -240,32 +281,91 @@ function renderUsers(users) {
 }
 
 // ============================================================
-// BAN / UNBAN
+// BAN USER — Mở modal
 // ============================================================
-function toggleBan(userId, username, ban) {
-    const action = ban ? "cấm" : "mở cấm";
-    const icon = ban ? "🚫" : "✅";
+function openBanModal(userId, username) {
+    adminState.banTarget = { userId, username };
+    adminState.banDuration = "1d";
+
+    document.getElementById("ban-username").textContent = username;
+    document.getElementById("ban-reason").value = "";
+
+    // Reset duration buttons
+    document.querySelectorAll(".ban-duration-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.duration === "1d");
+    });
+
+    document.getElementById("ban-modal").classList.add("show");
+}
+
+function closeBanModal() {
+    document.getElementById("ban-modal").classList.remove("show");
+    adminState.banTarget = null;
+}
+
+async function confirmBan() {
+    if (!adminState.banTarget) return;
+
+    const { userId, username } = adminState.banTarget;
+    const duration = adminState.banDuration || "1d";
+    const reason = document.getElementById("ban-reason").value.trim();
+
+    const confirmBtn = document.getElementById("ban-confirm");
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "⏳ Đang cấm...";
+
+    try {
+        const res = await fetch(`/api/admin/users/${userId}/ban`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ duration, reason })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            showToast(`✅ Đã cấm user "${username}"`);
+            closeBanModal();
+            await loadUsers();
+            await loadStats();
+        } else {
+            showToast(`❌ ${data.error || "Lỗi không xác định"}`, true);
+        }
+    } catch (e) {
+        showToast("❌ Lỗi kết nối: " + e.message, true);
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "🚫 Cấm";
+    }
+}
+
+// ============================================================
+// UNBAN USER
+// ============================================================
+async function unbanUser(userId, username) {
     showConfirm(
-        `${icon} ${ban ? "Cấm" : "Mở cấm"} user "${username}"?`,
-        ban ? "User này sẽ không thể đăng nhập hoặc mã hóa/giải mã." : "User này sẽ có thể dùng lại bình thường.",
+        `✅ Mở cấm user "${username}"?`,
+        "User này sẽ có thể đăng nhập và sử dụng lại bình thường.",
         async () => {
             try {
-                const res = await fetch(`/api/admin/users/${userId}/ban`, {
+                const res = await fetch(`/api/admin/users/${userId}/unban`, {
                     method: "POST",
                     credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ban })
+                    headers: { "Content-Type": "application/json" }
                 });
+
                 const data = await res.json();
-                if (res.ok) {
-                    showToast(`✅ Đã ${action} user "${username}"`);
-                    loadUsers();
-                    loadStats();
+
+                if (res.ok && data.success) {
+                    showToast(`✅ Đã mở cấm user "${username}"`);
+                    await loadUsers();
+                    await loadStats();
                 } else {
-                    showToast(`❌ ${data.error}`, true);
+                    showToast(`❌ ${data.error || "Lỗi không xác định"}`, true);
                 }
             } catch (e) {
-                showToast("❌ Lỗi kết nối", true);
+                showToast("❌ Lỗi kết nối: " + e.message, true);
             }
         }
     );
@@ -285,12 +385,12 @@ function deleteUser(userId, username) {
                     credentials: "include"
                 });
                 const data = await res.json();
-                if (res.ok) {
+                if (res.ok && data.success) {
                     showToast(`✅ Đã xóa user "${username}"`);
-                    loadUsers();
-                    loadStats();
+                    await loadUsers();
+                    await loadStats();
                 } else {
-                    showToast(`❌ ${data.error}`, true);
+                    showToast(`❌ ${data.error || "Lỗi không xác định"}`, true);
                 }
             } catch (e) {
                 showToast("❌ Lỗi kết nối", true);
@@ -303,7 +403,6 @@ function deleteUser(userId, username) {
 // VIEW USER HISTORY
 // ============================================================
 function viewUserHistory(username) {
-    // Chuyển sang tab history + set filter
     document.getElementById("history-search").value = username;
     document.querySelectorAll(".admin-tab").forEach(t => {
         t.classList.toggle("active", t.dataset.tab === "history");
