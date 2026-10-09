@@ -584,3 +584,74 @@ async function initUserMenu() {
         }
     });
 }
+// ============================================================
+// ACCOUNT DELETED OVERLAY
+// ============================================================
+function showAccountDeletedScreen(username, deletedBy) {
+    if (document.getElementById("account-deleted-overlay")) return;
+
+    const overlay = document.createElement("div");
+    overlay.id = "account-deleted-overlay";
+    overlay.className = "account-deleted-overlay";
+    overlay.innerHTML = `
+        <div class="account-deleted-card">
+            <div class="account-deleted-icon">🗑</div>
+            <h1 class="account-deleted-title">TÀI KHOẢN ĐÃ BỊ XÓA</h1>
+            <p class="account-deleted-text">
+                Tài khoản <b>${username || "của bạn"}</b> đã bị xóa
+                bởi quản trị viên <b>${deletedBy || "Admin"}</b>.
+            </p>
+            <p class="account-deleted-text">
+                Bạn sẽ được chuyển về trang đăng nhập sau
+                <b><span id="deleted-countdown">5</span></b> giây...
+            </p>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    let countdown = 5;
+    const countdownEl = document.getElementById("deleted-countdown");
+
+    const interval = setInterval(() => {
+        countdown--;
+        if (countdownEl) countdownEl.textContent = countdown;
+
+        if (countdown <= 0) {
+            clearInterval(interval);
+            window.location.href = "/login";
+        }
+    }, 1000);
+}
+
+// ============================================================
+// POLLING — kiểm tra tài khoản còn tồn tại không
+// ============================================================
+(function startAccountCheck() {
+    // Chỉ chạy khi đã login (không phải khách)
+    setTimeout(async () => {
+        try {
+            const meRes = await fetch("/api/me", { credentials: "include" });
+            const meData = await meRes.json();
+
+            if (!meData.logged_in) return;
+
+            // Bắt đầu polling
+            setInterval(async () => {
+                try {
+                    const res = await fetch("/api/check-user-exists", {
+                        credentials: "include"
+                    });
+                    const data = await res.json();
+
+                    if (data.deleted) {
+                        showAccountDeletedScreen(
+                            data.username,
+                            data.deleted_by
+                        );
+                    }
+                } catch (e) {}
+            }, 5000);
+
+        } catch (e) {}
+    }, 2000);
+})();
