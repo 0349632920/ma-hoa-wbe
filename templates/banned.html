@@ -11,7 +11,6 @@
     <div class="banned-container">
         <div class="banned-card">
             <div class="banned-icon-wrap">
-                <div class="banned-icon-glow"></div>
                 <div class="banned-icon">🚫</div>
             </div>
 
@@ -22,22 +21,10 @@
                 <span class="banned-username-value">{{ username }}</span>
             </div>
 
-            {% if ban_info.permanent %}
-                <div class="banned-duration permanent">
-                    <div class="banned-duration-label">Thời hạn</div>
-                    <div class="banned-duration-value">♾️ VĨNH VIỄN</div>
-                </div>
-            {% else %}
-                <div class="banned-duration">
-                    <div class="banned-duration-label">Thời gian còn lại</div>
-                    <div class="banned-duration-value" id="countdown" data-remaining="{{ ban_info.remaining_seconds }}">
-                        Đang tính...
-                    </div>
-                    <div class="banned-until">
-                        Mở khóa lúc: <b>{{ ban_info.banned_until }}</b>
-                    </div>
-                </div>
-            {% endif %}
+            <div class="banned-duration permanent">
+                <div class="banned-duration-label">Thời hạn</div>
+                <div class="banned-duration-value">♾️ VĨNH VIỄN</div>
+            </div>
 
             {% if ban_info.ban_reason %}
                 <div class="banned-reason">
@@ -75,52 +62,9 @@
                 Mã Hóa Chữ © 2024 • Bảo vệ thông tin của bạn
             </div>
         </div>
-
-        <div class="banned-bg">
-            <div class="banned-blob banned-blob-1"></div>
-            <div class="banned-blob banned-blob-2"></div>
-        </div>
     </div>
 
     <script>
-    // ===== ĐẾM NGƯỢC =====
-    const countdownEl = document.getElementById("countdown");
-    if (countdownEl) {
-        let remaining = parseInt(countdownEl.dataset.remaining) || 0;
-
-        function formatTime(sec) {
-            if (sec <= 0) return "Đã hết hạn";
-            const days = Math.floor(sec / 86400);
-            const hours = Math.floor((sec % 86400) / 3600);
-            const minutes = Math.floor((sec % 3600) / 60);
-            const seconds = sec % 60;
-
-            let parts = [];
-            if (days > 0) parts.push(days + " ngày");
-            if (hours > 0) parts.push(hours + " giờ");
-            if (minutes > 0) parts.push(minutes + " phút");
-            if (seconds > 0 && days === 0) parts.push(seconds + " giây");
-            return parts.join(" ") || "0 giây";
-        }
-
-        function tick() {
-            if (remaining <= 0) {
-                countdownEl.textContent = "Đã hết hạn!";
-                countdownEl.classList.add("expired");
-                setTimeout(() => {
-                    window.location.href = "/";
-                }, 2000);
-                return;
-            }
-            countdownEl.textContent = formatTime(remaining);
-            remaining--;
-        }
-
-        tick();
-        setInterval(tick, 1000);
-    }
-
-    // ===== ĐĂNG XUẤT =====
     document.getElementById("btn-banned-logout").addEventListener("click", async () => {
         try {
             await fetch("/api/logout", { method: "POST", credentials: "include" });
@@ -129,17 +73,6 @@
             window.location.href = "/login";
         }
     });
-
-    // ===== CHECK ĐỊNH KỲ =====
-    setInterval(async () => {
-        try {
-            const res = await fetch("/api/ban-status", { credentials: "include" });
-            const data = await res.json();
-            if (data.logged_in && (!data.ban_info || !data.ban_info.is_banned)) {
-                window.location.href = "/";
-            }
-        } catch (e) {}
-    }, 10000);
     </script>
 </body>
 </html>
