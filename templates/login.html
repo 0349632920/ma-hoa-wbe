@@ -3,203 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔐 Đăng nhập - Mã Hóa Chữ</title>
+    <title>🔐 Mã Hóa Chữ</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
-<body class="login-page">
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <span class="login-icon">🔐</span>
-                <h1>MÃ HÓA CHỮ</h1>
-                <p class="login-subtitle">Bảo vệ thông tin của bạn</p>
-            </div>
-
-            <div class="login-tabs">
-                <button class="login-tab active" data-tab="login">Đăng nhập</button>
-                <button class="login-tab" data-tab="register">Đăng ký</button>
-            </div>
-
-            <form class="login-form" id="login-form">
-                <div class="form-group">
-                    <label>👤 Tên đăng nhập</label>
-                    <input type="text" id="login-username" placeholder="Nhập tên đăng nhập..." autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label>🔒 Mật khẩu</label>
-                    <div class="password-input">
-                        <input type="password" id="login-password" placeholder="Nhập mật khẩu..." autocomplete="current-password">
-                        <button type="button" class="eye-btn" data-target="login-password">👁</button>
-                    </div>
-                </div>
-                <div class="login-error" id="login-error"></div>
-                <button type="submit" class="login-submit">🔓 ĐĂNG NHẬP</button>
-            </form>
-
-            <form class="login-form hidden" id="register-form">
-                <div class="form-group">
-                    <label>👤 Tên đăng nhập</label>
-                    <input type="text" id="reg-username" placeholder="VD: nguyenvana" autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label>🔒 Mật khẩu</label>
-                    <div class="password-input">
-                        <input type="password" id="reg-password" placeholder="Ít nhất 6 ký tự..." autocomplete="new-password">
-                        <button type="button" class="eye-btn" data-target="reg-password">👁</button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>🔒 Nhập lại mật khẩu</label>
-                    <div class="password-input">
-                        <input type="password" id="reg-password2" placeholder="Nhập lại mật khẩu..." autocomplete="new-password">
-                        <button type="button" class="eye-btn" data-target="reg-password2">👁</button>
-                    </div>
-                </div>
-                <div class="login-error" id="register-error"></div>
-                <button type="submit" class="login-submit register">✨ TẠO TÀI KHOẢN</button>
-            </form>
-
-            <div class="guest-divider"><span>hoặc</span></div>
-
-            <button type="button" class="guest-btn" id="btn-guest">
-                🚀 Dùng thử không cần đăng nhập
-            </button>
-
-            <div class="login-footer">
-                <span>🚀 Hơn <b>40 thuật toán</b> mã hóa</span>
-            </div>
+<body>
+    <!-- User bar với dropdown -->
+    <div class="user-bar" id="user-bar">
+        <div class="user-trigger" id="user-trigger">
+            <div class="user-avatar" id="user-avatar">U</div>
+            <div class="user-name" id="user-name">{{ username }}</div>
+            <span class="user-caret">▼</span>
         </div>
-
-        <div class="bg-decoration">
-            <div class="blob blob-1"></div>
-            <div class="blob blob-2"></div>
-            <div class="blob blob-3"></div>
+        <div class="user-dropdown" id="user-dropdown">
+            <div class="dropdown-header">
+                <div class="dropdown-header-label">Đang đăng nhập</div>
+                <div class="dropdown-header-name">
+                    <span id="dropdown-username">{{ username }}</span>
+                    <span class="guest-badge" id="guest-badge" style="display:none;">GUEST</span>
+                </div>
+            </div>
+            <button class="dropdown-item" id="btn-profile">
+                <span class="item-icon">👤</span>
+                <span>Tài khoản</span>
+            </button>
+            <button class="dropdown-item" id="btn-history">
+                <span class="item-icon">📜</span>
+                <span>Lịch sử</span>
+            </button>
+            <button class="dropdown-item danger" id="btn-logout">
+                <span class="item-icon">🚪</span>
+                <span>Đăng xuất</span>
+            </button>
         </div>
     </div>
 
-    <script>
-    document.querySelectorAll(".login-tab").forEach(tab => {
-        tab.addEventListener("click", () => {
-            document.querySelectorAll(".login-tab").forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-            const target = tab.dataset.tab;
-            document.getElementById("login-form").classList.toggle("hidden", target !== "login");
-            document.getElementById("register-form").classList.toggle("hidden", target !== "register");
-        });
-    });
+    <header class="header">
+        <div class="logo">
+            <span class="icon">🔒</span>
+            <h1>MÃ HÓA CHỮ</h1>
+        </div>
+        <p class="subtitle">
+            Bảo vệ thông tin của bạn • <span id="algo-count">0</span> thuật toán
+        </p>
+    </header>
 
-    document.querySelectorAll(".eye-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const inp = document.getElementById(btn.dataset.target);
-            if (inp.type === "password") {
-                inp.type = "text"; btn.textContent = "🙈";
-            } else {
-                inp.type = "password"; btn.textContent = "👁";
-            }
-        });
-    });
+    <div class="toggle-container">
+        <button class="toggle-btn active" data-mode="encode">🔒 MÃ HÓA</button>
+        <button class="toggle-btn" data-mode="decode">🔓 GIẢI MÃ</button>
+    </div>
 
-    document.getElementById("login-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const username = document.getElementById("login-username").value.trim();
-        const password = document.getElementById("login-password").value;
-        const errEl = document.getElementById("login-error");
-        const btn = e.target.querySelector(".login-submit");
+    <div class="main">
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-icon">📄</span>
+                <span class="panel-title">Văn bản gốc</span>
+                <span class="char-count" id="count-in">0</span>
+            </div>
+            <textarea id="input" placeholder="Nhập văn bản cần mã hóa..."></textarea>
+        </div>
 
-        errEl.textContent = "";
-        if (!username || !password) { errEl.textContent = "⚠ Vui lòng nhập đầy đủ"; return; }
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-icon">🔓</span>
+                <span class="panel-title">Kết quả</span>
+                <button class="copy-btn" id="copy-out">📋 Sao chép</button>
+            </div>
+            <textarea id="output" readonly placeholder="Kết quả sẽ hiện ở đây..."></textarea>
+        </div>
+    </div>
 
-        btn.disabled = true;
-        btn.textContent = "⏳ Đang đăng nhập...";
+    <div class="controls">
+        <div class="algo-picker" id="algo-picker">
+            <span class="icon">🎯</span>
+            <div class="picker-info">
+                <div class="picker-label">Thuật toán</div>
+                <div class="picker-value" id="current-algo">📦 Base64</div>
+            </div>
+            <span class="arrow">▶</span>
+        </div>
 
-        try {
-            const res = await fetch("/api/login", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({username, password})
-            });
-            const data = await res.json();
-            if (data.success) {
-                btn.textContent = "✅ Thành công!";
-                setTimeout(() => window.location.href = "/", 500);
-            } else {
-                errEl.textContent = "❌ " + data.error;
-                btn.disabled = false;
-                btn.textContent = "🔓 ĐĂNG NHẬP";
-            }
-        } catch (err) {
-            errEl.textContent = "❌ Lỗi kết nối";
-            btn.disabled = false;
-            btn.textContent = "🔓 ĐĂNG NHẬP";
-        }
-    });
+        <div class="key-input">
+            <span class="icon">🔑</span>
+            <div class="key-info">
+                <div class="key-label">Khóa bí mật</div>
+                <input type="password" id="key" value="matkhau123" placeholder="Nhập khóa...">
+            </div>
+            <button class="eye-btn" id="toggle-key">👁</button>
+        </div>
 
-    document.getElementById("register-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const username = document.getElementById("reg-username").value.trim();
-        const password = document.getElementById("reg-password").value;
-        const password2 = document.getElementById("reg-password2").value;
-        const errEl = document.getElementById("register-error");
-        const btn = e.target.querySelector(".login-submit");
+        <button class="action-btn primary" id="btn-run">
+            <span id="btn-run-text">⚙ MÃ HÓA</span>
+        </button>
+    </div>
 
-        errEl.textContent = "";
-        if (!username || !password || !password2) { errEl.textContent = "⚠ Vui lòng nhập đầy đủ"; return; }
-        if (password !== password2) { errEl.textContent = "❌ Mật khẩu nhập lại không khớp"; return; }
+    <div class="controls-row2">
+        <button class="action-btn cyan" id="btn-swap">🔁 ĐẢO CHIỀU</button>
+        <button class="action-btn danger" id="btn-clear">🗑 XÓA TẤT CẢ</button>
+    </div>
 
-        btn.disabled = true;
-        btn.textContent = "⏳ Đang tạo...";
+    <div class="modal" id="algo-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎯 Chọn thuật toán</h2>
+                <button class="close-btn" id="close-modal">✕</button>
+            </div>
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="search" placeholder="Tìm: aes, base, morse...">
+            </div>
+            <div class="algo-list" id="algo-list"></div>
+        </div>
+    </div>
 
-        try {
-            const res = await fetch("/api/register", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({username, password})
-            });
-            const data = await res.json();
-            if (data.success) {
-                btn.textContent = "✅ Thành công!";
-                setTimeout(() => window.location.href = "/", 500);
-            } else {
-                errEl.textContent = "❌ " + data.error;
-                btn.disabled = false;
-                btn.textContent = "✨ TẠO TÀI KHOẢN";
-            }
-        } catch (err) {
-            errEl.textContent = "❌ Lỗi kết nối";
-            btn.disabled = false;
-            btn.textContent = "✨ TẠO TÀI KHOẢN";
-        }
-    });
+    <div class="transition-slider" id="transition-slider">
+        <div class="slider-bg" id="slider-bg"></div>
+        <div class="slider-content">
+            <div class="slider-icon" id="slider-icon">🔒</div>
+            <div class="slider-text" id="slider-text">ĐANG CHUYỂN...</div>
+            <div class="slider-subtext" id="slider-subtext">Vui lòng chờ</div>
+        </div>
+    </div>
 
-    document.getElementById("btn-guest").addEventListener("click", async () => {
-        const btn = document.getElementById("btn-guest");
-        btn.disabled = true;
-        btn.textContent = "⏳ Đang tạo tài khoản...";
-        try {
-            const res = await fetch("/api/guest", { method: "POST" });
-            const data = await res.json();
-            if (data.success) {
-                btn.textContent = "✅ Thành công!";
-                setTimeout(() => window.location.href = "/", 500);
-            } else {
-                btn.textContent = "❌ " + (data.error || "Lỗi");
-                btn.disabled = false;
-                setTimeout(() => btn.textContent = "🚀 Dùng thử không cần đăng nhập", 2000);
-            }
-        } catch (err) {
-            btn.textContent = "❌ Lỗi kết nối";
-            btn.disabled = false;
-            setTimeout(() => btn.textContent = "🚀 Dùng thử không cần đăng nhập", 2000);
-        }
-    });
+    <div class="toast" id="toast"></div>
 
-    document.getElementById("login-password").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") document.getElementById("login-form").requestSubmit();
-    });
-    document.getElementById("reg-password2").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") document.getElementById("register-form").requestSubmit();
-    });
-    </script>
+    <script src="/static/script.js"></script>
 </body>
 </html>
