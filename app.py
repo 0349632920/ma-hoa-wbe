@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Mã Hóa Chữ - Web App với PostgreSQL
-Đã fix: vòng lặp redirect vô tận
+Mã Hóa Chữ - Web App cho phép khách xem, yêu cầu login khi mã hóa
 """
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, make_response
 from functools import wraps
 import os
 import bcrypt
@@ -26,10 +25,8 @@ app = Flask(__name__,
             template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"),
             static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "static"))
 
-# SECRET_KEY CỐ ĐỊNH
 app.secret_key = os.environ.get("SECRET_KEY", "mahoa-chu-secret-key-2024-fixed-do-not-change")
 
-# Session config
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
@@ -37,7 +34,6 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=86400 * 7,
 )
 
-# ProxyFix cho HTTPS proxy Render
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_for=1)
 
@@ -58,7 +54,7 @@ def get_db():
 
 def init_db():
     if not DATABASE_URL:
-        print("⚠ Chưa có DATABASE_URL — bỏ qua init_db")
+        print("⚠ Chưa có DATABASE_URL")
         return
     try:
         conn = get_db()
@@ -68,8 +64,7 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(30) UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                is_admin BOOLEAN DEFAULT FALSE
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         c.execute("""
@@ -94,33 +89,36 @@ def init_db():
 init_db()
 
 # ============================================================
-# AUTH
+# AUTH HELPERS
 # ============================================================
-def login_required(f):
+def is_logged_in():
+    return "user_id" in session
+
+def get_username():
+    return session.get("username", "Khách")
+
+def login_required_api(f):
+    """Yêu cầu login cho API — trả 401 JSON nếu chưa login."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        if "user_id" not in session:
-            if request.path.startswith("/api/"):
-                return jsonify({"error": "Chưa đăng nhập"}), 401
-            session.clear()
-            return redirect(url_for("login_page"))
+        if not is_logged_in():
+            return jsonify({"error": "Chưa đăng nhập"}), 401
         return f(*args, **kwargs)
     return decorated
 
 # ============================================================
 # PAGES
 # ============================================================
+@app.route("/")
+def index():
+    """Trang chủ — ai cũng vào được."""
+    return render_template("index.html", username=get_username())
+
 @app.route("/login")
 def login_page():
-    # LUÔN xóa session khi vào login — tránh vòng lặp redirect
-    session.clear()
+    if is_logged_in():
+        return redirect(url_for("index"))
     return render_template("login.html")
-
-@app.route("/")
-@login_required
-def index():
-    return render_template("index.html",
-                            username=session.get("username", "User"))
 
 # ============================================================
 # AUTH API
@@ -199,6 +197,7 @@ def api_login():
 
 @app.route("/api/guest", methods=["POST"])
 def api_guest():
+    """Đăng nhập ẩn danh."""
     try:
         guest_name = f"guest_{secrets.token_hex(4)}"
         conn = get_db()
@@ -229,8 +228,9 @@ def api_logout():
 
 @app.route("/api/me")
 def api_me():
-    if "user_id" not in session:
-        return jsonify({"logged_in": False})
+    """Kiểm tra trạng thái đăng nhập — không cần login."""
+    if not is_logged_in():
+        return jsonify({"logged_in": False, "username": "Khách"})
     return jsonify({
         "logged_in": True,
         "user_id": session["user_id"],
@@ -242,8 +242,8 @@ def api_me():
 # APP API
 # ============================================================
 @app.route("/api/algos")
-@login_required
 def api_algos():
+    """Danh sách thuật toán — ai cũng xem được."""
     return jsonify({
         "grouped": get_grouped(),
         "order": GROUP_ORDER,
@@ -251,8 +251,9 @@ def api_algos():
     })
 
 @app.route("/api/process", methods=["POST"])
-@login_required
+@login_required_api
 def api_process():
+    """Mã hóa/giải mã — YÊU CẦU ĐĂNG NHẬP."""
     data = request.get_json()
     if not data:
         return jsonify({"error": "Thiếu dữ liệu"}), 400
@@ -287,7 +288,7 @@ def api_process():
         return jsonify({"error": str(e)}), 400
 
 @app.route("/api/history")
-@login_required
+@login_required_api
 def api_history():
     try:
         conn = get_db()
@@ -304,19 +305,6 @@ def api_history():
                 d["created_at"] = d["created_at"].strftime("%Y-%m-%d %H:%M:%S")
             result.append(d)
         return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/history/clear", methods=["POST"])
-@login_required
-def api_history_clear():
-    try:
-        conn = get_db()
-        c = conn.cursor()
-        c.execute("DELETE FROM history WHERE user_id = %s", (session["user_id"],))
-        conn.commit()
-        c.close(); conn.close()
-        return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
