@@ -8,140 +8,158 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- User bar -->
-    <div class="user-bar">
-        <div class="user-avatar" id="user-avatar">K</div>
-        <div class="user-name" id="user-name">{{ username }}</div>
-        {% if username == "Khách" %}
-            <button class="btn-logout" id="btn-top-login" style="background: rgba(37, 99, 235, 0.12); border-color: rgba(37, 99, 235, 0.3); color: var(--blue-light);">🔑 Đăng nhập</button>
-        {% else %}
-            <button class="btn-admin" id="btn-admin" style="display: none;">🛡 Admin</button>
-            <button class="btn-logout" id="btn-logout">🚪 Đăng xuất</button>
+    <!-- Loading Screen -->
+    <div class="site-loading" id="site-loading">
+        <div class="site-loading-card">
+            <div class="site-loading-icon">🔐</div>
+            <div class="site-loading-spinner"></div>
+            <div class="site-loading-text">Đang tải trang...</div>
+            <div class="site-loading-subtext">Vui lòng chờ trong giây lát</div>
+            <div class="site-loading-progress">
+                <div class="site-loading-bar" id="site-loading-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nội dung chính -->
+    <div class="site-content" id="site-content" style="display: none;">
+
+        <!-- User bar -->
+        <div class="user-bar">
+            <div class="user-avatar" id="user-avatar">K</div>
+            <div class="user-name" id="user-name">{{ username }}</div>
+            {% if username == "Khách" %}
+                <button class="btn-logout" id="btn-top-login" style="background: rgba(37, 99, 235, 0.12); border-color: rgba(37, 99, 235, 0.3); color: var(--blue-light);">🔑 Đăng nhập</button>
+            {% else %}
+                <button class="btn-admin" id="btn-admin" style="display: none;">🛡 Admin</button>
+                <button class="btn-logout" id="btn-logout">🚪 Đăng xuất</button>
+            {% endif %}
+        </div>
+
+        <!-- Thông báo lỗi không có quyền -->
+        {% if request.args.get('error') == 'no_permission' %}
+        <div class="error-toast" id="error-toast">
+            <span class="error-toast-icon">🚫</span>
+            <span class="error-toast-text">Bạn không có quyền truy cập trang Admin</span>
+        </div>
         {% endif %}
-    </div>
 
-    <!-- Thông báo lỗi không có quyền -->
-    {% if request.args.get('error') == 'no_permission' %}
-    <div class="error-toast" id="error-toast">
-        <span class="error-toast-icon">🚫</span>
-        <span class="error-toast-text">Bạn không có quyền truy cập trang Admin</span>
-    </div>
-    {% endif %}
-
-    <header class="header">
-        <div class="logo">
-            <span class="icon">🔒</span>
-            <h1>MÃ HÓA CHỮ</h1>
-        </div>
-        <p class="subtitle">
-            Bảo vệ thông tin của bạn • <span id="algo-count">0</span> thuật toán
-        </p>
-    </header>
-
-    <div class="toggle-container">
-        <button class="toggle-btn active" data-mode="encode">🔒 MÃ HÓA</button>
-        <button class="toggle-btn" data-mode="decode">🔓 GIẢI MÃ</button>
-    </div>
-
-    <div class="main">
-        <div class="panel">
-            <div class="panel-header">
-                <span class="panel-icon">📄</span>
-                <span class="panel-title">Văn bản gốc</span>
-                <span class="char-count" id="count-in">0</span>
+        <header class="header">
+            <div class="logo">
+                <span class="icon">🔒</span>
+                <h1>MÃ HÓA CHỮ</h1>
             </div>
-            <textarea id="input" placeholder="Nhập văn bản cần mã hóa..."></textarea>
+            <p class="subtitle">
+                Bảo vệ thông tin của bạn • <span id="algo-count">0</span> thuật toán
+            </p>
+        </header>
+
+        <div class="toggle-container">
+            <button class="toggle-btn active" data-mode="encode">🔒 MÃ HÓA</button>
+            <button class="toggle-btn" data-mode="decode">🔓 GIẢI MÃ</button>
         </div>
 
-        <div class="panel">
-            <div class="panel-header">
-                <span class="panel-icon">🔓</span>
-                <span class="panel-title">Kết quả</span>
-                <button class="copy-btn" id="copy-out">📋 Sao chép</button>
+        <div class="main">
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-icon">📄</span>
+                    <span class="panel-title">Văn bản gốc</span>
+                    <span class="char-count" id="count-in">0</span>
+                </div>
+                <textarea id="input" placeholder="Nhập văn bản cần mã hóa..."></textarea>
             </div>
-            <textarea id="output" readonly placeholder="Kết quả sẽ hiện ở đây..."></textarea>
-        </div>
-    </div>
 
-    <div class="controls">
-        <div class="algo-picker" id="algo-picker">
-            <span class="icon">🎯</span>
-            <div class="picker-info">
-                <div class="picker-label">Thuật toán</div>
-                <div class="picker-value" id="current-algo">📦 Base64</div>
-            </div>
-            <span class="arrow">▶</span>
-        </div>
-
-        <div class="key-input">
-            <span class="icon">🔑</span>
-            <div class="key-info">
-                <div class="key-label">Khóa bí mật</div>
-                <input type="password" id="key" value="matkhau123" placeholder="Nhập khóa...">
-            </div>
-            <button class="eye-btn" id="toggle-key">👁</button>
-        </div>
-
-        <button class="action-btn primary" id="btn-run">
-            <span id="btn-run-text">⚙ MÃ HÓA</span>
-        </button>
-    </div>
-
-    <div class="controls-row2">
-        <button class="action-btn cyan" id="btn-swap">🔁 ĐẢO CHIỀU</button>
-        <button class="action-btn danger" id="btn-clear">🗑 XÓA TẤT CẢ</button>
-    </div>
-
-    <div class="modal" id="algo-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🎯 Chọn thuật toán</h2>
-                <button class="close-btn" id="close-modal">✕</button>
-            </div>
-            <div class="search-box">
-                <span>🔍</span>
-                <input type="text" id="search" placeholder="Tìm: aes, base, morse...">
-            </div>
-            <div class="algo-list" id="algo-list"></div>
-        </div>
-    </div>
-
-    <div class="transition-slider" id="transition-slider">
-        <div class="slider-bg" id="slider-bg"></div>
-        <div class="slider-content">
-            <div class="slider-icon" id="slider-icon">🔒</div>
-            <div class="slider-text" id="slider-text">ĐANG CHUYỂN...</div>
-            <div class="slider-subtext" id="slider-subtext">Vui lòng chờ</div>
-        </div>
-    </div>
-
-    <!-- Modal yêu cầu đăng nhập -->
-    <div class="confirm-modal" id="login-required-modal">
-        <div class="confirm-box">
-            <div class="confirm-icon">🔐</div>
-            <h3 class="confirm-title">Cần đăng nhập</h3>
-            <p class="confirm-text">Bạn cần đăng nhập để sử dụng tính năng mã hóa / giải mã.</p>
-            <div class="confirm-actions">
-                <button class="confirm-btn cancel" id="btn-cancel-login">Hủy</button>
-                <button class="confirm-btn primary" id="btn-go-login">Đăng nhập</button>
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-icon">🔓</span>
+                    <span class="panel-title">Kết quả</span>
+                    <button class="copy-btn" id="copy-out">📋 Sao chép</button>
+                </div>
+                <textarea id="output" readonly placeholder="Kết quả sẽ hiện ở đây..."></textarea>
             </div>
         </div>
-    </div>
 
-    <!-- Modal xác nhận đăng xuất -->
-    <div class="confirm-modal" id="logout-modal">
-        <div class="confirm-box">
-            <div class="confirm-icon">🚪</div>
-            <h3 class="confirm-title">Đăng xuất?</h3>
-            <p class="confirm-text">Bạn có chắc muốn đăng xuất khỏi tài khoản <b id="confirm-username"></b>?</p>
-            <div class="confirm-actions">
-                <button class="confirm-btn cancel" id="btn-cancel-logout">Hủy</button>
-                <button class="confirm-btn danger" id="btn-confirm-logout">Đăng xuất</button>
+        <div class="controls">
+            <div class="algo-picker" id="algo-picker">
+                <span class="icon">🎯</span>
+                <div class="picker-info">
+                    <div class="picker-label">Thuật toán</div>
+                    <div class="picker-value" id="current-algo">📦 Base64</div>
+                </div>
+                <span class="arrow">▶</span>
+            </div>
+
+            <div class="key-input">
+                <span class="icon">🔑</span>
+                <div class="key-info">
+                    <div class="key-label">Khóa bí mật</div>
+                    <input type="password" id="key" value="matkhau123" placeholder="Nhập khóa...">
+                </div>
+                <button class="eye-btn" id="toggle-key">👁</button>
+            </div>
+
+            <button class="action-btn primary" id="btn-run">
+                <span id="btn-run-text">⚙ MÃ HÓA</span>
+            </button>
+        </div>
+
+        <div class="controls-row2">
+            <button class="action-btn cyan" id="btn-swap">🔁 ĐẢO CHIỀU</button>
+            <button class="action-btn danger" id="btn-clear">🗑 XÓA TẤT CẢ</button>
+        </div>
+
+        <div class="modal" id="algo-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🎯 Chọn thuật toán</h2>
+                    <button class="close-btn" id="close-modal">✕</button>
+                </div>
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="search" placeholder="Tìm: aes, base, morse...">
+                </div>
+                <div class="algo-list" id="algo-list"></div>
             </div>
         </div>
-    </div>
 
-    <div class="toast" id="toast"></div>
+        <div class="transition-slider" id="transition-slider">
+            <div class="slider-bg" id="slider-bg"></div>
+            <div class="slider-content">
+                <div class="slider-icon" id="slider-icon">🔒</div>
+                <div class="slider-text" id="slider-text">ĐANG CHUYỂN...</div>
+                <div class="slider-subtext" id="slider-subtext">Vui lòng chờ</div>
+            </div>
+        </div>
+
+        <!-- Modal yêu cầu đăng nhập -->
+        <div class="confirm-modal" id="login-required-modal">
+            <div class="confirm-box">
+                <div class="confirm-icon">🔐</div>
+                <h3 class="confirm-title">Cần đăng nhập</h3>
+                <p class="confirm-text">Bạn cần đăng nhập để sử dụng tính năng mã hóa / giải mã.</p>
+                <div class="confirm-actions">
+                    <button class="confirm-btn cancel" id="btn-cancel-login">Hủy</button>
+                    <button class="confirm-btn primary" id="btn-go-login">Đăng nhập</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal xác nhận đăng xuất -->
+        <div class="confirm-modal" id="logout-modal">
+            <div class="confirm-box">
+                <div class="confirm-icon">🚪</div>
+                <h3 class="confirm-title">Đăng xuất?</h3>
+                <p class="confirm-text">Bạn có chắc muốn đăng xuất khỏi tài khoản <b id="confirm-username"></b>?</p>
+                <div class="confirm-actions">
+                    <button class="confirm-btn cancel" id="btn-cancel-logout">Hủy</button>
+                    <button class="confirm-btn danger" id="btn-confirm-logout">Đăng xuất</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+
+    </div>  <!-- đóng .site-content -->
 
     <script src="/static/script.js"></script>
 </body>
