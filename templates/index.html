@@ -15,9 +15,18 @@
         {% if username == "Khách" %}
             <button class="btn-logout" id="btn-top-login" style="background: rgba(37, 99, 235, 0.12); border-color: rgba(37, 99, 235, 0.3); color: var(--blue-light);">🔑 Đăng nhập</button>
         {% else %}
+            <button class="btn-admin" id="btn-admin" style="display: none;">🛡 Admin</button>
             <button class="btn-logout" id="btn-logout">🚪 Đăng xuất</button>
         {% endif %}
     </div>
+
+    <!-- Thông báo lỗi không có quyền -->
+    {% if request.args.get('error') == 'no_permission' %}
+    <div class="error-toast" id="error-toast">
+        <span class="error-toast-icon">🚫</span>
+        <span class="error-toast-text">Bạn không có quyền truy cập trang Admin</span>
+    </div>
+    {% endif %}
 
     <header class="header">
         <div class="logo">
