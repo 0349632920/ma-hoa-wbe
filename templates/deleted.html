@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🗑️ Tài khoản sẽ bị xóa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(155,89,182,0.2), transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(231,76,60,0.15), transparent 50%);
+      animation: bgPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes bgPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .delete-container {
+      position: relative;
+      z-index: 2;
+      max-width: 640px;
+      width: 100%;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.1),
+        0 30px 80px rgba(0,0,0,0.6),
+        0 0 100px rgba(155,89,182,0.3);
+      overflow: hidden;
+      animation: shakeIn 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    }
+
+    @keyframes shakeIn {
+      0% { transform: translateX(-30px) scale(0.9); opacity: 0; }
+      20% { transform: translateX(20px) scale(0.95); }
+      40% { transform: translateX(-15px) scale(0.97); }
+      60% { transform: translateX(10px) scale(0.99); }
+      80% { transform: translateX(-5px) scale(1); }
+      100% { transform: translateX(0) scale(1); opacity: 1; }
+    }
+
+    .delete-header {
+      background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%);
+      padding: 30px 40px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .delete-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0,0,0,0.1) 10px,
+        rgba(0,0,0,0.1) 20px
+      );
+      opacity: 0.3;
+      animation: stripeMove 20s linear infinite;
+    }
+
+    @keyframes stripeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 100px 100px; }
+    }
+
+    .delete-header-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .delete-icon {
+      width: 70px;
+      height: 70px;
+      background: rgba(255,255,255,0.2);
+      border: 3px solid white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      flex-shrink: 0;
+      animation: deleteIconPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes deleteIconPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.7); }
+      50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255,255,255,0); }
+    }
+
+    .delete-header h1 {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      line-height: 1.2;
+    }
+
+    .delete-header p {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .delete-body {
+      padding: 35px 40px;
+    }
+
+    .danger-alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 18px 22px;
+      background: linear-gradient(135deg, #ffebee, #ffcdd2);
+      border-left: 5px solid #e74c3c;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      animation: dangerPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes dangerPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(231,76,60,0.3); }
+      50% { box-shadow: 0 0 0 12px rgba(231,76,60,0); }
+    }
+
+    .danger-icon {
+      font-size: 28px;
+      animation: dangerShake 1.5s ease-in-out infinite;
+    }
+
+    @keyframes dangerShake {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-10deg); }
+      75% { transform: rotate(10deg); }
+    }
+
+    .danger-text {
+      flex: 1;
+      color: #c0392b;
+      font-weight: 700;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .delete-message {
+      font-size: 16px;
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    .delete-message strong {
+      color: #8e44ad;
+      font-weight: 700;
+    }
+
+    .delete-info {
+      background: #f8f9fa;
+      border-left: 5px solid #8e44ad;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 25px;
+    }
+
+    .delete-info-row {
+      display: flex;
+      padding: 10px 0;
+      border-bottom: 1px solid #e9ecef;
+      font-size: 14px;
+    }
+
+    .delete-info-row:last-child { border-bottom: none; }
+
+    .delete-info-label {
+      color: #6c757d;
+      font-weight: 600;
+      min-width: 140px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .delete-info-value {
+      color: #212529;
+      font-weight: 700;
+      flex: 1;
+      word-break: break-word;
+    }
+
+    .delete-info-value.reason {
+      color: #8e44ad;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: #f3e5f5;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid #e1bee7;
+    }
+
+    .will-lose {
+      background: #fff8e1;
+      border-left: 5px solid #f39c12;
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-bottom: 25px;
+    }
+
+    .will-lose-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #856404;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .will-lose-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .will-lose-list li {
+      padding: 6px 0 6px 28px;
+      font-size: 14px;
+      color: #665109;
+      position: relative;
+      font-weight: 500;
+    }
+
+    .will-lose-list li::before {
+      content: '❌';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      font-size: 14px;
+    }
+
+    .confirm-checkbox-box {
+      background: #f0f0f5;
+      border: 2px solid #d1d5db;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .confirm-checkbox-box:hover {
+      background: #e8e8f0;
+      border-color: #8e44ad;
+    }
+
+    .confirm-checkbox-box.checked {
+      background: #f3e5f5;
+      border-color: #8e44ad;
+      box-shadow: 0 0 0 3px rgba(142,68,173,0.1);
+    }
+
+    .confirm-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .confirm-checkbox-label input {
+      width: 22px;
+      height: 22px;
+      accent-color: #8e44ad;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .delete-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .delete-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 16px 22px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .delete-btn.danger {
+      background: linear-gradient(135deg, #8e44ad, #6c3483);
+      color: white;
+      box-shadow: 0 6px 20px rgba(142,68,173,0.4);
+    }
+
+    .delete-btn.danger:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(142,68,173,0.6);
+    }
+
+    .delete-btn.danger:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      opacity: 0.6;
+      box-shadow: none;
+    }
+
+    .delete-btn.secondary {
+      background: #f1f3f5;
+      color: #495057;
+    }
+
+    .delete-btn.secondary:hover {
+      background: #e9ecef;
+      transform: translateY(-2px);
+    }
+
+    .delete-footer {
+      background: #f8f9fa;
+      padding: 15px 40px;
+      text-align: center;
+      font-size: 12px;
+      color: #6c757d;
+      border-top: 1px solid #e9ecef;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Final modal */
+    .final-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,10,20,0.9);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.3s;
+    }
+
+    .final-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .final-modal {
+      background: white;
+      border-radius: 20px;
+      max-width: 460px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.7);
+      transform: scale(0.9);
+      transition: 0.3s;
+    }
+
+    .final-modal-overlay.show .final-modal {
+      transform: scale(1);
+    }
+
+    .final-modal-header {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      padding: 24px;
+      color: white;
+      text-align: center;
+    }
+
+    .final-modal-header h3 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .final-modal-header p {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .final-modal-body {
+      padding: 26px;
+      text-align: center;
+    }
+
+    .final-modal-body p {
+      font-size: 15px;
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .final-modal-body strong {
+      color: #c0392b;
+    }
+
+    .final-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .final-btn {
+      flex: 1;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .final-btn.cancel {
+      background: #e5e5f0;
+      color: #555;
+    }
+
+    .final-btn.confirm-delete {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: white;
+    }
+
+    .final-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    /* Deleting overlay */
+    .deleting-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,10,20,0.95);
+      backdrop-filter: blur(15px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.3s;
+    }
+
+    .deleting-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .deleting-content {
+      text-align: center;
+      color: white;
+    }
+
+    .deleting-spinner {
+      width: 80px;
+      height: 80px;
+      border: 5px solid rgba(255,255,255,0.2);
+      border-top-color: #e74c3c;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 24px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .deleting-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .deleting-subtitle {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    @media (max-width: 500px) {
+      .delete-header { padding: 25px 22px; }
+      .delete-body { padding: 25px 22px; }
+      .delete-header h1 { font-size: 22px; }
+      .delete-icon { width: 55px; height: 55px; font-size: 28px; }
+      .delete-info-label { min-width: 100px; font-size: 13px; }
+      .delete-info-value { font-size: 13px; }
+      .delete-footer { padding: 12px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="delete-container">
+    <div class="delete-header">
+      <div class="delete-header-content">
+        <div class="delete-icon">🗑️</div>
+        <div>
+          <h1>Tài khoản sẽ bị XÓA</h1>
+          <p>Your account is pending deletion</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="delete-body">
+      <div class="danger-alert">
+        <div class="danger-icon">⚠️</div>
+        <div class="danger-text">
+          Đây là hành động <strong>KHÔNG THỂ HOÀN TÁC</strong>. Tài khoản của bạn sẽ bị xóa vĩnh viễn khỏi hệ thống.
+        </div>
+      </div>
+
+      <p class="delete-message">
+        Tài khoản <strong>{{ username }}</strong> đã bị quản trị viên đánh dấu để xóa.
+        Bạn cần xác nhận để hoàn tất việc xóa tài khoản.
+      </p>
+
+      <div class="delete-info">
+        <div class="delete-info-row">
+          <span class="delete-info-label">👤 Tài khoản</span>
+          <span class="delete-info-value">{{ username }}</span>
+        </div>
+        <div class="delete-info-row">
+          <span class="delete-info-label">🗑️ Lý do</span>
+          <span class="delete-info-value reason">{{ reason }}</span>
+        </div>
+        <div class="delete-info-row">
+          <span class="delete-info-label">📅 Thời gian</span>
+          <span class="delete-info-value">{{ deleted_at }}</span>
+        </div>
+        {% if expires_at_display %}
+        <div class="delete-info-row">
+          <span class="delete-info-label">⏰ Hết hạn</span>
+          <span class="delete-info-value" style="color:#e67e22;">{{ expires_at_display }}</span>
+        </div>
+        {% endif %}
+        <div class="delete-info-row">
+          <span class="delete-info-label">👑 Admin</span>
+          <span class="delete-info-value">{{ deleted_by }}</span>
+        </div>
+        <div class="delete-info-row">
+          <span class="delete-info-label">🆔 Delete ID</span>
+          <span class="delete-info-value" style="font-family:'JetBrains Mono',monospace;font-size:12px;">{{ delete_id }}</span>
+        </div>
+      </div>
+
+      <div class="will-lose">
+        <div class="will-lose-title">
+          <span>⚠️</span>
+          <span>Bạn sẽ MẤT VĨNH VIỄN</span>
+        </div>
+        <ul class="will-lose-list">
+          <li>Tất cả lịch sử mã hóa / giải mã</li>
+          <li>Tài khoản đăng nhập</li>
+          <li>Mọi dữ liệu liên quan</li>
+          <li>Không thể khôi phục sau khi xóa</li>
+        </ul>
+      </div>
+
+      <div class="confirm-checkbox-box" id="checkboxBox">
+        <label class="confirm-checkbox-label">
+          <input type="checkbox" id="confirmCheck">
+          <span>Tôi đã hiểu và <strong>chấp nhận xóa</strong> tài khoản của mình vĩnh viễn</span>
+        </label>
+      </div>
+
+      <div class="delete-actions">
+        <button class="delete-btn secondary" onclick="logoutNow()">
+          🚪 Đăng xuất
+        </button>
+        <button class="delete-btn danger" id="deleteBtn" onclick="openFinalModal()" disabled>
+          🗑️ Xóa tài khoản
+        </button>
+      </div>
+    </div>
+
+    <div class="delete-footer">
+      🔒 Mã Hóa Tool — Account Deletion System
+    </div>
+  </div>
+
+  <div class="final-modal-overlay" id="finalModal">
+    <div class="final-modal">
+      <div class="final-modal-header">
+        <h3>⚠️ XÁC NHẬN LẦN CUỐI</h3>
+        <p>Hành động không thể hoàn tác</p>
+      </div>
+      <div class="final-modal-body">
+        <p>
+          Bạn có <strong>CHẮC CHẮN</strong> muốn xóa tài khoản<br>
+          <strong>{{ username }}</strong> vĩnh viễn?
+        </p>
+        <div class="final-actions">
+          <button class="final-btn cancel" onclick="closeFinalModal()">
+            ❌ Hủy
+          </button>
+          <button class="final-btn confirm-delete" onclick="confirmDelete()">
+            🗑️ XÓA NGAY
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="deleting-overlay" id="deletingOverlay">
+    <div class="deleting-content">
+      <div class="deleting-spinner"></div>
+      <h2 class="deleting-title">Đang xóa tài khoản...</h2>
+      <p class="deleting-subtitle">Vui lòng chờ trong giây lát</p>
+    </div>
+  </div>
+
+  <script>
+    const username = "{{ username }}";
+
+    // ==========================================
+    // CHECKBOX → ENABLE NÚT
+    // ==========================================
+    const check = document.getElementById('confirmCheck');
+    const checkboxBox = document.getElementById('checkboxBox');
+    const deleteBtn = document.getElementById('deleteBtn');
+
+    check.addEventListener('change', () => {
+      if (check.checked) {
+        deleteBtn.disabled = false;
+        checkboxBox.classList.add('checked');
+      } else {
+        deleteBtn.disabled = true;
+        checkboxBox.classList.remove('checked');
+      }
+    });
+
+    checkboxBox.addEventListener('click', (e) => {
+      if (e.target !== check) {
+        check.checked = !check.checked;
+        check.dispatchEvent(new Event('change'));
+      }
+    });
+
+    // ==========================================
+    // MODAL XÁC NHẬN CUỐI
+    // ==========================================
+    function openFinalModal() {
+      if (!check.checked) return;
+      document.getElementById('finalModal').classList.add('show');
+    }
+
+    function closeFinalModal() {
+      document.getElementById('finalModal').classList.remove('show');
+    }
+
+    // ==========================================
+    // ĐĂNG XUẤT
+    // ==========================================
+    async function logoutNow() {
+      if (!confirm('Đăng xuất khỏi tài khoản?')) return;
+      try {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/login';
+      } catch (e) {
+        window.location.href = '/login';
+      }
+    }
+
+    // ==========================================
+    // XÓA THẬT
+    // ==========================================
+    async function confirmDelete() {
+      closeFinalModal();
+      document.getElementById('deletingOverlay').classList.add('show');
+
+      playDeleteSound();
+
+      await new Promise(r => setTimeout(r, 2000));
+
+      try {
+        const res = await fetch('/api/confirm-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          // Hiệu ứng xóa xong
+          document.querySelector('.deleting-title').textContent = '✅ Đã xóa tài khoản!';
+          document.querySelector('.deleting-subtitle').textContent = 'Đang chuyển về trang đăng nhập...';
+          document.querySelector('.deleting-spinner').style.borderTopColor = '#27ae60';
+
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 1500);
+        } else {
+          alert('❌ Lỗi: ' + (data.error || 'Không thể xóa tài khoản'));
+          document.getElementById('deletingOverlay').classList.remove('show');
+        }
+      } catch (e) {
+        alert('❌ Lỗi kết nối!');
+        document.getElementById('deletingOverlay').classList.remove('show');
+      }
+    }
+
+    // ==========================================
+    // ÂM THANH XÓA
+    // ==========================================
+    function playDeleteSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [800, 600, 400, 200];
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+          gain.gain.setValueAtTime(0.08, ctx.currentTime + i * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.15);
+          osc.start(ctx.currentTime + i * 0.15);
+          osc.stop(ctx.currentTime + i * 0.15 + 0.2);
+        });
+      } catch (e) {}
+    }
+
+    // ==========================================
+    // ESC đóng modal
+    // ==========================================
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeFinalModal();
+    });
+
+    document.getElementById('finalModal').addEventListener('click', (e) => {
+      if (e.target.id === 'finalModal') closeFinalModal();
+    });
+  </script>
+</body>
+</html>
