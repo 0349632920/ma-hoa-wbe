@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🔐 75+ Kiểu Mã Hóa & Giải Mã</title>
+  <title>🔐 Mã Hóa Tool</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- =============================================
-       SPLASH SCREEN (loading ban đầu)
-       ============================================= -->
+  <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
     <div class="splash-bg">
       <span class="floating-emoji" style="--delay:0s;--x:10%;--y:20%">🔐</span>
@@ -22,7 +20,6 @@
       <span class="floating-emoji" style="--delay:0.3s;--x:85%;--y:45%">🎯</span>
       <span class="floating-emoji" style="--delay:1.7s;--x:55%;--y:85%">✨</span>
     </div>
-
     <div class="splash-content">
       <div class="splash-logo">
         <div class="logo-shield">
@@ -31,39 +28,23 @@
           <div class="logo-ring ring-2"></div>
         </div>
       </div>
-
       <h1 class="splash-title">
         <span>Mã Hóa</span> <span class="gradient-text">Tool</span>
       </h1>
-
       <p class="splash-subtitle">Công cụ mã hóa & giải mã đa phương pháp</p>
-
       <div class="splash-progress">
         <div class="splash-progress-fill" id="splashProgress"></div>
       </div>
-
       <p class="splash-status" id="splashStatus">Đang khởi tạo...</p>
-
       <div class="splash-steps">
-        <div class="splash-step" data-step="1">
-          <div class="step-dot"></div>
-          <span>Khởi động</span>
-        </div>
-        <div class="splash-step" data-step="2">
-          <div class="step-dot"></div>
-          <span>Tải phương pháp</span>
-        </div>
-        <div class="splash-step" data-step="3">
-          <div class="step-dot"></div>
-          <span>Sẵn sàng</span>
-        </div>
+        <div class="splash-step" data-step="1"><div class="step-dot"></div><span>Khởi động</span></div>
+        <div class="splash-step" data-step="2"><div class="step-dot"></div><span>Tải phương pháp</span></div>
+        <div class="splash-step" data-step="3"><div class="step-dot"></div><span>Sẵn sàng</span></div>
       </div>
     </div>
   </div>
 
-  <!-- =============================================
-       NỘI DUNG CHÍNH
-       ============================================= -->
+  <!-- MAIN CONTAINER -->
   <div class="container" id="mainContainer">
     <header>
       <div class="logo">
@@ -73,21 +54,17 @@
           <p>{{ methods|length }}+ kiểu mã hóa & giải mã</p>
         </div>
       </div>
-
       <div class="header-actions">
         <div class="stats-badge">📊 {{ methods|length }} phương pháp</div>
-
-        <!-- User Menu -->
         <div class="user-menu" id="userMenu">
           <button class="user-btn" id="userBtn">
             <div class="user-avatar">{{ username[0]|upper }}</div>
             <div class="user-info">
               <strong>{{ username }}</strong>
-              <small>Đã đăng nhập</small>
+              <small>{% if is_super_admin %}👑 Super Admin{% elif role == 'admin' %}👑 Admin{% else %}Đã đăng nhập{% endif %}</small>
             </div>
             <span class="user-arrow">▼</span>
           </button>
-
           <div class="user-dropdown" id="userDropdown">
             <div class="user-dropdown-header">
               <div class="user-avatar large">{{ username[0]|upper }}</div>
@@ -96,37 +73,34 @@
                 <small id="userLoginInfo">Đang tải...</small>
               </div>
             </div>
-            <button class="dropdown-item" onclick="showHistory()">
-              🕐 Lịch sử gần đây
+            {% if role == 'admin' or is_super_admin %}
+            <button class="dropdown-item admin-item" onclick="window.location.href='/admin'">
+              👑 Admin Panel
             </button>
-            <button class="dropdown-item danger" onclick="logout()">
-              🚪 Đăng xuất
-            </button>
+            {% endif %}
+            <button class="dropdown-item" onclick="showHistory()">🕐 Lịch sử gần đây</button>
+            <button class="dropdown-item danger" onclick="logout()">🚪 Đăng xuất</button>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- ===== TASKBAR ===== -->
+    <div id="warningBannerContainer"></div>
+
+    <!-- TASKBAR -->
     <div class="taskbar">
       <button class="task-btn active" data-action="encrypt" id="tabEncrypt">
         <span class="task-icon">🔒</span>
-        <div class="task-text">
-          <strong>Mã Hóa</strong>
-          <small>Encrypt</small>
-        </div>
+        <div class="task-text"><strong>Mã Hóa</strong><small>Encrypt</small></div>
       </button>
       <button class="task-btn" data-action="decrypt" id="tabDecrypt">
         <span class="task-icon">🔓</span>
-        <div class="task-text">
-          <strong>Giải Mã</strong>
-          <small>Decrypt</small>
-        </div>
+        <div class="task-text"><strong>Giải Mã</strong><small>Decrypt</small></div>
       </button>
       <div class="task-indicator" id="taskIndicator"></div>
     </div>
 
-    <!-- ===== METHOD PICKER ===== -->
+    <!-- METHOD PICKER -->
     <div class="method-picker-section">
       <label>🎯 Kiểu mã hóa:</label>
       <button class="method-picker-btn" id="openPickerBtn">
@@ -139,13 +113,11 @@
       </button>
     </div>
 
-    <!-- Key -->
     <div id="keySection" class="key-section hidden">
       <label id="keyLabel">🔑 Khóa:</label>
       <input type="text" id="keyInput" placeholder="Nhập khóa...">
     </div>
 
-    <!-- Warnings -->
     <div id="hashWarning" class="hash-warning hidden">
       ⚠️ Phương pháp này là <strong>mã hóa 1 chiều</strong> — không thể giải mã!
     </div>
@@ -172,20 +144,15 @@
       </div>
     </div>
 
-    <!-- Buttons -->
     <div class="buttons">
-      <button class="btn primary" id="actionBtn" onclick="runAction()">
-        🔒 Mã Hóa Ngay
-      </button>
+      <button class="btn primary" id="actionBtn" onclick="runAction()">🔒 Mã Hóa Ngay</button>
       <button class="btn swap" onclick="swapText()">🔄 Đảo Chiều</button>
       <button class="btn copy" onclick="copyResult()">📋 Sao Chép</button>
       <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
     </div>
   </div>
 
-  <!-- =============================================
-       LOADING OVERLAY khi chuyển tab
-       ============================================= -->
+  <!-- LOADING OVERLAY -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-content">
       <div class="loading-animation">
@@ -194,34 +161,18 @@
         <div class="pulse-ring delay-1"></div>
         <div class="pulse-ring delay-2"></div>
       </div>
-
       <h2 class="loading-title" id="loadingTitle">Đang chuyển chế độ...</h2>
       <p class="loading-subtitle" id="loadingSubtitle">Vui lòng chờ trong giây lát</p>
-
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       <div class="loading-steps">
-        <div class="step-item" data-step="1">
-          <span class="step-icon">⚙️</span>
-          <span>Khởi tạo</span>
-        </div>
-        <div class="step-item" data-step="2">
-          <span class="step-icon">🔄</span>
-          <span>Chuyển đổi</span>
-        </div>
-        <div class="step-item" data-step="3">
-          <span class="step-icon">✅</span>
-          <span>Hoàn tất</span>
-        </div>
+        <div class="step-item" data-step="1"><span class="step-icon">⚙️</span><span>Khởi tạo</span></div>
+        <div class="step-item" data-step="2"><span class="step-icon">🔄</span><span>Chuyển đổi</span></div>
+        <div class="step-item" data-step="3"><span class="step-icon">✅</span><span>Hoàn tất</span></div>
       </div>
     </div>
   </div>
 
-  <!-- =============================================
-       PROCESSING OVERLAY
-       ============================================= -->
+  <!-- PROCESSING OVERLAY -->
   <div class="processing-overlay" id="processingOverlay">
     <div class="processing-box">
       <div class="processing-spinner">
@@ -232,23 +183,16 @@
     </div>
   </div>
 
-  <!-- =============================================
-       MODAL CHỌN PHƯƠNG PHÁP
-       ============================================= -->
+  <!-- MODAL CHỌN PHƯƠNG PHÁP -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <div class="modal-header">
-        <div>
-          <h2>🔐 Chọn kiểu mã hóa</h2>
-          <p>{{ methods|length }} phương pháp có sẵn</p>
-        </div>
+        <div><h2>🔐 Chọn kiểu mã hóa</h2><p>{{ methods|length }} phương pháp có sẵn</p></div>
         <button class="modal-close" id="closeModalBtn">✕</button>
       </div>
-
       <div class="modal-search">
-        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm... (VD: base64, aes, morse)">
+        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm...">
       </div>
-
       <div class="modal-body">
         <div class="methods-grid" id="methodsGrid">
           {% for key, name in methods.items() %}
@@ -259,7 +203,6 @@
           {% endfor %}
         </div>
       </div>
-
       <div class="modal-footer">
         <span>💡 Gõ tên để tìm nhanh</span>
         <button class="btn-cancel" id="cancelModalBtn">Đóng</button>
@@ -267,23 +210,16 @@
     </div>
   </div>
 
-  <!-- =============================================
-       MODAL LỊCH SỬ
-       ============================================= -->
+  <!-- MODAL LỊCH SỬ -->
   <div class="modal-overlay" id="historyModalOverlay">
     <div class="modal modal-history">
       <div class="modal-header history-header">
-        <div>
-          <h2>🕐 Lịch sử gần đây</h2>
-          <p id="historyCountText">Đang tải...</p>
-        </div>
+        <div><h2>🕐 Lịch sử gần đây</h2><p id="historyCountText">Đang tải...</p></div>
         <button class="modal-close" id="closeHistoryBtn">✕</button>
       </div>
-
       <div class="modal-body" id="historyBody">
         <div class="empty-msg">Đang tải lịch sử...</div>
       </div>
-
       <div class="modal-footer">
         <span>💡 Hiển thị 20 lần gần nhất</span>
         <button class="btn-cancel" id="cancelHistoryBtn">Đóng</button>
@@ -291,21 +227,11 @@
     </div>
   </div>
 
-  <!-- Toast -->
   <div id="toast" class="toast"></div>
 
   <script>
-    // ==========================================
-    // SPLASH SCREEN
-    // ==========================================
-    const splashMessages = [
-      'Đang khởi tạo...',
-      'Đang tải các phương pháp mã hóa...',
-      'Đang chuẩn bị công cụ...',
-      'Sắp xong rồi...',
-      'Sẵn sàng!'
-    ];
-
+    // SPLASH
+    const splashMessages = ['Đang khởi tạo...', 'Đang tải phương pháp...', 'Đang chuẩn bị...', 'Sắp xong...', 'Sẵn sàng!'];
     const splashProgress = document.getElementById('splashProgress');
     const splashStatus = document.getElementById('splashStatus');
 
@@ -354,50 +280,27 @@
       setTimeout(runSplash, 200);
     });
 
-    // ==========================================
     // STATE
-    // ==========================================
     let currentMethod = 'base64';
     let currentAction = 'encrypt';
     let isTransitioning = false;
 
-    const oneWayMethods = new Set([
-      'md5','sha1','sha224','sha256','sha384','sha512',
-      'sha3_256','sha3_512','blake2b','blake2s','crc32',
-      'uuid','random_hex'
-    ]);
-    const keyMethods = new Set([
-      'caesar','affine','vigenere','beaufort','autokey',
-      'playfair','hill','railfence','columnar','xor','aes'
-    ]);
+    const oneWayMethods = new Set(['md5','sha1','sha224','sha256','sha384','sha512','sha3_256','sha3_512','blake2b','blake2s','crc32','uuid','random_hex']);
+    const keyMethods = new Set(['caesar','affine','vigenere','beaufort','autokey','playfair','hill','railfence','columnar','xor','aes']);
     const keyLabels = {
-      'caesar': '🔢 Khóa dịch chuyển (1-25):',
-      'affine': '🔢 Khóa affine (a,b):',
-      'vigenere': '🔑 Từ khóa Vigenère:',
-      'beaufort': '🔑 Từ khóa Beaufort:',
-      'autokey': '🔑 Từ khóa Autokey:',
-      'playfair': '🔑 Từ khóa Playfair:',
-      'hill': '🔢 Ma trận Hill 2x2 (a,b,c,d):',
-      'railfence': '🔢 Số thanh ray (>=2):',
-      'columnar': '🔑 Từ khóa Columnar:',
-      'xor': '🔑 Khóa XOR:',
-      'aes': '🔐 Mật khẩu AES:'
+      'caesar': '🔢 Khóa dịch chuyển (1-25):', 'affine': '🔢 Khóa affine (a,b):',
+      'vigenere': '🔑 Từ khóa Vigenère:', 'beaufort': '🔑 Từ khóa Beaufort:',
+      'autokey': '🔑 Từ khóa Autokey:', 'playfair': '🔑 Từ khóa Playfair:',
+      'hill': '🔢 Ma trận Hill:', 'railfence': '🔢 Số ray (>=2):',
+      'columnar': '🔑 Từ khóa Columnar:', 'xor': '🔑 Khóa XOR:', 'aes': '🔐 Mật khẩu AES:'
     };
     const keyPlaceholders = {
-      'caesar': 'Mặc định: 3',
-      'affine': 'Mặc định: 5,8',
-      'vigenere': 'Mặc định: KEY',
-      'beaufort': 'Mặc định: KEY',
-      'autokey': 'Mặc định: KEY',
-      'playfair': 'Mặc định: KEY',
-      'hill': 'Mặc định: 3,3,2,5',
-      'railfence': 'Mặc định: 3',
-      'columnar': 'Mặc định: KEY',
-      'xor': 'Mặc định: KEY',
-      'aes': 'Nhập mật khẩu...'
+      'caesar': 'Mặc định: 3', 'affine': 'Mặc định: 5,8', 'vigenere': 'Mặc định: KEY',
+      'beaufort': 'Mặc định: KEY', 'autokey': 'Mặc định: KEY', 'playfair': 'Mặc định: KEY',
+      'hill': 'Mặc định: 3,3,2,5', 'railfence': 'Mặc định: 3', 'columnar': 'Mặc định: KEY',
+      'xor': 'Mặc định: KEY', 'aes': 'Nhập mật khẩu...'
     };
 
-    // ===== DOM =====
     const modalOverlay = document.getElementById('modalOverlay');
     const historyModalOverlay = document.getElementById('historyModalOverlay');
     const searchInput = document.getElementById('searchInput');
@@ -405,20 +308,16 @@
     const tabDecrypt = document.getElementById('tabDecrypt');
     const taskIndicator = document.getElementById('taskIndicator');
     const actionBtn = document.getElementById('actionBtn');
-
     const loadingOverlay = document.getElementById('loadingOverlay');
     const loadingIcon = document.getElementById('loadingIcon');
     const loadingTitle = document.getElementById('loadingTitle');
     const loadingSubtitle = document.getElementById('loadingSubtitle');
     const progressFill = document.getElementById('progressFill');
-
     const processingOverlay = document.getElementById('processingOverlay');
     const processingIcon = document.getElementById('processingIcon');
     const processingText = document.getElementById('processingText');
 
-    // ==========================================
     // USER MENU
-    // ==========================================
     const userMenu = document.getElementById('userMenu');
     const userBtn = document.getElementById('userBtn');
 
@@ -428,26 +327,47 @@
     });
 
     document.addEventListener('click', (e) => {
-      if (!userMenu.contains(e.target)) {
-        userMenu.classList.remove('open');
-      }
+      if (!userMenu.contains(e.target)) userMenu.classList.remove('open');
     });
 
     async function loadUserInfo() {
       try {
         const res = await fetch('/api/me');
-        if (res.status === 401) {
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        const data = await res.json();
+
+        if (data.banned) {
+          alert('🚫 Tài khoản đã bị BAN!');
           window.location.href = '/login';
           return;
         }
-        const data = await res.json();
+
         if (data.success) {
           const el = document.getElementById('userLoginInfo');
-          if (el) {
-            el.textContent = `Đăng nhập ${data.login_count} lần`;
+          if (el) el.textContent = `Đăng nhập ${data.login_count} lần`;
+
+          if (data.warnings && data.warnings.length > 0 && data.status === 'warned') {
+            showWarningBanner(data.warnings);
           }
         }
       } catch (e) { console.error(e); }
+    }
+
+    function showWarningBanner(warnings) {
+      const container = document.getElementById('warningBannerContainer');
+      if (!container) return;
+      const last = warnings[warnings.length - 1];
+      const time = new Date(last.time).toLocaleString('vi-VN');
+      container.innerHTML = `
+        <div class="user-warning-banner" id="warningBanner">
+          <span class="warning-banner-icon">⚠️</span>
+          <div class="warning-banner-content">
+            <strong>Bạn có ${warnings.length} cảnh báo từ admin!</strong>
+            <small>Lý do gần nhất: "${escapeHtml(last.reason)}" — ${time}</small>
+          </div>
+          <button class="warning-banner-close" onclick="document.getElementById('warningBanner').remove()">✕</button>
+        </div>
+      `;
     }
 
     async function logout() {
@@ -456,14 +376,9 @@
         await fetch('/api/logout', { method: 'POST' });
         showToast('👋 Đã đăng xuất!');
         setTimeout(() => { window.location.href = '/login'; }, 500);
-      } catch (e) {
-        showToast('❌ Lỗi đăng xuất!', true);
-      }
+      } catch (e) { showToast('❌ Lỗi!', true); }
     }
 
-    // ==========================================
-    // LỊCH SỬ
-    // ==========================================
     async function showHistory() {
       userMenu.classList.remove('open');
       historyModalOverlay.classList.add('show');
@@ -471,9 +386,7 @@
 
       const body = document.getElementById('historyBody');
       const countText = document.getElementById('historyCountText');
-
-      body.innerHTML = '<div class="empty-msg">Đang tải lịch sử...</div>';
-      countText.textContent = 'Đang tải...';
+      body.innerHTML = '<div class="empty-msg">Đang tải...</div>';
 
       try {
         const res = await fetch('/api/history');
@@ -481,17 +394,12 @@
 
         if (!data.success || !data.history || data.history.length === 0) {
           countText.textContent = 'Chưa có lịch sử';
-          body.innerHTML = `
-            <div class="empty-msg">
-              📭 Chưa có lịch sử nào!<br>
-              <small>Hãy thử mã hóa hoặc giải mã văn bản trước.</small>
-            </div>
-          `;
+          body.innerHTML = '<div class="empty-msg">📭 Chưa có lịch sử!</div>';
           return;
         }
 
         countText.textContent = `${data.history.length} lần gần đây`;
-        body.innerHTML = data.history.map((h, i) => {
+        body.innerHTML = data.history.map((h) => {
           const t = new Date(h.time).toLocaleString('vi-VN');
           const icon = h.action === 'encrypt' ? '🔒' : '🔓';
           const act = h.action === 'encrypt' ? 'Mã hóa' : 'Giải mã';
@@ -501,26 +409,19 @@
                 <div>
                   <span class="history-icon">${icon}</span>
                   <strong>${act}</strong>
-                  <span class="history-method">${h.method}</span>
+                  <span class="history-method">${escapeHtml(h.method)}</span>
                 </div>
                 <span class="history-time">${t}</span>
               </div>
               <div class="history-preview">
-                <div class="history-line">
-                  <span class="history-label">📝 In:</span>
-                  <code>${escapeHtml(h.input_preview)}${h.input_preview.length >= 50 ? '...' : ''}</code>
-                </div>
-                <div class="history-line">
-                  <span class="history-label">✅ Out:</span>
-                  <code>${escapeHtml(h.output_preview)}${h.output_preview.length >= 50 ? '...' : ''}</code>
-                </div>
+                <div class="history-line"><span class="history-label">📝 In:</span><code>${escapeHtml(h.input_preview)}</code></div>
+                <div class="history-line"><span class="history-label">✅ Out:</span><code>${escapeHtml(h.output_preview)}</code></div>
               </div>
             </div>
           `;
         }).join('');
       } catch (e) {
-        countText.textContent = 'Lỗi';
-        body.innerHTML = '<div class="empty-msg">❌ Không tải được lịch sử!</div>';
+        body.innerHTML = '<div class="empty-msg">❌ Lỗi tải lịch sử!</div>';
       }
     }
 
@@ -536,28 +437,18 @@
     });
 
     function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-      })[c]);
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
     }
 
-    // ==========================================
     // LOADING SCREEN
-    // ==========================================
     function showLoadingScreen(action, callback) {
       if (isTransitioning) return;
       isTransitioning = true;
-
       const isEncrypt = action === 'encrypt';
 
       loadingIcon.textContent = isEncrypt ? '🔒' : '🔓';
-      loadingTitle.textContent = isEncrypt
-        ? 'Đang chuyển sang chế độ Mã hóa...'
-        : 'Đang chuyển sang chế độ Giải mã...';
-      loadingSubtitle.textContent = isEncrypt
-        ? 'Chuẩn bị công cụ mã hóa'
-        : 'Chuẩn bị công cụ giải mã';
-
+      loadingTitle.textContent = isEncrypt ? 'Đang chuyển sang Mã hóa...' : 'Đang chuyển sang Giải mã...';
+      loadingSubtitle.textContent = isEncrypt ? 'Chuẩn bị mã hóa' : 'Chuẩn bị giải mã';
       loadingOverlay.className = 'loading-overlay show ' + (isEncrypt ? 'encrypt-mode' : 'decrypt-mode');
 
       progressFill.style.transition = 'none';
@@ -567,7 +458,6 @@
       setTimeout(() => {
         progressFill.style.transition = 'width 1.5s ease-out';
         progressFill.style.width = '100%';
-
         setTimeout(() => markStep(1, 'active'), 100);
         setTimeout(() => markStep(1, 'done'), 500);
         setTimeout(() => markStep(2, 'active'), 500);
@@ -591,22 +481,14 @@
       }
     }
 
-    // ==========================================
-    // PROCESSING OVERLAY
-    // ==========================================
     function showProcessing(action) {
       processingIcon.textContent = action === 'encrypt' ? '🔒' : '🔓';
       processingText.textContent = action === 'encrypt' ? 'Đang mã hóa...' : 'Đang giải mã...';
       processingOverlay.classList.add('show');
     }
 
-    function hideProcessing() {
-      processingOverlay.classList.remove('show');
-    }
+    function hideProcessing() { processingOverlay.classList.remove('show'); }
 
-    // ==========================================
-    // ĐỔI CHẾ ĐỘ
-    // ==========================================
     function setAction(action, skipLoading = false) {
       if (currentAction === action && !skipLoading) return;
 
@@ -614,18 +496,11 @@
         currentAction = action;
         tabEncrypt.classList.toggle('active', action === 'encrypt');
         tabDecrypt.classList.toggle('active', action === 'decrypt');
-        taskIndicator.style.transform = action === 'encrypt'
-          ? 'translateX(0)' : 'translateX(100%)';
+        taskIndicator.style.transform = action === 'encrypt' ? 'translateX(0)' : 'translateX(100%)';
 
-        document.getElementById('inputLabel').textContent =
-          action === 'encrypt' ? '📝 Văn bản gốc' : '📥 Văn bản đã mã hóa';
-        document.getElementById('outputLabel').textContent =
-          action === 'encrypt' ? '✅ Kết quả mã hóa' : '✅ Kết quả giải mã';
-
-        document.getElementById('input').placeholder =
-          action === 'encrypt'
-            ? 'Nhập văn bản cần mã hóa...'
-            : 'Dán văn bản đã mã hóa cần giải mã...';
+        document.getElementById('inputLabel').textContent = action === 'encrypt' ? '📝 Văn bản gốc' : '📥 Văn bản đã mã hóa';
+        document.getElementById('outputLabel').textContent = action === 'encrypt' ? '✅ Kết quả mã hóa' : '✅ Kết quả giải mã';
+        document.getElementById('input').placeholder = action === 'encrypt' ? 'Nhập văn bản cần mã hóa...' : 'Dán văn bản đã mã hóa...';
 
         if (action === 'encrypt') {
           actionBtn.textContent = '🔒 Mã Hóa Ngay';
@@ -646,9 +521,7 @@
     tabEncrypt.addEventListener('click', () => setAction('encrypt'));
     tabDecrypt.addEventListener('click', () => setAction('decrypt'));
 
-    // ==========================================
-    // MODAL PHƯƠNG PHÁP
-    // ==========================================
+    // MODAL
     function openModal() {
       modalOverlay.classList.add('show');
       document.body.style.overflow = 'hidden';
@@ -665,10 +538,7 @@
     document.getElementById('openPickerBtn').addEventListener('click', openModal);
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-
-    modalOverlay.addEventListener('click', (e) => {
-      if (e.target === modalOverlay) closeModal();
-    });
+    modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -682,20 +552,17 @@
     function filterMethods(q) {
       let visible = 0;
       document.querySelectorAll('.method-btn').forEach(btn => {
-        const match = !q ||
-          btn.dataset.method.toLowerCase().includes(q) ||
-          btn.title.toLowerCase().includes(q);
+        const match = !q || btn.dataset.method.toLowerCase().includes(q) || btn.title.toLowerCase().includes(q);
         btn.style.display = match ? '' : 'none';
         if (match) visible++;
       });
-
       let emptyMsg = document.getElementById('emptyMsg');
       if (visible === 0) {
         if (!emptyMsg) {
           emptyMsg = document.createElement('div');
           emptyMsg.id = 'emptyMsg';
           emptyMsg.className = 'empty-msg';
-          emptyMsg.textContent = '😕 Không tìm thấy phương pháp nào!';
+          emptyMsg.textContent = '😕 Không tìm thấy!';
           document.getElementById('methodsGrid').appendChild(emptyMsg);
         }
       } else if (emptyMsg) emptyMsg.remove();
@@ -714,9 +581,6 @@
       });
     });
 
-    // ==========================================
-    // UPDATE UI
-    // ==========================================
     function updateUI() {
       const keySection = document.getElementById('keySection');
       const hashWarning = document.getElementById('hashWarning');
@@ -750,20 +614,12 @@
       }
     }
 
-    // ==========================================
-    // RUN ACTION
-    // ==========================================
     async function runAction() {
       const text = document.getElementById('input').value;
       const key = document.getElementById('keyInput').value;
 
       if (!text.trim()) {
-        showToast(
-          currentAction === 'encrypt'
-            ? '⚠️ Vui lòng nhập văn bản cần mã hóa!'
-            : '⚠️ Vui lòng nhập văn bản cần giải mã!',
-          true
-        );
+        showToast(currentAction === 'encrypt' ? '⚠️ Nhập văn bản cần mã hóa!' : '⚠️ Nhập văn bản cần giải mã!', true);
         return;
       }
 
@@ -777,39 +633,36 @@
           body: JSON.stringify({ text, method: currentMethod, action: currentAction, key })
         });
         const data = await res.json();
-
         hideProcessing();
 
         if (data.need_login) {
-          showToast('⚠️ Phiên đăng nhập hết hạn!', true);
+          showToast('⚠️ Phiên hết hạn!', true);
           setTimeout(() => { window.location.href = '/login'; }, 1000);
+          return;
+        }
+
+        if (data.banned) {
+          alert('🚫 Tài khoản đã bị BAN!');
+          window.location.href = data.redirect || '/banned';
           return;
         }
 
         if (data.success) {
           document.getElementById('output').value = data.result;
           updateCounts();
-          showToast(
-            currentAction === 'encrypt'
-              ? '🔒 Mã hóa thành công!'
-              : '🔓 Giải mã thành công!'
-          );
+          showToast(currentAction === 'encrypt' ? '🔒 Mã hóa thành công!' : '🔓 Giải mã thành công!');
         } else {
           showToast('❌ ' + data.error, true);
         }
       } catch (err) {
         hideProcessing();
-        showToast('❌ Lỗi kết nối server!', true);
-        console.error(err);
+        showToast('❌ Lỗi kết nối!', true);
       }
     }
 
-    // ==========================================
-    // UTILS
-    // ==========================================
     function swapText() {
       const out = document.getElementById('output').value;
-      if (!out) return showToast('⚠️ Chưa có kết quả để đảo chiều!', true);
+      if (!out) return showToast('⚠️ Chưa có kết quả!', true);
 
       document.getElementById('input').value = out;
       document.getElementById('output').value = '';
@@ -821,15 +674,11 @@
           currentAction = newAction;
           tabEncrypt.classList.toggle('active', newAction === 'encrypt');
           tabDecrypt.classList.toggle('active', newAction === 'decrypt');
-          taskIndicator.style.transform = newAction === 'encrypt'
-            ? 'translateX(0)' : 'translateX(100%)';
+          taskIndicator.style.transform = newAction === 'encrypt' ? 'translateX(0)' : 'translateX(100%)';
 
-          document.getElementById('inputLabel').textContent =
-            newAction === 'encrypt' ? '📝 Văn bản gốc' : '📥 Văn bản đã mã hóa';
-          document.getElementById('outputLabel').textContent =
-            newAction === 'encrypt' ? '✅ Kết quả mã hóa' : '✅ Kết quả giải mã';
-          document.getElementById('input').placeholder =
-            newAction === 'encrypt' ? 'Nhập văn bản cần mã hóa...' : 'Dán văn bản đã mã hóa...';
+          document.getElementById('inputLabel').textContent = newAction === 'encrypt' ? '📝 Văn bản gốc' : '📥 Văn bản đã mã hóa';
+          document.getElementById('outputLabel').textContent = newAction === 'encrypt' ? '✅ Kết quả mã hóa' : '✅ Kết quả giải mã';
+          document.getElementById('input').placeholder = newAction === 'encrypt' ? 'Nhập văn bản...' : 'Dán văn bản đã mã hóa...';
           actionBtn.textContent = newAction === 'encrypt' ? '🔒 Mã Hóa Ngay' : '🔓 Giải Mã Ngay';
           actionBtn.className = 'btn primary' + (newAction === 'decrypt' ? ' decrypt-mode' : '');
           document.getElementById('decryptNotice').classList.toggle('hidden', newAction !== 'decrypt');
@@ -854,10 +703,8 @@
     }
 
     function updateCounts() {
-      document.getElementById('inputCount').textContent =
-        document.getElementById('input').value.length + ' ký tự';
-      document.getElementById('outputCount').textContent =
-        document.getElementById('output').value.length + ' ký tự';
+      document.getElementById('inputCount').textContent = document.getElementById('input').value.length + ' ký tự';
+      document.getElementById('outputCount').textContent = document.getElementById('output').value.length + ' ký tự';
     }
 
     function showToast(msg, isError = false) {
@@ -868,9 +715,7 @@
       setTimeout(() => t.classList.remove('show'), 2200);
     }
 
-    // ==========================================
     // INIT
-    // ==========================================
     document.getElementById('input').addEventListener('input', updateCounts);
     const defaultBtn = document.querySelector('.method-btn[data-method="base64"]');
     if (defaultBtn) defaultBtn.classList.add('active');
