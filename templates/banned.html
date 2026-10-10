@@ -3,76 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚫 Tài khoản bị cấm - Mã Hóa Chữ</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <title>Tài khoản bị khóa</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="banned-page">
-    <div class="banned-container">
-        <div class="banned-card">
-            <div class="banned-icon-wrap">
-                <div class="banned-icon">🚫</div>
+<body class="ban-body">
+    <div class="ban-modal">
+        <div class="ban-icon">🚫</div>
+        <h1>BẠN ĐÃ BỊ KHÓA</h1>
+        <p class="ban-subtitle">
+            Tài khoản <strong>{{ username }}</strong> đã bị tạm khóa bởi moderator.
+        </p>
+
+        <div class="ban-info-box">
+            <div class="ban-info-row">
+                <span class="ban-info-label">Lý do:</span>
+                <span class="ban-info-value">{{ reason }}</span>
             </div>
-
-            <h1 class="banned-title">TÀI KHOẢN ĐÃ BỊ CẤM</h1>
-
-            <div class="banned-username">
-                <span class="banned-username-label">Tài khoản:</span>
-                <span class="banned-username-value">{{ username }}</span>
+            {% if exp and exp != '0' and exp != '' %}
+            <div class="ban-info-row">
+                <span class="ban-info-label">Hết hạn:</span>
+                <span class="ban-info-value">{{ exp }}</span>
             </div>
-
-            <div class="banned-duration permanent">
-                <div class="banned-duration-label">Thời hạn</div>
-                <div class="banned-duration-value">♾️ VĨNH VIỄN</div>
-            </div>
-
-            {% if ban_info.ban_reason %}
-                <div class="banned-reason">
-                    <div class="banned-reason-icon">⚠️</div>
-                    <div class="banned-reason-content">
-                        <div class="banned-reason-label">Lý do</div>
-                        <div class="banned-reason-text">{{ ban_info.ban_reason }}</div>
-                    </div>
-                </div>
+            <div class="ban-countdown" id="countdown">Đang tính...</div>
             {% else %}
-                <div class="banned-reason">
-                    <div class="banned-reason-icon">⚠️</div>
-                    <div class="banned-reason-content">
-                        <div class="banned-reason-label">Lý do</div>
-                        <div class="banned-reason-text">
-                            Tài khoản của bạn đã bị quản trị viên cấm sử dụng dịch vụ.
-                            Nếu bạn cho rằng đây là sự nhầm lẫn, vui lòng liên hệ admin.
-                        </div>
-                    </div>
-                </div>
+            <div class="ban-info-row">
+                <span class="ban-info-label">Loại:</span>
+                <span class="ban-info-value ban-permanent">VĨNH VIỄN</span>
+            </div>
             {% endif %}
-
-            <div class="banned-code">
-                <span>Mã lỗi:</span>
-                <code>ACCOUNT_BANNED_403</code>
-            </div>
-
-            <div class="banned-actions">
-                <button class="banned-btn logout" id="btn-banned-logout">
-                    🚪 Đăng xuất
-                </button>
-            </div>
-
-            <div class="banned-footer">
-                Mã Hóa Chữ © 2024 • Bảo vệ thông tin của bạn
-            </div>
         </div>
+
+        <p class="ban-note">
+            Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ admin qua email hỗ trợ.
+        </p>
+
+        <a href="{{ url_for('login_page') }}" class="btn btn-primary btn-block">Quay lại đăng nhập</a>
     </div>
 
     <script>
-    document.getElementById("btn-banned-logout").addEventListener("click", async () => {
-        try {
-            await fetch("/api/logout", { method: "POST", credentials: "include" });
-            window.location.href = "/login";
-        } catch (e) {
-            window.location.href = "/login";
+        const expStr = "{{ exp }}";
+        if (expStr && expStr !== '0' && expStr !== '' && expStr !== 'None') {
+            const target = new Date(expStr).getTime();
+            const el = document.getElementById('countdown');
+            function tick() {
+                const diff = target - Date.now();
+                if (diff <= 0) {
+                    el.textContent = "✅ Đã hết hạn - Tải lại trang để đăng nhập";
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                el.textContent = `⏱ Còn lại: ${h}h ${m}m ${s}s`;
+                setTimeout(tick, 1000);
+            }
+            tick();
         }
-    });
     </script>
 </body>
 </html>
