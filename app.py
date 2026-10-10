@@ -10,7 +10,7 @@ from game_utils import (
     generate_meme_template,
     points_to_level, level_to_next, add_points, update_streak,
     ensure_game_data, init_game_data, REWARDS, MEME_TEMPLATES,
-    # ⚔️ PvP
+    # PvP
     create_pvp_room, join_pvp_room, start_pvp_room,
     submit_pvp_answer, get_pvp_room, leave_pvp_room,
     cleanup_old_rooms,
@@ -25,6 +25,11 @@ from game_utils import (
     kick_guest,
     vote_rematch,
     add_match_to_history,
+    # ⏰ AFK
+    heartbeat, check_afk_status, add_afk_warning, get_afk_warnings,
+    leave_match,
+    check_and_kick_afk,
+    AFK_TIMEOUT, AFK_WARNING_AT,
 )
 from dotenv import load_dotenv
 from functools import wraps
@@ -1104,7 +1109,7 @@ def api_history():
 
 
 # ============================================================
-# 🎮 GAME HUB
+# GAME HUB
 # ============================================================
 @app.route('/game')
 @login_required
@@ -1288,7 +1293,7 @@ def api_random_method():
 
 
 # ═══════════════════════════════════════════════════════════
-#  ⚔️ PVP — ĐUA GÕ CHỮ TIẾNG ANH
+#  PVP ROUTES
 # ═══════════════════════════════════════════════════════════
 @app.route('/api/pvp/create', methods=['POST'])
 @login_required
@@ -1393,6 +1398,95 @@ def api_pvp_leave():
     return jsonify(result)
 
 
+@app.route('/api/pvp/leave-match', methods=['POST'])
+@login_required
+def api_pvp_leave_match():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    result = leave_match(code, username)
+    if result.get('left') and result.get('room'):
+        result['room'] = _sanitize_room(result['room'], username)
+    return jsonify(result)
+
+
+# ═══ AFK ROUTES ═══
+@app.route('/api/pvp/heartbeat', methods=['POST'])
+@login_required
+def api_pvp_heartbeat():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    if not code:
+        return jsonify({'success': False, 'error': 'Thiếu code!'}), 400
+    result = heartbeat(code, username)
+    return jsonify(result)
+
+
+@app.route('/api/pvp/afk-status/<code>')
+@login_required
+def api_pvp_afk_status(code):
+    username = session['username']
+    result = check_afk_status(code, username)
+    if not result['success']:
+        return jsonify(result), 404
+    return jsonify(result)
+
+
+@app.route('/api/pvp/afk-warning', methods=['POST'])
+@login_required
+def api_pvp_afk_warning():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    if not code:
+        return jsonify({'success': False, 'error': 'Thiếu code!'}), 400
+    result = add_afk_warning(code, username)
+    return jsonify(result)
+
+
+@app.route('/api/pvp/afk-warnings/<code>')
+@login_required
+def api_pvp_afk_warnings(code):
+    username = session['username']
+    result = get_afk_warnings(code, username)
+    return jsonify(result)
+
+
+@app.route('/api/pvp/check-kick-afk', methods=['POST'])
+@login_required
+def api_pvp_check_kick_afk():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    if not code:
+        return jsonify({'success': False, 'error': 'Thiếu code!'}), 400
+
+    result = check_and_kick_afk(code, username)
+    if not result['success']:
+        return jsonify(result), 400
+
+    response = {
+        'success': True,
+        'kicked': result.get('kicked', False),
+    }
+
+    if result.get('kicked'):
+        response.update({
+            'kicked_user': result.get('kicked_user'),
+            'kicked_display': result.get('kicked_display'),
+            'winner': result.get('winner'),
+            'winner_display': result.get('winner_display'),
+            'afk_seconds': result.get('afk_seconds'),
+            'message': f"⚡ {result.get('kicked_display')} đã bị kick vì AFK {result.get('afk_seconds')}s!"
+        })
+        if result.get('room'):
+            response['room'] = _sanitize_room(result['room'], username)
+
+    return jsonify(response)
+
+
+# ═══ FRIENDS ═══
 @app.route('/api/friends')
 @login_required
 def api_get_friends():
@@ -1427,8 +1521,7 @@ def api_search_users():
     friends = get_friends(username)
     results = []
     for uname, udata in users.items():
-        if uname == username:
-            continue
+        if uname == username: continue
         if q in uname.lower() or q in udata.get('display_name', '').lower():
             results.append({
                 'username': uname,
@@ -1619,6 +1712,9 @@ def _sanitize_room(room: dict, username: str) -> dict:
         "is_host": is_host,
         "opponent": opponent,
         "opponent_display": room["guest_display"] if is_host else room["host_display"],
+        "afk_kick_info": room.get("afk_kick_info"),
+        "left_user": room.get("left_user"),
+        "left_display": room.get("left_display"),
     }
 
     round_idx = room["current_round"]
@@ -1640,7 +1736,6 @@ def _sanitize_room(room: dict, username: str) -> dict:
         q_idx = r["current_index"]
         if 0 <= q_idx < total_q:
             q = r["questions"][q_idx]
-            # ═══ CHỈ HIỆN TỪ TIẾNG ANH ═══
             safe["current_question"] = {
                 "index": q_idx,
                 "word": q["word"],
