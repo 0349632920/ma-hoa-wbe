@@ -545,4 +545,27 @@ textarea:focus {
   background: #333;
   color: white;
   padding: 12px 24px;
-  border-radius: 30
+  border-radius: 30px;
+  font-size: 14px;
+  opacity: 0;
+  transition: 0.4s;
+  pointer-events: none;
+  z-index: 2000;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ===== Responsive ===== */
+@media (max-width: 500px) {
+  .container { padding: 20px; }
+  h1 { font-size: 20px; }
+  .logo-icon { width: 50px; height: 50px; font-size: 28px; }
+  .stats-badge { font-size: 11px; padding: 8px 14px; }
+  .methods-grid { grid-template-columns: 1fr; }
+  .task-btn .task-text small { display: none; }
+  .modal-header, .modal-search, .modal-body, .modal-footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
