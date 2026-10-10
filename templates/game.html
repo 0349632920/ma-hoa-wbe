@@ -14,7 +14,7 @@
     }
     .container { max-width: 1200px; margin: 0 auto; }
 
-    /* HEADER */
+    /* ═══ HEADER ═══ */
     .game-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border-radius: 20px; padding: 24px 30px; margin-bottom: 20px;
@@ -41,7 +41,7 @@
     }
     .btn-back:hover { background: rgba(255,255,255,0.3); }
 
-    /* TABS */
+    /* ═══ TABS ═══ */
     .tabs {
       display: flex; gap: 10px; margin-bottom: 20px;
       overflow-x: auto; padding-bottom: 5px;
@@ -58,7 +58,6 @@
       box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
     }
 
-    /* PANELS */
     .panel {
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.1);
@@ -75,7 +74,7 @@
       display: flex; align-items: center; gap: 10px;
     }
 
-    /* LEADERBOARD */
+    /* ═══ LEADERBOARD ═══ */
     .lb-row {
       display: flex; align-items: center; gap: 15px;
       padding: 16px 20px; background: rgba(255,255,255,0.03);
@@ -99,7 +98,7 @@
     .lb-points strong { display: block; font-size: 20px; color: #ffd700; }
     .lb-points small { color: #999; font-size: 11px; }
 
-    /* DAILY */
+    /* ═══ DAILY ═══ */
     .daily-card {
       background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.03));
       border: 2px solid #ffd700; border-radius: 16px;
@@ -136,7 +135,7 @@
       font-weight: 700; font-size: 14px; margin-bottom: 16px;
     }
 
-    /* REWARDS */
+    /* ═══ REWARDS ═══ */
     .rewards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -160,7 +159,7 @@
     }
     .reward-claim-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
 
-    /* RANDOM */
+    /* ═══ RANDOM ═══ */
     .random-display {
       text-align: center; padding: 40px 20px;
       background: rgba(0,0,0,0.2); border-radius: 16px;
@@ -181,6 +180,7 @@
       padding: 10px 16px; background: rgba(255,255,255,0.05);
       border-radius: 10px; cursor: pointer;
     }
+
     .big-btn {
       padding: 18px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
       color: #fff; border: none; border-radius: 14px;
@@ -202,7 +202,7 @@
     .btn-sm.ghost { background: rgba(255,255,255,0.1); color: #fff; }
     .btn-sm:hover { transform: translateY(-2px); }
 
-    /* PVP LOBBY */
+    /* ═══ PVP ═══ */
     .pvp-subtabs {
       display: flex; gap: 8px; margin-bottom: 24px;
       padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -215,10 +215,7 @@
       font-family: inherit; font-size: 14px; white-space: nowrap; transition: 0.2s;
     }
     .pvp-subtab:hover { background: rgba(255,255,255,0.1); }
-    .pvp-subtab.active {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-    }
-
+    .pvp-subtab.active { background: linear-gradient(135deg, #667eea, #764ba2); }
     .pvp-section { display: none; }
     .pvp-section.active { display: block; animation: fadeIn 0.3s ease; }
 
@@ -248,7 +245,6 @@
     }
     .pvp-code-input:focus { border-color: #667eea; }
 
-    /* Rule settings */
     .rule-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 12px 16px; background: rgba(255,255,255,0.03);
@@ -262,10 +258,7 @@
       font-weight: 700; font-size: 15px; outline: none;
     }
     .rule-row input:focus { border-color: #667eea; }
-    .toggle-switch {
-      position: relative; display: inline-block;
-      width: 52px; height: 28px;
-    }
+    .toggle-switch { position: relative; display: inline-block; width: 52px; height: 28px; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .toggle-slider {
       position: absolute; cursor: pointer;
@@ -281,7 +274,6 @@
     .toggle-switch input:checked + .toggle-slider { background: #27ae60; }
     .toggle-switch input:checked + .toggle-slider:before { transform: translateX(24px); }
 
-    /* Room list */
     .room-list-item {
       display: flex; align-items: center; justify-content: space-between;
       padding: 16px 20px; background: rgba(255,255,255,0.03);
@@ -289,10 +281,7 @@
       border-left: 4px solid #667eea;
       transition: 0.2s;
     }
-    .room-list-item:hover {
-      background: rgba(102,126,234,0.1);
-      transform: translateX(4px);
-    }
+    .room-list-item:hover { background: rgba(102,126,234,0.1); transform: translateX(4px); }
     .room-list-info { flex: 1; }
     .room-list-info strong { font-size: 16px; display: block; margin-bottom: 4px; }
     .room-list-info small { color: #999; font-size: 12px; }
@@ -302,7 +291,7 @@
       padding: 4px 10px; background: rgba(0,0,0,0.3); border-radius: 6px;
     }
 
-    /* Waiting room */
+    /* ═══ WAITING ROOM ═══ */
     .pvp-waiting-box {
       background: rgba(255,255,255,0.03);
       border: 2px solid rgba(102,126,234,0.3);
@@ -335,9 +324,7 @@
     }
     .pvp-player-avatar { font-size: 48px; margin-bottom: 8px; }
     .pvp-player-name { font-size: 14px; font-weight: 700; }
-    .pvp-player-level {
-      font-size: 12px; color: #ffd700; margin-top: 4px;
-    }
+    .pvp-player-level { font-size: 12px; color: #ffd700; margin-top: 4px; }
     .pvp-vs-small { font-size: 24px; font-weight: 900; color: #ff6b6b; }
     .pvp-waiting-actions {
       display: flex; flex-wrap: wrap; gap: 12px;
@@ -351,7 +338,7 @@
     }
     .pvp-btn-cancel:hover { background: rgba(231,76,60,0.15); color: #e74c3c; }
 
-    /* Chat */
+    /* ═══ CHAT ═══ */
     .pvp-chat-box {
       background: rgba(0,0,0,0.3);
       border-radius: 12px; padding: 16px; margin-top: 24px;
@@ -362,17 +349,9 @@
       border-radius: 10px; font-size: 14px;
       background: rgba(255,255,255,0.05);
     }
-    .pvp-chat-msg.mine {
-      background: rgba(102,126,234,0.2);
-      text-align: right;
-    }
-    .pvp-chat-msg-name {
-      font-size: 12px; color: #999;
-      font-weight: 700; margin-bottom: 4px;
-    }
-    .pvp-chat-input-row {
-      display: flex; gap: 10px; margin-top: 12px;
-    }
+    .pvp-chat-msg.mine { background: rgba(102,126,234,0.2); text-align: right; }
+    .pvp-chat-msg-name { font-size: 12px; color: #999; font-weight: 700; margin-bottom: 4px; }
+    .pvp-chat-input-row { display: flex; gap: 10px; margin-top: 12px; }
     .pvp-chat-input {
       flex: 1; padding: 12px 16px;
       background: rgba(0,0,0,0.3);
@@ -382,7 +361,7 @@
     }
     .pvp-chat-input:focus { border-color: #667eea; }
 
-    /* Playing */
+    /* ═══ PLAYING ═══ */
     .pvp-scoreboard {
       display: flex; justify-content: space-between;
       align-items: center; padding: 20px 30px;
@@ -416,24 +395,27 @@
       transition: width 0.3s ease;
     }
 
+    /* ═══ QUESTION BOX ═══ */
     .pvp-question-box {
       background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.1));
       border: 2px solid rgba(102,126,234,0.3);
-      border-radius: 16px; padding: 30px;
+      border-radius: 16px; padding: 40px 30px;
       text-align: center; margin-bottom: 20px;
     }
     .pvp-question-label {
       font-size: 14px; color: #999;
-      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;
     }
     .pvp-question-text {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 28px; font-weight: 700; color: #ffd700;
-      word-break: break-all; margin-bottom: 12px; line-height: 1.4;
+      font-size: 56px; font-weight: 900; color: #ffd700;
+      letter-spacing: 6px; word-break: break-all;
+      line-height: 1.2; text-shadow: 0 4px 20px rgba(255,215,0,0.4);
+      animation: wordPulse 1.5s ease-in-out infinite;
     }
-    .pvp-question-method {
-      font-size: 13px; color: #999;
-      font-family: 'JetBrains Mono', monospace;
+    @keyframes wordPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
     }
 
     .pvp-opponent-status {
@@ -449,12 +431,13 @@
 
     .pvp-answer-row { display: flex; gap: 12px; margin-bottom: 15px; }
     .pvp-answer-input {
-      flex: 1; padding: 18px 24px;
+      flex: 1; padding: 20px 28px;
       background: rgba(0,0,0,0.3);
       border: 3px solid rgba(102,126,234,0.5);
       border-radius: 14px; color: #fff;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 22px; letter-spacing: 2px; outline: none;
+      font-size: 26px; letter-spacing: 3px; outline: none;
+      text-align: center;
     }
     .pvp-answer-input:focus { border-color: #667eea; box-shadow: 0 0 0 4px rgba(102,126,234,0.2); }
     .pvp-answer-input:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -473,14 +456,168 @@
       border: 2px solid #e74c3c;
     }
 
-    .pvp-next-round {
-      text-align: center; padding: 30px;
-      background: rgba(255,215,0,0.1);
-      border: 2px dashed #ffd700; border-radius: 16px;
+    /* ═══ AFK WARNING ═══ */
+    .afk-warning-banner {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120px);
+      padding: 16px 28px;
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: #fff;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      box-shadow: 0 12px 40px rgba(243, 156, 18, 0.6);
+      z-index: 10000;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 90vw;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
     }
-    .pvp-next-icon { font-size: 48px; margin-bottom: 10px; }
+    .afk-warning-banner.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+    .afk-warning-banner.danger {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      box-shadow: 0 12px 40px rgba(231, 76, 60, 0.6);
+      animation: afkPulse 0.8s ease-in-out infinite;
+    }
+    .afk-warning-banner .afk-icon {
+      font-size: 24px;
+      animation: afkShake 0.6s ease-in-out infinite;
+    }
+    @keyframes afkShake {
+      0%, 100% { transform: rotate(0); }
+      25% { transform: rotate(-15deg); }
+      75% { transform: rotate(15deg); }
+    }
+    @keyframes afkPulse {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.03); }
+    }
 
-    /* Finished */
+    .opp-afk-notice {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      background: rgba(231, 76, 60, 0.15);
+      border-left: 4px solid #e74c3c;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 15px;
+      color: #f87171;
+      animation: afkPulse 1.2s ease-in-out infinite;
+    }
+
+    /* ═══ LEAVE BUTTON ═══ */
+    .pvp-leave-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 22px;
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(231, 76, 60, 0.5);
+      z-index: 9000;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      transition: 0.2s;
+    }
+    .pvp-leave-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(231, 76, 60, 0.7);
+    }
+    .pvp-leave-btn.show { display: flex; }
+
+    /* ═══ LEAVE CONFIRM MODAL ═══ */
+    .leave-confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10001;
+      background: rgba(20, 20, 40, 0.75);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.3s;
+    }
+    .leave-confirm-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .leave-confirm-box {
+      background: linear-gradient(145deg, #2a2a3e, #1f1f2e);
+      border: 2px solid #e74c3c;
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+    }
+    .leave-confirm-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    .leave-confirm-box h3 {
+      font-size: 22px;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .leave-confirm-box p {
+      color: #999;
+      font-size: 14px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .leave-confirm-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .leave-confirm-btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+      min-width: 120px;
+    }
+    .leave-confirm-btn.cancel {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    .leave-confirm-btn.confirm {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(231,76,60,0.4);
+    }
+    .leave-confirm-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    /* ═══ FINISHED ═══ */
     .pvp-result-box {
       text-align: center; padding: 40px;
       background: rgba(255,255,255,0.03); border-radius: 20px;
@@ -508,7 +645,7 @@
     .pvp-result-value { font-size: 36px; font-weight: 900; color: #ffd700; }
     .pvp-result-vs { font-size: 24px; color: #666; }
 
-    /* Friends */
+    /* ═══ FRIENDS ═══ */
     .friends-list-item {
       display: flex; align-items: center; gap: 12px;
       padding: 14px 18px; background: rgba(255,255,255,0.03);
@@ -523,7 +660,6 @@
     .friends-info { flex: 1; }
     .friends-info strong { display: block; font-size: 15px; }
     .friends-info small { color: #999; font-size: 12px; }
-
     .friend-search-input {
       width: 100%; padding: 14px 18px;
       background: rgba(0,0,0,0.3);
@@ -534,7 +670,7 @@
     }
     .friend-search-input:focus { border-color: #667eea; }
 
-    /* History */
+    /* ═══ HISTORY ═══ */
     .history-row {
       display: flex; align-items: center; gap: 15px;
       padding: 14px 20px; background: rgba(255,255,255,0.03);
@@ -553,7 +689,7 @@
       font-size: 16px; font-weight: 700; color: #ffd700;
     }
 
-    /* MEME */
+    /* ═══ MEME ═══ */
     .meme-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
     @media (max-width: 700px) { .meme-form { grid-template-columns: 1fr; } }
     .meme-input {
@@ -585,7 +721,7 @@
     .meme-preview.show { display: block; }
     .meme-preview img { max-width: 100%; border-radius: 12px; }
 
-    /* Loading + Toast */
+    /* ═══ LOADING + TOAST ═══ */
     .loading-spinner {
       display: inline-block; width: 20px; height: 20px;
       border: 3px solid rgba(255,255,255,0.3);
@@ -605,7 +741,7 @@
     .toast.show { transform: translateX(-50%) translateY(0); }
     .toast.error { background: #e74c3c; }
     .toast.reward { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; }
-
+    .toast.warning { background: linear-gradient(135deg, #f39c12, #e67e22); }
     .empty-msg {
       text-align: center; padding: 40px 20px;
       color: #999; font-size: 15px;
@@ -695,9 +831,9 @@
 
   <!-- PVP -->
   <div class="panel" id="panel-pvp">
-    <h2 class="panel-title">⚔️ PvP — Nhập chữ nhanh</h2>
+    <h2 class="panel-title">⚔️ PvP — Đua gõ chữ</h2>
     <p style="color:#999;margin-bottom:20px;font-size:14px;">
-      🏁 Best of X — Tùy chỉnh luật — Chơi với bạn bè
+      ⌨️ Gõ từ tiếng Anh nhanh nhất — Ai gõ nhanh hơn thắng!
     </p>
 
     <div class="pvp-subtabs">
@@ -707,7 +843,7 @@
       <button class="pvp-subtab" data-subtab="history">📊 Lịch sử</button>
     </div>
 
-    <!-- SUBTAB: LOBBY -->
+    <!-- LOBBY -->
     <div class="pvp-section active" id="pvp-lobby">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <h3 style="font-size:16px;">📋 Phòng đang chờ</h3>
@@ -725,7 +861,7 @@
       </div>
     </div>
 
-    <!-- SUBTAB: CREATE -->
+    <!-- CREATE -->
     <div class="pvp-section" id="pvp-create">
       <h3 style="margin-bottom:16px;">⚙️ Cấu hình phòng</h3>
 
@@ -752,7 +888,7 @@
       </button>
     </div>
 
-    <!-- SUBTAB: FRIENDS -->
+    <!-- FRIENDS -->
     <div class="pvp-section" id="pvp-friends">
       <h3 style="margin-bottom:16px;">🔍 Tìm bạn bè</h3>
       <input type="text" id="friendSearch" class="friend-search-input"
@@ -770,7 +906,7 @@
       </div>
     </div>
 
-    <!-- SUBTAB: HISTORY -->
+    <!-- HISTORY -->
     <div class="pvp-section" id="pvp-history">
       <h3 style="margin-bottom:16px;">📊 20 trận gần nhất</h3>
       <div id="pvpHistoryList">
@@ -778,7 +914,7 @@
       </div>
     </div>
 
-    <!-- WAITING ROOM -->
+    <!-- WAITING -->
     <div id="pvpWaiting" style="display:none;">
       <div class="pvp-waiting-box">
         <div class="pvp-room-code-display">
@@ -808,12 +944,10 @@
           ⏳ Đang chờ đối thủ vào phòng...
         </div>
 
-        <!-- Rule display -->
         <div style="text-align:center;font-size:13px;color:#999;margin-bottom:20px;">
           ⚙️ <span id="pvpWaitingRules">3 ván × 10 câu</span>
         </div>
 
-        <!-- Chat box -->
         <div class="pvp-chat-box" id="pvpChatBox"></div>
         <div class="pvp-chat-input-row">
           <input type="text" class="pvp-chat-input" id="pvpChatInput"
@@ -852,6 +986,12 @@
         </div>
       </div>
 
+      <!-- AFK notice -->
+      <div class="opp-afk-notice" id="oppAfkNotice" style="display:none;">
+        <span>⚠️</span>
+        <span id="oppAfkText">Đối thủ đang AFK...</span>
+      </div>
+
       <div class="pvp-progress">
         <div class="pvp-progress-info">
           <span>Câu <strong id="pvpCurrentQ">1</strong>/<strong id="pvpTotalQ">10</strong></span>
@@ -863,9 +1003,8 @@
       </div>
 
       <div class="pvp-question-box">
-        <div class="pvp-question-label">🔓 Giải mã chuỗi sau:</div>
+        <div class="pvp-question-label">⌨️ GÕ TỪ TIẾNG ANH SAU:</div>
         <div class="pvp-question-text" id="pvpQuestionText">...</div>
-        <div class="pvp-question-method" id="pvpQuestionMethod">Phương pháp: —</div>
       </div>
 
       <div class="pvp-opponent-status" id="pvpOpponentStatus" style="display:none;">
@@ -878,20 +1017,15 @@
         <span id="pvpOppAnswerText">Đối thủ đã trả lời!</span>
       </div>
 
-      <div class="pvp-answer-row" id="pvpAnswerRow">
+      <div class="pvp-answer-row">
         <input type="text" id="pvpAnswerInput" class="pvp-answer-input"
-               placeholder="Nhập đáp án..." autocomplete="off" autofocus>
+               placeholder="Gõ từ trên..." autocomplete="off" autofocus>
         <button class="big-btn" id="pvpSubmitBtn" onclick="submitPvPAnswer()" style="margin:0;">
           ✅ Gửi
         </button>
       </div>
 
       <div id="pvpFeedback" class="pvp-feedback" style="display:none;"></div>
-
-      <div id="pvpNextRoundNotice" class="pvp-next-round" style="display:none;">
-        <div class="pvp-next-icon">⏭️</div>
-        <div>Chuẩn bị ván tiếp theo...</div>
-      </div>
     </div>
 
     <!-- FINISHED -->
@@ -934,6 +1068,33 @@
     <div class="meme-preview" id="memePreview"></div>
   </div>
 
+</div>
+
+<!-- ═══ AFK WARNING BANNER ═══ -->
+<div class="afk-warning-banner" id="afkWarningBanner">
+  <span class="afk-icon">⚠️</span>
+  <span id="afkWarningText">Bạn đang AFK! Vui lòng tương tác.</span>
+</div>
+
+<!-- ═══ LEAVE MATCH BUTTON ═══ -->
+<button class="pvp-leave-btn" id="pvpLeaveBtn" onclick="confirmLeaveMatch()">
+  🚪 Rời trận
+</button>
+
+<!-- ═══ LEAVE CONFIRM MODAL ═══ -->
+<div class="leave-confirm-overlay" id="leaveConfirmOverlay">
+  <div class="leave-confirm-box">
+    <div class="leave-confirm-icon">🚪</div>
+    <h3>Rời trận đấu?</h3>
+    <p>
+      Nếu bạn rời trận bây giờ, bạn sẽ bị xử <strong style="color:#e74c3c;">THUA</strong>
+      và đối thủ thắng trận này.
+    </p>
+    <div class="leave-confirm-actions">
+      <button class="leave-confirm-btn cancel" onclick="closeLeaveConfirm()">❌ Ở lại</button>
+      <button class="leave-confirm-btn confirm" onclick="doLeaveMatch()">🚪 Rời trận</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1190,17 +1351,33 @@ async function rollRandom() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  PVP
+//  PVP - VARIABLES
 // ═══════════════════════════════════════════════════════════
 let pvpRoomCode = null;
 let pvpCurrentRoom = null;
 let pvpPollInterval = null;
 let pvpChatPollInterval = null;
+let pvpHeartbeatInterval = null;
 let pvpHasAnswered = false;
-let pvpLastChatTime = 0;
 let pvpPollingActive = false;
+let pvpLastActivity = Date.now();
+let pvpAfkWarningShown = false;
+let pvpLastOppAfkWarning = 0;
 
-// ─── 1. Danh sách phòng public ───
+// Theo dõi hoạt động user
+['mousemove', 'keydown', 'click', 'touchstart', 'scroll'].forEach(evt => {
+  document.addEventListener(evt, () => {
+    pvpLastActivity = Date.now();
+    // Ẩn cảnh báo AFK nếu user tương tác
+    const banner = $('afkWarningBanner');
+    if (banner.classList.contains('show')) {
+      banner.classList.remove('show');
+      pvpAfkWarningShown = false;
+    }
+  }, { passive: true });
+});
+
+// ═══ 1. Danh sách phòng public ═══
 async function loadPublicRooms() {
   const container = $('publicRoomsList');
   container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
@@ -1249,6 +1426,7 @@ async function joinPvPRoom() {
     showPvPWaiting(data.room);
     startPvPPolling();
     startChatPolling();
+    startHeartbeat();
   } catch (e) { showToast('❌ Lỗi vào phòng!', 'error'); }
 }
 
@@ -1271,20 +1449,18 @@ async function createPvPRoom() {
     showPvPWaiting(data.room);
     startPvPPolling();
     startChatPolling();
+    startHeartbeat();
   } catch (e) { showToast('❌ Lỗi tạo phòng!', 'error'); }
 }
 
-// ─── Waiting Room ───
+// ═══ WAITING ROOM ═══
 function showPvPWaiting(room) {
-  $('pvp-lobby').classList.remove('active');
-  $('pvp-create').classList.remove('active');
-  $('pvp-friends').classList.remove('active');
-  $('pvp-history').classList.remove('active');
   document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = 'none');
-
   $('pvpWaiting').style.display = 'block';
   $('pvpPlaying').style.display = 'none';
   $('pvpFinished').style.display = 'none';
+  $('pvpLeaveBtn').classList.remove('show');
+  $('oppAfkNotice').style.display = 'none';
 
   $('pvpRoomCode').textContent = room.code;
   $('pvpHostName').textContent = room.host_display;
@@ -1333,8 +1509,10 @@ function showPvPPlaying(room) {
   $('pvpWaiting').style.display = 'none';
   $('pvpPlaying').style.display = 'block';
   $('pvpFinished').style.display = 'none';
+  $('pvpLeaveBtn').classList.add('show');
   updatePvPUI(room);
   pvpHasAnswered = false;
+  pvpLastActivity = Date.now();
   setTimeout(() => $('pvpAnswerInput')?.focus(), 200);
 }
 
@@ -1357,7 +1535,6 @@ function updatePvPUI(room) {
   const totalRounds = room.rules?.rounds || 3;
   $('pvpRoundLabel').textContent = `Ván ${room.current_round + 1}/${totalRounds}`;
 
-  // Progress
   const total = room.round_info?.total_questions || 10;
   const current = (room.round_info?.current_index || 0) + 1;
   $('pvpCurrentQ').textContent = Math.min(current, total);
@@ -1366,11 +1543,9 @@ function updatePvPUI(room) {
   $('pvpProgressFill').style.width = pct + '%';
   $('pvpProgressPct').textContent = pct + '%';
 
-  // Question
   if (room.current_question) {
     const q = room.current_question;
-    $('pvpQuestionText').textContent = q.display;
-    $('pvpQuestionMethod').textContent = `Phương pháp: ${q.method} • ${q.length} ký tự`;
+    $('pvpQuestionText').textContent = q.word || q.display;
 
     if (q.your_answer) {
       pvpHasAnswered = true;
@@ -1382,17 +1557,17 @@ function updatePvPUI(room) {
       $('pvpAnswerInput').disabled = false;
       $('pvpSubmitBtn').disabled = false;
       $('pvpAnswerInput').value = '';
+      $('pvpAnswerInput').placeholder = 'Gõ từ trên...';
       $('pvpFeedback').style.display = 'none';
       setTimeout(() => $('pvpAnswerInput')?.focus(), 100);
     }
 
-    // Opponent status
     if (room.opponent_answered) {
       $('pvpOpponentStatus').style.display = 'none';
       $('pvpOpponentAnswered').style.display = 'flex';
       const oa = room.opponent_answer || {};
       $('pvpOppAnswerText').textContent =
-        `Đối thủ đã trả lời ${oa.correct ? '✅ đúng' : '❌ sai'} (${oa.time_taken}s)`;
+        `Đối thủ đã gõ ${oa.correct ? '✅ đúng' : '❌ sai'} (${oa.time_taken}s)`;
     } else {
       $('pvpOpponentStatus').style.display = 'flex';
       $('pvpOpponentAnswered').style.display = 'none';
@@ -1408,7 +1583,7 @@ function showPvPFeedback(yourAnswer) {
     fb.innerHTML = `✅ Đúng! +${yourAnswer.points} điểm (${yourAnswer.time_taken}s)`;
   } else {
     fb.className = 'pvp-feedback wrong';
-    fb.innerHTML = `❌ Sai! Đáp án: <strong>${pvpCurrentRoom.current_question.correct_answer || '?'}</strong>`;
+    fb.innerHTML = `❌ Sai! Từ đúng: <strong>${pvpCurrentRoom.current_question.correct_answer || '?'}</strong>`;
   }
 }
 
@@ -1418,6 +1593,7 @@ async function submitPvPAnswer() {
   const answer = input.value.trim();
   if (!answer) { showToast('⚠️ Nhập đáp án!', 'error'); return; }
 
+  pvpLastActivity = Date.now();
   $('pvpSubmitBtn').disabled = true;
   input.disabled = true;
 
@@ -1451,6 +1627,8 @@ function showPvPFinished(room) {
   $('pvpWaiting').style.display = 'none';
   $('pvpPlaying').style.display = 'none';
   $('pvpFinished').style.display = 'block';
+  $('pvpLeaveBtn').classList.remove('show');
+  stopHeartbeat();
 
   const fr = room.final_result;
   if (!fr) return;
@@ -1469,7 +1647,7 @@ function showPvPFinished(room) {
   `).join('');
 }
 
-// ─── Polling ───
+// ═══ POLLING ═══
 function startPvPPolling() {
   if (pvpPollingActive) return;
   pvpPollingActive = true;
@@ -1487,13 +1665,9 @@ function startPvPPolling() {
       } else if (room.status === 'finished' && oldStatus !== 'finished') {
         showPvPFinished(room);
       } else if (room.status === 'ready' && oldStatus === 'waiting') {
-        // Có người vào phòng
-        if (room.guest) {
-          showToast(`🔔 ${room.guest_display} đã vào phòng!`);
-        }
+        if (room.guest) showToast(`🔔 ${room.guest_display} đã vào phòng!`);
         showPvPWaiting(room);
       } else if (room.status === 'playing') {
-        // Chỉ update nếu user chưa trả lời
         updatePvPUI(room);
       } else if (room.status === 'waiting' && room.guest === null && pvpCurrentRoom?.guest) {
         showToast('👋 Đối thủ đã rời phòng!');
@@ -1511,7 +1685,7 @@ function stopPvPPolling() {
   pvpPollingActive = false;
 }
 
-// ─── Chat polling ───
+// ═══ CHAT POLLING ═══
 function startChatPolling() {
   if (pvpChatPollInterval) clearInterval(pvpChatPollInterval);
   pvpChatPollInterval = setInterval(async () => {
@@ -1557,7 +1731,7 @@ async function sendChat() {
   } catch (e) {}
 }
 
-// ─── Kick ───
+// ═══ KICK ═══
 async function kickGuest() {
   if (!confirm('Bạn có chắc muốn kick đối thủ?')) return;
   try {
@@ -1567,14 +1741,13 @@ async function kickGuest() {
     });
     if (data.success) {
       showToast('🚫 ' + data.message);
-      // Reload trạng thái
       const r = await api(`/api/pvp/room/${pvpRoomCode}`);
       if (r.success) { pvpCurrentRoom = r.room; showPvPWaiting(r.room); }
     } else showToast('❌ ' + data.error, 'error');
   } catch (e) { showToast('❌ Lỗi kick!', 'error'); }
 }
 
-// ─── Rematch ───
+// ═══ REMATCH ═══
 async function voteRematch() {
   try {
     const data = await api('/api/pvp/rematch', {
@@ -1593,7 +1766,7 @@ async function voteRematch() {
   } catch (e) {}
 }
 
-// ─── Leave ───
+// ═══ LEAVE ═══
 async function leavePvP() {
   if (!confirm('Rời phòng?')) return;
   try {
@@ -1607,12 +1780,15 @@ async function leavePvP() {
 
 function backToLobby() {
   stopPvPPolling();
+  stopHeartbeat();
   if (pvpChatPollInterval) clearInterval(pvpChatPollInterval);
   pvpRoomCode = null;
   pvpCurrentRoom = null;
   $('pvpWaiting').style.display = 'none';
   $('pvpPlaying').style.display = 'none';
   $('pvpFinished').style.display = 'none';
+  $('pvpLeaveBtn').classList.remove('show');
+  $('oppAfkNotice').style.display = 'none';
   document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = '');
   document.querySelectorAll('.pvp-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.pvp-subtab').forEach(s => s.classList.remove('active'));
@@ -1621,7 +1797,7 @@ function backToLobby() {
   loadPublicRooms();
 }
 
-// ─── Copy room code ───
+// ═══ COPY ROOM CODE ═══
 function copyRoomCode() {
   if (!pvpRoomCode) return;
   navigator.clipboard.writeText(pvpRoomCode);
@@ -1639,6 +1815,145 @@ async function shareLink() {
 }
 
 // ═══════════════════════════════════════════════════════════
+//  ⏰ HEARTBEAT + AFK DETECTION
+// ═══════════════════════════════════════════════════════════
+function startHeartbeat() {
+  stopHeartbeat();
+  pvpHeartbeatInterval = setInterval(async () => {
+    if (!pvpRoomCode) return;
+    if (pvpCurrentRoom?.status === 'finished') return;
+    try {
+      await api('/api/pvp/heartbeat', {
+        method: 'POST',
+        body: JSON.stringify({ code: pvpRoomCode })
+      });
+    } catch (e) {}
+  }, 5000); // Mỗi 5s
+}
+
+function stopHeartbeat() {
+  if (pvpHeartbeatInterval) {
+    clearInterval(pvpHeartbeatInterval);
+    pvpHeartbeatInterval = null;
+  }
+}
+
+// Kiểm tra AFK mỗi 3s
+setInterval(async () => {
+  if (!pvpRoomCode) return;
+  if (pvpCurrentRoom?.status !== 'playing') {
+    $('oppAfkNotice').style.display = 'none';
+    return;
+  }
+  try {
+    const data = await api(`/api/pvp/afk-status/${pvpRoomCode}`);
+    if (!data.success) return;
+
+    // ═══ ĐỐI THỦ AFK ═══
+    if (data.opponent_is_afk) {
+      const oppName = pvpCurrentRoom?.opponent_display || 'Đối thủ';
+      const secs = Math.round(data.opponent_afk_seconds);
+      $('oppAfkNotice').style.display = 'flex';
+      $('oppAfkText').textContent = `⚠️ ${oppName} đang AFK ${secs}s!`;
+
+      // Cảnh báo lớn nếu chưa thông báo trong 15s
+      const now = Date.now();
+      if (now - pvpLastOppAfkWarning > 15000) {
+        pvpLastOppAfkWarning = now;
+        playAfkSound();
+        showToast(`⚠️ ${oppName} đang AFK!`, 'warning');
+      }
+    } else {
+      $('oppAfkNotice').style.display = 'none';
+    }
+
+    // ═══ CHÍNH BẠN AFK ═══
+    if (data.your_afk_seconds >= 20 && pvpCurrentRoom?.status === 'playing') {
+      const secs = Math.round(data.your_afk_seconds);
+      const banner = $('afkWarningBanner');
+      banner.classList.add('show');
+      if (secs >= 30) {
+        banner.classList.add('danger');
+        $('afkWarningText').textContent = `🚨 Bạn đã AFK ${secs}s! Trả lời ngay!`;
+      } else {
+        banner.classList.remove('danger');
+        $('afkWarningText').textContent = `⏰ Bạn AFK ${secs}s! Vui lòng tương tác.`;
+      }
+
+      // Lưu cảnh báo vào server (chỉ trong game)
+      if (!pvpAfkWarningShown) {
+        pvpAfkWarningShown = true;
+        try {
+          await api('/api/pvp/afk-warning', {
+            method: 'POST',
+            body: JSON.stringify({ code: pvpRoomCode })
+          });
+        } catch (e) {}
+      }
+    } else {
+      $('afkWarningBanner').classList.remove('show', 'danger');
+      pvpAfkWarningShown = false;
+    }
+  } catch (e) { console.debug('AFK check:', e); }
+}, 3000);
+
+function playAfkSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [600, 800, 600, 800];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.12);
+      osc.start(ctx.currentTime + i * 0.15);
+      osc.stop(ctx.currentTime + i * 0.15 + 0.15);
+    });
+  } catch (e) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  🚪 LEAVE MATCH
+// ═══════════════════════════════════════════════════════════
+function confirmLeaveMatch() {
+  $('leaveConfirmOverlay').classList.add('show');
+}
+
+function closeLeaveConfirm() {
+  $('leaveConfirmOverlay').classList.remove('show');
+}
+
+async function doLeaveMatch() {
+  closeLeaveConfirm();
+  if (!pvpRoomCode) return;
+
+  try {
+    const data = await api('/api/pvp/leave-match', {
+      method: 'POST',
+      body: JSON.stringify({ code: pvpRoomCode })
+    });
+    if (data.success) {
+      showToast('🚪 Đã rời trận! Bạn bị xử thua.', 'warning');
+      stopHeartbeat();
+      setTimeout(() => backToLobby(), 1500);
+    } else {
+      showToast('❌ ' + (data.error || 'Lỗi!'), 'error');
+    }
+  } catch (e) {
+    showToast('❌ Lỗi kết nối!', 'error');
+  }
+}
+
+// Đóng modal khi bấm ngoài
+$('leaveConfirmOverlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'leaveConfirmOverlay') closeLeaveConfirm();
+});
+
+// ═══════════════════════════════════════════════════════════
 //  FRIENDS
 // ═══════════════════════════════════════════════════════════
 async function loadFriends() {
@@ -1646,7 +1961,6 @@ async function loadFriends() {
     const data = await api('/api/friends');
     if (!data.success) return;
 
-    // Requests
     const reqBox = $('friendRequests');
     if (!data.requests.length) {
       reqBox.innerHTML = '<div class="empty-msg" style="padding:20px;">Không có lời mời</div>';
@@ -1664,7 +1978,6 @@ async function loadFriends() {
       `).join('');
     }
 
-    // Friends
     const listBox = $('friendsList');
     if (!data.friends.length) {
       listBox.innerHTML = '<div class="empty-msg" style="padding:20px;">Chưa có bạn bè</div>';
@@ -1858,7 +2171,7 @@ async function generateMeme() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  URL params: ?join=CODE
+//  URL PARAMS: ?join=CODE
 // ═══════════════════════════════════════════════════════════
 function checkUrlJoin() {
   const params = new URLSearchParams(window.location.search);
