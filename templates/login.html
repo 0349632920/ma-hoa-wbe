@@ -16,7 +16,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
-      overflow: hidden;
+      overflow-x: hidden;
       position: relative;
       transition: background 0.6s ease;
     }
@@ -52,6 +52,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Logo */
     .login-logo {
       text-align: center;
       margin-bottom: 35px;
@@ -90,6 +91,7 @@
       font-size: 14px;
     }
 
+    /* Tabs */
     .auth-tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -134,6 +136,7 @@
 
     .auth-tab.active { color: white; }
 
+    /* Form */
     .form-group {
       margin-bottom: 18px;
       animation: fadeIn 0.3s ease;
@@ -206,6 +209,7 @@
 
     .toggle-password:hover { background: #f0f0f5; }
 
+    /* Password strength */
     .password-strength {
       display: flex;
       gap: 4px;
@@ -231,6 +235,7 @@
       font-weight: 500;
     }
 
+    /* Options */
     .form-options {
       display: flex;
       justify-content: space-between;
@@ -263,6 +268,7 @@
 
     .forgot-link:hover { text-decoration: underline; }
 
+    /* Error box */
     .error-box {
       padding: 12px 16px;
       background: #ffebee;
@@ -283,6 +289,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Submit button */
     .btn-submit {
       width: 100%;
       padding: 16px;
@@ -328,6 +335,233 @@
       to { transform: rotate(360deg); }
     }
 
+    /* ============================================
+       CREATOR CREDIT — 2 NGƯỜI
+       ============================================ */
+    .creator-credit {
+      margin-top: 30px;
+      padding-top: 24px;
+      border-top: 1px solid #f0f0f5;
+      text-align: center;
+      animation: fadeIn 0.6s ease 0.8s both;
+    }
+
+    .creator-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .creator-divider > span:first-child,
+    .creator-divider > span:last-child {
+      font-size: 14px;
+      opacity: 0.5;
+    }
+
+    .creator-divider-line {
+      width: 80px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #667eea, transparent);
+      border-radius: 2px;
+    }
+
+    .creator-label {
+      font-size: 12px;
+      color: #999;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+    }
+
+    .creators-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 480px) {
+      .creators-row {
+        grid-template-columns: 1fr;
+        max-width: 260px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+
+    .creator-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 18px 14px;
+      background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+      border: 2px solid #e0e5ff;
+      border-radius: 16px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .creator-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(102,126,234,0.15), transparent);
+      transition: 0.6s;
+    }
+
+    .creator-card:hover::before {
+      left: 100%;
+    }
+
+    .creator-card:hover {
+      border-color: #667eea;
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.25);
+    }
+
+    .creator-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 22px;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      transition: 0.3s;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .creator-card:hover .creator-avatar {
+      transform: scale(1.1) rotate(-5deg);
+    }
+
+    .creator-avatar-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      position: relative;
+      z-index: 2;
+    }
+
+    .avatar-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: white;
+      z-index: 1;
+    }
+
+    .creator-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #333;
+      margin-bottom: 3px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .creator-role {
+      font-size: 11px;
+      color: #999;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .creator-tiktok-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: #000;
+      color: white;
+      transition: 0.3s;
+    }
+
+    .creator-card:hover .creator-tiktok-badge {
+      background: linear-gradient(135deg, #25F4EE, #FE2C55);
+      transform: scale(1.05);
+    }
+
+    /* SÁT NHÂN */
+    .killer-card {
+      background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+      border-color: #ffd0d0;
+    }
+
+    .killer-card:hover {
+      border-color: #e74c3c;
+      box-shadow: 0 12px 30px rgba(231, 76, 60, 0.3);
+    }
+
+    .killer-avatar {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      box-shadow: 0 8px 20px rgba(231, 76, 60, 0.5);
+      animation: killerPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes killerPulse {
+      0%, 100% { box-shadow: 0 8px 20px rgba(231, 76, 60, 0.5); }
+      50% { box-shadow: 0 8px 30px rgba(231, 76, 60, 0.9); }
+    }
+
+    .killer-name {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .killer-role {
+      color: #c0392b;
+      font-weight: 700;
+    }
+
+    .killer-badge {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      animation: killerBadgePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes killerBadgePulse {
+      0%, 100% { box-shadow: 0 0 8px rgba(231, 76, 60, 0.6); }
+      50% { box-shadow: 0 0 16px rgba(231, 76, 60, 1); }
+    }
+
+    .creator-card:hover .killer-badge {
+      background: linear-gradient(135deg, #25F4EE, #FE2C55);
+      animation: none;
+    }
+
+    .creator-footer {
+      font-size: 11px;
+      color: #bbb;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Toast */
     .toast {
       position: fixed;
       bottom: 30px;
@@ -352,7 +586,7 @@
       opacity: 1;
     }
 
-    /* Hiệu ứng khi bị ban */
+    /* Ban/Delete effects */
     @keyframes bannedShake {
       0%, 100% { transform: translateX(0); }
       10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
@@ -370,7 +604,6 @@
       box-shadow: 0 0 40px rgba(231,76,60,0.8), 0 30px 80px rgba(0,0,0,0.35) !important;
     }
 
-    /* Hiệu ứng khi bị đánh dấu xóa */
     body.deleted-mode {
       background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%) !important;
       animation: bannedShake 0.6s ease;
@@ -468,6 +701,47 @@
         <span class="btn-text">🔓 Đăng nhập</span>
       </button>
     </form>
+
+    <!-- ============================================
+         CREATOR CREDIT — 2 NGƯỜI TẠO WEB
+         ============================================ -->
+    <div class="creator-credit">
+      <div class="creator-divider">
+        <span>✨</span>
+        <span class="creator-divider-line"></span>
+        <span>✨</span>
+      </div>
+
+      <div class="creator-label">💻 Được phát triển bởi</div>
+
+      <div class="creators-row">
+        <!-- HÙNG — NGƯỜI TẠO WEB -->
+        <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="creator-card" title="TikTok: @tienhung0707">
+          <div class="creator-avatar">
+            <div class="avatar-fallback">H</div>
+            <img src="https://unavatar.io/tiktok/tienhung0707" alt="Hùng" class="creator-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="creator-name">Hùng</div>
+          <div class="creator-role">Developer</div>
+          <div class="creator-tiktok-badge">🎵 TikTok</div>
+        </a>
+
+        <!-- SÁT NHÂN -->
+        <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="creator-card killer-card" title="TikTok: @fan.yu.juhoon">
+          <div class="creator-avatar killer-avatar">
+            <div class="avatar-fallback">🔪</div>
+            <img src="https://unavatar.io/tiktok/fan.yu.juhoon" alt="Sát Nhân" class="creator-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="creator-name killer-name">Sát Nhân</div>
+          <div class="creator-role killer-role">Co-Founder</div>
+          <div class="creator-tiktok-badge killer-badge">🎵 TikTok</div>
+        </a>
+      </div>
+
+      <div class="creator-footer">
+        © 2026 Mã Hóa Tool — All rights reserved
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -605,14 +879,12 @@
         });
         const data = await res.json();
 
-        // THÀNH CÔNG
         if (data.success) {
           showToast(data.message || '✅ Thành công!');
           setTimeout(() => { window.location.href = '/'; }, 700);
           return;
         }
 
-        // BỊ BAN
         if (data.banned) {
           document.body.classList.add('banned-mode');
           document.getElementById('loginContainer').classList.add('banned-shake');
@@ -623,7 +895,6 @@
           return;
         }
 
-        // BỊ ĐÁNH DẤU XÓA
         if (data.pending_delete) {
           document.body.classList.add('deleted-mode');
           document.getElementById('loginContainer').classList.add('deleted-shake');
@@ -634,7 +905,6 @@
           return;
         }
 
-        // LỖI
         showError(data.error || 'Có lỗi xảy ra!');
         submitBtn.disabled = false;
         submitBtn.classList.remove('loading');
