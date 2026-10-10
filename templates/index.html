@@ -112,13 +112,11 @@
       </button>
     </div>
 
-    <!-- KEY -->
     <div id="keySection" class="key-section hidden">
       <label id="keyLabel">🔑 Khóa:</label>
       <input type="text" id="keyInput" placeholder="Nhập khóa...">
     </div>
 
-    <!-- WARNINGS -->
     <div id="hashWarning" class="hash-warning hidden">
       ⚠️ Phương pháp này là <strong>mã hóa 1 chiều</strong> — không thể giải mã!
     </div>
@@ -144,7 +142,6 @@
       </div>
     </div>
 
-    <!-- BUTTONS -->
     <div class="buttons">
       <button class="btn primary" id="actionBtn" onclick="runAction()">🔒 Mã Hóa Ngay</button>
       <button class="btn swap" onclick="swapText()">🔄 Đảo Chiều</button>
@@ -192,7 +189,7 @@
         <button class="modal-close" id="closeModalBtn">✕</button>
       </div>
       <div class="modal-search">
-        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm... (VD: base64, aes, morse)">
+        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm...">
       </div>
       <div class="modal-body">
         <div class="methods-grid" id="methodsGrid">
@@ -228,9 +225,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL BAN TOÀN MÀN HÌNH
-       ============================================ -->
+  <!-- MODAL BAN TOÀN MÀN HÌNH -->
   <div class="blocked-overlay" id="banBlockOverlay">
     <div class="blocked-content">
       <div class="blocked-animation">
@@ -239,10 +234,8 @@
         <div class="ban-pulse delay-1"></div>
         <div class="ban-pulse delay-2"></div>
       </div>
-
       <h1 class="blocked-title">🚫 BẠN ĐÃ BỊ BAN</h1>
       <p class="blocked-subtitle">Không thể mã hóa / giải mã khi tài khoản bị khóa</p>
-
       <div class="blocked-info">
         <div class="blocked-info-row">
           <span class="blocked-label">👤 Tài khoản:</span>
@@ -261,18 +254,14 @@
           <span class="blocked-value" id="blockBy">—</span>
         </div>
       </div>
-
       <div class="blocked-actions">
         <button class="blocked-btn danger" onclick="goToBanPage()">📄 Xem chi tiết</button>
       </div>
-
       <p class="blocked-footer">🔒 Nếu cho rằng đây là nhầm lẫn, hãy liên hệ admin</p>
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL WARN TOÀN MÀN HÌNH
-       ============================================ -->
+  <!-- MODAL WARN TOÀN MÀN HÌNH -->
   <div class="blocked-overlay warn-overlay" id="warnBlockOverlay">
     <div class="blocked-content warn-content">
       <div class="blocked-animation">
@@ -281,10 +270,8 @@
         <div class="warn-pulse delay-1"></div>
         <div class="warn-pulse delay-2"></div>
       </div>
-
       <h1 class="blocked-title warn-title">⚠️ BẠN ĐANG BỊ CẢNH BÁO</h1>
       <p class="blocked-subtitle">Không thể mã hóa / giải mã khi còn cảnh báo từ admin</p>
-
       <div class="warn-count-box">
         <span class="warn-count-icon">⚠️</span>
         <div>
@@ -292,23 +279,21 @@
           <small>Vui lòng liên hệ admin để được gỡ cảnh báo</small>
         </div>
       </div>
-
       <div class="blocked-info warn-info-list" id="warnListContainer"></div>
-
       <div class="blocked-actions">
         <button class="blocked-btn warn-btn" onclick="acknowledgeWarn()">✅ Tôi đã hiểu</button>
         <button class="blocked-btn secondary" onclick="goToWarnPage()">📄 Xem chi tiết</button>
       </div>
-
       <p class="blocked-footer">💡 Cảnh báo sẽ biến mất khi admin xóa cho bạn</p>
     </div>
   </div>
 
+  <!-- TOAST -->
   <div id="toast" class="toast"></div>
 
   <script>
     // ==========================================
-    // SPLASH
+    // SPLASH SCREEN
     // ==========================================
     const splashMessages = [
       'Đang khởi tạo...',
@@ -372,7 +357,15 @@
     let currentMethod = 'base64';
     let currentAction = 'encrypt';
     let isTransitioning = false;
-    let warnAcknowledged = false;  // Đánh dấu đã bấm "Tôi đã hiểu"
+    let warnAcknowledged = false;
+
+    // ===== POLLING STATE =====
+    let pollInterval = null;
+    let isPolling = false;
+    let lastStatus = null;
+    let lastWarningsCount = 0;
+    let isHandlingBlock = false;  // Đang xử lý ban/delete → không poll nữa
+    const POLL_INTERVAL = 3000;    // 3 giây
 
     const oneWayMethods = new Set([
       'md5','sha1','sha224','sha256','sha384','sha512',
@@ -442,16 +435,32 @@
     });
 
     // ==========================================
-    // LOAD USER INFO + AUTO HIỆN MODAL WARN
+    // LOAD USER INFO (ban đầu)
     // ==========================================
     async function loadUserInfo() {
       try {
-        const res = await fetch('/api/me');
+        const res = await fetch('/api/me', {
+          headers: { 'Cache-Control': 'no-cache' }
+        });
         if (res.status === 401) { window.location.href = '/login'; return; }
         const data = await res.json();
 
+        // BAN
         if (data.banned) {
-          window.location.href = data.redirect || '/login';
+          stopPolling();
+          showBanBlock(data.ban_info || {}, data.username || '');
+          playBanSound();
+          setTimeout(() => {
+            window.location.href = data.redirect || ('/banned?user=' + data.username);
+          }, 3000);
+          return;
+        }
+
+        // PENDING DELETE
+        if (data.pending_delete) {
+          stopPolling();
+          showToast('🗑️ Tài khoản đã bị đánh dấu XÓA! Đang chuyển...', true);
+          setTimeout(() => { window.location.href = '/deleted'; }, 1500);
           return;
         }
 
@@ -459,10 +468,14 @@
           const el = document.getElementById('userLoginInfo');
           if (el) el.textContent = `Đăng nhập ${data.login_count} lần`;
 
-          // BỊ WARN → hiện modal toàn màn hình (nếu chưa acknowledge)
+          // Cập nhật state ban đầu
+          lastStatus = data.status;
+          lastWarningsCount = (data.warnings || []).length;
+
+          // WARN — hiện modal nếu chưa acknowledge
           if (data.warnings && data.warnings.length > 0 && data.status === 'warned') {
             setTimeout(() => {
-              if (!warnAcknowledged) {
+              if (!warnAcknowledged && !isHandlingBlock) {
                 showWarnBlock(data.warnings, data.username);
                 playWarnSound();
               }
@@ -472,8 +485,126 @@
       } catch (e) { console.error(e); }
     }
 
+    // ==========================================
+    // POLLING — KIỂM TRA TRẠNG THÁI MỖI 3 GIÂY
+    // ==========================================
+    async function pollStatus() {
+      // Bỏ qua nếu:
+      //  - Đang xử lý block (ban/delete)
+      //  - Đang có 1 request chạy
+      //  - Tab ẩn
+      if (isHandlingBlock) return;
+      if (isPolling) return;
+      if (document.hidden) return;
+
+      isPolling = true;
+
+      try {
+        const res = await fetch('/api/me', {
+          headers: { 'Cache-Control': 'no-cache' },
+          credentials: 'same-origin'
+        });
+
+        // Session hết hạn
+        if (res.status === 401) {
+          stopPolling();
+          window.location.href = '/login';
+          return;
+        }
+
+        const data = await res.json();
+
+        // ===== BỊ BAN =====
+        if (data.banned) {
+          isHandlingBlock = true;
+          stopPolling();
+
+          showBanBlock(data.ban_info || {}, data.username || '');
+          playBanSound();
+          showToast('🚫 Bạn đã bị BAN bởi admin!', true);
+
+          // Chuyển trang ban sau 3s
+          setTimeout(() => {
+            window.location.href = data.redirect || ('/banned?user=' + data.username);
+          }, 3000);
+          return;
+        }
+
+        // ===== BỊ ĐÁNH DẤU XÓA =====
+        if (data.pending_delete) {
+          isHandlingBlock = true;
+          stopPolling();
+
+          showToast('🗑️ Tài khoản đã bị đánh dấu XÓA! Đang chuyển...', true);
+
+          setTimeout(() => {
+            window.location.href = data.redirect || '/deleted';
+          }, 1500);
+          return;
+        }
+
+        // ===== WARN =====
+        if (data.success) {
+          const newWarnCount = (data.warnings || []).length;
+
+          // Có warning MỚI (số lượng tăng)
+          if (newWarnCount > lastWarningsCount) {
+            // Reset cờ acknowledge → bắt user xem lại
+            warnAcknowledged = false;
+
+            showWarnBlock(data.warnings, data.username);
+            playWarnSound();
+
+            const diff = newWarnCount - lastWarningsCount;
+            showToast(`⚠️ Bạn vừa nhận ${diff} cảnh báo mới từ admin!`, true);
+          }
+
+          // Cập nhật state
+          lastStatus = data.status;
+          lastWarningsCount = newWarnCount;
+
+          // Cập nhật UI
+          const el = document.getElementById('userLoginInfo');
+          if (el) el.textContent = `Đăng nhập ${data.login_count} lần`;
+        }
+      } catch (e) {
+        // Lỗi mạng — im lặng, lần sau thử lại
+        console.debug('Poll error:', e);
+      } finally {
+        isPolling = false;
+      }
+    }
+
+    // Bắt đầu polling
+    function startPolling() {
+      if (pollInterval) clearInterval(pollInterval);
+      console.log('🔄 Polling started (every 3s)');
+      pollInterval = setInterval(pollStatus, POLL_INTERVAL);
+    }
+
+    // Dừng polling
+    function stopPolling() {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+        console.log('⏹️ Polling stopped');
+      }
+    }
+
+    // Khi tab hiện lại → poll ngay
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !isHandlingBlock) {
+        console.log('👁️ Tab visible — poll ngay');
+        pollStatus();
+      }
+    });
+
+    // ==========================================
+    // LOGOUT
+    // ==========================================
     async function logout() {
       if (!confirm('Bạn có chắc muốn đăng xuất?')) return;
+      stopPolling();
       try {
         await fetch('/api/logout', { method: 'POST' });
         showToast('👋 Đã đăng xuất!');
@@ -651,11 +782,8 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (document.getElementById('banBlockOverlay').classList.contains('show')) {
-          return; // Không cho đóng ban bằng ESC
-        }
+        if (document.getElementById('banBlockOverlay').classList.contains('show')) return;
         if (document.getElementById('warnBlockOverlay').classList.contains('show')) {
-          // Đóng = acknowledge luôn
           acknowledgeWarn();
           return;
         }
@@ -756,22 +884,30 @@
         hideProcessing();
 
         if (data.need_login) {
+          stopPolling();
           showToast('⚠️ Phiên hết hạn!', true);
           setTimeout(() => { window.location.href = '/login'; }, 1000);
           return;
         }
 
-        // BỊ BAN
+        // BAN
         if (data.banned) {
+          isHandlingBlock = true;
+          stopPolling();
           showBanBlock(data.ban_info || {}, data.username || '');
           playBanSound();
+          setTimeout(() => {
+            window.location.href = '/banned?user=' + (data.username || '');
+          }, 3000);
           return;
         }
 
-        // BỊ CẢNH BÁO — chỉ hiện nếu chưa acknowledge
-        if (data.warned && !warnAcknowledged) {
-          showWarnBlock(data.warnings || [], data.username || '');
-          playWarnSound();
+        // PENDING DELETE
+        if (data.pending_delete) {
+          isHandlingBlock = true;
+          stopPolling();
+          showToast('🗑️ Tài khoản đã bị đánh dấu XÓA!', true);
+          setTimeout(() => { window.location.href = '/deleted'; }, 1500);
           return;
         }
 
@@ -840,28 +976,20 @@
       document.body.style.overflow = 'hidden';
     }
 
-    // ==========================================
-    // ACKNOWLEDGE WARN — BẤM "TÔI ĐÃ HIỂU"
-    // ==========================================
     async function acknowledgeWarn() {
       try {
-        // Gọi API đánh dấu đã xem
         await fetch('/api/acknowledge-warnings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (e) {
-        console.error('Lỗi acknowledge:', e);
-      }
+      } catch (e) {}
 
-      // Đánh dấu local
       warnAcknowledged = true;
 
       // Đóng modal
       document.getElementById('warnBlockOverlay').classList.remove('show');
       document.body.style.overflow = '';
 
-      // Thông báo
       showToast('✅ Đã ghi nhận! Bạn có thể sử dụng web bình thường.');
     }
 
@@ -975,7 +1103,17 @@
     if (defaultBtn) defaultBtn.classList.add('active');
     taskIndicator.style.transform = 'translateX(0)';
     updateUI();
+
+    // Load user info ban đầu
     loadUserInfo();
+
+    // ===== BẮT ĐẦU POLLING SAU KHI SPLASH XONG =====
+    setTimeout(() => {
+      startPolling();
+    }, 2500);  // Bắt đầu sau khi splash kết thúc
+
+    // Dừng polling khi rời trang
+    window.addEventListener('beforeunload', stopPolling);
   </script>
 </body>
 </html>
