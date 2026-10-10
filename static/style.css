@@ -1350,3 +1350,412 @@ textarea:focus {
   .logout-header h3 { font-size: 18px; }
   .logout-body { padding: 22px 20px; }
 }
+/* ============================================
+   AVATAR TIKTOK — ẢNH THẬT
+   ============================================ */
+.creator-avatar-img,
+.killer-avatar-img,
+.footer-avatar-img,
+.footer-killer-avatar-img,
+.admin-credit-avatar-img,
+.admin-killer-avatar-img,
+.dropdown-creator-avatar-img,
+.dropdown-killer-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  transition: 0.3s;
+}
+
+/* Wrapper cho avatar để có thể chứa cả ảnh và fallback */
+.creator-avatar,
+.killer-avatar,
+.footer-avatar,
+.footer-killer-avatar,
+.admin-credit-avatar,
+.admin-killer-avatar,
+.dropdown-creator-avatar,
+.dropdown-killer-avatar {
+  overflow: hidden;
+  position: relative;
+}
+
+/* Fallback chữ cái khi ảnh không load */
+.avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: white;
+  z-index: 1;
+}
+
+.creator-avatar img,
+.killer-avatar img,
+.footer-avatar img,
+.footer-killer-avatar img {
+  position: relative;
+  z-index: 2;
+}
+
+/* ============================================
+   FOOTER CREATORS (trang chủ)
+   ============================================ */
+.page-footer {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid #f0f0f5;
+  text-align: center;
+}
+
+.footer-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.footer-line {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #667eea, transparent);
+  border-radius: 2px;
+}
+
+.footer-star {
+  font-size: 16px;
+  animation: footerStarPulse 2s ease-in-out infinite;
+}
+
+@keyframes footerStarPulse {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+  50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+}
+
+.footer-label {
+  font-size: 11px;
+  color: #999;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 20px;
+}
+
+.footer-creators {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 480px) {
+  .footer-creators {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.footer-creator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+  border: 2px solid #e0e5ff;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  min-width: 200px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.footer-creator::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102,126,234,0.15), transparent);
+  transition: 0.6s;
+}
+
+.footer-creator:hover::before {
+  left: 100%;
+}
+
+.footer-creator:hover {
+  border-color: #667eea;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+}
+
+.footer-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  transition: transform 0.3s;
+}
+
+.footer-creator:hover .footer-avatar {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.footer-info {
+  flex: 1;
+  text-align: left;
+  min-width: 0;
+}
+
+.footer-name {
+  font-size: 14px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.footer-role {
+  font-size: 10px;
+  color: #999;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.footer-tiktok {
+  font-size: 15px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #000;
+  color: white;
+  transition: 0.3s;
+  flex-shrink: 0;
+}
+
+.footer-creator:hover .footer-tiktok {
+  background: linear-gradient(135deg, #25F4EE, #FE2C55);
+  transform: scale(1.15) rotate(5deg);
+}
+
+/* SÁT NHÂN */
+.footer-killer {
+  background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+  border-color: #ffd0d0;
+}
+
+.footer-killer:hover {
+  border-color: #e74c3c;
+  box-shadow: 0 10px 25px rgba(231, 76, 60, 0.25);
+}
+
+.footer-killer-avatar {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  font-size: 22px;
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.5);
+  animation: footerKillerPulse 2s ease-in-out infinite;
+}
+
+@keyframes footerKillerPulse {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(231, 76, 60, 0.5);
+  }
+  50% {
+    box-shadow: 0 6px 24px rgba(231, 76, 60, 0.9);
+  }
+}
+
+.footer-killer-name {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.footer-killer-role {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.footer-killer-badge {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  animation: footerKillerBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes footerKillerBadgePulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(231, 76, 60, 0.6); }
+  50% { box-shadow: 0 0 16px rgba(231, 76, 60, 1); }
+}
+
+.footer-killer:hover .footer-killer-badge {
+  background: linear-gradient(135deg, #25F4EE, #FE2C55);
+  animation: none;
+}
+
+.footer-copy {
+  font-size: 12px;
+  color: #bbb;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 8px 0;
+}
+
+.footer-copy strong {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* ============================================
+   DROPDOWN CREDIT
+   ============================================ */
+.dropdown-credit {
+  margin-top: 8px;
+  padding-top: 12px;
+}
+
+.dropdown-credit-line {
+  height: 1px;
+  background: #f0f0f5;
+  margin-bottom: 12px;
+}
+
+.dropdown-credit-label {
+  font-size: 9px;
+  color: #999;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.dropdown-creators {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dropdown-creator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+  border: 2px solid #e0e5ff;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.dropdown-creator:hover {
+  border-color: #667eea;
+  background: white;
+  transform: translateX(3px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+}
+
+.dropdown-creator-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.dropdown-creator-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dropdown-creator-name {
+  font-size: 12px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.dropdown-creator-role {
+  font-size: 9px;
+  color: #999;
+  font-weight: 600;
+}
+
+.dropdown-creator-tiktok {
+  font-size: 14px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #000;
+  color: white;
+  transition: 0.3s;
+}
+
+.dropdown-creator:hover .dropdown-creator-tiktok {
+  background: linear-gradient(135deg, #25F4EE, #FE2C55);
+  transform: scale(1.15);
+}
+
+.dropdown-killer {
+  background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+  border-color: #ffd0d0;
+}
+
+.dropdown-killer:hover {
+  border-color: #e74c3c;
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.25);
+}
+
+.dropdown-killer-avatar {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.5);
+}
+
+.dropdown-killer-name {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dropdown-killer-role {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.dropdown-killer-badge {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.dropdown-killer:hover .dropdown-killer-badge {
+  background: linear-gradient(135deg, #25F4EE, #FE2C55);
+}
