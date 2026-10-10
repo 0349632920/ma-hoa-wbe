@@ -1818,3 +1818,53 @@ input[type="number"]:focus {
 
 /* Panel đơn giản */
 .panel .row { margin-bottom: 14px; }
+/* ============================================================
+   LAYOUT 2 CỘT: INPUT TRÁI — OUTPUT PHẢI
+   ============================================================ */
+.panel-input textarea,
+.panel-output textarea {
+    height: 380px;
+    margin-bottom: 0;
+}
+
+.panel-input .row { margin-bottom: 14px; }
+
+.panel-output textarea {
+    background: var(--bg3);
+    color: var(--green);
+    border-color: rgba(16, 185, 129, 0.3);
+    margin-bottom: 16px;
+}
+.panel-output textarea:focus {
+    border-color: var(--green);
+}
+
+.panel-output .actions {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.panel-output .actions .btn {
+    width: 100%;
+    padding: 12px;
+}
+
+/* Đảm bảo 2 cột bằng nhau */
+.main {
+    align-items: stretch;
+}
+.main .panel {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 900px) {
+    .panel-output .actions {
+        grid-template-columns: 1fr;
+    }
+    .panel-input textarea,
+    .panel-output textarea {
+        height: 260px;
+    }
+}
