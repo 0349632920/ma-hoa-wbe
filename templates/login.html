@@ -38,8 +38,8 @@
     .login-container {
       background: #fff;
       border-radius: 24px;
-      padding: 50px 45px;
-      max-width: 480px;
+      padding: 45px 40px;
+      max-width: 620px;
       width: 100%;
       box-shadow: 0 30px 80px rgba(0,0,0,0.35);
       position: relative;
@@ -52,10 +52,9 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Logo */
     .login-logo {
       text-align: center;
-      margin-bottom: 35px;
+      margin-bottom: 30px;
     }
 
     .login-logo-icon {
@@ -91,7 +90,6 @@
       font-size: 14px;
     }
 
-    /* Tabs */
     .auth-tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -136,7 +134,6 @@
 
     .auth-tab.active { color: white; }
 
-    /* Form */
     .form-group {
       margin-bottom: 18px;
       animation: fadeIn 0.3s ease;
@@ -209,7 +206,6 @@
 
     .toggle-password:hover { background: #f0f0f5; }
 
-    /* Password strength */
     .password-strength {
       display: flex;
       gap: 4px;
@@ -235,7 +231,6 @@
       font-weight: 500;
     }
 
-    /* Options */
     .form-options {
       display: flex;
       justify-content: space-between;
@@ -268,7 +263,6 @@
 
     .forgot-link:hover { text-decoration: underline; }
 
-    /* Error box */
     .error-box {
       padding: 12px 16px;
       background: #ffebee;
@@ -289,7 +283,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Submit button */
     .btn-submit {
       width: 100%;
       padding: 16px;
@@ -336,7 +329,7 @@
     }
 
     /* ============================================
-       CREATOR CREDIT — 2 NGƯỜI
+       CREATOR CREDIT
        ============================================ */
     .creator-credit {
       margin-top: 30px;
@@ -376,35 +369,31 @@
       margin-bottom: 18px;
     }
 
+    /* 5 người ngang */
     .creators-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
       margin-bottom: 18px;
-    }
-
-    @media (max-width: 480px) {
-      .creators-row {
-        grid-template-columns: 1fr;
-        max-width: 260px;
-        margin-left: auto;
-        margin-right: auto;
-      }
     }
 
     .creator-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 18px 14px;
+      padding: 12px 8px;
       background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
       border: 2px solid #e0e5ff;
-      border-radius: 16px;
+      border-radius: 14px;
       text-decoration: none;
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
       cursor: pointer;
+      flex: 1;
+      min-width: 95px;
+      max-width: 120px;
     }
 
     .creator-card::before {
@@ -417,9 +406,7 @@
       transition: 0.6s;
     }
 
-    .creator-card:hover::before {
-      left: 100%;
-    }
+    .creator-card:hover::before { left: 100%; }
 
     .creator-card:hover {
       border-color: #667eea;
@@ -428,8 +415,8 @@
     }
 
     .creator-avatar {
-      width: 64px;
-      height: 64px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
@@ -437,9 +424,9 @@
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 22px;
-      margin-bottom: 12px;
-      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      font-size: 18px;
+      margin-bottom: 8px;
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
       transition: 0.3s;
       overflow: hidden;
       position: relative;
@@ -471,30 +458,34 @@
     }
 
     .creator-name {
-      font-size: 15px;
+      font-size: 10px;
       font-weight: 800;
       color: #333;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
       background: linear-gradient(135deg, #667eea, #764ba2);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      text-align: center;
+      line-height: 1.2;
     }
 
     .creator-role {
-      font-size: 11px;
+      font-size: 8px;
       color: #999;
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      text-align: center;
+      line-height: 1.2;
     }
 
     .creator-tiktok-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      font-size: 10px;
+      gap: 3px;
+      font-size: 8px;
       font-weight: 700;
-      padding: 4px 10px;
+      padding: 3px 7px;
       border-radius: 20px;
       background: #000;
       color: white;
@@ -506,7 +497,83 @@
       transform: scale(1.05);
     }
 
-    /* SÁT NHÂN */
+    /* ===== HÙNG — XANH LÁ (Ở GIỮA) ===== */
+    .creator-card.hung-card {
+      position: relative;
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 2.5px solid #22c55e;
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.25);
+      transform: scale(1.05);
+      z-index: 2;
+    }
+
+    .creator-card.hung-card:hover {
+      transform: scale(1.1) translateY(-4px);
+      box-shadow: 0 12px 35px rgba(34, 197, 94, 0.45);
+      border-color: #16a34a;
+    }
+
+    .creator-card.hung-card::after {
+      content: '⭐';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      font-size: 14px;
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(253,160,133,0.6);
+      animation: starGlow 2s ease-in-out infinite;
+      z-index: 3;
+    }
+
+    @keyframes starGlow {
+      0%, 100% {
+        box-shadow: 0 3px 10px rgba(253,160,133,0.6);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 4px 20px rgba(253,160,133,1);
+        transform: scale(1.15);
+      }
+    }
+
+    .hung-avatar {
+      background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+      box-shadow: 0 6px 16px rgba(34, 197, 94, 0.6) !important;
+      animation: hungPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes hungPulse {
+      0%, 100% { box-shadow: 0 6px 16px rgba(34, 197, 94, 0.6); }
+      50% { box-shadow: 0 6px 24px rgba(34, 197, 94, 1); }
+    }
+
+    .hung-name {
+      background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+
+    .hung-role {
+      color: #16a34a !important;
+      font-weight: 700 !important;
+    }
+
+    .hung-badge {
+      background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    }
+
+    .creator-card.hung-card:hover .hung-badge {
+      background: linear-gradient(135deg, #25F4EE, #FE2C55) !important;
+    }
+
+    /* ===== SÁT NHÂN — ĐỎ ===== */
     .killer-card {
       background: linear-gradient(135deg, #fff5f5, #ffe8e8);
       border-color: #ffd0d0;
@@ -519,13 +586,7 @@
 
     .killer-avatar {
       background: linear-gradient(135deg, #e74c3c, #c0392b);
-      box-shadow: 0 8px 20px rgba(231, 76, 60, 0.5);
-      animation: killerPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes killerPulse {
-      0%, 100% { box-shadow: 0 8px 20px rgba(231, 76, 60, 0.5); }
-      50% { box-shadow: 0 8px 30px rgba(231, 76, 60, 0.9); }
+      box-shadow: 0 6px 16px rgba(231, 76, 60, 0.5);
     }
 
     .killer-name {
@@ -535,30 +596,219 @@
       background-clip: text;
     }
 
-    .killer-role {
-      color: #c0392b;
-      font-weight: 700;
-    }
+    .killer-role { color: #c0392b; font-weight: 700; }
 
-    .killer-badge {
-      background: linear-gradient(135deg, #e74c3c, #c0392b);
-      animation: killerBadgePulse 2s ease-in-out infinite;
-    }
+    .killer-badge { background: linear-gradient(135deg, #e74c3c, #c0392b); }
 
-    @keyframes killerBadgePulse {
-      0%, 100% { box-shadow: 0 0 8px rgba(231, 76, 60, 0.6); }
-      50% { box-shadow: 0 0 16px rgba(231, 76, 60, 1); }
-    }
-
-    .creator-card:hover .killer-badge {
+    .killer-card:hover .killer-badge {
       background: linear-gradient(135deg, #25F4EE, #FE2C55);
-      animation: none;
+    }
+
+    /* ===== DŨNG — TÍM ===== */
+    .dung-card {
+      background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+      border-color: #e9d5ff;
+    }
+
+    .dung-card:hover {
+      border-color: #9333ea;
+      box-shadow: 0 12px 30px rgba(147, 51, 234, 0.25);
+    }
+
+    .dung-avatar {
+      background: linear-gradient(135deg, #9333ea, #7e22ce);
+      box-shadow: 0 6px 16px rgba(147, 51, 234, 0.5);
+    }
+
+    .dung-name {
+      background: linear-gradient(135deg, #9333ea, #7e22ce);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .dung-role { color: #7e22ce; font-weight: 700; }
+
+    .dung-badge { background: linear-gradient(135deg, #9333ea, #7e22ce); }
+
+    .dung-card:hover .dung-badge {
+      background: linear-gradient(135deg, #25F4EE, #FE2C55);
+    }
+
+    /* ===== MINH CHÂU — VỆ SĨ 🛡️ ===== */
+    .chau-card {
+      position: relative;
+      background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+      border: 2.5px solid #ec4899;
+      box-shadow:
+        0 6px 20px rgba(236, 72, 153, 0.3),
+        inset 0 0 20px rgba(236, 72, 153, 0.05);
+    }
+
+    .chau-card:hover {
+      border-color: #db2777;
+      box-shadow:
+        0 12px 30px rgba(219, 39, 119, 0.5),
+        inset 0 0 30px rgba(219, 39, 119, 0.1);
+      transform: translateY(-4px) scale(1.03);
+    }
+
+    .chau-card::after {
+      content: '🛡️';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      font-size: 13px;
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(236, 72, 153, 0.7);
+      animation: shieldGlow 2s ease-in-out infinite;
+      z-index: 3;
+    }
+
+    @keyframes shieldGlow {
+      0%, 100% {
+        box-shadow: 0 3px 10px rgba(236, 72, 153, 0.7);
+        transform: scale(1) rotate(0deg);
+      }
+      50% {
+        box-shadow: 0 4px 22px rgba(236, 72, 153, 1);
+        transform: scale(1.15) rotate(-10deg);
+      }
+    }
+
+    .chau-avatar {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      box-shadow: 0 6px 16px rgba(236, 72, 153, 0.5);
+      position: relative;
+      overflow: visible !important;
+    }
+
+    .chau-avatar::before {
+      content: '🛡️';
+      position: absolute;
+      bottom: -5px;
+      right: -5px;
+      font-size: 11px;
+      width: 16px;
+      height: 16px;
+      background: linear-gradient(135deg, #ec4899, #be185d);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(236, 72, 153, 0.8);
+      z-index: 4;
+      animation: shieldMiniPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes shieldMiniPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(236, 72, 153, 0.8);
+      }
+      50% {
+        transform: scale(1.2);
+        box-shadow: 0 2px 14px rgba(236, 72, 153, 1);
+      }
+    }
+
+    .chau-name {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .chau-role {
+      color: #be185d !important;
+      font-weight: 800 !important;
+      font-size: 8px !important;
+      letter-spacing: 0.2px;
+    }
+
+    .chau-badge {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+    }
+
+    .chau-card:hover .chau-badge {
+      background: linear-gradient(135deg, #25F4EE, #FE2C55);
+    }
+
+    /* ===== MINH NGỌC — VÀNG ===== */
+    .ngoc-card {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border-color: #fde68a;
+    }
+
+    .ngoc-card:hover {
+      border-color: #f59e0b;
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.25);
+    }
+
+    .ngoc-avatar {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+    }
+
+    .ngoc-name {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .ngoc-role { color: #d97706; font-weight: 700; }
+
+    .ngoc-badge { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+    .ngoc-card:hover .ngoc-badge {
+      background: linear-gradient(135deg, #25F4EE, #FE2C55);
     }
 
     .creator-footer {
       font-size: 11px;
       color: #bbb;
       font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .creators-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .creator-card {
+        max-width: none;
+        min-width: auto;
+      }
+      .creator-card.hung-card {
+        transform: scale(1);
+      }
+      .creator-card.hung-card:hover {
+        transform: translateY(-4px) scale(1.02);
+      }
+    }
+
+    @media (max-width: 450px) {
+      .creators-row {
+        grid-template-columns: 1fr 1fr;
+        max-width: 280px;
+      }
+      .creator-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+      }
     }
 
     /* Toast */
@@ -616,14 +866,13 @@
     }
 
     @media (max-width: 500px) {
-      .login-container { padding: 35px 25px; }
+      .login-container { padding: 30px 22px; }
       .login-logo h1 { font-size: 22px; }
       .login-logo-icon { width: 70px; height: 70px; font-size: 40px; }
     }
   </style>
 </head>
 <body>
-  <!-- Emojis trang trí -->
   <div class="bg-emoji" style="top:10%;left:8%;animation-delay:0s">🔐</div>
   <div class="bg-emoji" style="top:20%;right:12%;animation-delay:0.5s">🔒</div>
   <div class="bg-emoji" style="bottom:15%;left:15%;animation-delay:1s">🔑</div>
@@ -638,17 +887,14 @@
       <p>Đăng nhập để sử dụng công cụ</p>
     </div>
 
-    <!-- Tabs -->
     <div class="auth-tabs" id="authTabs">
       <div class="auth-tab-indicator"></div>
       <button class="auth-tab active" id="tabLogin">🔓 Đăng nhập</button>
       <button class="auth-tab" id="tabRegister">✨ Đăng ký</button>
     </div>
 
-    <!-- Error box -->
     <div class="error-box" id="errorBox"></div>
 
-    <!-- Form -->
     <form id="authForm" onsubmit="return false;">
       <div class="form-group">
         <label>👤 Tên đăng nhập</label>
@@ -702,9 +948,7 @@
       </button>
     </form>
 
-    <!-- ============================================
-         CREATOR CREDIT — 2 NGƯỜI TẠO WEB
-         ============================================ -->
+    <!-- CREATOR CREDIT — 5 NGƯỜI -->
     <div class="creator-credit">
       <div class="creator-divider">
         <span>✨</span>
@@ -715,18 +959,7 @@
       <div class="creator-label">💻 Được phát triển bởi</div>
 
       <div class="creators-row">
-        <!-- HÙNG — NGƯỜI TẠO WEB -->
-        <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="creator-card" title="TikTok: @tienhung0707">
-          <div class="creator-avatar">
-            <div class="avatar-fallback">H</div>
-            <img src="https://unavatar.io/tiktok/tienhung0707" alt="Hùng" class="creator-avatar-img" onerror="this.style.display='none'">
-          </div>
-          <div class="creator-name">Hùng</div>
-          <div class="creator-role">Developer</div>
-          <div class="creator-tiktok-badge">🎵 TikTok</div>
-        </a>
-
-        <!-- SÁT NHÂN -->
+        <!-- 1. SÁT NHÂN -->
         <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="creator-card killer-card" title="TikTok: @fan.yu.juhoon">
           <div class="creator-avatar killer-avatar">
             <div class="avatar-fallback">🔪</div>
@@ -734,7 +967,51 @@
           </div>
           <div class="creator-name killer-name">Sát Nhân</div>
           <div class="creator-role killer-role">Co-Founder</div>
-          <div class="creator-tiktok-badge killer-badge">🎵 TikTok</div>
+          <div class="creator-tiktok-badge killer-badge">🎵</div>
+        </a>
+
+        <!-- 2. DŨNG -->
+        <a href="https://www.tiktok.com/@dungg_haha" target="_blank" class="creator-card dung-card" title="TikTok: @dungg_haha">
+          <div class="creator-avatar dung-avatar">
+            <div class="avatar-fallback">D</div>
+            <img src="https://unavatar.io/tiktok/dungg_haha" alt="Dũng" class="creator-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="creator-name dung-name">Dũng</div>
+          <div class="creator-role dung-role">Designer</div>
+          <div class="creator-tiktok-badge dung-badge">🎵</div>
+        </a>
+
+        <!-- 3. HÙNG — XANH LÁ (Ở GIỮA) ⭐ -->
+        <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="creator-card hung-card" title="TikTok: @tienhung0707">
+          <div class="creator-avatar hung-avatar">
+            <div class="avatar-fallback">H</div>
+            <img src="https://unavatar.io/tiktok/tienhung0707" alt="Hùng" class="creator-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="creator-name hung-name">Hùng ⭐</div>
+          <div class="creator-role hung-role">Founder</div>
+          <div class="creator-tiktok-badge hung-badge">🎵</div>
+        </a>
+
+        <!-- 4. MINH CHÂU — VỆ SĨ 🛡️ -->
+        <a href="https://www.tiktok.com/@minhchaudepzai246" target="_blank" class="creator-card chau-card" title="TikTok: @minhchaudepzai246">
+          <div class="creator-avatar chau-avatar">
+            <div class="avatar-fallback">C</div>
+            <img src="https://unavatar.io/tiktok/minhchaudepzai246" alt="Minh Châu" class="creator-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="creator-name chau-name">Minh Châu</div>
+          <div class="creator-role chau-role">🛡️ Vệ sĩ của Hùng</div>
+          <div class="creator-tiktok-badge chau-badge">🎵</div>
+        </a>
+
+        <!-- 5. MINH NGỌC -->
+        <a href="https://www.tiktok.com/@ngoc021215" target="_blank" class="creator-card ngoc-card" title="TikTok: @ngoc021215">
+          <div class="creator-avatar ngoc-avatar">
+            <div class="avatar-fallback">N</div>
+            <img src="https://unavatar.io/tiktok/ngoc021215" alt="Minh Ngọc" class="creator-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="creator-name ngoc-name">Minh Ngọc</div>
+          <div class="creator-role ngoc-role">Supporter</div>
+          <div class="creator-tiktok-badge ngoc-badge">🎵</div>
         </a>
       </div>
 
