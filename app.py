@@ -4,6 +4,12 @@ from crypto_utils import (
     translate, to_english, to_vietnamese, auto_translate, detect_language,
     LANGUAGES,
 )
+from game_utils import (
+    get_daily_challenge, check_rewards, pick_random_method,
+    generate_pvp_match, calculate_pvp_result, generate_meme_template,
+    points_to_level, level_to_next, add_points, update_streak,
+    ensure_game_data, init_game_data, REWARDS, MEME_TEMPLATES
+)
 from dotenv import load_dotenv
 from functools import wraps
 from datetime import datetime, timedelta
@@ -335,7 +341,8 @@ def seed_accounts():
                 }],
                 'suspicious_score': 0,
                 'warnings_shown': True,
-                'protected': (role == 'super_admin')
+                'protected': (role == 'super_admin'),
+                'game': init_game_data()
             }
             created += 1
             print(f"  ✅ Đã tạo: {username} ({role}) — ID: {user_id}")
@@ -383,7 +390,8 @@ def init_super_admin():
             'activity_log': [{'action': 'system', 'detail': f'Super Admin tạo tự động — ID: {user_id}', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
-            'protected': True
+            'protected': True,
+            'game': init_game_data()
         }
         save_user(admin_name, users[admin_name])
         print(f"👑 Đã tạo SUPER ADMIN: {admin_name} — ID: {user_id}")
@@ -429,6 +437,10 @@ def init_super_admin():
 
     if not user.get('protected'):
         user['protected'] = True
+        changed = True
+
+    if 'game' not in user:
+        user['game'] = init_game_data()
         changed = True
 
     defaults = {
@@ -546,7 +558,6 @@ def log_activity(username, action, detail=''):
 # FORMAT DURATION
 # ============================================================
 def _format_duration(delta: timedelta) -> str:
-    """Format timedelta thành chuỗi đẹp: '1 giờ 30 phút', '3 ngày'..."""
     total_seconds = int(delta.total_seconds())
     days = total_seconds // 86400
     hours = (total_seconds % 86400) // 3600
@@ -671,7 +682,8 @@ def register():
             'activity_log': [{'action': 'register', 'detail': f'Đăng ký — ID: {user_id}', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
-            'protected': False
+            'protected': False,
+            'game': init_game_data()
         }
         save_user(username, users[username])
 
@@ -1237,6 +1249,307 @@ def api_history():
 
 
 # ============================================================
+# 🎮 GAME HUB
+# ============================================================
+@app.route('/game')
+@login_required
+def game_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+    return render_template('game.html')
+
+
+@app.route('/api/game/leaderboard')
+@login_required
+def api_leaderboard():
+    users = load_users()
+    board = []
+    for uname, udata in users.items():
+        game = udata.get('game', {})
+        points = game.get('points', 0)
+        if points > 0 or game.get('pvp_stats', {}).get('total_matches', 0) > 0:
+            board.append({
+                'username': udata.get('display_name', uname),
+                'real_username': uname,
+                'user_id': udata.get('user_id', '—'),
+                'points': points,
+                'level': points_to_level(points),
+                'pvp_wins': game.get('pvp_stats', {}).get('wins', 0),
+                'streak': game.get('streak', 0),
+                'daily_count': len(game.get('daily_completed', [])),
+                'is_super_admin': is_super_admin(uname)
+            })
+    board.sort(key=lambda x: (-x['points'], -x['pvp_wins']))
+    for i, u in enumerate(board):
+        u['rank'] = i + 1
+        if i == 0: u['medal'] = '🥇'
+        elif i == 1: u['medal'] = '🥈'
+        elif i == 2: u['medal'] = '🥉'
+        else: u['medal'] = f'#{i+1}'
+    return jsonify({'success': True, 'leaderboard': board[:50]})
+
+
+@app.route('/api/game/daily')
+@login_required
+def api_daily():
+    users = load_users()
+    username = session['username']
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+    user = users[username]
+    game = ensure_game_data(user)
+    challenge = get_daily_challenge()
+    today = datetime.now().strftime('%Y-%m-%d')
+    completed = today in game.get('daily_completed', [])
+    return jsonify({
+        'success': True,
+        'challenge': {
+            'id': challenge['id'],
+            'description': challenge['description'],
+            'method': challenge['method'],
+            'method_name': METHODS.get(challenge['method'], challenge['method']),
+            'action': challenge['action'],
+            'text': challenge['text'],
+            'points': challenge['points'],
+            'key': challenge.get('key', '')
+        },
+        'completed': completed,
+        'streak': game.get('streak', 0),
+        'last_daily': game.get('last_daily')
+    })
+
+
+@app.route('/api/game/daily/submit', methods=['POST'])
+@login_required
+def api_daily_submit():
+    users = load_users()
+    username = session['username']
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+    data = request.get_json()
+    answer = (data.get('answer') or '').strip()
+    if not answer:
+        return jsonify({'success': False, 'error': 'Chưa có câu trả lời!'}), 400
+    user = users[username]
+    game = ensure_game_data(user)
+    challenge = get_daily_challenge()
+    today = datetime.now().strftime('%Y-%m-%d')
+    if today in game.get('daily_completed', []):
+        return jsonify({'success': False, 'error': 'Hôm nay đã làm rồi!'}), 400
+    correct = answer == challenge['expected'].strip()
+    if correct:
+        new_streak = update_streak(user)
+        points_earned = challenge['points']
+        bonus = 0
+        if new_streak >= 7: bonus = 50
+        elif new_streak >= 3: bonus = 20
+        points_earned += bonus
+        add_points(user, points_earned, f"Daily: {challenge['id']}")
+        game['daily_completed'].append(today)
+        game['daily_completed'] = game['daily_completed'][-30:]
+        unlocked = check_rewards(game)
+        users[username] = user
+        save_user(username, user)
+        return jsonify({
+            'success': True,
+            'correct': True,
+            'points_earned': points_earned,
+            'bonus': bonus,
+            'streak': new_streak,
+            'total_points': game['points'],
+            'level': points_to_level(game['points']),
+            'unlocked_rewards': unlocked
+        })
+    else:
+        users[username] = user
+        save_user(username, user)
+        return jsonify({
+            'success': True,
+            'correct': False,
+            'expected_preview': challenge['expected'][:30] + '...' if len(challenge['expected']) > 30 else challenge['expected'],
+            'message': 'Sai rồi! Thử lại vào ngày mai nhé!'
+        })
+
+
+@app.route('/api/game/rewards')
+@login_required
+def api_rewards():
+    users = load_users()
+    username = session['username']
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+    user = users[username]
+    game = ensure_game_data(user)
+    unlocked_ids = {r['id'] for r in check_rewards(game)}
+    claimed_ids = set(game.get('rewards_claimed', []))
+    all_rewards = []
+    for r in REWARDS:
+        status = 'locked'
+        if r['id'] in claimed_ids: status = 'claimed'
+        elif r['id'] in unlocked_ids: status = 'unlocked'
+        all_rewards.append({**r, 'status': status})
+    return jsonify({
+        'success': True,
+        'rewards': all_rewards,
+        'stats': {
+            'points': game.get('points', 0),
+            'level': points_to_level(game.get('points', 0)),
+            'daily_count': len(game.get('daily_completed', [])),
+            'pvp_wins': game.get('pvp_stats', {}).get('wins', 0),
+            'streak': game.get('streak', 0)
+        }
+    })
+
+
+@app.route('/api/game/rewards/claim', methods=['POST'])
+@login_required
+def api_claim_reward():
+    users = load_users()
+    username = session['username']
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+    data = request.get_json()
+    reward_id = data.get('reward_id', '').strip()
+    user = users[username]
+    game = ensure_game_data(user)
+    reward = next((r for r in REWARDS if r['id'] == reward_id), None)
+    if not reward:
+        return jsonify({'success': False, 'error': 'Reward không tồn tại!'}), 404
+    if reward_id in game.get('rewards_claimed', []):
+        return jsonify({'success': False, 'error': 'Đã claim rồi!'}), 400
+    unlocked = {r['id'] for r in check_rewards(game)}
+    if reward_id not in unlocked:
+        return jsonify({'success': False, 'error': 'Chưa đủ điều kiện!'}), 403
+    game.setdefault('rewards_claimed', []).append(reward_id)
+    add_points(user, reward['points_reward'], f"Reward: {reward_id}")
+    users[username] = user
+    save_user(username, user)
+    return jsonify({
+        'success': True,
+        'message': f'🎁 Nhận được {reward["points_reward"]} điểm!',
+        'points_earned': reward['points_reward'],
+        'total_points': game['points'],
+        'level': points_to_level(game['points'])
+    })
+
+
+@app.route('/api/game/random-method')
+@login_required
+def api_random_method():
+    exclude_one_way = request.args.get('exclude_one_way', 'false').lower() == 'true'
+    exclude_key = request.args.get('exclude_key', 'false').lower() == 'true'
+    result = pick_random_method(exclude_one_way, exclude_key)
+    return jsonify({'success': True, **result})
+
+
+@app.route('/api/game/pvp/start', methods=['POST'])
+@login_required
+def api_pvp_start():
+    match = generate_pvp_match()
+    return jsonify({'success': True, 'match': match})
+
+
+@app.route('/api/game/pvp/submit', methods=['POST'])
+@login_required
+def api_pvp_submit():
+    users = load_users()
+    username = session['username']
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+    data = request.get_json()
+    player_score = int(data.get('player_score', 0))
+    opponent_score = int(data.get('opponent_score', 0))
+    result = calculate_pvp_result(player_score, opponent_score)
+    user = users[username]
+    game = ensure_game_data(user)
+    stats = game.setdefault('pvp_stats', {'wins': 0, 'losses': 0, 'draws': 0, 'total_matches': 0})
+    stats['total_matches'] = stats.get('total_matches', 0) + 1
+    if result['result'] == 'win': stats['wins'] = stats.get('wins', 0) + 1
+    elif result['result'] == 'loss': stats['losses'] = stats.get('losses', 0) + 1
+    else: stats['draws'] = stats.get('draws', 0) + 1
+    history = game.get('match_history', [])
+    history.insert(0, {
+        'result': result['result'],
+        'player_score': player_score,
+        'opponent_score': opponent_score,
+        'time': datetime.now().isoformat()
+    })
+    game['match_history'] = history[:20]
+    add_points(user, result['points'], f"PvP: {result['result']}")
+    users[username] = user
+    save_user(username, user)
+    return jsonify({
+        'success': True,
+        **result,
+        'total_points': game['points'],
+        'pvp_stats': stats
+    })
+
+
+@app.route('/api/game/meme/templates')
+@login_required
+def api_meme_templates():
+    return jsonify({'success': True, 'templates': MEME_TEMPLATES})
+
+
+@app.route('/api/game/meme/generate', methods=['POST'])
+@login_required
+def api_meme_generate():
+    users = load_users()
+    username = session['username']
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+    data = request.get_json()
+    input_text = data.get('input_text', '')
+    output_text = data.get('output_text', '')
+    template_id = data.get('template_id')
+    if not input_text or not output_text:
+        return jsonify({'success': False, 'error': 'Thiếu text!'}), 400
+    meme = generate_meme_template(input_text, output_text, template_id)
+    user = users[username]
+    game = ensure_game_data(user)
+    game['meme_count'] = game.get('meme_count', 0) + 1
+    if game['meme_count'] <= 10:
+        add_points(user, 10, "Meme created")
+    users[username] = user
+    save_user(username, user)
+    return jsonify({'success': True, 'meme': meme})
+
+
+@app.route('/api/game/me')
+@login_required
+def api_game_me():
+    users = load_users()
+    username = session['username']
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+    user = users[username]
+    game = ensure_game_data(user)
+    level_info = level_to_next(game.get('points', 0))
+    board = []
+    for uname, udata in users.items():
+        g = udata.get('game', {})
+        board.append((uname, g.get('points', 0)))
+    board.sort(key=lambda x: -x[1])
+    rank = next((i + 1 for i, (u, _) in enumerate(board) if u == username), 0)
+    return jsonify({
+        'success': True,
+        'game': game,
+        'level_info': level_info,
+        'rank': rank,
+        'total_users': len(board)
+    })
+
+
+# ============================================================
 # ADMIN PANEL
 # ============================================================
 @app.route('/admin')
@@ -1291,29 +1604,12 @@ def admin_users():
     return jsonify({'success': True, 'users': result})
 
 
-# ============================================================
-# ADMIN ACTIONS
-# ============================================================
-
 # ════════════════════════════════════════════════════════════
 #  🚫 BAN với THỜI GIAN TÙY CHỈNH
 # ════════════════════════════════════════════════════════════
 @app.route('/api/admin/ban', methods=['POST'])
 @super_admin_required
 def admin_ban():
-    """
-    Ban user với thời gian tùy chỉnh.
-    Body:
-        {
-            "username": "user1",
-            "reason":   "Spam",
-            "duration": "15min" | "30min" | "1h" | "6h" | "12h" |
-                        "1day" | "3days" | "7days" | "30days" |
-                        "permanent" | "custom",
-            "custom_value": 5,          # chỉ dùng khi duration="custom"
-            "custom_unit":  "hours"     # 'minutes' | 'hours' | 'days'
-        }
-    """
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -1336,7 +1632,6 @@ def admin_ban():
         target_id = users[target].get('user_id', '—')
         now = datetime.now()
 
-        # ═══ KHỞI TẠO BAN_INFO ═══
         ban_info = {
             'user_id': target_id,
             'reason': reason,
@@ -1346,7 +1641,6 @@ def admin_ban():
             'is_temp_ban': False
         }
 
-        # ═══ MAP DURATION → TIMEDELTA ═══
         duration_map = {
             '15min':  timedelta(minutes=15),
             '30min':  timedelta(minutes=30),
@@ -1370,7 +1664,6 @@ def admin_ban():
             ban_info['duration_label'] = _format_duration(delta)
 
         elif duration == 'custom':
-            # Validate custom
             try:
                 custom_value = int(custom_value)
             except (TypeError, ValueError):
@@ -1397,7 +1690,6 @@ def admin_ban():
         else:
             return jsonify({'success': False, 'error': f'Thời gian không hợp lệ: {duration}'}), 400
 
-        # ═══ LƯU ═══
         users[target]['status'] = 'banned'
         users[target]['ban_info'] = ban_info
         save_user(target, users[target])
