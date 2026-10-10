@@ -3129,3 +3129,53 @@ textarea:focus {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
+/* ═══════════════════════════════════════════
+   🎮 NÚT PLAY GAME
+   ═══════════════════════════════════════════ */
+.btn.game {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+.btn.game:hover {
+  background: linear-gradient(135deg, #e082ea 0%, #e44660 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.55);
+}
+.btn.game::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: gameShine 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes gameShine {
+  0%   { left: -100%; }
+  50%  { left: 100%; }
+  100% { left: 100%; }
+}
+.dropdown-item.game-item {
+  background: linear-gradient(135deg, rgba(240, 147, 251, 0.15), rgba(245, 87, 108, 0.15));
+  color: #c0392b;
+  font-weight: 700;
+  position: relative;
+}
+.dropdown-item.game-item:hover {
+  background: linear-gradient(135deg, rgba(240, 147, 251, 0.3), rgba(245, 87, 108, 0.3));
+  transform: translateX(4px);
+}
+.dropdown-item.game-item::after {
+  content: '🔥';
+  position: absolute;
+  right: 16px;
+  font-size: 14px;
+  animation: firePulse 1.5s ease-in-out infinite;
+}
+@keyframes firePulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.2); }
+}
