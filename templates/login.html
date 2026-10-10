@@ -21,7 +21,6 @@
       transition: background 0.6s ease;
     }
 
-    /* Emoji bay lơ lửng */
     .bg-emoji {
       position: absolute;
       font-size: 40px;
@@ -53,7 +52,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Logo */
     .login-logo {
       text-align: center;
       margin-bottom: 35px;
@@ -92,7 +90,6 @@
       font-size: 14px;
     }
 
-    /* Tabs Đăng nhập / Đăng ký */
     .auth-tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -137,7 +134,6 @@
 
     .auth-tab.active { color: white; }
 
-    /* Form */
     .form-group {
       margin-bottom: 18px;
       animation: fadeIn 0.3s ease;
@@ -156,9 +152,7 @@
       margin-bottom: 8px;
     }
 
-    .input-wrapper {
-      position: relative;
-    }
+    .input-wrapper { position: relative; }
 
     .input-icon {
       position: absolute;
@@ -212,7 +206,6 @@
 
     .toggle-password:hover { background: #f0f0f5; }
 
-    /* Password strength */
     .password-strength {
       display: flex;
       gap: 4px;
@@ -238,7 +231,6 @@
       font-weight: 500;
     }
 
-    /* Remember */
     .form-options {
       display: flex;
       justify-content: space-between;
@@ -271,7 +263,6 @@
 
     .forgot-link:hover { text-decoration: underline; }
 
-    /* Error box */
     .error-box {
       padding: 12px 16px;
       background: #ffebee;
@@ -292,7 +283,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Submit button */
     .btn-submit {
       width: 100%;
       padding: 16px;
@@ -309,8 +299,6 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      position: relative;
-      overflow: hidden;
     }
 
     .btn-submit:hover:not(:disabled) {
@@ -340,25 +328,6 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Demo account */
-    .demo-hint {
-      margin-top: 24px;
-      padding: 12px 16px;
-      background: #f8f9ff;
-      border-radius: 10px;
-      font-size: 13px;
-      color: #667eea;
-      text-align: center;
-      border: 2px dashed #e0e5ff;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .demo-hint:hover { background: #eef2ff; }
-
-    .demo-hint strong { color: #764ba2; }
-
-    /* Toast */
     .toast {
       position: fixed;
       bottom: 30px;
@@ -383,9 +352,7 @@
       opacity: 1;
     }
 
-    /* ============================================
-       HIỆU ỨNG KHI BỊ BAN
-       ============================================ */
+    /* Hiệu ứng khi bị ban */
     @keyframes bannedShake {
       0%, 100% { transform: translateX(0); }
       10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
@@ -403,9 +370,7 @@
       box-shadow: 0 0 40px rgba(231,76,60,0.8), 0 30px 80px rgba(0,0,0,0.35) !important;
     }
 
-    /* ============================================
-       HIỆU ỨNG KHI BỊ ĐÁNH DẤU XÓA
-       ============================================ */
+    /* Hiệu ứng khi bị đánh dấu xóa */
     body.deleted-mode {
       background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%) !important;
       animation: bannedShake 0.6s ease;
@@ -417,7 +382,6 @@
       box-shadow: 0 0 40px rgba(142,68,173,0.8), 0 30px 80px rgba(0,0,0,0.35) !important;
     }
 
-    /* Responsive */
     @media (max-width: 500px) {
       .login-container { padding: 35px 25px; }
       .login-logo h1 { font-size: 22px; }
@@ -504,17 +468,12 @@
         <span class="btn-text">🔓 Đăng nhập</span>
       </button>
     </form>
-
-    <!-- Demo hint -->
-    <div class="demo-hint" onclick="fillDemo()">
-      💡 Dùng thử: <strong>admin</strong> / <strong>admin123</strong> (bấm để điền tự động)
-    </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
   <script>
-    let mode = 'login'; // 'login' | 'register'
+    let mode = 'login';
 
     const tabs = document.getElementById('authTabs');
     const tabLogin = document.getElementById('tabLogin');
@@ -530,9 +489,6 @@
     const optionsRow = document.getElementById('optionsRow');
     const rememberCheck = document.getElementById('rememberCheck');
 
-    // ==========================================
-    // CHUYỂN TAB
-    // ==========================================
     function setMode(newMode) {
       mode = newMode;
       hideError();
@@ -561,18 +517,12 @@
     tabLogin.addEventListener('click', () => setMode('login'));
     tabRegister.addEventListener('click', () => setMode('register'));
 
-    // ==========================================
-    // TOGGLE PASSWORD
-    // ==========================================
     document.getElementById('togglePassword').addEventListener('click', function() {
       const type = passwordInput.type === 'password' ? 'text' : 'password';
       passwordInput.type = type;
       this.textContent = type === 'password' ? '👁️' : '🙈';
     });
 
-    // ==========================================
-    // ĐỘ MẠNH MẬT KHẨU
-    // ==========================================
     passwordInput.addEventListener('input', () => {
       if (mode !== 'register') return;
       const pwd = passwordInput.value;
@@ -604,9 +554,6 @@
       return Math.min(s, 4);
     }
 
-    // ==========================================
-    // SUBMIT
-    // ==========================================
     document.getElementById('authForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       await submit();
@@ -623,7 +570,6 @@
       const username = usernameInput.value.trim();
       const password = passwordInput.value;
 
-      // Validate client
       if (!username || !password) {
         showError('Vui lòng nhập đầy đủ thông tin!');
         return;
@@ -643,7 +589,6 @@
         }
       }
 
-      // Loading
       submitBtn.disabled = true;
       submitBtn.classList.add('loading');
 
@@ -660,48 +605,36 @@
         });
         const data = await res.json();
 
-        // ==========================================
         // THÀNH CÔNG
-        // ==========================================
         if (data.success) {
           showToast(data.message || '✅ Thành công!');
           setTimeout(() => { window.location.href = '/'; }, 700);
           return;
         }
 
-        // ==========================================
-        // BỊ BAN → HIỆU ỨNG ĐỎ + CHUYỂN TRANG BAN
-        // ==========================================
+        // BỊ BAN
         if (data.banned) {
           document.body.classList.add('banned-mode');
           document.getElementById('loginContainer').classList.add('banned-shake');
-
           showError('🚫 Tài khoản đã bị BAN!\nĐang chuyển đến trang thông báo...');
-
           setTimeout(() => {
             window.location.href = data.redirect || '/banned';
           }, 1800);
           return;
         }
 
-        // ==========================================
-        // BỊ ĐÁNH DẤU XÓA → CHUYỂN TRANG XÓA
-        // ==========================================
+        // BỊ ĐÁNH DẤU XÓA
         if (data.pending_delete) {
           document.body.classList.add('deleted-mode');
           document.getElementById('loginContainer').classList.add('deleted-shake');
-
           showError('🗑️ Tài khoản đã bị đánh dấu XÓA!\nĐang chuyển đến trang xác nhận...');
-
           setTimeout(() => {
             window.location.href = data.redirect || '/deleted';
           }, 1800);
           return;
         }
 
-        // ==========================================
-        // LỖI THÔNG THƯỜNG
-        // ==========================================
+        // LỖI
         showError(data.error || 'Có lỗi xảy ra!');
         submitBtn.disabled = false;
         submitBtn.classList.remove('loading');
@@ -713,13 +646,9 @@
       }
     }
 
-    // ==========================================
-    // ERROR BOX
-    // ==========================================
     function showError(msg) {
       errorBox.textContent = '❌ ' + msg;
       errorBox.classList.add('show');
-
       if (msg.includes('Tên') || msg.includes('đăng nhập')) {
         usernameInput.classList.add('error');
         setTimeout(() => usernameInput.classList.remove('error'), 500);
@@ -729,13 +658,8 @@
       }
     }
 
-    function hideError() {
-      errorBox.classList.remove('show');
-    }
+    function hideError() { errorBox.classList.remove('show'); }
 
-    // ==========================================
-    // TOAST
-    // ==========================================
     function showToast(msg, isError = false) {
       const t = document.getElementById('toast');
       t.textContent = msg;
@@ -744,19 +668,6 @@
       setTimeout(() => t.classList.remove('show'), 2200);
     }
 
-    // ==========================================
-    // DEMO
-    // ==========================================
-    function fillDemo() {
-      usernameInput.value = 'admin';
-      passwordInput.value = 'admin123';
-      if (mode === 'register') setMode('login');
-      showToast('💡 Đã điền tài khoản demo');
-    }
-
-    // ==========================================
-    // ENTER ĐỂ SUBMIT
-    // ==========================================
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (
         e.target === usernameInput ||
