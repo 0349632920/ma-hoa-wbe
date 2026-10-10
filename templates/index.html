@@ -8,25 +8,39 @@
 </head>
 <body data-user="{{ username or '' }}" data-admin="{{ '1' if is_admin else '0' }}">
 
-    <header class="topbar">
-        <div class="logo">🔐 Mã Hóa WBE</div>
-        <div class="user-info">
-            <button class="warning-history-btn" id="warning-history-btn" title="Lịch sử cảnh báo">
-                ⚠️ <span class="warning-badge" id="warning-badge" style="display:none">0</span>
-            </button>
-            {% if is_admin %}
-                <a href="{{ url_for('admin_page') }}" class="btn btn-sm">⚙️ Admin</a>
-            {% endif %}
-            <span class="username">👤 {{ username }}</span>
-            <a href="{{ url_for('logout') }}" class="btn btn-sm">Đăng xuất</a>
-        </div>
-    </header>
+    <!-- User bar -->
+    <div class="user-bar">
+        <div class="user-avatar">{{ (username or 'U')[0]|upper }}</div>
+        <span class="user-name">{{ username or 'User' }}</span>
+        {% if is_admin %}
+            <a href="{{ url_for('admin_page') }}" class="btn-admin">⚙️ Admin</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Đăng xuất</a>
+    </div>
 
-    <main class="container">
-        <div class="panel">
-            <h2>🔒 Mã hóa / Giải mã</h2>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <span class="icon">🔐</span>
+            <h1>Mã Hóa WBE</h1>
+        </div>
+        <p class="subtitle">70+ thuật toán mã hóa &amp; giải mã</p>
+    </div>
+
+    <!-- Layout 2 cột: TRÁI = input, PHẢI = output -->
+    <div class="main">
+
+        <!-- === CỘT TRÁI: NHẬP VĂN BẢN === -->
+        <div class="panel panel-input">
+            <div class="panel-header">
+                <span class="panel-icon">📝</span>
+                <span class="panel-title">Văn bản đầu vào</span>
+                <span class="char-count" id="char-count">0 ký tự</span>
+            </div>
+
+            <!-- Thuật toán -->
             <div class="row">
-                <label>Thuật toán:</label>
+                <label>🔧 Thuật toán</label>
                 <select id="algo-select">
                     {% for group in group_order %}
                         {% if group in grouped %}
@@ -39,37 +53,53 @@
                     {% endfor %}
                 </select>
             </div>
+
+            <!-- Key -->
             <div class="row">
-                <label>Khóa (key - nếu cần):</label>
+                <label>🔑 Khóa (nếu cần)</label>
                 <input type="text" id="key-input" placeholder="VD: SECRET, 3, 5,8, KEY...">
             </div>
-            <div class="row">
-                <label>Văn bản đầu vào:</label>
-                <textarea id="input-text" rows="6" placeholder="Nhập văn bản..."></textarea>
+
+            <!-- Textarea input -->
+            <textarea id="input-text" placeholder="Nhập văn bản cần mã hóa / giải mã tại đây..."></textarea>
+        </div>
+
+        <!-- === CỘT PHẢI: KẾT QUẢ === -->
+        <div class="panel panel-output">
+            <div class="panel-header">
+                <span class="panel-icon">✨</span>
+                <span class="panel-title">Kết quả</span>
+                <span class="char-count" id="elapsed">0 ms</span>
             </div>
+
+            <textarea id="output-text" readonly placeholder="Kết quả sẽ hiển thị ở đây..."></textarea>
+
+            <!-- Nút hành động -->
             <div class="actions">
                 <button class="btn btn-primary" id="btn-encode">🔒 Mã hóa</button>
                 <button class="btn btn-secondary" id="btn-decode">🔓 Giải mã</button>
-                <button class="btn" id="btn-clear">🗑 Xóa</button>
-                <button class="btn" id="btn-swap">⇅ Đảo</button>
                 <button class="btn" id="btn-copy">📋 Copy</button>
-            </div>
-            <div class="row">
-                <label>Kết quả (<span id="elapsed">0</span> ms):</label>
-                <textarea id="output-text" rows="6" readonly placeholder="Kết quả..."></textarea>
+                <button class="btn" id="btn-swap">⇅ Đảo</button>
+                <button class="btn" id="btn-clear">🗑 Xóa</button>
             </div>
         </div>
+    </div>
 
+    <!-- Lịch sử -->
+    <div class="container">
         <div class="panel">
-            <h2>📜 Lịch sử</h2>
-            <button class="btn btn-sm" id="btn-refresh-history">🔄 Refresh</button>
+            <div class="panel-header">
+                <span class="panel-icon">📜</span>
+                <span class="panel-title">Lịch sử</span>
+                <button class="btn btn-sm" id="btn-refresh-history">🔄 Refresh</button>
+            </div>
             <div id="history-list" class="history-list">
                 <p class="muted">Chưa có lịch sử</p>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- MODAL CẢNH BÁO KIỂU ROBLOX -->
+    <!-- Warning modal (Roblox) -->
     <div class="warning-overlay" id="warning-overlay" style="display:none">
         <div class="warning-modal" id="warning-modal">
             <div class="warning-header">
@@ -110,7 +140,7 @@
         </div>
     </div>
 
-    <!-- MODAL LỊCH SỬ CẢNH BÁO -->
+    <!-- Lịch sử cảnh báo -->
     <div class="warning-history-overlay" id="warning-history-overlay" style="display:none">
         <div class="warning-history-modal">
             <div class="warning-history-header">
