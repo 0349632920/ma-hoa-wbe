@@ -46,17 +46,24 @@ ADMIN_PASSWORD_HASH = bcrypt.hashpw(
 def get_db():
     if not DB_OK or not DATABASE_URL:
         return None
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    url = DATABASE_URL
+    # Tự động thêm sslmode=require nếu thiếu (Neon/Supabase/Aiven yêu cầu)
+    if "sslmode" not in url:
+        sep = "&" if "?" in url else "?"
+        url = f"{url}{sep}sslmode=require"
+    conn = psycopg2.connect(url, cursor_factory=RealDictCursor)
     return conn
 
 
 def init_db():
+    """Tạo bảng + migrate cột thiếu (an toàn cho DB cũ và mới)"""
     conn = get_db()
     if not conn:
-        print("[DB] Không kết nối được DB - chạy không lưu lịch sử")
+        print("[DB] Không kết nối được DB")
         return
     try:
         with conn, conn.cursor() as cur:
+            # ========== BƯỚC 1: TẠO BẢNG CƠ BẢN ==========
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
@@ -67,7 +74,9 @@ def init_db():
                     warning_count INT DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     last_login TIMESTAMP
-                );
+                )
+            """)
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS history (
                     id SERIAL PRIMARY KEY,
                     user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -76,30 +85,30 @@ def init_db():
                     input_text TEXT,
                     output_text TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
+                )
+            """)
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS deleted_users (
                     id SERIAL PRIMARY KEY,
                     username VARCHAR(50),
                     reason TEXT,
                     deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-                CREATE INDEX IF NOT EXISTS idx_history_user
-                    ON history(user_id, created_at DESC);
-
+                )
+            """)
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS warnings (
                     id SERIAL PRIMARY KEY,
                     user_id INT REFERENCES users(id) ON DELETE CASCADE,
-                    title VARCHAR(200) NOT NULL,
-                    reason TEXT NOT NULL,
-                    moderator VARCHAR(50) NOT NULL,
+                    title VARCHAR(200),
+                    reason TEXT,
+                    moderator VARCHAR(50),
                     severity VARCHAR(20) DEFAULT 'warning',
                     acknowledged BOOLEAN DEFAULT FALSE,
                     acknowledged_at TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-                CREATE INDEX IF NOT EXISTS idx_warnings_user
-                    ON warnings(user_id, acknowledged, created_at DESC);
-
+                )
+            """)
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS bans (
                     id SERIAL PRIMARY KEY,
                     user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -109,11 +118,42 @@ def init_db():
                     expires_at TIMESTAMP,
                     is_permanent BOOLEAN DEFAULT FALSE,
                     is_active BOOLEAN DEFAULT TRUE
-                );
-                CREATE INDEX IF NOT EXISTS idx_bans_user
-                    ON bans(user_id, is_active);
+                )
             """)
-        print("[DB] Khởi tạo thành công")
+
+            # ========== BƯỚC 2: MIGRATE CỘT THIẾU (cho DB cũ) ==========
+            # Users
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active'")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS warning_count INT DEFAULT 0")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP")
+
+            # Warnings
+            cur.execute("ALTER TABLE warnings ADD COLUMN IF NOT EXISTS title VARCHAR(200)")
+            cur.execute("ALTER TABLE warnings ADD COLUMN IF NOT EXISTS reason TEXT")
+            cur.execute("ALTER TABLE warnings ADD COLUMN IF NOT EXISTS moderator VARCHAR(50)")
+            cur.execute("ALTER TABLE warnings ADD COLUMN IF NOT EXISTS severity VARCHAR(20) DEFAULT 'warning'")
+            cur.execute("ALTER TABLE warnings ADD COLUMN IF NOT EXISTS acknowledged BOOLEAN DEFAULT FALSE")
+            cur.execute("ALTER TABLE warnings ADD COLUMN IF NOT EXISTS acknowledged_at TIMESTAMP")
+            cur.execute("ALTER TABLE warnings ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+
+            # Bans
+            cur.execute("ALTER TABLE bans ADD COLUMN IF NOT EXISTS reason TEXT")
+            cur.execute("ALTER TABLE bans ADD COLUMN IF NOT EXISTS moderator VARCHAR(50)")
+            cur.execute("ALTER TABLE bans ADD COLUMN IF NOT EXISTS banned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            cur.execute("ALTER TABLE bans ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP")
+            cur.execute("ALTER TABLE bans ADD COLUMN IF NOT EXISTS is_permanent BOOLEAN DEFAULT FALSE")
+            cur.execute("ALTER TABLE bans ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE")
+
+            # ========== BƯỚC 3: TẠO INDEX (SAU KHI ĐÃ CÓ ĐỦ CỘT) ==========
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id, created_at DESC)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_warnings_user ON warnings(user_id, acknowledged, created_at DESC)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_bans_user ON bans(user_id, is_active)")
+
+        print("[DB] Khởi tạo + migrate thành công")
+    except Exception as e:
+        print(f"[DB] Lỗi init_db: {e}")
+        raise
     finally:
         conn.close()
 
@@ -760,10 +800,19 @@ def banned_page():
     return render_template("banned.html", reason=reason, exp=exp, username=username)
 
 
+# ==================== ERROR HANDLERS ====================
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("index.html", grouped=get_grouped(),
+                           group_order=GROUP_ORDER,
+                           username=session.get("username"),
+                           is_admin=session.get("role") == "admin",
+                           error="404 - Không tìm thấy"), 404
+
+
 # ==================== MAIN ====================
+# CHỈ init_db() khi chạy trực tiếp, KHÔNG chạy khi gunicorn import
 if __name__ == "__main__":
     init_db()
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-else:
-    init_db()
