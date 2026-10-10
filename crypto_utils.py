@@ -823,6 +823,13 @@ for _group in ALL_GROUPS.values():
 # Danh sách one-way (hash, uuid, random)
 ONE_WAY_ONLY = {k for k, (enc, dec) in REGISTRY.items() if dec is None}
 
+# ════════════════════════════════════════════════════════════
+#  🔁  TƯƠNG THÍCH NGƯỢC: tái tạo METHODS phẳng từ ALL_GROUPS
+# ════════════════════════════════════════════════════════════
+METHODS = {}
+for _group in ALL_GROUPS.values():
+    for _m in _group:
+        METHODS[_m] = DISPLAY_NAMES.get(_m, _m)
 
 # ════════════════════════════════════════════════════════════
 #  🚀  HÀM XỬ LÝ CHÍNH
