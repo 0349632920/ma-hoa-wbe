@@ -5,6 +5,8 @@ import random
 import hashlib
 import string
 import time
+import os
+import json
 from datetime import datetime, timedelta
 from crypto_utils import METHODS, ONE_WAY_ONLY
 
@@ -131,7 +133,7 @@ def pick_random_method(exclude_one_way: bool = False, exclude_key: bool = False)
 
 
 # ═══════════════════════════════════════════════════════════
-#  ⚔️ PVP — ĐUA GÕ CHỮ TIẾNG ANH + AFK DETECTION
+#  PVP ROOMS
 # ═══════════════════════════════════════════════════════════
 PVP_ROOMS = {}
 FRIENDS_DB = {}
@@ -143,13 +145,13 @@ DEFAULT_ROUNDS = 3
 POINTS_PER_CORRECT = 100
 MAX_SPEED_BONUS = 50
 
-# ⏰ AFK Detection
-AFK_TIMEOUT = 30          # 30 giây không trả lời → AFK
+# ⏰ AFK
+AFK_TIMEOUT = 30          # AFK >= 30s → kick
+AFK_WARNING_AT = 20       # Cảnh báo sớm 20s
 AFK_WARNING_INTERVAL = 10 # Nhắc lại cảnh báo mỗi 10s
 
 # Danh sách từ tiếng Anh để đua gõ
 PVP_WORDS = [
-    # Ngắn (4-5 ký tự)
     "hello", "world", "code", "game", "fast", "type", "quick", "speed",
     "race", "win", "lose", "draw", "match", "player", "arena", "skill",
     "power", "byte", "bit", "hash", "salt", "token", "port", "packet",
@@ -157,7 +159,6 @@ PVP_WORDS = [
     "robot", "cyber", "future", "system", "memory", "buffer", "cache",
     "thread", "signal", "network", "kernel", "process", "input", "output",
     "string", "number", "letter", "word", "text", "file", "path", "link",
-    # Trung bình (6-8 ký tự)
     "python", "cipher", "secret", "encode", "decode", "secure",
     "monitor", "program", "binary", "legend", "master", "champion",
     "elite", "crypto", "hacker", "developer", "engineer", "algorithm",
@@ -167,7 +168,6 @@ PVP_WORDS = [
     "learning", "thinking", "creating", "building", "working",
     "playing", "winning", "typing", "running", "coding", "gaming",
     "hacking", "testing", "writing", "reading", "speaking",
-    # Dài hơn (9-11 ký tự)
     "encryption", "decryption", "programming", "javascript",
     "typescript", "framework", "structure",
     "connection", "networking", "challenge", "adventure",
@@ -184,17 +184,117 @@ def _gen_room_code(length: int = 6) -> str:
 
 
 def _gen_questions(count: int) -> list:
-    """Tạo `count` từ tiếng Anh random, không lặp."""
     if count > len(PVP_WORDS):
         count = len(PVP_WORDS)
     words = random.sample(PVP_WORDS, count)
-    questions = []
-    for word in words:
-        questions.append({
-            "word": word,
-            "display": word,
-        })
-    return questions
+    return [{"word": w, "display": w} for w in words]
+
+
+def load_users_from_db() -> dict:
+    """Load users từ DB hoặc JSON."""
+    DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
+    if DATABASE_URL:
+        try:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+            conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+            try:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute("SELECT username, data FROM users")
+                    rows = cur.fetchall()
+                    return {row['username']: row['data'] for row in rows}
+            finally:
+                conn.close()
+        except Exception as e:
+            print(f"⚠️ Lỗi load users: {e}")
+    if not os.path.exists('users.json'):
+        return {}
+    try:
+        with open('users.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"⚠️ Lỗi đọc JSON: {e}")
+        return {}
+
+
+def save_user_to_db(username: str, user_data: dict):
+    """Lưu user vào DB hoặc JSON."""
+    DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
+    if DATABASE_URL:
+        try:
+            import psycopg2
+            from psycopg2.extras import Json
+            conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO users (username, data, updated_at)
+                        VALUES (%s, %s, NOW())
+                        ON CONFLICT (username)
+                        DO UPDATE SET 
+                            data = EXCLUDED.data,
+                            updated_at = NOW()
+                    """, (username, Json(user_data)))
+                conn.commit()
+                return
+            finally:
+                conn.close()
+        except Exception as e:
+            print(f"❌ Lỗi save_user_to_db: {e}")
+    try:
+        users = load_users_from_db()
+        users[username] = user_data
+        with open('users.json', 'w', encoding='utf-8') as f:
+            json.dump(users, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"❌ Lỗi ghi JSON: {e}")
+
+
+def _save_afk_match_history(room, winner, loser, users):
+    """Lưu lịch sử khi 1 người bị kick vì AFK."""
+    try:
+        # Winner
+        if winner in users:
+            game = ensure_game_data(users[winner])
+            history = game.get("match_history", [])
+            history.insert(0, {
+                "opponent": room.get("guest_display") if winner == room["host"] else room.get("host_display"),
+                "my_score": room["round_wins"].get(winner, 0),
+                "opp_score": 0,
+                "my_rounds": room["round_wins"].get(winner, 0),
+                "opp_rounds": 0,
+                "result": "win",
+                "reason": "opponent_afk",
+                "time": datetime.now().isoformat(),
+            })
+            game["match_history"] = history[:20]
+            stats = game.setdefault("pvp_stats", {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0})
+            stats["wins"] = stats.get("wins", 0) + 1
+            stats["total_matches"] = stats.get("total_matches", 0) + 1
+            save_user_to_db(winner, users[winner])
+
+        # Loser
+        if loser in users:
+            game = ensure_game_data(users[loser])
+            history = game.get("match_history", [])
+            history.insert(0, {
+                "opponent": room.get("host_display") if loser == room["guest"] else room.get("guest_display"),
+                "my_score": 0,
+                "opp_score": room["round_wins"].get(winner, 0),
+                "my_rounds": 0,
+                "opp_rounds": room["round_wins"].get(winner, 0),
+                "result": "loss",
+                "reason": "afk",
+                "time": datetime.now().isoformat(),
+            })
+            game["match_history"] = history[:20]
+            stats = game.setdefault("pvp_stats", {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0})
+            stats["losses"] = stats.get("losses", 0) + 1
+            stats["total_matches"] = stats.get("total_matches", 0) + 1
+            game["afk_warnings_count"] = game.get("afk_warnings_count", 0) + 1
+            save_user_to_db(loser, users[loser])
+    except Exception as e:
+        print(f"⚠️ Lỗi lưu lịch sử AFK: {e}")
 
 
 # ─── 1. Danh sách phòng public ───
@@ -203,10 +303,8 @@ def list_public_rooms() -> list:
     result = []
     now = time.time()
     for code, room in PVP_ROOMS.items():
-        if not room.get("is_public", True):
-            continue
-        if room["status"] not in ("waiting", "ready"):
-            continue
+        if not room.get("is_public", True): continue
+        if room["status"] not in ("waiting", "ready"): continue
         result.append({
             "code": code,
             "host": room["host"],
@@ -258,14 +356,9 @@ def create_pvp_room(host_username: str, host_display: str,
     rounds = []
     for r in range(rules["rounds"]):
         rounds.append({
-            "index": r,
-            "questions": [],
-            "current_index": -1,
-            "answers": {},
-            "scores": {},
-            "winner": None,
-            "question_started_at": None,
-            "started_at": None,
+            "index": r, "questions": [], "current_index": -1,
+            "answers": {}, "scores": {}, "winner": None,
+            "question_started_at": None, "started_at": None,
         })
 
     room = {
@@ -287,12 +380,12 @@ def create_pvp_room(host_username: str, host_display: str,
         "created_at": now,
         "last_activity": now,
         "finished_at": None,
-        # ⏰ AFK tracking
-        "afk_warnings": {},       # { username: [timestamps] }
+        "afk_warnings": {},
         "last_afk_check": now,
-        # 🚪 Leave tracking
         "left_user": None,
         "left_display": None,
+        "heartbeats": {},
+        "afk_kick_info": None,
     }
     PVP_ROOMS[code] = room
     return room
@@ -549,6 +642,9 @@ def vote_rematch(code: str, username: str) -> dict:
         room["rematch_votes"] = []
         room["left_user"] = None
         room["left_display"] = None
+        room["afk_kick_info"] = None
+        room["afk_warnings"] = {}
+        room["heartbeats"] = {}
         room["last_activity"] = time.time()
         return {"success": True, "restarted": True, "message": "Cả 2 đồng ý! Trận mới bắt đầu!"}
     return {"success": True, "votes": votes, "message": "Đã vote. Chờ đối thủ..."}
@@ -610,11 +706,15 @@ def start_pvp_room(code: str, host_username: str) -> dict:
     room["afk_warnings"] = {}
     room["left_user"] = None
     room["left_display"] = None
+    room["heartbeats"] = {
+        room["host"]: time.time(),
+        room["guest"]: time.time(),
+    }
+    room["afk_kick_info"] = None
     return {"success": True, "room": room}
 
 
 def submit_pvp_answer(code: str, username: str, answer: str) -> dict:
-    """Nộp đáp án — so sánh từ tiếng Anh."""
     code = code.upper().strip()
     if code not in PVP_ROOMS:
         return {"success": False, "error": "Không tìm thấy phòng!"}
@@ -653,6 +753,7 @@ def submit_pvp_answer(code: str, username: str, answer: str) -> dict:
     }
     r["scores"][username] = r["scores"].get(username, 0) + points
     room["last_activity"] = time.time()
+    room.setdefault("heartbeats", {})[username] = time.time()
 
     host_answered = q_idx in r["answers"].get(room["host"], {})
     guest_answered = q_idx in r["answers"].get(room["guest"], {})
@@ -725,18 +826,15 @@ def leave_pvp_room(code: str, username: str) -> dict:
 
 
 # ═══════════════════════════════════════════════════════════
-#  🚪 RỜI TRẬN GIỮA CHỪNG
+#  🚪 RỜI TRẬN
 # ═══════════════════════════════════════════════════════════
 def leave_match(code: str, username: str) -> dict:
-    """Rời trận đang chơi — người rời bị xử thua."""
     code = code.upper().strip()
     if code not in PVP_ROOMS:
         return {"success": True, "destroyed": True}
-
     room = PVP_ROOMS[code]
 
     if room["status"] == "playing":
-        # Đang chơi → xử thua, đối thủ thắng
         opponent = room["guest"] if room["host"] == username else room["host"]
         if opponent:
             room["round_wins"][opponent] = room["round_wins"].get(opponent, 0) + 999
@@ -748,43 +846,34 @@ def leave_match(code: str, username: str) -> dict:
         return {"success": True, "left": True, "room": room,
                 "message": f"{room['left_display']} đã rời trận!"}
 
-    # Đang chờ → xóa khỏi phòng
     return leave_pvp_room(code, username)
 
 
 # ═══════════════════════════════════════════════════════════
-#  ⏰ AFK DETECTION (chỉ trong game, không ảnh hưởng web)
+#  ⏰ HEARTBEAT
 # ═══════════════════════════════════════════════════════════
 def heartbeat(code: str, username: str) -> dict:
-    """Client gọi mỗi 5s để báo còn online."""
     code = code.upper().strip()
     if code not in PVP_ROOMS:
         return {"success": False, "error": "Không tìm thấy phòng!"}
     room = PVP_ROOMS[code]
     if username not in (room["host"], room["guest"]):
         return {"success": False, "error": "Bạn không ở trong phòng!"}
-
-    # Cập nhật heartbeat
     room.setdefault("heartbeats", {})[username] = time.time()
     room["last_activity"] = time.time()
-
-    # Xóa cảnh báo AFK nếu user quay lại
     warnings = room.get("afk_warnings", {})
     if username in warnings:
         del warnings[username]
-
     return {"success": True, "heartbeat_at": room["heartbeats"][username]}
 
 
+# ═══════════════════════════════════════════════════════════
+#  ⏰ AFK STATUS
+# ═══════════════════════════════════════════════════════════
 def check_afk_status(code: str, username: str) -> dict:
-    """
-    Kiểm tra trạng thái AFK của cả 2 người chơi.
-    Dùng để hiển thị cảnh báo trong Game Hub.
-    """
     code = code.upper().strip()
     if code not in PVP_ROOMS:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-
     room = PVP_ROOMS[code]
     if username not in (room["host"], room["guest"]):
         return {"success": False, "error": "Bạn không ở trong phòng!"}
@@ -793,11 +882,9 @@ def check_afk_status(code: str, username: str) -> dict:
     heartbeats = room.get("heartbeats", {})
     opponent = room["guest"] if room["host"] == username else room["host"]
 
-    # Thời gian AFK của bạn
     my_last = heartbeats.get(username, room.get("created_at", now))
     my_afk = round(now - my_last, 1)
 
-    # Thời gian AFK của đối thủ
     opp_afk = 999
     if opponent:
         opp_last = heartbeats.get(opponent, room.get("created_at", now))
@@ -808,13 +895,13 @@ def check_afk_status(code: str, username: str) -> dict:
         "your_afk_seconds": my_afk,
         "opponent_afk_seconds": opp_afk if opponent else 0,
         "opponent_is_afk": bool(opponent and opp_afk >= AFK_TIMEOUT),
-        "opponent_warning": bool(opponent and opp_afk >= AFK_TIMEOUT),
+        "opponent_warning": bool(opponent and opp_afk >= AFK_WARNING_AT),
         "afk_timeout": AFK_TIMEOUT,
+        "afk_warning_at": AFK_WARNING_AT,
     }
 
 
 def add_afk_warning(code: str, username: str) -> dict:
-    """Thêm cảnh báo AFK cho user (hiện trong game)."""
     code = code.upper().strip()
     if code not in PVP_ROOMS:
         return {"success": False, "error": "Không tìm thấy phòng!"}
@@ -822,18 +909,14 @@ def add_afk_warning(code: str, username: str) -> dict:
     warnings = room.setdefault("afk_warnings", {})
     user_warnings = warnings.setdefault(username, [])
     now = time.time()
-
-    # Chỉ thêm nếu chưa có cảnh báo gần đây (trong 10s)
     if not user_warnings or (now - user_warnings[-1]) >= AFK_WARNING_INTERVAL:
         user_warnings.append(now)
         room["last_activity"] = now
         return {"success": True, "warning_added": True, "count": len(user_warnings)}
-
     return {"success": True, "warning_added": False, "count": len(user_warnings)}
 
 
 def get_afk_warnings(code: str, username: str) -> dict:
-    """Lấy cảnh báo AFK của user (để hiện trong Game Hub)."""
     code = code.upper().strip()
     if code not in PVP_ROOMS:
         return {"success": False, "error": "Không tìm thấy phòng!"}
@@ -843,6 +926,82 @@ def get_afk_warnings(code: str, username: str) -> dict:
         "success": True,
         "your_warnings": warnings.get(username, []),
         "total_warnings": sum(len(w) for w in warnings.values()),
+    }
+
+
+# ═══════════════════════════════════════════════════════════
+#  ⏰ AUTO KICK AFK — Đối thủ AFK >= 30s → kick, requestor thắng
+# ═══════════════════════════════════════════════════════════
+def check_and_kick_afk(code: str, requestor: str) -> dict:
+    """
+    Kiểm tra đối thủ có AFK >= 30s không.
+    Nếu có → kick đối thủ, requestor thắng trận.
+    """
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": False, "error": "Không tìm thấy phòng!"}
+
+    room = PVP_ROOMS[code]
+
+    if room["status"] != "playing":
+        return {"success": True, "kicked": False}
+
+    if requestor not in (room["host"], room["guest"]):
+        return {"success": False, "error": "Bạn không ở trong phòng!"}
+
+    opponent = room["guest"] if room["host"] == requestor else room["host"]
+    if not opponent:
+        return {"success": True, "kicked": False}
+
+    heartbeats = room.get("heartbeats", {})
+    now = time.time()
+    opp_last = heartbeats.get(opponent, room.get("created_at", now))
+    opp_afk = now - opp_last
+
+    if opp_afk < AFK_TIMEOUT:
+        return {
+            "success": True,
+            "kicked": False,
+            "opponent_afk_seconds": round(opp_afk, 1),
+        }
+
+    # ═══ ĐỐI THỦ AFK >= 30s → KICK ═══
+    opponent_display = (
+        room["guest_display"] if room["host"] == requestor else room["host_display"]
+    )
+    requestor_display = (
+        room["host_display"] if room["host"] == requestor else room["guest_display"]
+    )
+
+    room["round_wins"][requestor] = room["round_wins"].get(requestor, 0) + 999
+
+    room["status"] = "finished"
+    room["finished_at"] = now
+    room["afk_kick_info"] = {
+        "kicked_user": opponent,
+        "kicked_display": opponent_display,
+        "winner": requestor,
+        "winner_display": requestor_display,
+        "afk_seconds": round(opp_afk, 1),
+        "time": datetime.now().isoformat(),
+    }
+
+    # Lưu lịch sử
+    try:
+        users = load_users_from_db()
+        _save_afk_match_history(room, requestor, opponent, users)
+    except Exception as e:
+        print(f"⚠️ Lỗi lưu lịch sử AFK kick: {e}")
+
+    return {
+        "success": True,
+        "kicked": True,
+        "kicked_user": opponent,
+        "kicked_display": opponent_display,
+        "winner": requestor,
+        "winner_display": requestor_display,
+        "afk_seconds": round(opp_afk, 1),
+        "room": room,
     }
 
 
