@@ -339,7 +339,6 @@
       position: relative;
     }
 
-    /* Vòng xoay ở CHÍNH GIỮA — dùng transform translate(-50%, -50%) */
     .action-btn.loading::before,
     .btn-modal.loading::before {
       content: '';
@@ -356,7 +355,6 @@
       z-index: 2;
     }
 
-    /* Vòng ngoài glow — cũng ở CHÍNH GIỮA */
     .action-btn.loading::after,
     .btn-modal.loading::after {
       content: '';
@@ -373,38 +371,28 @@
     }
 
     @keyframes robloxSpinner {
-      0% {
-        transform: translate(-50%, -50%) rotate(0deg);
-      }
-      100% {
-        transform: translate(-50%, -50%) rotate(360deg);
-      }
+      0%   { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
 
     @keyframes robloxGlow {
-      0%, 100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.3;
-      }
-      50% {
-        transform: translate(-50%, -50%) scale(1.15);
-        opacity: 0.6;
-      }
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+      50%      { transform: translate(-50%, -50%) scale(1.15); opacity: 0.6; }
     }
 
-    /* Vòng trong modal to hơn */
     .btn-modal.loading::before {
       width: 20px;
       height: 20px;
       border-width: 3px;
     }
-
     .btn-modal.loading::after {
       width: 30px;
       height: 30px;
     }
 
-    /* Modal */
+    /* ============================================
+       MODAL
+       ============================================ */
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(20,20,40,0.65);
@@ -447,13 +435,21 @@
       display: block; font-size: 14px; font-weight: 600;
       color: #555; margin-bottom: 8px;
     }
-    .form-group textarea {
+    .form-group textarea,
+    .form-group input[type="number"],
+    .form-group select {
       width: 100%; padding: 12px 14px;
       border: 2px solid #e0e0e0; border-radius: 10px;
       font-size: 14px; font-family: inherit;
-      transition: 0.3s; min-height: 90px; resize: vertical;
+      transition: 0.3s;
+      background: #fff;
     }
-    .form-group textarea:focus {
+    .form-group textarea {
+      min-height: 90px; resize: vertical;
+    }
+    .form-group textarea:focus,
+    .form-group input[type="number"]:focus,
+    .form-group select:focus {
       outline: none; border-color: #667eea;
       box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
     }
@@ -478,6 +474,127 @@
     .btn-modal.confirm-warn { background: linear-gradient(135deg, #f39c12, #f1c40f); }
     .btn-modal.confirm-ban { background: linear-gradient(135deg, #e74c3c, #c0392b); }
     .btn-modal:hover:not(.loading) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+    /* ═══════════════════════════════════════════
+       BAN DURATION OPTIONS
+       ═══════════════════════════════════════════ */
+    .duration-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .duration-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px;
+      background: #f7f7fb;
+      border: 2px solid #e5e5f0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .duration-option:hover {
+      background: #eef1fb;
+      border-color: #667eea;
+    }
+    .duration-option input[type="radio"] {
+      accent-color: #667eea;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .duration-option.selected {
+      background: linear-gradient(135deg, #eef1fb, #e0e5ff);
+      border-color: #667eea;
+      box-shadow: 0 2px 8px rgba(102,126,234,0.2);
+    }
+    .duration-option.danger {
+      background: #fff5f5;
+      border-color: #ffcdd2;
+    }
+    .duration-option.danger:hover {
+      background: #ffebee;
+      border-color: #e74c3c;
+    }
+    .duration-option.danger input[type="radio"] {
+      accent-color: #e74c3c;
+    }
+    .duration-option.danger.selected {
+      background: linear-gradient(135deg, #ffebee, #ffcdd2);
+      border-color: #e74c3c;
+      box-shadow: 0 2px 8px rgba(231,76,60,0.2);
+    }
+
+    /* Custom duration box */
+    .custom-duration-box {
+      display: none;
+      margin-top: 14px;
+      padding: 16px 18px;
+      background: #f0f4ff;
+      border: 2px dashed #667eea;
+      border-radius: 12px;
+      animation: slideDown 0.3s ease;
+    }
+    .custom-duration-box.show {
+      display: block;
+    }
+    .custom-duration-box label {
+      font-size: 13px;
+      color: #4c51bf;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .custom-duration-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .custom-duration-row input,
+    .custom-duration-row select {
+      padding: 10px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      background: #fff;
+    }
+    .custom-duration-row input:focus,
+    .custom-duration-row select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+    }
+    .custom-hint {
+      font-size: 12px;
+      color: #667eea;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    /* Preview ban duration */
+    .ban-preview {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #fff5f5, #ffebee);
+      border-left: 4px solid #e74c3c;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #c0392b;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideDown 0.3s ease;
+    }
+    .ban-preview::before {
+      content: '⏱️';
+      font-size: 20px;
+    }
 
     .detail-section {
       margin-bottom: 18px; padding-bottom: 18px;
@@ -569,6 +686,7 @@
       .splash-title { font-size: 30px; }
       .splash-crown { width: 110px; height: 110px; }
       .crown-icon { font-size: 55px; }
+      .duration-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -713,9 +831,9 @@
     </div>
   </div>
 
-  <!-- MODAL BAN -->
+  <!-- MODAL BAN — với thời gian tùy chỉnh -->
   <div class="modal-overlay" id="banModal">
-    <div class="modal">
+    <div class="modal" style="max-width: 640px;">
       <div class="modal-header ban-header">
         <div><h3>🚫 Ban người dùng</h3><p id="banTargetName">—</p></div>
         <button class="modal-close" onclick="closeModal('banModal')">✕</button>
@@ -725,18 +843,74 @@
           <label>📝 Lý do ban:</label>
           <textarea id="banReason" placeholder="VD: Vi phạm nghiêm trọng..."></textarea>
         </div>
+
         <div class="form-group" style="margin-top:16px;">
           <label>⏱️ Thời hạn ban:</label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <label style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:#f0f0f5; border-radius:10px; cursor:pointer; font-weight:600;">
-              <input type="radio" name="banDuration" value="permanent" checked style="accent-color:#e74c3c;">
+          <div class="duration-grid" id="durationGrid">
+            <label class="duration-option" data-value="15min">
+              <input type="radio" name="banDuration" value="15min">
+              <span>⚡ 15 phút</span>
+            </label>
+            <label class="duration-option" data-value="30min">
+              <input type="radio" name="banDuration" value="30min">
+              <span>⏱️ 30 phút</span>
+            </label>
+            <label class="duration-option" data-value="1h">
+              <input type="radio" name="banDuration" value="1h">
+              <span>🕐 1 giờ</span>
+            </label>
+            <label class="duration-option" data-value="6h">
+              <input type="radio" name="banDuration" value="6h">
+              <span>🕕 6 giờ</span>
+            </label>
+            <label class="duration-option" data-value="12h">
+              <input type="radio" name="banDuration" value="12h">
+              <span>🕛 12 giờ</span>
+            </label>
+            <label class="duration-option" data-value="1day">
+              <input type="radio" name="banDuration" value="1day">
+              <span>📅 1 ngày</span>
+            </label>
+            <label class="duration-option" data-value="3days">
+              <input type="radio" name="banDuration" value="3days">
+              <span>📆 3 ngày</span>
+            </label>
+            <label class="duration-option" data-value="7days">
+              <input type="radio" name="banDuration" value="7days">
+              <span>🗓️ 7 ngày</span>
+            </label>
+            <label class="duration-option" data-value="30days">
+              <input type="radio" name="banDuration" value="30days">
+              <span>📅 30 ngày</span>
+            </label>
+            <label class="duration-option danger" data-value="permanent">
+              <input type="radio" name="banDuration" value="permanent" checked>
               <span>♾️ Vĩnh viễn</span>
             </label>
-            <label style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:#fff3cd; border-radius:10px; cursor:pointer; font-weight:600;">
-              <input type="radio" name="banDuration" value="1day" style="accent-color:#f39c12;">
-              <span>⏰ 1 ngày (24h)</span>
+            <label class="duration-option" data-value="custom" style="grid-column: 1 / -1;">
+              <input type="radio" name="banDuration" value="custom">
+              <span>⚙️ Tùy chỉnh thời gian...</span>
             </label>
           </div>
+
+          <!-- Custom duration box -->
+          <div class="custom-duration-box" id="customDurationBox">
+            <label>⚙️ Nhập thời gian tùy chỉnh:</label>
+            <div class="custom-duration-row">
+              <input type="number" id="customBanValue" placeholder="Số (VD: 5)" min="1" max="3650">
+              <select id="customBanUnit">
+                <option value="minutes">Phút</option>
+                <option value="hours" selected>Giờ</option>
+                <option value="days">Ngày</option>
+              </select>
+            </div>
+            <p class="custom-hint">💡 Tối đa 3650 đơn vị (VD: 5 giờ, 10 ngày, 1440 phút)</p>
+          </div>
+        </div>
+
+        <!-- Preview thời gian -->
+        <div class="ban-preview" id="banPreview">
+          <span>Sẽ ban: <strong id="banPreviewText">Vĩnh viễn</strong></span>
         </div>
       </div>
       <div class="modal-footer">
@@ -1183,9 +1357,12 @@
         let statusBadge;
         if (u.status === 'banned') {
           const isTemp = u.ban_info && u.ban_info.is_temp_ban;
-          statusBadge = isTemp
-            ? '<span class="badge temp-ban">⏰ Ban tạm</span>'
-            : '<span class="badge banned">🚫 Bị ban</span>';
+          const durationLabel = u.ban_info && u.ban_info.duration_label;
+          if (isTemp) {
+            statusBadge = `<span class="badge temp-ban">⏰ Ban ${durationLabel || 'tạm'}</span>`;
+          } else {
+            statusBadge = '<span class="badge banned">🚫 Ban vĩnh viễn</span>';
+          }
         } else if (u.status === 'pending_delete') {
           statusBadge = '<span class="badge pending-delete">🗑️ Chờ xóa</span>';
         } else if (u.status === 'warned') {
@@ -1315,19 +1492,118 @@
     }
 
     // ==========================================
-    // BAN
+    // BAN — với thời gian tùy chỉnh
     // ==========================================
     function openBanModal(username) {
       pendingTarget = username;
       document.getElementById('banTargetName').textContent = username;
       document.getElementById('banReason').value = '';
-      document.querySelector('input[name="banDuration"][value="permanent"]').checked = true;
+
+      // Reset về vĩnh viễn
+      const permanentRadio = document.querySelector('input[name="banDuration"][value="permanent"]');
+      if (permanentRadio) permanentRadio.checked = true;
+
+      // Ẩn custom box
+      document.getElementById('customDurationBox').classList.remove('show');
+      document.getElementById('customBanValue').value = '';
+
+      // Reset chọn UI
+      updateDurationSelection();
+      updateBanPreview();
+
       document.getElementById('banModal').classList.add('show');
     }
 
+    function updateDurationSelection() {
+      document.querySelectorAll('.duration-option').forEach(opt => {
+        const radio = opt.querySelector('input[type="radio"]');
+        opt.classList.toggle('selected', radio && radio.checked);
+      });
+    }
+
+    function updateBanPreview() {
+      const selected = document.querySelector('input[name="banDuration"]:checked');
+      if (!selected) return;
+
+      const value = selected.value;
+      const preview = document.getElementById('banPreviewText');
+
+      const labels = {
+        '15min':  '15 phút',
+        '30min':  '30 phút',
+        '1h':     '1 giờ',
+        '6h':     '6 giờ',
+        '12h':    '12 giờ',
+        '1day':   '1 ngày',
+        '3days':  '3 ngày',
+        '7days':  '7 ngày',
+        '30days': '30 ngày',
+        'permanent': 'Vĩnh viễn'
+      };
+
+      if (value === 'custom') {
+        const num = parseInt(document.getElementById('customBanValue').value);
+        const unit = document.getElementById('customBanUnit').value;
+        const unitLabels = { minutes: 'phút', hours: 'giờ', days: 'ngày' };
+
+        if (!num || num <= 0) {
+          preview.textContent = 'Chưa nhập';
+          preview.style.color = '#999';
+        } else {
+          preview.textContent = `${num} ${unitLabels[unit]}`;
+          preview.style.color = '#c0392b';
+        }
+      } else {
+        preview.textContent = labels[value] || value;
+        preview.style.color = '#c0392b';
+      }
+    }
+
+    function toggleCustomDuration() {
+      const selected = document.querySelector('input[name="banDuration"]:checked');
+      const isCustom = selected && selected.value === 'custom';
+      document.getElementById('customDurationBox').classList.toggle('show', isCustom);
+      if (isCustom) {
+        setTimeout(() => document.getElementById('customBanValue').focus(), 100);
+      }
+    }
+
+    // Gắn sự kiện cho radio
+    document.querySelectorAll('input[name="banDuration"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        updateDurationSelection();
+        toggleCustomDuration();
+        updateBanPreview();
+      });
+    });
+
+    // Gắn sự kiện cho custom input
+    document.getElementById('customBanValue').addEventListener('input', updateBanPreview);
+    document.getElementById('customBanUnit').addEventListener('change', updateBanPreview);
+
     async function confirmBan() {
       const reason = document.getElementById('banReason').value.trim() || 'Vi phạm điều khoản';
-      const duration = document.querySelector('input[name="banDuration"]:checked').value;
+      const selected = document.querySelector('input[name="banDuration"]:checked');
+      if (!selected) { showToast('⚠️ Chọn thời gian ban!', true); return; }
+
+      const duration = selected.value;
+      let customValue = null;
+      let customUnit = 'hours';
+
+      if (duration === 'custom') {
+        customValue = parseInt(document.getElementById('customBanValue').value);
+        customUnit = document.getElementById('customBanUnit').value;
+
+        if (!customValue || customValue <= 0) {
+          showToast('⚠️ Nhập thời gian hợp lệ (> 0)!', true);
+          return;
+        }
+        if (customValue > 3650) {
+          showToast('⚠️ Tối đa 3650!', true);
+          return;
+        }
+      }
+
       const btn = document.querySelector('#banModal .confirm-ban');
       btn.classList.add('loading');
       btn.disabled = true;
@@ -1336,7 +1612,13 @@
         const res = await fetch('/api/admin/ban', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: pendingTarget, reason, duration })
+          body: JSON.stringify({
+            username: pendingTarget,
+            reason,
+            duration,
+            custom_value: customValue,
+            custom_unit: customUnit
+          })
         });
         const data = await res.json();
         await new Promise(r => setTimeout(r, 800));
@@ -1365,12 +1647,14 @@
       const infoEl = document.getElementById('unbanInfoText');
       if (user && user.ban_info) {
         const isTemp = user.ban_info.is_temp_ban;
+        const durationLabel = user.ban_info.duration_label || (isTemp ? 'Tạm thời' : 'Vĩnh viễn');
         infoEl.innerHTML = `
           <div style="padding:14px 18px; background:#e8f5e9; border-left:4px solid #27ae60; border-radius:10px; font-size:13px; color:#1b5e20;">
             <strong>✅ Gỡ ban cho user này?</strong><br>
             <div style="margin-top:8px;">
               🚫 Lý do ban: <strong>${escapeHtml(user.ban_info.reason || '—')}</strong><br>
-              ${isTemp ? '⏰ Ban tạm (1 ngày)' : '♾️ Ban vĩnh viễn'}
+              ⏱️ Thời hạn: <strong>${durationLabel}</strong><br>
+              👑 Bởi: <strong>${escapeHtml(user.ban_info.by || '—')}</strong>
             </div>
           </div>
         `;
@@ -1680,6 +1964,7 @@
         let banHtml = '';
         if (u.ban_info) {
           const isTemp = u.ban_info.is_temp_ban;
+          const durationLabel = u.ban_info.duration_label || (isTemp ? 'Tạm thời' : 'Vĩnh viễn');
           let banUntilStr = '';
           if (isTemp && u.ban_info.ban_until) {
             try {
@@ -1688,7 +1973,8 @@
           }
           banHtml = `
             <div class="detail-section">
-              <h4>${isTemp ? '⏰ Ban tạm thời (1 ngày)' : '🚫 Ban vĩnh viễn'}</h4>
+              <h4>${isTemp ? '⏰ Ban tạm thời' : '🚫 Ban vĩnh viễn'}</h4>
+              <div class="detail-row"><span>Thời hạn:</span><span style="color:#c0392b;font-weight:700;">${durationLabel}</span></div>
               <div class="detail-row"><span>Lý do:</span><span>${escapeHtml(u.ban_info.reason)}</span></div>
               <div class="detail-row"><span>Thời gian ban:</span><span>${formatTime(u.ban_info.time)}</span></div>
               <div class="detail-row"><span>Bởi:</span><span>${escapeHtml(u.ban_info.by)}</span></div>
@@ -1784,6 +2070,9 @@
         loadStats();
       }
     }, 30000);
+
+    // Init selection
+    updateDurationSelection();
   </script>
 </body>
 </html>
