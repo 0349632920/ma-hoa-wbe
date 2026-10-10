@@ -13,21 +13,24 @@
       min-height: 100vh;
       background: #1a1a2e;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 20px;
-      overflow: hidden;
+      padding: 30px 20px;
       position: relative;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     body::before {
       content: '';
-      position: absolute;
+      position: fixed;
       inset: 0;
       background:
         radial-gradient(circle at 20% 30%, rgba(155,89,182,0.2), transparent 50%),
         radial-gradient(circle at 80% 70%, rgba(231,76,60,0.15), transparent 50%);
       animation: bgPulse 4s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
     }
 
     @keyframes bgPulse {
@@ -47,6 +50,7 @@
         0 30px 80px rgba(0,0,0,0.6),
         0 0 100px rgba(155,89,182,0.3);
       overflow: hidden;
+      margin-bottom: 40px;
       animation: shakeIn 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97);
     }
 
@@ -308,12 +312,13 @@
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
+      margin-top: 10px;
     }
 
     .delete-btn {
       flex: 1;
-      min-width: 140px;
-      padding: 16px 22px;
+      min-width: 160px;
+      padding: 16px 24px;
       border: none;
       border-radius: 10px;
       font-size: 15px;
@@ -343,6 +348,7 @@
       cursor: not-allowed;
       opacity: 0.6;
       box-shadow: none;
+      transform: none;
     }
 
     .delete-btn.secondary {
@@ -365,7 +371,9 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Final modal */
+    /* ============================================
+       FINAL MODAL - XÁC NHẬN XÓA
+       ============================================ */
     .final-modal-overlay {
       position: fixed;
       inset: 0;
@@ -467,7 +475,92 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
 
-    /* Deleting overlay */
+    /* ============================================
+       LOGOUT MODAL
+       ============================================ */
+    .logout-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,10,20,0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.3s;
+    }
+
+    .logout-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .logout-modal {
+      background: white;
+      border-radius: 20px;
+      max-width: 420px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.6);
+      transform: scale(0.9);
+      transition: 0.3s;
+    }
+
+    .logout-modal-overlay.show .logout-modal {
+      transform: scale(1);
+    }
+
+    .logout-modal-header {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      padding: 24px;
+      color: white;
+      text-align: center;
+    }
+
+    .logout-modal-header .logout-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+      animation: logoutIconPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes logoutIconPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .logout-modal-header h3 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .logout-modal-header p {
+      font-size: 13px;
+      opacity: 0.95;
+    }
+
+    .logout-modal-body {
+      padding: 24px 26px;
+      text-align: center;
+    }
+
+    .logout-modal-body p {
+      font-size: 15px;
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .logout-modal-body strong {
+      color: #e67e22;
+    }
+
+    /* ============================================
+       DELETING OVERLAY
+       ============================================ */
     .deleting-overlay {
       position: fixed;
       inset: 0;
@@ -517,7 +610,11 @@
       opacity: 0.8;
     }
 
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
     @media (max-width: 500px) {
+      body { padding: 15px; }
       .delete-header { padding: 25px 22px; }
       .delete-body { padding: 25px 22px; }
       .delete-header h1 { font-size: 22px; }
@@ -525,11 +622,14 @@
       .delete-info-label { min-width: 100px; font-size: 13px; }
       .delete-info-value { font-size: 13px; }
       .delete-footer { padding: 12px 20px; }
+      .delete-actions { flex-direction: column; }
+      .delete-btn { min-width: auto; }
     }
   </style>
 </head>
 <body>
   <div class="delete-container">
+    <!-- HEADER -->
     <div class="delete-header">
       <div class="delete-header-content">
         <div class="delete-icon">🗑️</div>
@@ -540,7 +640,9 @@
       </div>
     </div>
 
+    <!-- BODY -->
     <div class="delete-body">
+      <!-- Cảnh báo -->
       <div class="danger-alert">
         <div class="danger-icon">⚠️</div>
         <div class="danger-text">
@@ -553,6 +655,7 @@
         Bạn cần xác nhận để hoàn tất việc xóa tài khoản.
       </p>
 
+      <!-- Info -->
       <div class="delete-info">
         <div class="delete-info-row">
           <span class="delete-info-label">👤 Tài khoản</span>
@@ -582,6 +685,7 @@
         </div>
       </div>
 
+      <!-- Sẽ mất gì -->
       <div class="will-lose">
         <div class="will-lose-title">
           <span>⚠️</span>
@@ -595,6 +699,7 @@
         </ul>
       </div>
 
+      <!-- Checkbox xác nhận -->
       <div class="confirm-checkbox-box" id="checkboxBox">
         <label class="confirm-checkbox-label">
           <input type="checkbox" id="confirmCheck">
@@ -602,8 +707,9 @@
         </label>
       </div>
 
+      <!-- Actions -->
       <div class="delete-actions">
-        <button class="delete-btn secondary" onclick="logoutNow()">
+        <button class="delete-btn secondary" onclick="openLogoutModal()">
           🚪 Đăng xuất
         </button>
         <button class="delete-btn danger" id="deleteBtn" onclick="openFinalModal()" disabled>
@@ -612,11 +718,15 @@
       </div>
     </div>
 
+    <!-- FOOTER -->
     <div class="delete-footer">
       🔒 Mã Hóa Tool — Account Deletion System
     </div>
   </div>
 
+  <!-- ============================================
+       MODAL XÁC NHẬN XÓA LẦN CUỐI
+       ============================================ -->
   <div class="final-modal-overlay" id="finalModal">
     <div class="final-modal">
       <div class="final-modal-header">
@@ -640,6 +750,36 @@
     </div>
   </div>
 
+  <!-- ============================================
+       MODAL XÁC NHẬN ĐĂNG XUẤT (thay cho confirm browser)
+       ============================================ -->
+  <div class="logout-modal-overlay" id="logoutModal">
+    <div class="logout-modal">
+      <div class="logout-modal-header">
+        <div class="logout-icon">🚪</div>
+        <h3>Xác nhận đăng xuất</h3>
+        <p>Bạn sẽ được chuyển về trang đăng nhập</p>
+      </div>
+      <div class="logout-modal-body">
+        <p>
+          Bạn có chắc muốn đăng xuất khỏi tài khoản<br>
+          <strong>{{ username }}</strong>?
+        </p>
+        <div class="final-actions">
+          <button class="final-btn cancel" onclick="closeLogoutModal()">
+            ❌ Ở lại
+          </button>
+          <button class="final-btn confirm-delete" style="background:linear-gradient(135deg,#f39c12,#e67e22);" onclick="doLogout()">
+            🚪 Đăng xuất
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       OVERLAY ĐANG XÓA
+       ============================================ -->
   <div class="deleting-overlay" id="deletingOverlay">
     <div class="deleting-content">
       <div class="deleting-spinner"></div>
@@ -652,7 +792,7 @@
     const username = "{{ username }}";
 
     // ==========================================
-    // CHECKBOX → ENABLE NÚT
+    // CHECKBOX → ENABLE NÚT XÓA
     // ==========================================
     const check = document.getElementById('confirmCheck');
     const checkboxBox = document.getElementById('checkboxBox');
@@ -668,6 +808,7 @@
       }
     });
 
+    // Click vào box → toggle checkbox
     checkboxBox.addEventListener('click', (e) => {
       if (e.target !== check) {
         check.checked = !check.checked;
@@ -676,7 +817,7 @@
     });
 
     // ==========================================
-    // MODAL XÁC NHẬN CUỐI
+    // MODAL XÁC NHẬN XÓA
     // ==========================================
     function openFinalModal() {
       if (!check.checked) return;
@@ -688,16 +829,22 @@
     }
 
     // ==========================================
-    // ĐĂNG XUẤT
+    // MODAL ĐĂNG XUẤT (thay browser confirm)
     // ==========================================
-    async function logoutNow() {
-      if (!confirm('Đăng xuất khỏi tài khoản?')) return;
+    function openLogoutModal() {
+      document.getElementById('logoutModal').classList.add('show');
+    }
+
+    function closeLogoutModal() {
+      document.getElementById('logoutModal').classList.remove('show');
+    }
+
+    async function doLogout() {
+      closeLogoutModal();
       try {
         await fetch('/api/logout', { method: 'POST' });
-        window.location.href = '/login';
-      } catch (e) {
-        window.location.href = '/login';
-      }
+      } catch (e) {}
+      window.location.href = '/login';
     }
 
     // ==========================================
@@ -709,6 +856,7 @@
 
       playDeleteSound();
 
+      // Đợi 2s (hiệu ứng)
       await new Promise(r => setTimeout(r, 2000));
 
       try {
@@ -719,7 +867,6 @@
         const data = await res.json();
 
         if (data.success) {
-          // Hiệu ứng xóa xong
           document.querySelector('.deleting-title').textContent = '✅ Đã xóa tài khoản!';
           document.querySelector('.deleting-subtitle').textContent = 'Đang chuyển về trang đăng nhập...';
           document.querySelector('.deleting-spinner').style.borderTopColor = '#27ae60';
@@ -728,13 +875,42 @@
             window.location.href = '/login';
           }, 1500);
         } else {
-          alert('❌ Lỗi: ' + (data.error || 'Không thể xóa tài khoản'));
+          // Hiện lỗi trong modal
+          showAlertModal('❌ Lỗi', data.error || 'Không thể xóa tài khoản');
           document.getElementById('deletingOverlay').classList.remove('show');
         }
       } catch (e) {
-        alert('❌ Lỗi kết nối!');
+        showAlertModal('❌ Lỗi kết nối', 'Không thể kết nối đến server. Vui lòng thử lại.');
         document.getElementById('deletingOverlay').classList.remove('show');
       }
+    }
+
+    // ==========================================
+    // MODAL THÔNG BÁO (thay cho alert)
+    // ==========================================
+    function showAlertModal(title, message) {
+      // Tạo modal tạm
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed; inset: 0; background: rgba(10,10,20,0.9);
+        backdrop-filter: blur(10px); display: flex; align-items: center;
+        justify-content: center; padding: 20px; z-index: 10001;
+      `;
+      overlay.innerHTML = `
+        <div style="background: white; border-radius: 20px; max-width: 420px; width: 100%; overflow: hidden; box-shadow: 0 30px 90px rgba(0,0,0,0.6);">
+          <div style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 22px; color: white; text-align: center;">
+            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">${title}</h3>
+          </div>
+          <div style="padding: 24px; text-align: center;">
+            <p style="font-size: 15px; color: #333; line-height: 1.6; margin-bottom: 20px;">${message}</p>
+            <button onclick="this.closest('div[style*=fixed]').remove()"
+                    style="width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;">
+              Đóng
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
     }
 
     // ==========================================
@@ -760,14 +936,21 @@
     }
 
     // ==========================================
-    // ESC đóng modal
+    // ĐÓNG MODAL KHI BẤM NGOÀI / ESC
     // ==========================================
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeFinalModal();
+      if (e.key === 'Escape') {
+        closeFinalModal();
+        closeLogoutModal();
+      }
     });
 
     document.getElementById('finalModal').addEventListener('click', (e) => {
       if (e.target.id === 'finalModal') closeFinalModal();
+    });
+
+    document.getElementById('logoutModal').addEventListener('click', (e) => {
+      if (e.target.id === 'logoutModal') closeLogoutModal();
     });
   </script>
 </body>
