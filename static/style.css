@@ -2619,3 +2619,494 @@ textarea:focus {
   background-clip: text;
   font-weight: 800;
 }
+/* ============================================
+   5 NGƯỜI TẠO — MÀU SẮC RIÊNG
+   ============================================ */
+
+/* ===== HÙNG — XANH LÁ (Ở GIỮA) ===== */
+.footer-creator.hung-creator,
+.creator-card.hung-card {
+  position: relative;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 2.5px solid #22c55e;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.25);
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+.footer-creator.hung-creator:hover,
+.creator-card.hung-card:hover {
+  transform: scale(1.1) translateY(-4px);
+  box-shadow: 0 12px 35px rgba(34, 197, 94, 0.45);
+  border-color: #16a34a;
+}
+
+/* Sao ⭐ của Hùng */
+.footer-creator.hung-creator::after,
+.creator-card.hung-card::after {
+  content: '⭐';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 16px;
+  background: linear-gradient(135deg, #f6d365, #fda085);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(253,160,133,0.6);
+  animation: starGlow 2s ease-in-out infinite;
+  z-index: 3;
+}
+
+@keyframes starGlow {
+  0%, 100% {
+    box-shadow: 0 3px 10px rgba(253,160,133,0.6);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(253,160,133,1);
+    transform: scale(1.15);
+  }
+}
+
+/* Avatar Hùng */
+.hung-avatar,
+.hung-creator .footer-avatar,
+.hung-card .creator-avatar,
+.dropdown-hung-avatar {
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.6);
+  animation: hungPulse 2s ease-in-out infinite;
+}
+
+@keyframes hungPulse {
+  0%, 100% { box-shadow: 0 6px 16px rgba(34, 197, 94, 0.6); }
+  50% { box-shadow: 0 6px 24px rgba(34, 197, 94, 1); }
+}
+
+.hung-name,
+.hung-creator .footer-name,
+.hung-card .creator-name,
+.dropdown-hung-name {
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+.hung-role,
+.hung-creator .footer-role,
+.hung-card .creator-role,
+.dropdown-hung-role {
+  color: #16a34a !important;
+  font-weight: 700;
+}
+
+.hung-badge,
+.hung-creator .footer-tiktok,
+.hung-card .creator-tiktok-badge,
+.dropdown-hung-badge {
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+}
+
+.hung-creator:hover .hung-badge,
+.hung-card:hover .hung-badge {
+  background: linear-gradient(135deg, #25F4EE, #FE2C55) !important;
+}
+
+/* ===== MINH CHÂU — VỆ SĨ CỦA HÙNG 🛡️ ===== */
+.footer-creator.chau-creator,
+.creator-card.chau-card {
+  position: relative;
+  background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+  border: 2.5px solid #ec4899;
+  box-shadow:
+    0 6px 20px rgba(236, 72, 153, 0.3),
+    inset 0 0 20px rgba(236, 72, 153, 0.05);
+}
+
+.footer-creator.chau-creator:hover,
+.creator-card.chau-card:hover {
+  border-color: #db2777;
+  box-shadow:
+    0 12px 30px rgba(219, 39, 119, 0.5),
+    inset 0 0 30px rgba(219, 39, 119, 0.1);
+  transform: translateY(-4px) scale(1.03);
+}
+
+/* Icon khiên ở góc */
+.footer-creator.chau-creator::after,
+.creator-card.chau-card::after {
+  content: '🛡️';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 14px;
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(236, 72, 153, 0.7);
+  animation: shieldGlow 2s ease-in-out infinite;
+  z-index: 3;
+}
+
+@keyframes shieldGlow {
+  0%, 100% {
+    box-shadow: 0 3px 10px rgba(236, 72, 153, 0.7);
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    box-shadow: 0 4px 22px rgba(236, 72, 153, 1);
+    transform: scale(1.15) rotate(-10deg);
+  }
+}
+
+/* Avatar Minh Châu — có khiên nhỏ */
+.chau-avatar,
+.chau-creator .footer-avatar,
+.chau-card .creator-avatar,
+.dropdown-chau-avatar {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  box-shadow: 0 6px 16px rgba(236, 72, 153, 0.5);
+  position: relative;
+  overflow: visible !important;
+}
+
+.chau-avatar::before,
+.chau-creator .footer-avatar::before,
+.chau-card .creator-avatar::before {
+  content: '🛡️';
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #ec4899, #be185d);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.8);
+  z-index: 4;
+  animation: shieldMiniPulse 2s ease-in-out infinite;
+}
+
+@keyframes shieldMiniPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(236, 72, 153, 0.8);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 2px 14px rgba(236, 72, 153, 1);
+  }
+}
+
+.chau-name,
+.chau-creator .footer-name,
+.chau-card .creator-name,
+.dropdown-chau-name {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.chau-role,
+.chau-creator .footer-role,
+.chau-card .creator-role,
+.dropdown-chau-role {
+  color: #be185d !important;
+  font-weight: 800 !important;
+  font-size: 10px !important;
+  letter-spacing: 0.2px;
+  position: relative;
+}
+
+.chau-role::after,
+.chau-creator .footer-role::after,
+.chau-card .creator-role::after {
+  content: '';
+  position: absolute;
+  inset: -2px -4px;
+  background: linear-gradient(90deg,
+    transparent, rgba(219, 39, 119, 0.2), transparent);
+  border-radius: 10px;
+  animation: bodyguardShine 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes bodyguardShine {
+  0%, 100% { opacity: 0; transform: translateX(-20px); }
+  50% { opacity: 1; transform: translateX(20px); }
+}
+
+.chau-badge,
+.chau-creator .footer-tiktok,
+.chau-card .creator-tiktok-badge,
+.dropdown-chau-badge {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+}
+
+.chau-creator:hover .chau-badge,
+.chau-card:hover .chau-badge {
+  background: linear-gradient(135deg, #25F4EE, #FE2C55);
+}
+
+/* ===== SÁT NHÂN — ĐỎ ===== */
+.footer-creator.footer-killer,
+.creator-card.killer-card {
+  background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+  border-color: #ffd0d0;
+}
+
+.footer-creator.footer-killer:hover,
+.creator-card.killer-card:hover {
+  border-color: #e74c3c;
+  box-shadow: 0 10px 25px rgba(231, 76, 60, 0.3);
+}
+
+.footer-killer-avatar,
+.killer-avatar,
+.dropdown-killer-avatar {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.5);
+}
+
+.footer-killer-name,
+.killer-name,
+.dropdown-killer-name {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.footer-killer-role,
+.killer-role,
+.dropdown-killer-role {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.footer-killer-badge,
+.killer-badge,
+.dropdown-killer-badge {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+/* ===== DŨNG — TÍM ===== */
+.footer-creator.dung-creator,
+.creator-card.dung-card {
+  background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+  border-color: #e9d5ff;
+}
+
+.footer-creator.dung-creator:hover,
+.creator-card.dung-card:hover {
+  border-color: #9333ea;
+  box-shadow: 0 10px 25px rgba(147, 51, 234, 0.25);
+}
+
+.dung-avatar,
+.dung-creator .footer-avatar,
+.dung-card .creator-avatar,
+.dropdown-dung-avatar {
+  background: linear-gradient(135deg, #9333ea, #7e22ce);
+  box-shadow: 0 6px 16px rgba(147, 51, 234, 0.5);
+}
+
+.dung-name,
+.dung-creator .footer-name,
+.dung-card .creator-name,
+.dropdown-dung-name {
+  background: linear-gradient(135deg, #9333ea, #7e22ce);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dung-role,
+.dung-creator .footer-role,
+.dung-card .creator-role,
+.dropdown-dung-role {
+  color: #7e22ce;
+  font-weight: 700;
+}
+
+.dung-badge,
+.dung-creator .footer-tiktok,
+.dung-card .creator-tiktok-badge,
+.dropdown-dung-badge {
+  background: linear-gradient(135deg, #9333ea, #7e22ce);
+}
+
+/* ===== MINH NGỌC — VÀNG ===== */
+.footer-creator.ngoc-creator,
+.creator-card.ngoc-card {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border-color: #fde68a;
+}
+
+.footer-creator.ngoc-creator:hover,
+.creator-card.ngoc-card:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.25);
+}
+
+.ngoc-avatar,
+.ngoc-creator .footer-avatar,
+.ngoc-card .creator-avatar,
+.dropdown-ngoc-avatar {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+}
+
+.ngoc-name,
+.ngoc-creator .footer-name,
+.ngoc-card .creator-name,
+.dropdown-ngoc-name {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 12px;
+}
+
+.ngoc-role,
+.ngoc-creator .footer-role,
+.ngoc-card .creator-role,
+.dropdown-ngoc-role {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.ngoc-badge,
+.ngoc-creator .footer-tiktok,
+.ngoc-card .creator-tiktok-badge,
+.dropdown-ngoc-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+/* ===== DROPDOWN BACKGROUNDS ===== */
+.dropdown-killer {
+  background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+  border-color: #ffd0d0;
+}
+
+.dropdown-dung {
+  background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+  border-color: #e9d5ff;
+}
+
+.dropdown-hung {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-color: #bbf7d0;
+  border-width: 2px;
+}
+
+.dropdown-chau {
+  background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+  border-color: #fbcfe8;
+}
+
+.dropdown-ngoc {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border-color: #fde68a;
+}
+
+.dropdown-hung:hover {
+  border-color: #22c55e;
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.3);
+}
+
+/* ============================================
+   RESPONSIVE 5 NGƯỜI
+   ============================================ */
+@media (max-width: 1100px) {
+  .footer-creators {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 850px) {
+  .footer-creators {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 480px;
+  }
+  .footer-creator.hung-creator {
+    transform: scale(1);
+  }
+  .footer-creator.hung-creator:hover {
+    transform: translateY(-3px) scale(1.02);
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-creators {
+    grid-template-columns: 1fr;
+    max-width: 300px;
+  }
+  .footer-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+}
+
+/* Login page: 5 người */
+@media (max-width: 900px) {
+  .creators-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .creator-card.hung-card {
+    transform: scale(1);
+  }
+  .creator-card.hung-card:hover {
+    transform: translateY(-4px) scale(1.02);
+  }
+}
+
+@media (max-width: 600px) {
+  .creators-row {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 340px;
+  }
+}
+
+@media (max-width: 400px) {
+  .creators-row {
+    grid-template-columns: 1fr 1fr;
+    max-width: 280px;
+  }
+  .creator-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+  .creator-name {
+    font-size: 10px;
+  }
+  .creator-role {
+    font-size: 8px;
+  }
+}
