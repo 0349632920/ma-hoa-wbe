@@ -1,18 +1,20 @@
 services:
   - type: web
-    name: ma-hoa-web
-    runtime: python
+    name: ma-hoa-wbe
+    env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --timeout 120 --workers 1
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
       - key: SECRET_KEY
         generateValue: true
-      - key: PYTHON_VERSION
-        value: 3.11.9        # ← Đổi thành 3.11.9
       - key: ADMIN_USER
         value: Hùng
       - key: ADMIN_PASSWORD
-        value: admin123
+        sync: false
       - key: DATABASE_URL
+        sync: false
+      - key: SEED_ACCOUNTS_JSON
         sync: false
