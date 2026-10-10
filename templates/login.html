@@ -35,11 +35,12 @@
       50% { transform: translateY(-40px) rotate(20deg); }
     }
 
+    /* CONTAINER TO HƠN */
     .login-container {
       background: #fff;
-      border-radius: 24px;
-      padding: 45px 40px;
-      max-width: 620px;
+      border-radius: 26px;
+      padding: 50px 55px;
+      max-width: 720px;
       width: 100%;
       box-shadow: 0 30px 80px rgba(0,0,0,0.35);
       position: relative;
@@ -52,21 +53,22 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Logo to hơn */
     .login-logo {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 32px;
     }
 
     .login-logo-icon {
-      font-size: 50px;
+      font-size: 56px;
       background: linear-gradient(135deg, #667eea, #764ba2);
-      width: 85px;
-      height: 85px;
+      width: 95px;
+      height: 95px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 22px;
-      margin: 0 auto 18px;
+      border-radius: 24px;
+      margin: 0 auto 20px;
       box-shadow: 0 12px 30px rgba(102,126,234,0.45);
       animation: logoPulse 2s ease-in-out infinite;
     }
@@ -77,37 +79,38 @@
     }
 
     .login-logo h1 {
-      font-size: 26px;
+      font-size: 30px;
       color: #333;
       font-weight: 800;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .login-logo h1 span { color: #667eea; }
 
     .login-logo p {
       color: #888;
-      font-size: 14px;
+      font-size: 15px;
     }
 
+    /* Tabs to hơn */
     .auth-tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
       background: #f0f2fa;
-      padding: 6px;
-      border-radius: 14px;
-      margin-bottom: 28px;
+      padding: 7px;
+      border-radius: 15px;
+      margin-bottom: 30px;
       position: relative;
     }
 
     .auth-tab-indicator {
       position: absolute;
-      top: 6px;
-      left: 6px;
-      width: calc(50% - 6px);
-      height: calc(100% - 12px);
+      top: 7px;
+      left: 7px;
+      width: calc(50% - 7px);
+      height: calc(100% - 14px);
       background: linear-gradient(135deg, #667eea, #764ba2);
-      border-radius: 10px;
+      border-radius: 11px;
       box-shadow: 0 6px 18px rgba(102,126,234,0.4);
       transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1;
@@ -120,22 +123,23 @@
     .auth-tab {
       position: relative;
       z-index: 2;
-      padding: 12px;
+      padding: 14px;
       border: none;
       background: transparent;
       cursor: pointer;
       font-family: inherit;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
       color: #777;
-      border-radius: 10px;
+      border-radius: 11px;
       transition: color 0.3s;
     }
 
     .auth-tab.active { color: white; }
 
+    /* Form to hơn */
     .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       animation: fadeIn 0.3s ease;
     }
 
@@ -146,29 +150,29 @@
 
     .form-group label {
       display: block;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
       color: #555;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .input-wrapper { position: relative; }
 
     .input-icon {
       position: absolute;
-      left: 16px;
+      left: 18px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 18px;
+      font-size: 20px;
       pointer-events: none;
     }
 
     .form-input {
       width: 100%;
-      padding: 14px 16px 14px 48px;
+      padding: 16px 18px 16px 54px;
       border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      font-size: 15px;
+      border-radius: 13px;
+      font-size: 16px;
       font-family: inherit;
       transition: 0.3s;
     }
@@ -192,29 +196,30 @@
 
     .toggle-password {
       position: absolute;
-      right: 14px;
+      right: 16px;
       top: 50%;
       transform: translateY(-50%);
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 18px;
-      padding: 4px;
-      border-radius: 6px;
+      font-size: 20px;
+      padding: 6px;
+      border-radius: 8px;
       transition: 0.2s;
     }
 
     .toggle-password:hover { background: #f0f0f5; }
 
+    /* Password strength */
     .password-strength {
       display: flex;
-      gap: 4px;
-      margin-top: 8px;
+      gap: 5px;
+      margin-top: 10px;
     }
 
     .strength-bar {
       flex: 1;
-      height: 4px;
+      height: 5px;
       background: #e0e0e0;
       border-radius: 4px;
       transition: 0.3s;
@@ -225,31 +230,32 @@
     .strength-bar.strong { background: #27ae60; }
 
     .strength-text {
-      font-size: 12px;
-      margin-top: 6px;
+      font-size: 13px;
+      margin-top: 8px;
       color: #888;
       font-weight: 500;
     }
 
+    /* Options */
     .form-options {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 22px;
-      font-size: 14px;
+      margin-bottom: 24px;
+      font-size: 15px;
     }
 
     .checkbox-wrapper {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       cursor: pointer;
       color: #555;
     }
 
     .checkbox-wrapper input {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       accent-color: #667eea;
       cursor: pointer;
     }
@@ -263,14 +269,15 @@
 
     .forgot-link:hover { text-decoration: underline; }
 
+    /* Error box */
     .error-box {
-      padding: 12px 16px;
+      padding: 14px 18px;
       background: #ffebee;
       border-left: 4px solid #e74c3c;
-      border-radius: 10px;
+      border-radius: 12px;
       color: #c0392b;
-      font-size: 14px;
-      margin-bottom: 18px;
+      font-size: 15px;
+      margin-bottom: 20px;
       animation: slideDown 0.3s ease;
       display: none;
       white-space: pre-line;
@@ -283,14 +290,15 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Submit button to hơn */
     .btn-submit {
       width: 100%;
-      padding: 16px;
+      padding: 18px;
       background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
       border: none;
-      border-radius: 12px;
-      font-size: 16px;
+      border-radius: 13px;
+      font-size: 17px;
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
@@ -312,8 +320,8 @@
     }
 
     .btn-submit .spinner {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border: 3px solid rgba(255,255,255,0.3);
       border-top-color: white;
       border-radius: 50%;
@@ -329,11 +337,11 @@
     }
 
     /* ============================================
-       CREATOR CREDIT
+       CREATOR CREDIT — 5 NGƯỜI
        ============================================ */
     .creator-credit {
-      margin-top: 30px;
-      padding-top: 24px;
+      margin-top: 32px;
+      padding-top: 26px;
       border-top: 1px solid #f0f0f5;
       text-align: center;
       animation: fadeIn 0.6s ease 0.8s both;
@@ -344,56 +352,56 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .creator-divider > span:first-child,
     .creator-divider > span:last-child {
-      font-size: 14px;
+      font-size: 15px;
       opacity: 0.5;
     }
 
     .creator-divider-line {
-      width: 80px;
+      width: 90px;
       height: 2px;
       background: linear-gradient(90deg, transparent, #667eea, transparent);
       border-radius: 2px;
     }
 
     .creator-label {
-      font-size: 12px;
+      font-size: 13px;
       color: #999;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     /* 5 người ngang */
     .creators-row {
       display: flex;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     .creator-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 12px 8px;
+      padding: 14px 10px;
       background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
       border: 2px solid #e0e5ff;
-      border-radius: 14px;
+      border-radius: 16px;
       text-decoration: none;
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
       cursor: pointer;
       flex: 1;
-      min-width: 95px;
-      max-width: 120px;
+      min-width: 105px;
+      max-width: 130px;
     }
 
     .creator-card::before {
@@ -415,8 +423,8 @@
     }
 
     .creator-avatar {
-      width: 48px;
-      height: 48px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
@@ -424,8 +432,8 @@
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 18px;
-      margin-bottom: 8px;
+      font-size: 20px;
+      margin-bottom: 10px;
       box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
       transition: 0.3s;
       overflow: hidden;
@@ -458,10 +466,10 @@
     }
 
     .creator-name {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 800;
       color: #333;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
       background: linear-gradient(135deg, #667eea, #764ba2);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -471,10 +479,10 @@
     }
 
     .creator-role {
-      font-size: 8px;
+      font-size: 9px;
       color: #999;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       text-align: center;
       line-height: 1.2;
     }
@@ -483,9 +491,9 @@
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      font-size: 8px;
+      font-size: 9px;
       font-weight: 700;
-      padding: 3px 7px;
+      padding: 3px 8px;
       border-radius: 20px;
       background: #000;
       color: white;
@@ -497,7 +505,7 @@
       transform: scale(1.05);
     }
 
-    /* ===== HÙNG — XANH LÁ (Ở GIỮA) ===== */
+    /* ===== HÙNG — XANH LÁ Ở GIỮA ===== */
     .creator-card.hung-card {
       position: relative;
       background: linear-gradient(135deg, #f0fdf4, #dcfce7);
@@ -518,10 +526,10 @@
       position: absolute;
       top: -8px;
       right: -8px;
-      font-size: 14px;
+      font-size: 15px;
       background: linear-gradient(135deg, #f6d365, #fda085);
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -658,10 +666,10 @@
       position: absolute;
       top: -8px;
       right: -8px;
-      font-size: 13px;
+      font-size: 14px;
       background: linear-gradient(135deg, #ec4899, #db2777);
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -694,9 +702,9 @@
       position: absolute;
       bottom: -5px;
       right: -5px;
-      font-size: 11px;
-      width: 16px;
-      height: 16px;
+      font-size: 12px;
+      width: 18px;
+      height: 18px;
       background: linear-gradient(135deg, #ec4899, #be185d);
       border-radius: 50%;
       display: flex;
@@ -728,7 +736,7 @@
     .chau-role {
       color: #be185d !important;
       font-weight: 800 !important;
-      font-size: 8px !important;
+      font-size: 9px !important;
       letter-spacing: 0.2px;
     }
 
@@ -772,18 +780,25 @@
     }
 
     .creator-footer {
-      font-size: 11px;
+      font-size: 12px;
       color: #bbb;
       font-family: 'JetBrains Mono', monospace;
     }
 
     /* Responsive */
+    @media (max-width: 800px) {
+      .login-container {
+        max-width: 100%;
+        padding: 40px 30px;
+      }
+    }
+
     @media (max-width: 700px) {
       .creators-row {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        max-width: 420px;
+        gap: 10px;
+        max-width: 450px;
         margin-left: auto;
         margin-right: auto;
       }
@@ -799,15 +814,23 @@
       }
     }
 
-    @media (max-width: 450px) {
+    @media (max-width: 500px) {
+      .login-container {
+        padding: 30px 22px;
+        border-radius: 20px;
+      }
+      .login-logo h1 { font-size: 24px; }
+      .login-logo-icon { width: 80px; height: 80px; font-size: 48px; }
+      .form-input { padding: 14px 16px 14px 48px; font-size: 15px; }
+      .btn-submit { padding: 16px; font-size: 16px; }
       .creators-row {
         grid-template-columns: 1fr 1fr;
-        max-width: 280px;
+        max-width: 320px;
       }
       .creator-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
       }
     }
 
@@ -863,12 +886,6 @@
       animation: bannedShake 0.6s ease;
       border: 4px solid #8e44ad !important;
       box-shadow: 0 0 40px rgba(142,68,173,0.8), 0 30px 80px rgba(0,0,0,0.35) !important;
-    }
-
-    @media (max-width: 500px) {
-      .login-container { padding: 30px 22px; }
-      .login-logo h1 { font-size: 22px; }
-      .login-logo-icon { width: 70px; height: 70px; font-size: 40px; }
     }
   </style>
 </head>
@@ -981,7 +998,7 @@
           <div class="creator-tiktok-badge dung-badge">🎵</div>
         </a>
 
-        <!-- 3. HÙNG — XANH LÁ (Ở GIỮA) ⭐ -->
+        <!-- 3. HÙNG — XANH LÁ Ở GIỮA ⭐ -->
         <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="creator-card hung-card" title="TikTok: @tienhung0707">
           <div class="creator-avatar hung-avatar">
             <div class="avatar-fallback">H</div>
