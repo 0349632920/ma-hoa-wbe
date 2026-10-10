@@ -968,7 +968,8 @@ def confirm_delete():
     username = session['username']
     if username not in users:
         session.clear()
-        return jsonify({'success': False, 'error': 'Tài khoản không tồn tại!'}), 404    user = users[username]
+        return jsonify({'success': False, 'error': 'Tài khoản không tồn tại!'}), 404    
+        user = users[username]
     if user.get('status') != 'pending_delete':
         return jsonify({'success': False, 'error': 'Không ở trạng thái chờ xóa!'}), 400
 
