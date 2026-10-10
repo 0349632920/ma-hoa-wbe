@@ -5,10 +5,15 @@ from crypto_utils import (
     LANGUAGES,
 )
 from game_utils import (
+    # Daily / Rewards
     get_daily_challenge, check_rewards, pick_random_method,
-    generate_pvp_match, calculate_pvp_result, generate_meme_template,
+    generate_meme_template,
     points_to_level, level_to_next, add_points, update_streak,
-    ensure_game_data, init_game_data, REWARDS, MEME_TEMPLATES
+    ensure_game_data, init_game_data, REWARDS, MEME_TEMPLATES,
+    # ⚔️ PvP mới
+    create_pvp_room, join_pvp_room, start_pvp_room,
+    submit_pvp_answer, get_pvp_room, leave_pvp_room,
+    cleanup_old_rooms, QUESTIONS_PER_ROUND, TOTAL_ROUNDS,
 )
 from dotenv import load_dotenv
 from functools import wraps
@@ -226,7 +231,7 @@ def verify_password(password, stored):
 
 
 # ============================================================
-# TẠO ID NGƯỜI DÙNG — 10 CHỮ SỐ
+# TẠO ID NGƯỜI DÙNG
 # ============================================================
 def generate_user_id(users=None):
     if users is None:
@@ -1267,6 +1272,7 @@ def game_page():
     return render_template('game.html')
 
 
+# ─── LEADERBOARD ───
 @app.route('/api/game/leaderboard')
 @login_required
 def api_leaderboard():
@@ -1297,6 +1303,7 @@ def api_leaderboard():
     return jsonify({'success': True, 'leaderboard': board[:50]})
 
 
+# ─── DAILY ───
 @app.route('/api/game/daily')
 @login_required
 def api_daily():
@@ -1379,6 +1386,7 @@ def api_daily_submit():
         })
 
 
+# ─── REWARDS ───
 @app.route('/api/game/rewards')
 @login_required
 def api_rewards():
@@ -1441,6 +1449,7 @@ def api_claim_reward():
     })
 
 
+# ─── RANDOM METHOD ───
 @app.route('/api/game/random-method')
 @login_required
 def api_random_method():
@@ -1450,50 +1459,223 @@ def api_random_method():
     return jsonify({'success': True, **result})
 
 
-@app.route('/api/game/pvp/start', methods=['POST'])
+# ═══════════════════════════════════════════════════════════
+#  ⚔️ PVP — NHẬP CHỮ NHANH (3 ván × 10 câu)
+# ═══════════════════════════════════════════════════════════
+@app.route('/api/pvp/create', methods=['POST'])
 @login_required
-def api_pvp_start():
-    match = generate_pvp_match()
-    return jsonify({'success': True, 'match': match})
+def api_pvp_create():
+    users = load_users()
+    username = session['username']
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+    user = users[username]
+    display = user.get('display_name', username)
+    try:
+        room = create_pvp_room(username, display)
+        return jsonify({
+            'success': True,
+            'code': room['code'],
+            'room': _sanitize_room(room, username)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@app.route('/api/game/pvp/submit', methods=['POST'])
+@app.route('/api/pvp/join', methods=['POST'])
 @login_required
-def api_pvp_submit():
+def api_pvp_join():
     users = load_users()
     username = session['username']
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
     data = request.get_json()
-    player_score = int(data.get('player_score', 0))
-    opponent_score = int(data.get('opponent_score', 0))
-    result = calculate_pvp_result(player_score, opponent_score)
+    code = (data.get('code') or '').strip().upper()
+    if not code:
+        return jsonify({'success': False, 'error': 'Nhập mã phòng!'}), 400
     user = users[username]
-    game = ensure_game_data(user)
-    stats = game.setdefault('pvp_stats', {'wins': 0, 'losses': 0, 'draws': 0, 'total_matches': 0})
-    stats['total_matches'] = stats.get('total_matches', 0) + 1
-    if result['result'] == 'win': stats['wins'] = stats.get('wins', 0) + 1
-    elif result['result'] == 'loss': stats['losses'] = stats.get('losses', 0) + 1
-    else: stats['draws'] = stats.get('draws', 0) + 1
-    history = game.get('match_history', [])
-    history.insert(0, {
-        'result': result['result'],
-        'player_score': player_score,
-        'opponent_score': opponent_score,
-        'time': datetime.now().isoformat()
-    })
-    game['match_history'] = history[:20]
-    add_points(user, result['points'], f"PvP: {result['result']}")
-    users[username] = user
-    save_user(username, user)
+    display = user.get('display_name', username)
+    result = join_pvp_room(code, username, display)
+    if not result['success']:
+        return jsonify(result), 404
     return jsonify({
         'success': True,
-        **result,
-        'total_points': game['points'],
-        'pvp_stats': stats
+        'code': code,
+        'room': _sanitize_room(result['room'], username)
     })
 
 
+@app.route('/api/pvp/start', methods=['POST'])
+@login_required
+def api_pvp_start():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    result = start_pvp_room(code, username)
+    if not result['success']:
+        return jsonify(result), 400
+    return jsonify({
+        'success': True,
+        'room': _sanitize_room(result['room'], username)
+    })
+
+
+@app.route('/api/pvp/room/<code>')
+@login_required
+def api_pvp_room(code):
+    username = session['username']
+    result = get_pvp_room(code)
+    if not result['success']:
+        return jsonify(result), 404
+    return jsonify({
+        'success': True,
+        'room': _sanitize_room(result['room'], username)
+    })
+
+
+@app.route('/api/pvp/submit', methods=['POST'])
+@login_required
+def api_pvp_submit():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    answer = (data.get('answer') or '').strip()
+    if not code or not answer:
+        return jsonify({'success': False, 'error': 'Thiếu dữ liệu!'}), 400
+    result = submit_pvp_answer(code, username, answer)
+    if not result['success']:
+        return jsonify(result), 400
+    return jsonify({
+        'success': True,
+        'correct': result['correct'],
+        'points': result['points'],
+        'time_taken': result['time_taken'],
+        'room': _sanitize_room(result['room'], username)
+    })
+
+
+@app.route('/api/pvp/leave', methods=['POST'])
+@login_required
+def api_pvp_leave():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    result = leave_pvp_room(code, username)
+    return jsonify(result)
+
+
+def _sanitize_room(room: dict, username: str) -> dict:
+    """Chuẩn hóa room data — hiển thị điểm đối thủ realtime."""
+    opponent = room["guest"] if room["host"] == username else room["host"]
+    is_host = (room["host"] == username)
+
+    safe = {
+        "code": room["code"],
+        "host": room["host"],
+        "host_display": room["host_display"],
+        "guest": room["guest"],
+        "guest_display": room["guest_display"],
+        "status": room["status"],
+        "current_round": room["current_round"],
+        "total_rounds": TOTAL_ROUNDS,
+        "questions_per_round": QUESTIONS_PER_ROUND,
+        "you": username,
+        "is_host": is_host,
+        "opponent": opponent,
+        "opponent_display": room["guest_display"] if is_host else room["host_display"],
+        "round_wins": {
+            "you": room["round_wins"].get(username, 0),
+            "opponent": room["round_wins"].get(opponent, 0) if opponent else 0,
+        },
+    }
+
+    round_idx = room["current_round"]
+    if 0 <= round_idx < TOTAL_ROUNDS:
+        r = room["rounds"][round_idx]
+        safe["round_info"] = {
+            "index": round_idx,
+            "current_index": r["current_index"],
+            "total_questions": QUESTIONS_PER_ROUND,
+            "scores": {
+                "you": r["scores"].get(username, 0),
+                "opponent": r["scores"].get(opponent, 0) if opponent else 0,
+            },
+            "winner": r["winner"],
+        }
+
+        q_idx = r["current_index"]
+        if 0 <= q_idx < QUESTIONS_PER_ROUND:
+            q = r["questions"][q_idx]
+            safe["current_question"] = {
+                "index": q_idx,
+                "display": q["display"],
+                "method": q["method"],
+                "length": len(q["word"]),
+            }
+            opp_answered = q_idx in r["answers"].get(opponent, {}) if opponent else False
+            safe["opponent_answered"] = opp_answered
+            if opp_answered:
+                opp_ans = r["answers"][opponent][q_idx]
+                safe["opponent_answer"] = {
+                    "answer": opp_ans["answer"],
+                    "correct": opp_ans["correct"],
+                    "points": opp_ans["points"],
+                    "time_taken": opp_ans["time_taken"],
+                }
+            my_answered = q_idx in r["answers"].get(username, {})
+            if my_answered:
+                my_ans = r["answers"][username][q_idx]
+                safe["current_question"]["your_answer"] = my_ans
+                safe["current_question"]["correct_answer"] = q["word"]
+        else:
+            safe["current_question"] = None
+            safe["opponent_answered"] = False
+    else:
+        safe["round_info"] = None
+        safe["current_question"] = None
+
+    if room["status"] == "finished":
+        my_wins = room["round_wins"].get(username, 0)
+        opp_wins = room["round_wins"].get(opponent, 0) if opponent else 0
+
+        if my_wins > opp_wins:
+            result = "win"
+            message = "🏆 Bạn thắng trận!"
+        elif my_wins < opp_wins:
+            result = "loss"
+            message = "😢 Bạn thua trận!"
+        else:
+            result = "draw"
+            message = "🤝 Hòa!"
+
+        total_you = 0
+        total_opp = 0
+        for r in room["rounds"]:
+            total_you += r["scores"].get(username, 0)
+            total_opp += r["scores"].get(opponent, 0) if opponent else 0
+
+        safe["final_result"] = {
+            "result": result,
+            "message": message,
+            "your_rounds_won": my_wins,
+            "opponent_rounds_won": opp_wins,
+            "total_score_you": total_you,
+            "total_score_opponent": total_opp,
+            "rounds": [
+                {
+                    "index": i,
+                    "your_score": r["scores"].get(username, 0),
+                    "opponent_score": r["scores"].get(opponent, 0) if opponent else 0,
+                    "winner": "you" if r["winner"] == username else ("opponent" if r["winner"] == opponent else "draw"),
+                }
+                for i, r in enumerate(room["rounds"])
+            ],
+        }
+
+    return safe
+
+
+# ─── MEME ───
 @app.route('/api/game/meme/templates')
 @login_required
 def api_meme_templates():
@@ -1524,6 +1706,7 @@ def api_meme_generate():
     return jsonify({'success': True, 'meme': meme})
 
 
+# ─── USER GAME STATS ───
 @app.route('/api/game/me')
 @login_required
 def api_game_me():
@@ -1604,9 +1787,9 @@ def admin_users():
     return jsonify({'success': True, 'users': result})
 
 
-# ════════════════════════════════════════════════════════════
-#  🚫 BAN với THỜI GIAN TÙY CHỈNH
-# ════════════════════════════════════════════════════════════
+# ============================================================
+# ADMIN ACTIONS
+# ============================================================
 @app.route('/api/admin/ban', methods=['POST'])
 @super_admin_required
 def admin_ban():
@@ -1695,11 +1878,7 @@ def admin_ban():
         save_user(target, users[target])
 
         msg = f'🚫 Đã ban user ID {target_id} ({ban_info["duration_label"]})'
-        return jsonify({
-            'success': True,
-            'message': msg,
-            'ban_info': ban_info
-        })
+        return jsonify({'success': True, 'message': msg, 'ban_info': ban_info})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -2087,6 +2266,7 @@ def health():
         'database': 'supabase' if has_database() else 'json_local',
         'total_methods': len(METHODS),
         'total_users': len(users),
+        'total_pvp_rooms': len(cleanup_old_rooms.__module__ and __import__('game_utils').PVP_ROOMS) if False else 0,
         'super_admin': SUPER_ADMIN_USERNAME,
         'super_admin_exists': any(usernames_match(u, SUPER_ADMIN_USERNAME) for u in users.keys())
     })
