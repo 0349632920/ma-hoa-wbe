@@ -3,45 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🔐 Web Mã Hóa & Giải Mã</title>
+  <title>🔐 70+ Kiểu Mã Hóa & Giải Mã</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>🔐 Mã Hóa & Giải Mã</h1>
-      <p>Công cụ mã hóa văn bản trực tuyến</p>
+      <div class="logo">
+        <div class="logo-icon">🔐</div>
+        <div>
+          <h1>Mã Hóa <span>Tool</span></h1>
+          <p>{{ methods|length }}+ kiểu mã hóa & giải mã</p>
+        </div>
+      </div>
+      <div class="stats-badge">📊 {{ methods|length }} phương pháp</div>
     </header>
 
-    <div class="tabs">
-      <button class="tab active" data-method="base64">Base64</button>
-      <button class="tab" data-method="caesar">Caesar</button>
-      <button class="tab" data-method="rot13">ROT13</button>
-      <button class="tab" data-method="binary">Binary</button>
-      <button class="tab" data-method="hex">Hex</button>
-      <button class="tab" data-method="aes">AES 🛡️</button>
+    <!-- Search box -->
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm phương pháp...">
     </div>
 
-    <div id="key-section" class="key-section hidden">
-      <label id="key-label">Khóa:</label>
-      <input type="text" id="key-input" placeholder="Nhập khóa...">
+    <!-- Danh sách phương pháp -->
+    <div class="methods-wrapper">
+      <div class="methods-grid" id="methodsGrid">
+        {% for key, name in methods.items() %}
+        <button class="method-btn" data-method="{{ key }}" title="{{ name }}">
+          <span class="method-name">{{ name }}</span>
+          <span class="method-code">{{ key }}</span>
+        </button>
+        {% endfor %}
+      </div>
     </div>
 
+    <!-- Method đang chọn -->
+    <div class="current-method">
+      <span>🎯 Đang chọn:</span>
+      <strong id="currentMethodName">Base64</strong>
+      <span class="current-method-code" id="currentMethodCode">base64</span>
+    </div>
+
+    <!-- Ô nhập khóa -->
+    <div id="keySection" class="key-section hidden">
+      <label id="keyLabel">🔑 Khóa:</label>
+      <input type="text" id="keyInput" placeholder="Nhập khóa...">
+    </div>
+
+    <!-- Thông báo hash -->
+    <div id="hashWarning" class="hash-warning hidden">
+      ⚠️ Phương pháp này là <strong>mã hóa 1 chiều</strong> — không thể giải mã!
+    </div>
+
+    <!-- IO -->
     <div class="io-section">
       <div class="box">
-        <label>📝 Văn bản gốc</label>
-        <textarea id="input" placeholder="Nhập văn bản..."></textarea>
+        <div class="box-header">
+          <label>📝 Văn bản gốc</label>
+          <span class="char-count" id="inputCount">0 ký tự</span>
+        </div>
+        <textarea id="input" placeholder="Nhập văn bản cần xử lý..."></textarea>
       </div>
       <div class="box">
-        <label>✅ Kết quả</label>
-        <textarea id="output" placeholder="Kết quả..." readonly></textarea>
+        <div class="box-header">
+          <label>✅ Kết quả</label>
+          <span class="char-count" id="outputCount">0 ký tự</span>
+        </div>
+        <textarea id="output" placeholder="Kết quả sẽ hiển thị ở đây..." readonly></textarea>
       </div>
     </div>
 
+    <!-- Buttons -->
     <div class="buttons">
-      <button class="btn encrypt" onclick="process('encrypt')">🔒 Mã Hóa</button>
-      <button class="btn decrypt" onclick="process('decrypt')">🔓 Giải Mã</button>
+      <button class="btn encrypt" onclick="process('encrypt')">
+        🔒 Mã Hóa
+      </button>
+      <button class="btn decrypt" onclick="process('decrypt')">
+        🔓 Giải Mã
+      </button>
+      <button class="btn swap" onclick="swapText()">🔄 Đảo Chiều</button>
       <button class="btn copy" onclick="copyResult()">📋 Sao Chép</button>
       <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
     </div>
@@ -51,40 +91,96 @@
 
   <script>
     let currentMethod = 'base64';
+    let oneWayMethods = new Set([
+      'md5','sha1','sha224','sha256','sha384','sha512',
+      'sha3_256','sha3_512','blake2b','blake2s','crc32',
+      'uuid','random_hex'
+    ]);
+    let keyMethods = new Set([
+      'caesar','affine','vigenere','beaufort','autokey',
+      'playfair','hill','railfence','columnar','xor','aes'
+    ]);
+    let keyLabels = {
+      'caesar': '🔢 Khóa dịch chuyển (1-25):',
+      'affine': '🔢 Khóa affine (a,b) — mặc định 5,8',
+      'vigenere': '🔑 Từ khóa Vigenère:',
+      'beaufort': '🔑 Từ khóa Beaufort:',
+      'autokey': '🔑 Từ khóa Autokey:',
+      'playfair': '🔑 Từ khóa Playfair:',
+      'hill': '🔢 Ma trận Hill 2x2 (a,b,c,d):',
+      'railfence': '🔢 Số thanh ray (>=2):',
+      'columnar': '🔑 Từ khóa Columnar:',
+      'xor': '🔑 Khóa XOR:',
+      'aes': '🔐 Mật khẩu AES:'
+    };
+    let keyPlaceholders = {
+      'caesar': 'Mặc định: 3',
+      'affine': 'Mặc định: 5,8',
+      'vigenere': 'Mặc định: KEY',
+      'beaufort': 'Mặc định: KEY',
+      'autokey': 'Mặc định: KEY',
+      'playfair': 'Mặc định: KEY',
+      'hill': 'Mặc định: 3,3,2,5',
+      'railfence': 'Mặc định: 3',
+      'columnar': 'Mặc định: KEY',
+      'xor': 'Mặc định: KEY',
+      'aes': 'Nhập mật khẩu...'
+    };
 
-    // Chuyển tab
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        currentMethod = tab.dataset.method;
-        updateKeySection();
+    // Chọn phương pháp
+    document.querySelectorAll('.method-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMethod = btn.dataset.method;
+        document.getElementById('currentMethodName').textContent = btn.title;
+        document.getElementById('currentMethodCode').textContent = currentMethod;
+        updateUI();
       });
     });
 
-    // Hiện/ẩn ô khóa
-    function updateKeySection() {
-      const keySection = document.getElementById('key-section');
-      const keyLabel = document.getElementById('key-label');
-      const keyInput = document.getElementById('key-input');
+    // Tìm kiếm
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      document.querySelectorAll('.method-btn').forEach(btn => {
+        const match = btn.dataset.method.toLowerCase().includes(q) ||
+                      btn.title.toLowerCase().includes(q);
+        btn.style.display = match ? '' : 'none';
+      });
+    });
 
-      if (currentMethod === 'caesar') {
+    function updateUI() {
+      const keySection = document.getElementById('keySection');
+      const hashWarning = document.getElementById('hashWarning');
+      const btnDecrypt = document.querySelector('.btn.decrypt');
+
+      // Hiện ô khóa
+      if (keyMethods.has(currentMethod)) {
         keySection.classList.remove('hidden');
-        keyLabel.textContent = 'Khóa dịch chuyển (1-25):';
-        keyInput.placeholder = 'Mặc định: 3';
-      } else if (currentMethod === 'aes') {
-        keySection.classList.remove('hidden');
-        keyLabel.textContent = 'Mật khẩu AES:';
-        keyInput.placeholder = 'Nhập mật khẩu bí mật...';
+        document.getElementById('keyLabel').textContent = keyLabels[currentMethod] || '🔑 Khóa:';
+        document.getElementById('keyInput').placeholder = keyPlaceholders[currentMethod] || '';
       } else {
         keySection.classList.add('hidden');
+      }
+
+      // Cảnh báo hash
+      if (oneWayMethods.has(currentMethod)) {
+        hashWarning.classList.remove('hidden');
+        btnDecrypt.disabled = true;
+        btnDecrypt.style.opacity = '0.4';
+        btnDecrypt.style.cursor = 'not-allowed';
+      } else {
+        hashWarning.classList.add('hidden');
+        btnDecrypt.disabled = false;
+        btnDecrypt.style.opacity = '1';
+        btnDecrypt.style.cursor = 'pointer';
       }
     }
 
     // Gọi API
     async function process(action) {
       const text = document.getElementById('input').value;
-      const key = document.getElementById('key-input').value;
+      const key = document.getElementById('keyInput').value;
 
       if (!text.trim()) {
         showToast('⚠️ Vui lòng nhập văn bản!', true);
@@ -95,18 +191,13 @@
         const res = await fetch('/api/process', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: text,
-            method: currentMethod,
-            action: action,
-            key: key
-          })
+          body: JSON.stringify({ text, method: currentMethod, action, key })
         });
-
         const data = await res.json();
 
         if (data.success) {
           document.getElementById('output').value = data.result;
+          updateCounts();
           showToast(action === 'encrypt' ? '🔒 Mã hóa thành công!' : '🔓 Giải mã thành công!');
         } else {
           showToast('❌ ' + data.error, true);
@@ -117,34 +208,47 @@
       }
     }
 
-    // Sao chép
-    function copyResult() {
-      const output = document.getElementById('output').value;
-      if (!output) {
-        showToast('⚠️ Không có gì để sao chép!', true);
-        return;
-      }
-      navigator.clipboard.writeText(output).then(() => {
-        showToast('📋 Đã sao chép!');
-      });
+    function swapText() {
+      const out = document.getElementById('output').value;
+      document.getElementById('input').value = out;
+      document.getElementById('output').value = '';
+      updateCounts();
+      showToast('🔄 Đã đảo chiều!');
     }
 
-    // Xóa
+    function copyResult() {
+      const out = document.getElementById('output').value;
+      if (!out) return showToast('⚠️ Không có gì để sao chép!', true);
+      navigator.clipboard.writeText(out).then(() => showToast('📋 Đã sao chép!'));
+    }
+
     function clearAll() {
       document.getElementById('input').value = '';
       document.getElementById('output').value = '';
-      document.getElementById('key-input').value = '';
+      document.getElementById('keyInput').value = '';
+      updateCounts();
       showToast('🗑️ Đã xóa!');
     }
 
-    // Toast
-    function showToast(msg, isError = false) {
-      const toast = document.getElementById('toast');
-      toast.textContent = msg;
-      toast.style.background = isError ? '#e74c3c' : '#27ae60';
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2200);
+    function updateCounts() {
+      document.getElementById('inputCount').textContent =
+        document.getElementById('input').value.length + ' ký tự';
+      document.getElementById('outputCount').textContent =
+        document.getElementById('output').value.length + ' ký tự';
     }
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = isError ? '#e74c3c' : '#27ae60';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // Khởi tạo
+    document.getElementById('input').addEventListener('input', updateCounts);
+    document.querySelector('.method-btn[data-method="base64"]').classList.add('active');
+    updateUI();
   </script>
 </body>
 </html>
