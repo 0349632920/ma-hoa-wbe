@@ -626,4 +626,974 @@
   <!-- ============================================
        MODAL BAN
        ============================================ -->
-  <div class="modal-overlay" id="ban
+  <div class="modal-overlay" id="banModal">
+    <div class="modal">
+      <div class="modal-header ban-header">
+        <div><h3>🚫 Ban người dùng</h3><p id="banTargetName">—</p></div>
+        <button class="modal-close" onclick="closeModal('banModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>📝 Lý do ban:</label>
+          <textarea id="banReason" placeholder="VD: Vi phạm nghiêm trọng..."></textarea>
+        </div>
+        <div class="form-group" style="margin-top:16px;">
+          <label>⏱️ Thời hạn ban:</label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:#f0f0f5; border-radius:10px; cursor:pointer; font-weight:600;">
+              <input type="radio" name="banDuration" value="permanent" checked style="accent-color:#e74c3c;">
+              <span>♾️ Vĩnh viễn</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:#fff3cd; border-radius:10px; cursor:pointer; font-weight:600;">
+              <input type="radio" name="banDuration" value="1day" style="accent-color:#f39c12;">
+              <span>⏰ 1 ngày (24h)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('banModal')">Hủy</button>
+        <button class="btn-modal confirm-ban" onclick="confirmBan()">🚫 Ban</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL DETAIL
+       ============================================ -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal">
+      <div class="modal-header detail-header">
+        <div><h3>👤 Chi tiết người dùng</h3><p id="detailTargetName">—</p></div>
+        <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+      </div>
+      <div class="modal-body" id="detailBody">Đang tải...</div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('detailModal')">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL RESET WARNINGS
+       ============================================ -->
+  <div class="modal-overlay" id="resetModal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+        <div>
+          <h3>🔄 Xác nhận xóa cảnh báo</h3>
+          <p id="resetTargetName">—</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('resetModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="padding:16px 20px; background:#e3f2fd; border-left:4px solid #3498db; border-radius:10px; margin-bottom:20px; font-size:14px; color:#0d47a1; line-height:1.6;">
+          <strong>🔄 Hành động này sẽ:</strong>
+          <ul style="margin-top:10px; padding-left:20px; line-height:1.8;">
+            <li>Xóa <strong>tất cả cảnh báo</strong> của user</li>
+            <li>Đưa trạng thái về <strong>"Hoạt động"</strong> (active)</li>
+            <li>User sẽ <strong>không còn thấy modal cảnh báo</strong></li>
+          </ul>
+        </div>
+        <div id="resetCurrentStatus" style="padding:14px 18px; background:#fff8e1; border-left:4px solid #f39c12; border-radius:10px; font-size:13px; color:#856404;">
+          <strong>📊 Trạng thái hiện tại:</strong>
+          <span id="resetStatusText">Đang tải...</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('resetModal')">❌ Hủy</button>
+        <button class="btn-modal" onclick="confirmReset()"
+                style="background: linear-gradient(135deg, #3498db, #2980b9); color: white;">
+          🔄 Xóa cảnh báo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL UNBAN
+       ============================================ -->
+  <div class="modal-overlay" id="unbanModal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #27ae60, #16a085);">
+        <div>
+          <h3>✅ Xác nhận gỡ ban</h3>
+          <p id="unbanTargetName">—</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('unbanModal')">✕</button>
+      </div>
+      <div class="modal-body" id="unbanInfoText">
+        Đang tải...
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('unbanModal')">❌ Hủy</button>
+        <button class="btn-modal" onclick="confirmUnban()"
+                style="background: linear-gradient(135deg, #27ae60, #16a085); color: white;">
+          ✅ Gỡ ban
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL CANCEL DELETE
+       ============================================ -->
+  <div class="modal-overlay" id="cancelDeleteModal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #16a085, #1abc9c);">
+        <div>
+          <h3>↩️ Hủy đánh dấu xóa</h3>
+          <p id="cancelDeleteTargetName">—</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('cancelDeleteModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center; padding:26px;">
+        <div style="font-size:56px; margin-bottom:14px;">↩️</div>
+        <p style="font-size:15px; color:#333; line-height:1.6;">
+          Bạn có chắc muốn <strong style="color:#16a085;">hủy đánh dấu xóa</strong><br>
+          cho tài khoản <strong id="cancelDeleteUsername">—</strong>?
+        </p>
+        <p style="font-size:13px; color:#888; margin-top:12px;">
+          User sẽ trở về trạng thái bình thường.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('cancelDeleteModal')">❌ Hủy</button>
+        <button class="btn-modal" onclick="confirmCancelDelete()"
+                style="background: linear-gradient(135deg, #16a085, #1abc9c); color: white;">
+          ↩️ Hủy xóa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL DELETE (PENDING DELETE)
+       ============================================ -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #8e44ad, #6c3483);">
+        <div>
+          <h3>🗑️ Đánh dấu xóa tài khoản</h3>
+          <p id="deleteTargetName">—</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="padding:14px 18px; background:#ffebee; border-left:4px solid #e74c3c; border-radius:10px; margin-bottom:18px; font-size:14px; color:#c0392b; line-height:1.6;">
+          <strong>⚠️ Chú ý!</strong> User sẽ thấy <strong>trang xác nhận xóa</strong> khi login.
+          Tài khoản chỉ bị xóa vĩnh viễn khi user bấm <strong>"Tôi đã hiểu và chấp nhận xóa"</strong>.
+        </div>
+        <div class="form-group">
+          <label>📝 Lý do xóa:</label>
+          <textarea id="deleteReasonInput" placeholder="VD: Vi phạm điều khoản nghiêm trọng..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('deleteModal')">❌ Hủy</button>
+        <button class="btn-modal" onclick="confirmDelete()"
+                style="background: linear-gradient(135deg, #8e44ad, #6c3483); color: white;">
+          🗑️ Đánh dấu xóa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL REFRESH STATUS
+       ============================================ -->
+  <div class="modal-overlay" id="refreshModal">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #16a085, #1abc9c);">
+        <div>
+          <h3>♻️ Làm mới trạng thái</h3>
+          <p id="refreshTargetName">—</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('refreshModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="padding:16px 20px; background:#e8f8f5; border-left:4px solid #16a085; border-radius:10px; margin-bottom:18px; font-size:14px; color:#0e6655;">
+          <strong>♻️ Sẽ reset toàn bộ:</strong>
+          <ul style="margin-top:10px; padding-left:20px; line-height:1.8;">
+            <li>Trạng thái về <strong>"Hoạt động"</strong></li>
+            <li>Xóa <strong>tất cả cảnh báo</strong></li>
+            <li>Gỡ <strong>ban</strong> (nếu có)</li>
+            <li>Hủy <strong>đánh dấu xóa</strong> (nếu có)</li>
+          </ul>
+        </div>
+
+        <div class="form-group">
+          <label>⚙️ Tùy chọn thêm:</label>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+            <label style="display:flex; align-items:center; gap:10px; padding:12px 16px; background:#f7f7fb; border-radius:10px; cursor:pointer; font-weight:500;">
+              <input type="checkbox" id="keepHistoryCheck" checked style="width:18px; height:18px; accent-color:#16a085; cursor:pointer;">
+              <span>📜 Giữ lịch sử mã hóa / giải mã</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; padding:12px 16px; background:#f7f7fb; border-radius:10px; cursor:pointer; font-weight:500;">
+              <input type="checkbox" id="keepLogCheck" checked style="width:18px; height:18px; accent-color:#16a085; cursor:pointer;">
+              <span>📊 Giữ log hoạt động</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="refreshCurrentStatus" style="margin-top:16px; padding:14px 18px; background:#fff8e1; border-left:4px solid #f39c12; border-radius:10px; font-size:13px; color:#856404;">
+          <strong>📊 Trạng thái hiện tại:</strong>
+          <span id="refreshStatusText">Đang tải...</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('refreshModal')">❌ Hủy</button>
+        <button class="btn-modal" onclick="confirmRefresh()"
+                style="background: linear-gradient(135deg, #16a085, #1abc9c); color: white;">
+          ♻️ Làm mới ngay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL REFRESH MULTIPLE
+       ============================================ -->
+  <div class="modal-overlay" id="refreshAllModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #16a085, #1abc9c);">
+        <div>
+          <h3>♻️ Làm mới nhiều tài khoản</h3>
+          <p><span id="refreshAllCount">0</span> user được chọn</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('refreshAllModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="padding:14px 18px; background:#e8f8f5; border-left:4px solid #16a085; border-radius:10px; margin-bottom:18px; font-size:14px; color:#0e6655;">
+          <strong>♻️ Sẽ reset toàn bộ:</strong>
+          <ul style="margin-top:10px; padding-left:20px; line-height:1.8;">
+            <li>Trạng thái về <strong>"Hoạt động"</strong></li>
+            <li>Xóa <strong>tất cả cảnh báo</strong></li>
+            <li>Gỡ <strong>ban</strong> (nếu có)</li>
+            <li>Hủy <strong>đánh dấu xóa</strong> (nếu có)</li>
+          </ul>
+        </div>
+
+        <div style="max-height:180px; overflow-y:auto; padding:14px 18px; background:#f8f9fa; border-radius:10px; border:1px solid #e5e5f0;">
+          <div style="font-size:12px; color:#888; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+            📋 Danh sách user:
+          </div>
+          <div id="refreshAllList"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('refreshAllModal')">❌ Hủy</button>
+        <button class="btn-modal" onclick="confirmRefreshAll()"
+                style="background: linear-gradient(135deg, #16a085, #1abc9c); color: white;">
+          ♻️ Làm mới tất cả
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL LOGOUT ADMIN
+       ============================================ -->
+  <div class="modal-overlay" id="logoutAdminModal">
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+        <div>
+          <h3>🚪 Xác nhận đăng xuất</h3>
+          <p>Bạn sẽ về trang đăng nhập</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('logoutAdminModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center; padding:26px;">
+        <div style="font-size:56px; margin-bottom:14px; animation: pulse 1.5s infinite;">🚪</div>
+        <p style="font-size:15px; color:#333; line-height:1.6;">
+          Bạn có chắc muốn đăng xuất khỏi<br>
+          Admin Panel?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('logoutAdminModal')">❌ Ở lại</button>
+        <button class="btn-modal" onclick="doLogoutAdmin()"
+                style="background: linear-gradient(135deg, #f39c12, #e67e22); color: white;">
+          🚪 Đăng xuất
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ==========================================
+    // SPLASH SCREEN
+    // ==========================================
+    const splashMessages = [
+      'Đang xác thực quyền Admin...',
+      'Đang tải danh sách người dùng...',
+      'Đang chuẩn bị bảng điều khiển...',
+      'Sắp xong...',
+      'Sẵn sàng!'
+    ];
+
+    const splashProgress = document.getElementById('splashProgress');
+    const splashStatus = document.getElementById('splashStatus');
+
+    function runSplash() {
+      splashProgress.style.width = '30%';
+      splashStatus.textContent = splashMessages[0];
+      markSplashStep(1, 'active');
+
+      setTimeout(() => {
+        splashProgress.style.width = '60%';
+        splashStatus.textContent = splashMessages[1];
+        markSplashStep(1, 'done');
+        markSplashStep(2, 'active');
+      }, 500);
+
+      setTimeout(() => {
+        splashProgress.style.width = '90%';
+        splashStatus.textContent = splashMessages[3];
+        markSplashStep(2, 'done');
+        markSplashStep(3, 'active');
+      }, 1100);
+
+      setTimeout(() => {
+        splashProgress.style.width = '100%';
+        splashStatus.textContent = splashMessages[4];
+        markSplashStep(3, 'done');
+      }, 1600);
+
+      setTimeout(() => {
+        document.getElementById('adminSplash').classList.add('hide');
+        document.body.style.overflow = '';
+        document.getElementById('adminContainer').classList.add('show');
+      }, 2100);
+    }
+
+    function markSplashStep(n, state) {
+      const el = document.querySelector(`.splash-step[data-step="${n}"]`);
+      if (el) {
+        el.classList.remove('active', 'done');
+        el.classList.add(state);
+      }
+    }
+
+    window.addEventListener('load', () => {
+      document.body.style.overflow = 'hidden';
+      setTimeout(runSplash, 200);
+    });
+
+    // ==========================================
+    // ADMIN LOGIC
+    // ==========================================
+    let allUsers = [];
+    let currentFilter = 'all';
+    let pendingTarget = null;
+    let resetTarget = null;
+    let unbanTarget = null;
+    let cancelDeleteTarget = null;
+    let deleteTarget = null;
+    let refreshTarget = null;
+    let refreshAllTargets = [];
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('statTotal').textContent = data.stats.total;
+          document.getElementById('statActive').textContent = data.stats.active;
+          document.getElementById('statWarned').textContent = data.stats.warned;
+          document.getElementById('statBanned').textContent = data.stats.banned;
+          document.getElementById('statAdmins').textContent = data.stats.admins;
+          document.getElementById('statSuspicious').textContent = data.stats.suspicious;
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadUsers() {
+      try {
+        const res = await fetch('/api/admin/users');
+        const data = await res.json();
+        if (data.success) {
+          allUsers = data.users;
+          renderUsers();
+        }
+      } catch (e) {
+        document.getElementById('usersTableBody').innerHTML =
+          '<tr><td colspan="6" style="text-align:center;padding:40px;color:#e74c3c">❌ Lỗi tải dữ liệu</td></tr>';
+      }
+    }
+
+    function renderUsers() {
+      const search = document.getElementById('searchUser').value.toLowerCase().trim();
+      const tbody = document.getElementById('usersTableBody');
+
+      let filtered = allUsers.filter(u => {
+        if (currentFilter !== 'all' && u.status !== currentFilter) return false;
+        if (search && !u.username.toLowerCase().includes(search)) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#999">😕 Không có người dùng</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(u => {
+        const rowClass = u.status === 'banned' ? 'banned-row' :
+                        u.status === 'warned' ? 'warned-row' : '';
+
+        let roleBadge;
+        if (u.is_super_admin) {
+          roleBadge = '<span class="super-admin-badge">👑 SUPER ADMIN</span>';
+        } else if (u.role === 'admin') {
+          roleBadge = '<span class="badge admin">👑 Admin</span>';
+        } else {
+          roleBadge = '<span class="badge user">👤 User</span>';
+        }
+
+        let statusBadge;
+        if (u.status === 'banned') {
+          const isTemp = u.ban_info && u.ban_info.is_temp_ban;
+          statusBadge = isTemp
+            ? '<span class="badge temp-ban">⏰ Ban tạm</span>'
+            : '<span class="badge banned">🚫 Bị ban</span>';
+        } else if (u.status === 'pending_delete') {
+          statusBadge = '<span class="badge pending-delete">🗑️ Chờ xóa</span>';
+        } else if (u.status === 'warned') {
+          statusBadge = '<span class="badge warned">⚠️ Cảnh báo</span>';
+        } else {
+          statusBadge = '<span class="badge active">✅ Hoạt động</span>';
+        }
+
+        let actions = '';
+        if (u.is_super_admin) {
+          actions = `
+            <button class="action-btn detail" onclick="showDetail('${u.username}')">👁️ Chi tiết</button>
+            <span class="protected-note">🛡️ Tự bảo vệ</span>
+          `;
+        } else {
+          if (u.status === 'banned') {
+            actions += `<button class="action-btn unban" onclick="openUnbanModal('${u.username}')">✅ Gỡ ban</button>`;
+          } else if (u.status === 'pending_delete') {
+            actions += `<button class="action-btn unban" onclick="openCancelDeleteModal('${u.username}')">↩️ Hủy xóa</button>`;
+          } else {
+            actions += `<button class="action-btn warn" onclick="openWarnModal('${u.username}')">⚠️ Cảnh báo</button>`;
+            actions += `<button class="action-btn ban" onclick="openBanModal('${u.username}')">🚫 Ban</button>`;
+          }
+          if (u.warnings_count > 0) {
+            actions += `<button class="action-btn reset" onclick="openResetModal('${u.username}')">🔄 Reset</button>`;
+          }
+          actions += `<button class="action-btn refresh" onclick="openRefreshModal('${u.username}')" title="Làm mới trạng thái">♻️</button>`;
+          actions += `<button class="action-btn delete" onclick="openDeleteModal('${u.username}')">🗑️</button>`;
+          actions += `<button class="action-btn detail" onclick="showDetail('${u.username}')">👁️</button>`;
+        }
+
+        const warnHighlight = u.warnings_count >= 2
+          ? `<span class="badge warned" style="animation: superBadgePulse 1.5s infinite;">${u.warnings_count} cảnh báo ⚡</span>`
+          : (u.warnings_count > 0
+            ? `<span class="badge warned">${u.warnings_count} cảnh báo</span>`
+            : '<span style="color:#999">—</span>');
+
+        return `
+          <tr class="${rowClass}">
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar-sm">${(u.display_name || u.username)[0].toUpperCase()}</div>
+                <div class="user-cell-info">
+                  <strong>${escapeHtml(u.display_name || u.username)}</strong>
+                  <small>${u.last_login ? 'Lần cuối: ' + formatTime(u.last_login) : 'Chưa đăng nhập'}</small>
+                </div>
+              </div>
+            </td>
+            <td>${roleBadge}</td>
+            <td>${statusBadge}</td>
+            <td><strong>${u.login_count}</strong></td>
+            <td>${warnHighlight}</td>
+            <td><div class="actions-cell">${actions}</div></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterByStatus(status) {
+      currentFilter = status;
+      const titles = {
+        'all': '📋 Danh sách người dùng',
+        'active': '✅ Người dùng đang hoạt động',
+        'warned': '⚠️ Người dùng bị cảnh báo',
+        'banned': '🚫 Người dùng bị ban'
+      };
+      document.getElementById('panelTitle').textContent = titles[status] || titles['all'];
+      renderUsers();
+    }
+
+    document.getElementById('searchUser').addEventListener('input', renderUsers);
+
+    // ==========================================
+    // WARN
+    // ==========================================
+    function openWarnModal(username) {
+      pendingTarget = username;
+      document.getElementById('warnTargetName').textContent = username;
+      document.getElementById('warnReason').value = '';
+      document.getElementById('ban1DayCheck').checked = false;
+
+      const user = allUsers.find(u => u.username === username);
+      const warnCount = user ? user.warnings_count : 0;
+      document.getElementById('currentWarnCount').textContent = warnCount;
+
+      if (warnCount >= 2) {
+        document.getElementById('warnCountWarning').classList.add('show');
+        document.getElementById('ban1DayBox').classList.add('show');
+      } else {
+        document.getElementById('warnCountWarning').classList.remove('show');
+        document.getElementById('ban1DayBox').classList.remove('show');
+      }
+
+      document.getElementById('warnModal').classList.add('show');
+    }
+
+    async function confirmWarn() {
+      const reason = document.getElementById('warnReason').value.trim();
+      if (!reason) { showToast('⚠️ Nhập lý do!', true); return; }
+
+      const ban1Day = document.getElementById('ban1DayCheck').checked;
+
+      try {
+        const res = await fetch('/api/admin/warn', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: pendingTarget,
+            reason: reason,
+            ban_1_day: ban1Day
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.banned ? '🚫 ' + data.message : '⚠️ ' + data.message);
+          closeModal('warnModal');
+          loadUsers();
+          loadStats();
+        } else {
+          showToast('❌ ' + data.error, true);
+        }
+      } catch (e) { showToast('❌ Lỗi!', true); }
+    }
+
+    // ==========================================
+    // BAN
+    // ==========================================
+    function openBanModal(username) {
+      pendingTarget = username;
+      document.getElementById('banTargetName').textContent = username;
+      document.getElementById('banReason').value = '';
+      document.querySelector('input[name="banDuration"][value="permanent"]').checked = true;
+      document.getElementById('banModal').classList.add('show');
+    }
+
+    async function confirmBan() {
+      const reason = document.getElementById('banReason').value.trim() || 'Vi phạm điều khoản';
+      const duration = document.querySelector('input[name="banDuration"]:checked').value;
+
+      try {
+        const res = await fetch('/api/admin/ban', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: pendingTarget, reason, duration })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('🚫 ' + data.message);
+          closeModal('banModal');
+          loadUsers(); loadStats();
+        } else showToast('❌ ' + data.error, true);
+      } catch (e) { showToast('❌ Lỗi!', true); }
+    }
+
+    // ==========================================
+    // UNBAN
+    // ==========================================
+    function openUnbanModal(username) {
+      unbanTarget = username;
+      document.getElementById('unbanTargetName').textContent = username;
+
+      const user = allUsers.find(u => u.username === username);
+      const infoEl = document.getElementById('unbanInfoText');
+      if (user && user.ban_info) {
+        const isTemp = user.ban_info.is_temp_ban;
+        infoEl.innerHTML = `
+          <div style="padding:14px 18px; background:#e8f5e9; border-left:4px solid #27ae60; border-radius:10px; font-size:13px; color:#1b5e20;">
+            <strong>✅ Gỡ ban cho user này?</strong><br>
+            <div style="margin-top:8px;">
+              🚫 Lý do ban: <strong>${escapeHtml(user.ban_info.reason || '—')}</strong><br>
+              ${isTemp ? '⏰ Ban tạm (1 ngày)' : '♾️ Ban vĩnh viễn'}
+            </div>
+          </div>
+        `;
+      } else {
+        infoEl.innerHTML = '<p style="text-align:center;color:#333;">Gỡ ban cho user này?</p>';
+      }
+
+      document.getElementById('unbanModal').classList.add('show');
+    }
+
+    async function confirmUnban() {
+      if (!unbanTarget) return;
+      try {
+        const res = await fetch('/api/admin/unban', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: unbanTarget })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✅ ' + data.message);
+          closeModal('unbanModal');
+          loadUsers(); loadStats();
+        } else showToast('❌ ' + data.error, true);
+      } catch (e) { showToast('❌ Lỗi!', true); }
+    }
+
+    // ==========================================
+    // CANCEL DELETE
+    // ==========================================
+    function openCancelDeleteModal(username) {
+      cancelDeleteTarget = username;
+      document.getElementById('cancelDeleteTargetName').textContent = username;
+      document.getElementById('cancelDeleteUsername').textContent = username;
+      document.getElementById('cancelDeleteModal').classList.add('show');
+    }
+
+    async function confirmCancelDelete() {
+      if (!cancelDeleteTarget) return;
+      try {
+        const res = await fetch('/api/admin/cancel-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: cancelDeleteTarget })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('↩️ ' + data.message);
+          closeModal('cancelDeleteModal');
+          loadUsers(); loadStats();
+        } else showToast('❌ ' + data.error, true);
+      } catch (e) { showToast('❌ Lỗi!', true); }
+    }
+
+    // ==========================================
+    // DELETE (PENDING)
+    // ==========================================
+    function openDeleteModal(username) {
+      deleteTarget = username;
+      document.getElementById('deleteTargetName').textContent = username;
+      document.getElementById('deleteReasonInput').value = '';
+      document.getElementById('deleteModal').classList.add('show');
+    }
+
+    async function confirmDelete() {
+      if (!deleteTarget) return;
+      const reason = document.getElementById('deleteReasonInput').value.trim() || 'Vi phạm điều khoản nghiêm trọng';
+
+      try {
+        const res = await fetch('/api/admin/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: deleteTarget, reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('⚠️ ' + data.message);
+          closeModal('deleteModal');
+          loadUsers(); loadStats();
+        } else showToast('❌ ' + data.error, true);
+      } catch (e) { showToast('❌ Lỗi!', true); }
+    }
+
+    // ==========================================
+    // RESET WARNINGS
+    // ==========================================
+    function openResetModal(username) {
+      resetTarget = username;
+      document.getElementById('resetTargetName').textContent = username;
+
+      const user = allUsers.find(u => u.username === username);
+      const statusText = document.getElementById('resetStatusText');
+
+      if (user) {
+        const parts = [];
+        parts.push(`Trạng thái: <strong>${user.status}</strong>`);
+        if (user.warnings_count > 0) parts.push(`<strong>${user.warnings_count}</strong> cảnh báo`);
+        if (user.ban_info) parts.push(`có ban`);
+        if (user.delete_info) parts.push(`chờ xóa`);
+        statusText.innerHTML = parts.join(' • ');
+      } else {
+        statusText.textContent = 'Không tải được';
+      }
+
+      document.getElementById('resetModal').classList.add('show');
+    }
+
+    async function confirmReset() {
+      if (!resetTarget) return;
+      try {
+        const res = await fetch('/api/admin/reset-warnings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: resetTarget })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('🔄 ' + data.message);
+          closeModal('resetModal');
+          loadUsers(); loadStats();
+        } else showToast('❌ ' + data.error, true);
+      } catch (e) { showToast('❌ Lỗi!', true); }
+    }
+
+    // ==========================================
+    // REFRESH STATUS (1 USER)
+    // ==========================================
+    function openRefreshModal(username) {
+      refreshTarget = username;
+      document.getElementById('refreshTargetName').textContent = username;
+      document.getElementById('keepHistoryCheck').checked = true;
+      document.getElementById('keepLogCheck').checked = true;
+
+      const user = allUsers.find(u => u.username === username);
+      const statusText = document.getElementById('refreshStatusText');
+
+      if (user) {
+        const parts = [];
+        parts.push(`Trạng thái: <strong>${user.status}</strong>`);
+        if (user.warnings_count > 0) parts.push(`${user.warnings_count} cảnh báo`);
+        if (user.ban_info) parts.push(`có ban`);
+        if (user.delete_info) parts.push(`chờ xóa`);
+        if (user.suspicious_score >= 30) parts.push(`nghi ngờ: ${user.suspicious_score}`);
+        statusText.innerHTML = parts.join(' • ');
+      } else {
+        statusText.textContent = 'Không tải được';
+      }
+
+      document.getElementById('refreshModal').classList.add('show');
+    }
+
+    async function confirmRefresh() {
+      if (!refreshTarget) return;
+      const keepHistory = document.getElementById('keepHistoryCheck').checked;
+      const keepLog = document.getElementById('keepLogCheck').checked;
+
+      try {
+        const res = await fetch('/api/admin/refresh-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: refreshTarget,
+            keep_history: keepHistory,
+            keep_log: keepLog
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('♻️ ' + data.message);
+          closeModal('refreshModal');
+          loadUsers(); loadStats();
+        } else showToast('❌ ' + data.error, true);
+      } catch (e) { showToast('❌ Lỗi!', true); }
+    }
+
+    // ==========================================
+    // REFRESH ALL
+    // ==========================================
+    async function refreshAllFiltered() {
+      const search = document.getElementById('searchUser').value.toLowerCase().trim();
+
+      let targets = allUsers.filter(u => {
+        if (u.is_super_admin) return false;
+        if (currentFilter !== 'all' && u.status !== currentFilter) return false;
+        if (search && !u.username.toLowerCase().includes(search)) return false;
+        return true;
+      });
+
+      if (targets.length === 0) {
+        showToast('⚠️ Không có user nào để làm mới!', true);
+        return;
+      }
+
+      refreshAllTargets = targets;
+      document.getElementById('refreshAllCount').textContent = targets.length;
+      document.getElementById('refreshAllList').innerHTML =
+        targets.slice(0, 10).map(u =>
+          `<div style="padding:6px 0; font-family:'JetBrains Mono', monospace; font-size:13px;">• ${escapeHtml(u.username)}</div>`
+        ).join('') +
+        (targets.length > 10 ? `<div style="padding:6px 0; color:#888;">... và ${targets.length - 10} user khác</div>` : '');
+
+      document.getElementById('refreshAllModal').classList.add('show');
+    }
+
+    async function confirmRefreshAll() {
+      if (refreshAllTargets.length === 0) return;
+
+      try {
+        const res = await fetch('/api/admin/refresh-multiple', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usernames: refreshAllTargets.map(u => u.username)
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('♻️ ' + data.message);
+          closeModal('refreshAllModal');
+          loadUsers(); loadStats();
+        } else showToast('❌ ' + data.error, true);
+      } catch (e) { showToast('❌ Lỗi!', true); }
+    }
+
+    // ==========================================
+    // DETAIL
+    // ==========================================
+    async function showDetail(username) {
+      document.getElementById('detailTargetName').textContent = username;
+      document.getElementById('detailBody').innerHTML = 'Đang tải...';
+      document.getElementById('detailModal').classList.add('show');
+
+      try {
+        const res = await fetch(`/api/admin/user/${username}`);
+        const data = await res.json();
+        if (!data.success) {
+          document.getElementById('detailBody').innerHTML = '❌ ' + data.error;
+          return;
+        }
+
+        const u = data.user;
+        const warningsHtml = u.warnings.length > 0
+          ? u.warnings.map(w => `
+              <div class="warning-item">
+                ⚠️ ${escapeHtml(w.reason)}
+                <small>${formatTime(w.time)} — bởi ${w.by}</small>
+              </div>`).join('')
+          : '<p style="color:#999;font-size:13px">Không có cảnh báo</p>';
+
+        const logsHtml = u.activity_log.length > 0
+          ? u.activity_log.slice(0, 10).map(l => `
+              <div class="detail-row"><span>${escapeHtml(l.action)}</span><span>${formatTime(l.time)}</span></div>
+            `).join('')
+          : '<p style="color:#999;font-size:13px">Không có log</p>';
+
+        let banHtml = '';
+        if (u.ban_info) {
+          const isTemp = u.ban_info.is_temp_ban;
+          let banUntilStr = '';
+          if (isTemp && u.ban_info.ban_until) {
+            try {
+              banUntilStr = `<div class="detail-row"><span>Hết hạn ban:</span><span style="color:#e67e22;">${formatTime(u.ban_info.ban_until)}</span></div>`;
+            } catch {}
+          }
+          banHtml = `
+            <div class="detail-section">
+              <h4>${isTemp ? '⏰ Ban tạm thời (1 ngày)' : '🚫 Ban vĩnh viễn'}</h4>
+              <div class="detail-row"><span>Lý do:</span><span>${escapeHtml(u.ban_info.reason)}</span></div>
+              <div class="detail-row"><span>Thời gian ban:</span><span>${formatTime(u.ban_info.time)}</span></div>
+              <div class="detail-row"><span>Bởi:</span><span>${escapeHtml(u.ban_info.by)}</span></div>
+              ${banUntilStr}
+            </div>
+          `;
+        }
+
+        document.getElementById('detailBody').innerHTML = `
+          <div class="detail-section">
+            <h4>📌 Thông tin cơ bản</h4>
+            <div class="detail-row"><span>Username:</span><span>${escapeHtml(u.username)}</span></div>
+            <div class="detail-row"><span>Vai trò:</span><span>${u.role}</span></div>
+            <div class="detail-row"><span>Trạng thái:</span><span>${u.status}</span></div>
+            <div class="detail-row"><span>Ngày tạo:</span><span>${formatTime(u.created_at)}</span></div>
+            <div class="detail-row"><span>Lần cuối:</span><span>${formatTime(u.last_login)}</span></div>
+            <div class="detail-row"><span>Số lần đăng nhập:</span><span>${u.login_count}</span></div>
+          </div>
+          ${banHtml}
+          <div class="detail-section">
+            <h4>⚠️ Cảnh báo (${u.warnings.length})</h4>
+            ${warningsHtml}
+          </div>
+          <div class="detail-section">
+            <h4>📊 Hoạt động gần đây</h4>
+            ${logsHtml}
+          </div>
+        `;
+      } catch (e) {
+        document.getElementById('detailBody').innerHTML = '❌ Lỗi!';
+      }
+    }
+
+    // ==========================================
+    // LOGOUT
+    // ==========================================
+    function openLogoutAdminModal() {
+      document.getElementById('logoutAdminModal').classList.add('show');
+    }
+
+    async function doLogoutAdmin() {
+      closeModal('logoutAdminModal');
+      try {
+        await fetch('/api/logout', { method: 'POST' });
+      } catch (e) {}
+      window.location.href = '/login';
+    }
+
+    // ==========================================
+    // MODAL UTILS
+    // ==========================================
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('show');
+      });
+    });
+
+    // ESC đóng modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.show').forEach(modal => {
+          modal.classList.remove('show');
+        });
+      }
+    });
+
+    // ==========================================
+    // HELPERS
+    // ==========================================
+    function formatTime(iso) {
+      if (!iso) return '—';
+      try { return new Date(iso).toLocaleString('vi-VN'); }
+      catch { return iso; }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+    }
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = isError ? '#e74c3c' : '#27ae60';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // Auto load sau splash
+    setTimeout(() => {
+      loadStats();
+      loadUsers();
+    }, 2100);
+
+    setInterval(loadStats, 30000);
+  </script>
+</body>
+</html>
