@@ -275,7 +275,6 @@ def register():
         session.permanent = True
         session['username'] = username
         session['login_time'] = now
-        session['warnings_shown'] = True
 
         return jsonify({
             'success': True,
@@ -374,6 +373,7 @@ def me():
     users = load_users()
     user = users.get(session['username'], {})
 
+    # Nếu bị ban → trả về thông tin ban
     if user.get('status') == 'banned' and not is_super_admin(session['username']):
         uname = session.get('username', '')
         session.clear()
@@ -393,12 +393,13 @@ def me():
         'created_at': user.get('created_at'),
         'status': user.get('status', 'active'),
         'warnings': user.get('warnings', []),
+        'warnings_shown': user.get('warnings_shown', False),
         'history_count': len(user.get('history', []))
     })
 
 
 # ============================================================
-# BAN PAGE (giữ nguyên)
+# BAN PAGE
 # ============================================================
 @app.route('/banned')
 def banned_page():
@@ -439,7 +440,7 @@ def banned_page():
 
 
 # ============================================================
-# WARNED PAGE — GIỮ LẠI cho nút "Xem chi tiết"
+# WARNED PAGE — cho nút "Xem chi tiết"
 # ============================================================
 @app.route('/warned')
 def warned_page():
@@ -460,19 +461,25 @@ def warned_page():
     return render_template('warned.html', username=session['username'], warnings=warnings)
 
 
+# ============================================================
+# ACKNOWLEDGE WARNINGS — ĐÁNH DẤU ĐÃ XEM
+# ============================================================
 @app.route('/api/acknowledge-warnings', methods=['POST'])
 def acknowledge_warnings():
-    if 'username' in session:
-        session['warnings_shown'] = True
-        users = load_users()
-        if session['username'] in users:
-            users[session['username']]['warnings_shown'] = True
-            save_users(users)
-    return jsonify({'success': True})
+    """Đánh dấu đã xem cảnh báo — không hiện lại cho đến khi bị warn lần nữa"""
+    if 'username' not in session:
+        return jsonify({'success': False, 'error': 'Chưa đăng nhập!'}), 401
+
+    users = load_users()
+    if session['username'] in users:
+        users[session['username']]['warnings_shown'] = True
+        save_users(users)
+
+    return jsonify({'success': True, 'message': 'Đã ghi nhận cảnh báo'})
 
 
 # ============================================================
-# ROUTES CHÍNH — KHÔNG CHUYỂN HƯỚNG SANG /WARNED NỮA!
+# ROUTES CHÍNH
 # ============================================================
 @app.route('/')
 @login_required
@@ -486,8 +493,7 @@ def index():
         session.clear()
         return redirect(url_for('banned_page', user=uname))
 
-    # WARN → VẪN VÀO TRANG CHỦ BÌNH THƯỜNG
-    # (JavaScript sẽ tự hiện modal toàn màn hình)
+    # WARN → VẪN VÀO TRANG CHỦ BÌNH THƯỜNG (JS sẽ hiện modal)
     return render_template(
         'index.html',
         methods=METHODS,
@@ -498,16 +504,17 @@ def index():
 
 
 # ============================================================
-# API PROCESS — CHẶN NẾU BAN/WARN
+# API PROCESS — CHỈ CHẶN BAN, KHÔNG CHẶN WARN
 # ============================================================
 @app.route('/api/process', methods=['POST'])
 @login_required
 def api_process():
+    """API xử lý mã hóa/giải mã — CHỈ CHẶN BAN"""
     try:
         users = load_users()
         user = users.get(session['username'], {})
 
-        # BAN
+        # ===== CHỈ CHẶN BAN =====
         if user.get('status') == 'banned' and not is_super_admin(session['username']):
             return jsonify({
                 'success': False,
@@ -518,19 +525,9 @@ def api_process():
                 'username': session['username']
             }), 403
 
-        # WARN
-        warnings = user.get('warnings', [])
-        if warnings and user.get('status') == 'warned' and not is_super_admin(session['username']):
-            return jsonify({
-                'success': False,
-                'error': f'Bạn có {len(warnings)} cảnh báo từ admin!',
-                'warned': True,
-                'blocked': True,
-                'warnings': warnings,
-                'username': session['username']
-            }), 403
+        # ===== WARN KHÔNG CHẶN NỮA =====
+        # (User vẫn mã hóa được sau khi bấm "Tôi đã hiểu")
 
-        # XỬ LÝ BÌNH THƯỜNG
         data = request.get_json()
         text = data.get('text', '').strip()
         method = data.get('method', 'base64')
@@ -625,6 +622,9 @@ def admin_users():
     return jsonify({'success': True, 'users': result})
 
 
+# ============================================================
+# ADMIN ACTIONS — CHỈ SUPER ADMIN
+# ============================================================
 @app.route('/api/admin/ban', methods=['POST'])
 @super_admin_required
 def admin_ban():
@@ -639,14 +639,14 @@ def admin_ban():
         if target == session['username']:
             return jsonify({
                 'success': False,
-                'error': '🚫 KHÔNG THỂ TỰ BAN CHÍNH MÌNH!'
+                'error': '🚫 KHÔNG THỂ TỰ BAN CHÍNH MÌNH!\n\nBạn là Super Admin duy nhất.'
             }), 400
 
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
         if is_super_admin(target):
-            return jsonify({'success': False, 'error': '🚫 Không thể ban Super Admin!'}), 403
+            return jsonify({'success': False, 'error': '🚫 Không thể ban Super Admin khác!'}), 403
 
         users[target]['status'] = 'banned'
         users[target]['ban_info'] = {
@@ -716,6 +716,7 @@ def admin_warn():
         if users[target].get('status') == 'active':
             users[target]['status'] = 'warned'
 
+        # Reset cờ để user thấy lại cảnh báo
         users[target]['warnings_shown'] = False
         save_users(users)
 
@@ -825,6 +826,9 @@ def admin_delete():
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
 
+# ============================================================
+# HEALTH CHECK
+# ============================================================
 @app.route('/health')
 def health():
     users = load_users()
