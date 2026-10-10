@@ -3,278 +3,142 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>⚠️ Cảnh báo — Mã Hóa Tool</title>
+  <title>⚠️ Cảnh báo</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
+      font-family: 'Inter', sans-serif; min-height: 100vh;
       background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; position: relative; overflow: hidden;
     }
-
     body::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15), transparent 40%),
-        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.15), transparent 40%);
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15), transparent 40%),
+                  radial-gradient(circle at 70% 80%, rgba(255,255,255,0.15), transparent 40%);
       pointer-events: none;
     }
-
-    /* Modal cảnh báo kiểu Roblox */
     .warn-container {
-      position: relative;
-      z-index: 2;
-      max-width: 560px;
-      width: 100%;
-      background: #fff;
+      position: relative; z-index: 2; max-width: 560px;
+      width: 100%; background: #fff;
       border-radius: 16px;
       box-shadow: 0 30px 80px rgba(0,0,0,0.4);
       overflow: hidden;
       animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     }
-
     @keyframes popIn {
       0% { transform: scale(0.7); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
     }
-
     .warn-header {
       background: linear-gradient(135deg, #ff6b35, #f7931e);
-      padding: 26px 32px;
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 16px;
+      padding: 26px 32px; color: white;
+      display: flex; align-items: center; gap: 16px;
     }
-
     .warn-icon {
-      width: 56px;
-      height: 56px;
+      width: 56px; height: 56px;
       background: rgba(255,255,255,0.25);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      flex-shrink: 0;
+      border-radius: 50%; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 28px; flex-shrink: 0;
       animation: warnIconShake 1.8s ease-in-out infinite;
     }
-
     @keyframes warnIconShake {
       0%, 100% { transform: rotate(0deg); }
       25% { transform: rotate(-8deg); }
       75% { transform: rotate(8deg); }
     }
-
-    .warn-header h1 {
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 2px;
-    }
-
-    .warn-header p {
-      font-size: 13px;
-      opacity: 0.9;
-    }
-
-    .warn-body {
-      padding: 28px 32px;
-    }
-
-    /* Khung từ Roblox */
+    .warn-header h1 { font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+    .warn-header p { font-size: 13px; opacity: 0.9; }
+    .warn-body { padding: 28px 32px; }
     .warn-roblox-box {
-      background: #fff8f0;
-      border: 2px solid #ffe0b2;
-      border-radius: 12px;
-      padding: 20px 24px;
-      margin-bottom: 22px;
+      background: #fff8f0; border: 2px solid #ffe0b2;
+      border-radius: 12px; padding: 20px 24px; margin-bottom: 22px;
     }
-
     .warn-roblox-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: #e65100;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #e65100; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
     }
-
     .warn-roblox-text {
-      font-size: 14px;
-      color: #333;
-      line-height: 1.6;
-      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; color: #333;
+      line-height: 1.6; font-family: 'JetBrains Mono', monospace;
     }
-
-    /* Danh sách cảnh báo */
     .warn-list {
-      max-height: 320px;
-      overflow-y: auto;
-      margin-bottom: 22px;
-      padding-right: 4px;
+      max-height: 320px; overflow-y: auto;
+      margin-bottom: 22px; padding-right: 4px;
     }
-
     .warn-list::-webkit-scrollbar { width: 6px; }
     .warn-list::-webkit-scrollbar-track { background: #f0f0f5; border-radius: 10px; }
     .warn-list::-webkit-scrollbar-thumb { background: #ff6b35; border-radius: 10px; }
-
     .warn-item {
-      background: #fff;
-      border: 2px solid #ffe0b2;
+      background: #fff; border: 2px solid #ffe0b2;
       border-left: 5px solid #ff6b35;
-      border-radius: 10px;
-      padding: 14px 18px;
-      margin-bottom: 10px;
-      transition: 0.2s;
+      border-radius: 10px; padding: 14px 18px;
+      margin-bottom: 10px; transition: 0.2s;
       animation: warnItemSlide 0.4s ease;
     }
-
     @keyframes warnItemSlide {
       from { opacity: 0; transform: translateX(-20px); }
       to { opacity: 1; transform: translateX(0); }
     }
-
-    .warn-item:hover {
-      transform: translateX(4px);
-      box-shadow: 0 6px 18px rgba(255,107,53,0.15);
-    }
-
+    .warn-item:hover { transform: translateX(4px); box-shadow: 0 6px 18px rgba(255,107,53,0.15); }
     .warn-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-      gap: 8px;
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 8px;
+      flex-wrap: wrap; gap: 8px;
     }
-
     .warn-item-number {
       background: linear-gradient(135deg, #ff6b35, #f7931e);
-      color: white;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 3px 10px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
+      color: white; font-size: 11px; font-weight: 800;
+      padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;
     }
-
     .warn-item-time {
-      font-size: 11px;
-      color: #999;
+      font-size: 11px; color: #999;
       font-family: 'JetBrains Mono', monospace;
     }
-
-    .warn-item-reason {
-      font-size: 13px;
-      color: #333;
-      line-height: 1.5;
-      margin-bottom: 6px;
-    }
-
-    .warn-item-by {
-      font-size: 11px;
-      color: #888;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* Cảnh báo nghiêm trọng */
+    .warn-item-reason { font-size: 13px; color: #333; line-height: 1.5; margin-bottom: 6px; }
+    .warn-item-by { font-size: 11px; color: #888; display: flex; align-items: center; gap: 4px; }
     .warn-danger {
-      background: #fff5f5;
-      border: 2px solid #fecaca;
+      background: #fff5f5; border: 2px solid #fecaca;
       border-left: 5px solid #e74c3c;
-      border-radius: 10px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
+      border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;
     }
-
     .warn-danger-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 800;
-      color: #c0392b;
-      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 800;
+      color: #c0392b; margin-bottom: 8px;
     }
-
-    .warn-danger-text {
-      font-size: 13px;
-      color: #7f1d1d;
-      line-height: 1.5;
-    }
-
-    /* Actions */
-    .warn-actions {
-      display: flex;
-      gap: 12px;
-    }
-
+    .warn-danger-text { font-size: 13px; color: #7f1d1d; line-height: 1.5; }
+    .warn-actions { display: flex; gap: 12px; }
     .warn-btn {
-      flex: 1;
-      padding: 14px 20px;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
+      flex: 1; padding: 14px 20px; border: none;
+      border-radius: 10px; font-size: 15px; font-weight: 700;
+      font-family: inherit; cursor: pointer;
       transition: all 0.25s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-
     .warn-btn.primary {
       background: linear-gradient(135deg, #ff6b35, #f7931e);
-      color: white;
-      box-shadow: 0 6px 20px rgba(255,107,53,0.4);
+      color: white; box-shadow: 0 6px 20px rgba(255,107,53,0.4);
     }
-
     .warn-btn.primary:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 30px rgba(255,107,53,0.6);
     }
-
-    .warn-btn.secondary {
-      background: #f1f3f5;
-      color: #495057;
-    }
-
-    .warn-btn.secondary:hover {
-      background: #e9ecef;
-      transform: translateY(-2px);
-    }
-
-    /* Rung động */
+    .warn-btn.secondary { background: #f1f3f5; color: #495057; }
+    .warn-btn.secondary:hover { background: #e9ecef; transform: translateY(-2px); }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
       20%, 40%, 60%, 80% { transform: translateX(6px); }
     }
-
     .shake-now { animation: shake 0.6s; }
-
     @media (max-width: 500px) {
       .warn-header { padding: 20px 22px; }
       .warn-body { padding: 22px; }
       .warn-header h1 { font-size: 18px; }
-      .warn-icon { width: 48px; height: 48px; font-size: 24px; }
     }
   </style>
 </head>
@@ -287,7 +151,6 @@
         <p>Warning issued by administrator</p>
       </div>
     </div>
-
     <div class="warn-body">
       <div class="warn-roblox-box">
         <div class="warn-roblox-title">
@@ -295,9 +158,9 @@
           <span>Thông báo chính thức</span>
         </div>
         <div class="warn-roblox-text">
-          Tài khoản <strong>{{ username }}</strong> của bạn đã nhận được
+          Tài khoản <strong>{{ username }}</strong> đã nhận được
           <strong>{{ warnings|length }} cảnh báo</strong> từ ban quản trị.
-          Vui lòng đọc kỹ và tuân thủ quy định để tránh bị ban vĩnh viễn.
+          Vui lòng đọc kỹ để tránh bị ban!
         </div>
       </div>
 
@@ -309,14 +172,14 @@
         </div>
         <div class="warn-danger-text">
           Bạn đã có <strong>{{ warnings|length }} cảnh báo</strong>.
-          Nếu tiếp tục vi phạm, tài khoản sẽ bị <strong>ban vĩnh viễn</strong> ngay lập tức!
+          Nếu tiếp tục vi phạm, tài khoản sẽ bị <strong>ban vĩnh viễn</strong>!
         </div>
       </div>
       {% endif %}
 
       <div class="warn-list">
         {% for w in warnings|reverse %}
-        <div class="warn-item" style="animation-delay: {{ loop.index0 * 0.08 }}s">
+        <div class="warn-item">
           <div class="warn-item-header">
             <span class="warn-item-number">CẢNH BÁO #{{ warnings|length - loop.index0 }}</span>
             <span class="warn-item-time">{{ w.time[:19].replace('T', ' ') }}</span>
@@ -333,60 +196,23 @@
       </div>
 
       <div class="warn-actions">
-        <button class="warn-btn secondary" onclick="window.location.href='/login'">
-          🚪 Đăng xuất
-        </button>
-        <button class="warn-btn primary" onclick="acceptWarning()">
-          ✅ Tôi đã hiểu
-        </button>
+        <button class="warn-btn secondary" onclick="window.location.href='/login'">🚪 Đăng xuất</button>
+        <button class="warn-btn primary" onclick="acceptWarning()">✅ Tôi đã hiểu</button>
       </div>
     </div>
   </div>
 
   <script>
-    // Rung khi load
     setTimeout(() => {
       document.getElementById('warnContainer').classList.add('shake-now');
       setTimeout(() => document.getElementById('warnContainer').classList.remove('shake-now'), 600);
     }, 400);
 
-    // Âm thanh cảnh báo (Web Audio API)
-    function playWarningSound() {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(800, ctx.currentTime);
-        osc.frequency.setValueAtTime(600, ctx.currentTime + 0.15);
-        osc.frequency.setValueAtTime(800, ctx.currentTime + 0.3);
-
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.5);
-      } catch (e) {}
-    }
-
-    // Phát âm thanh khi load (chỉ sau khi user tương tác)
-    document.addEventListener('click', function playOnce() {
-      playWarningSound();
-      document.removeEventListener('click', playOnce);
-    }, { once: true });
-
     function acceptWarning() {
-      // Đánh dấu đã đọc cảnh báo
       fetch('/api/acknowledge-warnings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
-      }).finally(() => {
-        window.location.href = '/';
-      });
+      }).finally(() => { window.location.href = '/'; });
     }
   </script>
 </body>
