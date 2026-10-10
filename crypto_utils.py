@@ -831,74 +831,67 @@ def viet_uni_decode(t):
 
 
 # ════════════════════════════════════════════════════════════
-#  14. TRANSLATE — dùng LibreTranslate (không Google)
+#  14. TRANSLATE — dùng MyMemory
 # ════════════════════════════════════════════════════════════
 LANGUAGES = {
     "en": "Tiếng Anh",
     "vi": "Tiếng Việt",
 }
 
-# Các instance LibreTranslate public (thử lần lượt)
-LIBRE_ENDPOINTS = [
-    "https://libretranslate.com/translate",
-    "https://translate.argosopentech.com/translate",
-    "https://libretranslate.de/translate",
-    "https://translate.terraprint.co/translate",
-]
-
-# Nếu bạn self-host, thêm endpoint của bạn vào đầu danh sách:
-# LIBRE_ENDPOINTS = ["http://localhost:5000/translate"] + LIBRE_ENDPOINTS
+MYMEMORY_URL = "https://api.mymemory.translated.net/get"
 
 
-def _libre_request(endpoint: str, text: str, source: str, target: str,
-                   timeout: int = 15) -> str:
-    """Gọi 1 endpoint LibreTranslate."""
-    payload = {
+def _mymemory_request(text: str, source: str, target: str,
+                      timeout: int = 15) -> str:
+    """Gọi MyMemory API."""
+    params = {
         "q": text,
-        "source": source,
-        "target": target,
-        "format": "text",
+        "langpair": f"{source}|{target}",
     }
-    r = requests.post(endpoint, json=payload, timeout=timeout)
+    r = requests.get(MYMEMORY_URL, params=params, timeout=timeout)
     r.raise_for_status()
     data = r.json()
-    if "translatedText" not in data:
-        raise ValueError(f"Response không hợp lệ: {data}")
-    return data["translatedText"]
+
+    status = data.get("responseStatus")
+    if status != 200:
+        raise ValueError(f"MyMemory lỗi: {data.get('responseDetails', status)}")
+
+    translated = data.get("responseData", {}).get("translatedText")
+    if not translated:
+        raise ValueError("MyMemory không trả về kết quả")
+
+    return translated
 
 
 def translate(text: str, source: str = "auto", target: str = "en",
-              max_retries: int = 2) -> str:
-    """
-    Dịch bằng LibreTranslate, tự động fallback qua nhiều endpoint.
-    - source: 'auto' | 'en' | 'vi'
-    - target: 'en' | 'vi'
-    """
+              max_retries: int = 3) -> str:
+    """Dịch bằng MyMemory với retry + delay khi bị rate limit."""
     if not text:
         raise ValueError("Văn bản trống!")
     if target not in LANGUAGES:
         raise ValueError(f"Ngôn ngữ đích không hỗ trợ: {target}")
 
+    # MyMemory yêu cầu source cụ thể, không nhận 'auto'
+    if source == "auto":
+        detected = detect_language(text)
+        source = detected if detected in ("en", "vi") else "en"
+
     last_err = None
     for attempt in range(max_retries):
-        for endpoint in LIBRE_ENDPOINTS:
-            try:
-                return _libre_request(endpoint, text, source, target)
-            except Exception as e:
-                last_err = e
-                err = str(e).lower()
-                # Rate limit → đợi rồi thử endpoint kế
-                if "too many" in err or "429" in err or "rate" in err:
-                    wait = 2 ** attempt
-                    print(f"⏳ {endpoint} bị rate limit, đợi {wait}s...")
-                    time.sleep(wait)
-                else:
-                    print(f"⚠️ {endpoint} lỗi: {e}")
-                continue  # thử endpoint kế tiếp
+        try:
+            return _mymemory_request(text, source, target)
+        except Exception as e:
+            last_err = e
+            err = str(e).lower()
+            if "too many" in err or "429" in err or "rate" in err:
+                wait = 2 ** attempt
+                print(f"⏳ MyMemory rate limit, đợi {wait}s...")
+                time.sleep(wait)
+                continue
+            raise ValueError(f"Lỗi dịch: {e}")
 
     raise ValueError(
-        "Tất cả server dịch đều đang bận hoặc bị giới hạn. "
-        "Vui lòng đợi vài giây rồi thử lại. "
+        "Server dịch đang bận. Vui lòng đợi vài giây rồi thử lại. "
         f"Chi tiết: {last_err}"
     )
 
@@ -920,17 +913,15 @@ def to_vietnamese(text: str) -> str:
 
 
 def detect_language(text: str) -> str:
-    """Phát hiện ngôn ngữ. LibreTranslate không có API detect chuẩn,
-    nên ta dùng heuristic đơn giản dựa trên ký tự tiếng Việt."""
+    """Phát hiện ngôn ngữ dựa trên ký tự tiếng Việt."""
     if not text:
         return "unknown"
 
-    # Nếu có ký tự tiếng Việt có dấu → chắc chắn là tiếng Việt
-    viet_chars = set("ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ")
+    viet_chars = set("ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệ"
+                     "íìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ")
     if any(c.lower() in viet_chars for c in text):
         return "vi"
 
-    # Nếu chỉ có ASCII chữ cái → đoán là tiếng Anh
     if re.fullmatch(r'[a-zA-Z0-9\s\.,!?\'"\-]+', text):
         return "en"
 
