@@ -118,6 +118,9 @@ METHODS = {
     "superscript": "Superscript",
     "subscript": "Subscript",
     "invisible": "Invisible Text",
+
+    # Tiếng Việt
+    "viet_uni": "Vietnamese Unicode (Telex mở rộng)",
 }
 
 HASH_METHODS = {'md5','sha1','sha224','sha256','sha384','sha512',
@@ -777,6 +780,106 @@ def invisible_decode(t): return t.replace('\u200b', ' ')
 
 
 # ============================================================
+# VIETNAMESE UNICODE ENCODING (Telex mở rộng)
+# Mỗi ký tự có dấu -> chữ gốc + mã dấu
+# Quy ước: s=sắc, f=huyền, r=hỏi, x=ngã, j=nặng
+#          w=mũ/móc/trăng (â, ê, ô, ă, ơ, ư), dd=đ
+# ============================================================
+
+VIET_MAP = {
+    # a
+    'á': ('a', 's'), 'à': ('a', 'f'), 'ả': ('a', 'r'), 'ã': ('a', 'x'), 'ạ': ('a', 'j'),
+    'â': ('a', 'w'), 'ấ': ('a', 'ws'), 'ầ': ('a', 'wf'), 'ẩ': ('a', 'wr'),
+    'ẫ': ('a', 'wx'), 'ậ': ('a', 'wj'),
+    'ă': ('a', 'w'), 'ắ': ('a', 'ws'), 'ằ': ('a', 'wf'), 'ẳ': ('a', 'wr'),
+    'ẵ': ('a', 'wx'), 'ặ': ('a', 'wj'),
+    # e
+    'é': ('e', 's'), 'è': ('e', 'f'), 'ẻ': ('e', 'r'), 'ẽ': ('e', 'x'), 'ẹ': ('e', 'j'),
+    'ê': ('e', 'w'), 'ế': ('e', 'ws'), 'ề': ('e', 'wf'), 'ể': ('e', 'wr'),
+    'ễ': ('e', 'wx'), 'ệ': ('e', 'wj'),
+    # i
+    'í': ('i', 's'), 'ì': ('i', 'f'), 'ỉ': ('i', 'r'), 'ĩ': ('i', 'x'), 'ị': ('i', 'j'),
+    # o
+    'ó': ('o', 's'), 'ò': ('o', 'f'), 'ỏ': ('o', 'r'), 'õ': ('o', 'x'), 'ọ': ('o', 'j'),
+    'ô': ('o', 'w'), 'ố': ('o', 'ws'), 'ồ': ('o', 'wf'), 'ổ': ('o', 'wr'),
+    'ỗ': ('o', 'wx'), 'ộ': ('o', 'wj'),
+    'ơ': ('o', 'w'), 'ớ': ('o', 'ws'), 'ờ': ('o', 'wf'), 'ở': ('o', 'wr'),
+    'ỡ': ('o', 'wx'), 'ợ': ('o', 'wj'),
+    # u
+    'ú': ('u', 's'), 'ù': ('u', 'f'), 'ủ': ('u', 'r'), 'ũ': ('u', 'x'), 'ụ': ('u', 'j'),
+    'ư': ('u', 'w'), 'ứ': ('u', 'ws'), 'ừ': ('u', 'wf'), 'ử': ('u', 'wr'),
+    'ữ': ('u', 'wx'), 'ự': ('u', 'wj'),
+    # y
+    'ý': ('y', 's'), 'ỳ': ('y', 'f'), 'ỷ': ('y', 'r'), 'ỹ': ('y', 'x'), 'ỵ': ('y', 'j'),
+    # d
+    'đ': ('d', 'd'),
+}
+
+# Bảng chữ hoa
+VIET_MAP_UPPER = {k.upper(): (v[0].upper(), v[1]) for k, v in VIET_MAP.items()}
+
+# Bảng ngược
+VIET_REV = {v: k for k, v in VIET_MAP.items()}
+VIET_REV_UPPER = {v: k for k, v in VIET_MAP_UPPER.items()}
+
+
+def viet_uni_encode(t):
+    """
+    Mã hóa ký tự tiếng Việt có dấu -> chữ gốc + mã dấu.
+    Ví dụ: 'ừ' -> 'uwf', 'á' -> 'aws', 'đ' -> 'dd', 'Tiếng Việt' -> 'Tiewsng Viweejt'
+    """
+    result = []
+    for ch in t:
+        if ch in VIET_MAP:
+            base, mark = VIET_MAP[ch]
+            result.append(base + mark)
+        elif ch in VIET_MAP_UPPER:
+            base, mark = VIET_MAP_UPPER[ch]
+            result.append(base + mark)
+        else:
+            result.append(ch)
+    return ''.join(result)
+
+
+def viet_uni_decode(t):
+    """
+    Giải mã dạng chữ gốc + mã dấu -> ký tự tiếng Việt có dấu.
+    Ví dụ: 'uwf' -> 'ừ', 'aws' -> 'á', 'dd' -> 'đ'
+    """
+    # Sắp key theo độ dài mark giảm dần để khớp 'ws' trước 'w'
+    keys_lower = sorted(VIET_REV.keys(), key=lambda x: -len(x[1]))
+    keys_upper = sorted(VIET_REV_UPPER.keys(), key=lambda x: -len(x[1]))
+
+    result = []
+    i = 0
+    n = len(t)
+    while i < n:
+        matched = False
+        # Ưu tiên khớp chữ hoa trước
+        for (base, mark) in keys_upper:
+            bl, ml = len(base), len(mark)
+            if t[i:i+bl] == base and t[i+bl:i+bl+ml] == mark:
+                result.append(VIET_REV_UPPER[(base, mark)])
+                i += bl + ml
+                matched = True
+                break
+        if matched:
+            continue
+        # Khớp chữ thường
+        for (base, mark) in keys_lower:
+            bl, ml = len(base), len(mark)
+            if t[i:i+bl] == base and t[i+bl:i+bl+ml] == mark:
+                result.append(VIET_REV[(base, mark)])
+                i += bl + ml
+                matched = True
+                break
+        if not matched:
+            result.append(t[i])
+            i += 1
+    return ''.join(result)
+
+
+# ============================================================
 # HÀM XỬ LÝ CHÍNH
 # ============================================================
 def process(text: str, method: str, action: str, key: str = '') -> str:
@@ -821,6 +924,7 @@ def process(text: str, method: str, action: str, key: str = '') -> str:
         'bubble': bubble_encode, 'strikethrough': strikethrough_encode,
         'superscript': superscript_encode, 'subscript': subscript_encode,
         'invisible': invisible_encode,
+        'viet_uni': viet_uni_encode,
     }
 
     dec_map = {
@@ -853,6 +957,7 @@ def process(text: str, method: str, action: str, key: str = '') -> str:
         'bubble': bubble_decode, 'strikethrough': strikethrough_decode,
         'superscript': superscript_decode, 'subscript': subscript_decode,
         'invisible': invisible_decode,
+        'viet_uni': viet_uni_decode,
     }
 
     if method == 'caesar':
