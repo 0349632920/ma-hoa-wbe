@@ -328,17 +328,18 @@
     .action-btn.refresh { background: linear-gradient(135deg, #16a085, #1abc9c); }
 
     /* ============================================
-       NÚT LOADING — VÒNG XOAY KHOẢNG ROBLOX
+       NÚT LOADING — VÒNG XOAY CHÍNH GIỮA (ROBLOX)
        ============================================ */
     .action-btn.loading,
     .btn-modal.loading {
       color: transparent !important;
       pointer-events: none;
-      opacity: 0.85;
+      opacity: 0.9;
       overflow: hidden;
+      position: relative;
     }
 
-    /* Vòng xoay tròn ở giữa nút */
+    /* Vòng xoay ở CHÍNH GIỮA — dùng transform translate(-50%, -50%) */
     .action-btn.loading::before,
     .btn-modal.loading::before {
       content: '';
@@ -347,15 +348,15 @@
       left: 50%;
       width: 16px;
       height: 16px;
-      margin: -8px 0 0 -8px;
-      border: 2.5px solid rgba(255, 255, 255, 0.35);
+      border: 2.5px solid rgba(255, 255, 255, 0.3);
       border-top-color: white;
       border-radius: 50%;
+      transform: translate(-50%, -50%);
       animation: robloxSpinner 0.7s linear infinite;
       z-index: 2;
     }
 
-    /* Vòng ngoài mờ dần (tạo hiệu ứng glow) */
+    /* Vòng ngoài glow — cũng ở CHÍNH GIỮA */
     .action-btn.loading::after,
     .btn-modal.loading::after {
       content: '';
@@ -364,41 +365,43 @@
       left: 50%;
       width: 24px;
       height: 24px;
-      margin: -12px 0 0 -12px;
       border: 2px solid rgba(255, 255, 255, 0.15);
       border-radius: 50%;
+      transform: translate(-50%, -50%);
       animation: robloxGlow 1.2s ease-in-out infinite;
       z-index: 1;
     }
 
     @keyframes robloxSpinner {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
     }
 
     @keyframes robloxGlow {
       0%, 100% {
-        transform: scale(1);
+        transform: translate(-50%, -50%) scale(1);
         opacity: 0.3;
       }
       50% {
-        transform: scale(1.15);
+        transform: translate(-50%, -50%) scale(1.15);
         opacity: 0.6;
       }
     }
 
-    /* Nút trong modal to hơn */
+    /* Vòng trong modal to hơn */
     .btn-modal.loading::before {
       width: 20px;
       height: 20px;
-      margin: -10px 0 0 -10px;
       border-width: 3px;
     }
 
     .btn-modal.loading::after {
       width: 30px;
       height: 30px;
-      margin: -15px 0 0 -15px;
     }
 
     /* Modal */
@@ -466,6 +469,7 @@
       transition: 0.3s; color: white;
       position: relative;
       min-width: 100px;
+      min-height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1198,18 +1202,18 @@
           `;
         } else {
           if (u.status === 'banned') {
-            actions += `<button class="action-btn unban" data-action="unban-${u.username}" onclick="openUnbanModal('${u.username}')">✅ Gỡ ban</button>`;
+            actions += `<button class="action-btn unban" onclick="openUnbanModal('${u.username}')">✅ Gỡ ban</button>`;
           } else if (u.status === 'pending_delete') {
-            actions += `<button class="action-btn unban" data-action="canceldel-${u.username}" onclick="openCancelDeleteModal('${u.username}')">↩️ Hủy xóa</button>`;
+            actions += `<button class="action-btn unban" onclick="openCancelDeleteModal('${u.username}')">↩️ Hủy xóa</button>`;
           } else {
-            actions += `<button class="action-btn warn" data-action="warn-${u.username}" onclick="openWarnModal('${u.username}')">⚠️ Cảnh báo</button>`;
-            actions += `<button class="action-btn ban" data-action="ban-${u.username}" onclick="openBanModal('${u.username}')">🚫 Ban</button>`;
+            actions += `<button class="action-btn warn" onclick="openWarnModal('${u.username}')">⚠️ Cảnh báo</button>`;
+            actions += `<button class="action-btn ban" onclick="openBanModal('${u.username}')">🚫 Ban</button>`;
           }
           if (u.warnings_count > 0) {
-            actions += `<button class="action-btn reset" data-action="reset-${u.username}" onclick="openResetModal('${u.username}')">🔄 Reset</button>`;
+            actions += `<button class="action-btn reset" onclick="openResetModal('${u.username}')">🔄 Reset</button>`;
           }
-          actions += `<button class="action-btn refresh" data-action="refresh-${u.username}" onclick="openRefreshModal('${u.username}')" title="Làm mới trạng thái">♻️</button>`;
-          actions += `<button class="action-btn delete" data-action="delete-${u.username}" onclick="openDeleteModal('${u.username}')">🗑️</button>`;
+          actions += `<button class="action-btn refresh" onclick="openRefreshModal('${u.username}')" title="Làm mới trạng thái">♻️</button>`;
+          actions += `<button class="action-btn delete" onclick="openDeleteModal('${u.username}')">🗑️</button>`;
           actions += `<button class="action-btn detail" onclick="showDetail('${u.username}')">👁️</button>`;
         }
 
