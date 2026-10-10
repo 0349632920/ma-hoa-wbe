@@ -20,7 +20,7 @@
       <div class="stats-badge">📊 {{ methods|length }} phương pháp</div>
     </header>
 
-    <!-- ===== TASKBAR: MÃ HÓA / GIẢI MÃ ===== -->
+    <!-- ===== TASKBAR ===== -->
     <div class="taskbar">
       <button class="task-btn active" data-action="encrypt" id="tabEncrypt">
         <span class="task-icon">🔒</span>
@@ -39,7 +39,7 @@
       <div class="task-indicator" id="taskIndicator"></div>
     </div>
 
-    <!-- ===== CHỌN KIỂU MÃ HÓA ===== -->
+    <!-- ===== METHOD PICKER ===== -->
     <div class="method-picker-section">
       <label>🎯 Kiểu mã hóa:</label>
       <button class="method-picker-btn" id="openPickerBtn">
@@ -52,23 +52,22 @@
       </button>
     </div>
 
-    <!-- Ô nhập khóa -->
+    <!-- Key -->
     <div id="keySection" class="key-section hidden">
       <label id="keyLabel">🔑 Khóa:</label>
       <input type="text" id="keyInput" placeholder="Nhập khóa...">
     </div>
 
-    <!-- Thông báo hash -->
+    <!-- Warnings -->
     <div id="hashWarning" class="hash-warning hidden">
       ⚠️ Phương pháp này là <strong>mã hóa 1 chiều</strong> — không thể giải mã!
     </div>
 
-    <!-- Thông báo khi ở chế độ giải mã -->
     <div id="decryptNotice" class="decrypt-notice hidden">
       💡 Đang ở <strong>chế độ Giải mã</strong> — dán văn bản đã mã hóa vào ô bên trái.
     </div>
 
-    <!-- ===== IO ===== -->
+    <!-- IO -->
     <div class="io-section">
       <div class="box">
         <div class="box-header">
@@ -86,7 +85,7 @@
       </div>
     </div>
 
-    <!-- ===== BUTTONS ===== -->
+    <!-- Buttons -->
     <div class="buttons">
       <button class="btn primary" id="actionBtn" onclick="runAction()">
         🔒 Mã Hóa Ngay
@@ -94,6 +93,55 @@
       <button class="btn swap" onclick="swapText()">🔄 Đảo Chiều</button>
       <button class="btn copy" onclick="copyResult()">📋 Sao Chép</button>
       <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MÀN HÌNH LOADING (khi chuyển tab)
+       ============================================= -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+      <div class="loading-animation">
+        <div class="lock-icon" id="loadingIcon">🔒</div>
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring delay-1"></div>
+        <div class="pulse-ring delay-2"></div>
+      </div>
+
+      <h2 class="loading-title" id="loadingTitle">Đang chuyển chế độ...</h2>
+      <p class="loading-subtitle" id="loadingSubtitle">Vui lòng chờ trong giây lát</p>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="loading-steps">
+        <div class="step-item" data-step="1">
+          <span class="step-icon">⚙️</span>
+          <span>Khởi tạo</span>
+        </div>
+        <div class="step-item" data-step="2">
+          <span class="step-icon">🔄</span>
+          <span>Chuyển đổi</span>
+        </div>
+        <div class="step-item" data-step="3">
+          <span class="step-icon">✅</span>
+          <span>Hoàn tất</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MÀN HÌNH LOADING KHI XỬ LÝ (nhỏ, inline)
+       ============================================= -->
+  <div class="processing-overlay" id="processingOverlay">
+    <div class="processing-box">
+      <div class="processing-spinner">
+        <div class="spinner-circle"></div>
+        <div class="spinner-icon" id="processingIcon">🔒</div>
+      </div>
+      <p class="processing-text" id="processingText">Đang mã hóa...</p>
     </div>
   </div>
 
@@ -135,7 +183,8 @@
   <script>
     // ===== STATE =====
     let currentMethod = 'base64';
-    let currentAction = 'encrypt'; // 'encrypt' hoặc 'decrypt'
+    let currentAction = 'encrypt';
+    let isTransitioning = false;
 
     const oneWayMethods = new Set([
       'md5','sha1','sha224','sha256','sha384','sha512',
@@ -181,46 +230,126 @@
     const taskIndicator = document.getElementById('taskIndicator');
     const actionBtn = document.getElementById('actionBtn');
 
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingIcon = document.getElementById('loadingIcon');
+    const loadingTitle = document.getElementById('loadingTitle');
+    const loadingSubtitle = document.getElementById('loadingSubtitle');
+    const progressFill = document.getElementById('progressFill');
+
+    const processingOverlay = document.getElementById('processingOverlay');
+    const processingIcon = document.getElementById('processingIcon');
+    const processingText = document.getElementById('processingText');
+
     // ==========================================
-    // TASKBAR: chuyển đổi Mã hóa / Giải mã
+    // LOADING SCREEN khi chuyển tab
     // ==========================================
-    function setAction(action) {
-      currentAction = action;
+    function showLoadingScreen(action, callback) {
+      if (isTransitioning) return;
+      isTransitioning = true;
 
-      // Cập nhật active tab
-      tabEncrypt.classList.toggle('active', action === 'encrypt');
-      tabDecrypt.classList.toggle('active', action === 'decrypt');
+      const isEncrypt = action === 'encrypt';
 
-      // Di chuyển indicator
-      taskIndicator.style.transform = action === 'encrypt'
-        ? 'translateX(0)'
-        : 'translateX(100%)';
+      // Cấu hình
+      loadingIcon.textContent = isEncrypt ? '🔒' : '🔓';
+      loadingTitle.textContent = isEncrypt
+        ? 'Đang chuyển sang chế độ Mã hóa...'
+        : 'Đang chuyển sang chế độ Giải mã...';
+      loadingSubtitle.textContent = isEncrypt
+        ? 'Chuẩn bị công cụ mã hóa'
+        : 'Chuẩn bị công cụ giải mã';
 
-      // Cập nhật nhãn
-      document.getElementById('inputLabel').textContent =
-        action === 'encrypt' ? '📝 Văn bản gốc' : '📥 Văn bản đã mã hóa';
-      document.getElementById('outputLabel').textContent =
-        action === 'encrypt' ? '✅ Kết quả mã hóa' : '✅ Kết quả giải mã';
+      // Đổi màu overlay
+      loadingOverlay.className = 'loading-overlay show ' + (isEncrypt ? 'encrypt-mode' : 'decrypt-mode');
 
-      // Placeholder
-      document.getElementById('input').placeholder =
-        action === 'encrypt'
-          ? 'Nhập văn bản cần mã hóa...'
-          : 'Dán văn bản đã mã hóa cần giải mã...';
+      // Reset progress
+      progressFill.style.transition = 'none';
+      progressFill.style.width = '0%';
+      document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active', 'done'));
 
-      // Nút action
-      if (action === 'encrypt') {
-        actionBtn.textContent = '🔒 Mã Hóa Ngay';
-        actionBtn.className = 'btn primary';
-      } else {
-        actionBtn.textContent = '🔓 Giải Mã Ngay';
-        actionBtn.className = 'btn primary decrypt-mode';
+      // Bắt đầu animation
+      setTimeout(() => {
+        progressFill.style.transition = 'width 1.5s ease-out';
+        progressFill.style.width = '100%';
+
+        // Steps
+        setTimeout(() => markStep(1, 'active'), 100);
+        setTimeout(() => markStep(1, 'done'), 500);
+        setTimeout(() => markStep(2, 'active'), 500);
+        setTimeout(() => markStep(2, 'done'), 1000);
+        setTimeout(() => markStep(3, 'active'), 1000);
+        setTimeout(() => markStep(3, 'done'), 1400);
+      }, 50);
+
+      // Kết thúc sau 1.6s
+      setTimeout(() => {
+        loadingOverlay.classList.remove('show');
+        callback && callback();
+        setTimeout(() => { isTransitioning = false; }, 300);
+      }, 1600);
+    }
+
+    function markStep(num, state) {
+      const el = document.querySelector(`.step-item[data-step="${num}"]`);
+      if (el) {
+        el.classList.remove('active', 'done');
+        el.classList.add(state);
       }
+    }
 
-      // Thông báo giải mã
-      document.getElementById('decryptNotice').classList.toggle('hidden', action !== 'decrypt');
+    // ==========================================
+    // PROCESSING OVERLAY (khi bấm nút mã hóa/giải mã)
+    // ==========================================
+    function showProcessing(action) {
+      processingIcon.textContent = action === 'encrypt' ? '🔒' : '🔓';
+      processingText.textContent = action === 'encrypt' ? 'Đang mã hóa...' : 'Đang giải mã...';
+      processingOverlay.classList.add('show');
+    }
 
-      updateUI();
+    function hideProcessing() {
+      processingOverlay.classList.remove('show');
+    }
+
+    // ==========================================
+    // ĐỔI CHẾ ĐỘ (TASKBAR)
+    // ==========================================
+    function setAction(action, skipLoading = false) {
+      if (currentAction === action && !skipLoading) return;
+
+      const doChange = () => {
+        currentAction = action;
+        tabEncrypt.classList.toggle('active', action === 'encrypt');
+        tabDecrypt.classList.toggle('active', action === 'decrypt');
+        taskIndicator.style.transform = action === 'encrypt'
+          ? 'translateX(0)'
+          : 'translateX(100%)';
+
+        document.getElementById('inputLabel').textContent =
+          action === 'encrypt' ? '📝 Văn bản gốc' : '📥 Văn bản đã mã hóa';
+        document.getElementById('outputLabel').textContent =
+          action === 'encrypt' ? '✅ Kết quả mã hóa' : '✅ Kết quả giải mã';
+
+        document.getElementById('input').placeholder =
+          action === 'encrypt'
+            ? 'Nhập văn bản cần mã hóa...'
+            : 'Dán văn bản đã mã hóa cần giải mã...';
+
+        if (action === 'encrypt') {
+          actionBtn.textContent = '🔒 Mã Hóa Ngay';
+          actionBtn.className = 'btn primary';
+        } else {
+          actionBtn.textContent = '🔓 Giải Mã Ngay';
+          actionBtn.className = 'btn primary decrypt-mode';
+        }
+
+        document.getElementById('decryptNotice').classList.toggle('hidden', action !== 'decrypt');
+        updateUI();
+      };
+
+      if (skipLoading) {
+        doChange();
+      } else {
+        showLoadingScreen(action, doChange);
+      }
     }
 
     tabEncrypt.addEventListener('click', () => setAction('encrypt'));
@@ -254,7 +383,6 @@
       if (e.key === 'Escape' && modalOverlay.classList.contains('show')) closeModal();
     });
 
-    // Tìm kiếm
     searchInput.addEventListener('input', (e) => filterMethods(e.target.value.toLowerCase().trim()));
 
     function filterMethods(q) {
@@ -285,10 +413,8 @@
         currentMethod = btn.dataset.method;
         document.getElementById('selectedMethodName').textContent = btn.title;
         document.getElementById('selectedMethodCode').textContent = currentMethod;
-
         document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-
         updateUI();
         closeModal();
         showToast(`✅ Đã chọn: ${btn.title}`);
@@ -296,14 +422,13 @@
     });
 
     // ==========================================
-    // CẬP NHẬT UI
+    // UPDATE UI
     // ==========================================
     function updateUI() {
       const keySection = document.getElementById('keySection');
       const hashWarning = document.getElementById('hashWarning');
       const tabDecryptEl = document.getElementById('tabDecrypt');
 
-      // Ô khóa
       if (keyMethods.has(currentMethod)) {
         keySection.classList.remove('hidden');
         document.getElementById('keyLabel').textContent = keyLabels[currentMethod] || '🔑 Khóa:';
@@ -312,33 +437,28 @@
         keySection.classList.add('hidden');
       }
 
-      // Xử lý hash (1 chiều)
       const isOneWay = oneWayMethods.has(currentMethod);
 
       if (isOneWay && currentAction === 'decrypt') {
-        // Nếu đang ở chế độ giải mã mà chọn hash → tự chuyển về mã hóa
-        setAction('encrypt');
+        setAction('encrypt', true);
         return;
       }
 
-      // Vô hiệu hóa tab giải mã nếu là hash
       if (isOneWay) {
         hashWarning.classList.remove('hidden');
         tabDecryptEl.disabled = true;
         tabDecryptEl.style.opacity = '0.4';
         tabDecryptEl.style.cursor = 'not-allowed';
-        tabDecryptEl.title = 'Phương pháp này không thể giải mã!';
       } else {
         hashWarning.classList.add('hidden');
         tabDecryptEl.disabled = false;
         tabDecryptEl.style.opacity = '1';
         tabDecryptEl.style.cursor = 'pointer';
-        tabDecryptEl.title = '';
       }
     }
 
     // ==========================================
-    // CHẠY HÀNH ĐỘNG (theo tab đang chọn)
+    // RUN ACTION (có loading overlay nhỏ)
     // ==========================================
     async function runAction() {
       const text = document.getElementById('input').value;
@@ -354,18 +474,21 @@
         return;
       }
 
+      // Hiện loading overlay nhỏ
+      showProcessing(currentAction);
+
+      // Delay ngắn để loading hiện ra (giả lập xử lý)
+      await new Promise(r => setTimeout(r, 600));
+
       try {
         const res = await fetch('/api/process', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text,
-            method: currentMethod,
-            action: currentAction,
-            key
-          })
+          body: JSON.stringify({ text, method: currentMethod, action: currentAction, key })
         });
         const data = await res.json();
+
+        hideProcessing();
 
         if (data.success) {
           document.getElementById('output').value = data.result;
@@ -379,13 +502,14 @@
           showToast('❌ ' + data.error, true);
         }
       } catch (err) {
+        hideProcessing();
         showToast('❌ Lỗi kết nối server!', true);
         console.error(err);
       }
     }
 
     // ==========================================
-    // TIỆN ÍCH
+    // UTILS
     // ==========================================
     function swapText() {
       const out = document.getElementById('output').value;
@@ -395,10 +519,25 @@
       document.getElementById('output').value = '';
       updateCounts();
 
-      // Tự động chuyển sang chế độ ngược lại
       if (!oneWayMethods.has(currentMethod)) {
-        setAction(currentAction === 'encrypt' ? 'decrypt' : 'encrypt');
-        showToast(`🔄 Đã đảo chiều — chuyển sang chế độ ${currentAction === 'encrypt' ? 'Mã hóa' : 'Giải mã'}`);
+        const newAction = currentAction === 'encrypt' ? 'decrypt' : 'encrypt';
+        showLoadingScreen(newAction, () => {
+          currentAction = newAction;
+          tabEncrypt.classList.toggle('active', newAction === 'encrypt');
+          tabDecrypt.classList.toggle('active', newAction === 'decrypt');
+          taskIndicator.style.transform = newAction === 'encrypt'
+            ? 'translateX(0)' : 'translateX(100%)';
+
+          document.getElementById('inputLabel').textContent =
+            newAction === 'encrypt' ? '📝 Văn bản gốc' : '📥 Văn bản đã mã hóa';
+          document.getElementById('outputLabel').textContent =
+            newAction === 'encrypt' ? '✅ Kết quả mã hóa' : '✅ Kết quả giải mã';
+          document.getElementById('input').placeholder =
+            newAction === 'encrypt' ? 'Nhập văn bản cần mã hóa...' : 'Dán văn bản đã mã hóa...';
+          actionBtn.textContent = newAction === 'encrypt' ? '🔒 Mã Hóa Ngay' : '🔓 Giải Mã Ngay';
+          actionBtn.className = 'btn primary' + (newAction === 'decrypt' ? ' decrypt-mode' : '');
+          document.getElementById('decryptNotice').classList.toggle('hidden', newAction !== 'decrypt');
+        });
       } else {
         showToast('🔄 Đã đảo chiều!');
       }
@@ -434,16 +573,12 @@
     }
 
     // ==========================================
-    // KHỞI TẠO
+    // INIT
     // ==========================================
     document.getElementById('input').addEventListener('input', updateCounts);
-
     const defaultBtn = document.querySelector('.method-btn[data-method="base64"]');
     if (defaultBtn) defaultBtn.classList.add('active');
-
-    // Đặt indicator đúng vị trí ban đầu
     taskIndicator.style.transform = 'translateX(0)';
-
     updateUI();
   </script>
 </body>
