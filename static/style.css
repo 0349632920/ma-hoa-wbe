@@ -22,7 +22,7 @@ body {
     line-height: 1.6;
 }
 
-/* ==================== TOPBAR ==================== */
+/* Topbar */
 .topbar {
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
@@ -38,7 +38,7 @@ body {
 .user-info { display: flex; gap: 12px; align-items: center; }
 .username { color: var(--text-muted); font-size: 14px; }
 
-/* ==================== CONTAINER ==================== */
+/* Container */
 .container {
     max-width: 1200px;
     margin: 24px auto;
@@ -47,7 +47,7 @@ body {
     gap: 24px;
 }
 
-/* ==================== PANEL ==================== */
+/* Panel */
 .panel {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -56,7 +56,7 @@ body {
 }
 .panel h2 { margin-bottom: 16px; font-size: 18px; }
 
-/* ==================== ROWS ==================== */
+/* Rows */
 .row { margin-bottom: 14px; }
 .row label {
     display: block;
@@ -65,7 +65,7 @@ body {
     font-size: 13px;
 }
 
-/* ==================== INPUTS ==================== */
+/* Inputs */
 input, select, textarea {
     width: 100%;
     padding: 10px 12px;
@@ -81,12 +81,9 @@ input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--primary);
 }
-textarea {
-    resize: vertical;
-    font-family: 'Courier New', monospace;
-}
+textarea { resize: vertical; font-family: 'Courier New', monospace; }
 
-/* ==================== BUTTONS ==================== */
+/* Buttons */
 .btn {
     padding: 10px 16px;
     background: var(--bg-input);
@@ -102,9 +99,9 @@ textarea {
 }
 .btn:hover { border-color: var(--primary); }
 .btn-sm { padding: 6px 12px; font-size: 13px; }
-.btn-primary { background: var(--primary); border-color: var(--primary); color: white; }
+.btn-primary { background: var(--primary); border-color: var(--primary); }
 .btn-primary:hover { background: var(--primary-hover); }
-.btn-secondary { background: var(--success); border-color: var(--success); color: white; }
+.btn-secondary { background: var(--success); border-color: var(--success); }
 .btn-secondary:hover { opacity: .85; }
 .btn-block { width: 100%; }
 
@@ -115,7 +112,7 @@ textarea {
     margin: 16px 0;
 }
 
-/* ==================== TABLE ==================== */
+/* Table */
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -129,7 +126,7 @@ textarea {
 .table th { color: var(--text-muted); font-weight: 600; }
 .table tr:hover { background: rgba(59, 130, 246, .05); }
 
-/* ==================== LOGIN ==================== */
+/* Login */
 .login-body {
     display: flex;
     align-items: center;
@@ -173,13 +170,9 @@ textarea {
     color: white;
 }
 
-.msg {
-    margin-top: 12px;
-    font-size: 14px;
-    min-height: 20px;
-}
+.msg { margin-top: 12px; font-size: 14px; min-height: 20px; }
 
-/* ==================== HISTORY ==================== */
+/* History */
 .history-list {
     max-height: 400px;
     overflow-y: auto;
@@ -210,7 +203,7 @@ textarea {
     font-size: 11px;
 }
 
-/* ==================== STATS ==================== */
+/* Stats */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -234,7 +227,7 @@ textarea {
     margin-top: 4px;
 }
 
-/* ==================== BADGE ==================== */
+/* Badge */
 .badge {
     display: inline-block;
     padding: 2px 8px;
@@ -245,6 +238,18 @@ textarea {
 .badge-active { background: rgba(16, 185, 129, .2); color: var(--success); }
 .badge-banned { background: rgba(239, 68, 68, .2); color: var(--danger); }
 .badge-admin { background: rgba(245, 158, 11, .2); color: var(--warning); }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container { padding: 0 8px; }
+    .panel { padding: 14px; }
+    .table { font-size: 12px; }
+    .table th, .table td { padding: 6px; }
+}
+
+/* =========================================================
+   PHẦN THÊM MỚI (KHÔNG SỬA CODE CŨ Ở TRÊN)
+   ========================================================= */
 
 /* ==================== ADMIN TABS ==================== */
 .admin-tabs {
@@ -463,7 +468,7 @@ textarea {
     50% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
 }
 
-/* ==================== WARNING HISTORY ==================== */
+/* ==================== WARNING HISTORY MODAL ==================== */
 .warning-history-overlay {
     position: fixed;
     inset: 0;
@@ -696,12 +701,8 @@ textarea {
     margin-bottom: 20px;
 }
 
-/* ==================== RESPONSIVE ==================== */
+/* ==================== RESPONSIVE CHO PHẦN MỚI ==================== */
 @media (max-width: 768px) {
-    .container { padding: 0 8px; }
-    .panel { padding: 14px; }
-    .table { font-size: 12px; }
-    .table th, .table td { padding: 6px; }
     .admin-tabs { flex-wrap: wrap; }
     .admin-tab { font-size: 12px; padding: 8px 10px; }
     .warning-modal { max-width: 100%; }
