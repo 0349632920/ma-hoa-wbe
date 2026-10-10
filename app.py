@@ -37,7 +37,7 @@ PENDING_DELETE_DAYS = 7
 
 
 # ============================================================
-# DATABASE LAYER — SUPABASE
+# DATABASE LAYER
 # ============================================================
 def has_database():
     return bool(DATABASE_URL)
@@ -80,9 +80,6 @@ def init_db():
         print(f"❌ Lỗi init_db: {e}")
 
 
-# ============================================================
-# LOAD / SAVE USERS
-# ============================================================
 def load_users():
     if has_database():
         try:
@@ -219,10 +216,9 @@ def verify_password(password, stored):
 
 
 # ============================================================
-# TẠO ID NGƯỜI DÙNG — 10 CHỮ SỐ (CHO TẤT CẢ, KỂ CẢ SUPER ADMIN)
+# TẠO ID NGƯỜI DÙNG — 10 CHỮ SỐ
 # ============================================================
 def generate_user_id(users=None):
-    """Tạo ID 10 chữ số duy nhất"""
     if users is None:
         users = load_users()
 
@@ -236,21 +232,10 @@ def generate_user_id(users=None):
         if new_id not in existing_ids:
             return new_id
 
-    # Fallback
     base_id = 1000000000
     while str(base_id) in existing_ids:
         base_id += 1
     return str(base_id)
-
-
-def find_user_by_id(user_id):
-    """Tìm user theo ID"""
-    users = load_users()
-    user_id = str(user_id).strip()
-    for username, data in users.items():
-        if str(data.get('user_id', '')) == user_id:
-            return username, data
-    return None, None
 
 
 # ============================================================
@@ -324,7 +309,7 @@ def seed_accounts():
                 continue
 
             now = datetime.now().isoformat()
-            user_id = generate_user_id(users)      # ← ID 10 số
+            user_id = generate_user_id(users)
 
             users[username] = {
                 'user_id': user_id,
@@ -362,7 +347,7 @@ def seed_accounts():
 
 
 # ============================================================
-# KHỞI TẠO SUPER ADMIN — CŨNG CÓ ID 10 SỐ
+# KHỞI TẠO SUPER ADMIN
 # ============================================================
 def init_super_admin():
     users = load_users()
@@ -376,11 +361,10 @@ def init_super_admin():
             break
 
     if existing_admin is None:
-        # Tạo admin mới với ID 10 số
         user_id = generate_user_id(users)
 
         users[admin_name] = {
-            'user_id': user_id,                # ← ID 10 số giống mọi người
+            'user_id': user_id,
             'password': hash_password(SUPER_ADMIN_PASSWORD),
             'role': 'super_admin',
             'display_name': SUPER_ADMIN_DISPLAY,
@@ -401,7 +385,6 @@ def init_super_admin():
         print(f"👑 Đã tạo SUPER ADMIN: {admin_name} — ID: {user_id}")
         return
 
-    # Đã có → nâng cấp
     changed = False
     user = users[existing_admin]
 
@@ -420,7 +403,6 @@ def init_super_admin():
         user['display_name'] = SUPER_ADMIN_DISPLAY
         changed = True
 
-    # Nếu chưa có user_id → tạo mới
     if not user.get('user_id'):
         user['user_id'] = generate_user_id(users)
         changed = True
@@ -610,6 +592,10 @@ def login_page():
     if 'username' in session:
         users = load_users()
         user = users.get(session['username'], {})
+        # User bị xóa
+        if session['username'] not in users:
+            session.clear()
+            return redirect(url_for('login_page'))
         if user.get('status') == 'banned' and not is_super_admin(session['username']):
             uname = session.get('username', '')
             session.clear()
@@ -796,18 +782,31 @@ def logout():
 @app.route('/api/me')
 @login_required
 def me():
-    user = check_and_auto_unban(session['username'])
+    users = load_users()
+    username = session['username']
 
-    if user.get('status') == 'banned' and not is_super_admin(session['username']):
+    # ===== USER BỊ XÓA — KICK =====
+    if username not in users:
+        session.clear()
+        return jsonify({
+            'success': False,
+            'deleted': True,
+            'kicked': True,
+            'error': 'Tài khoản đã bị xóa!',
+            'redirect': '/deleted-force'
+        }), 403
+
+    user = check_and_auto_unban(username)
+
+    if user.get('status') == 'banned' and not is_super_admin(username):
         ban_info = user.get('ban_info', {}) or {}
-        uname = session.get('username', '')
         return jsonify({
             'success': False, 'banned': True,
             'error': 'Tài khoản đã bị ban!',
             'ban_info': ban_info,
             'user_id': user.get('user_id', '—'),
             'ban_until': ban_info.get('ban_until'),
-            'redirect': f'/banned?user={uname}'
+            'redirect': f'/banned?user={username}'
         }), 403
 
     if user.get('status') == 'pending_delete':
@@ -895,7 +894,26 @@ def banned_page():
 
 
 # ============================================================
-# DELETED PAGE
+# TRANG BỊ ÉP BUỘC XÓA (Roblox style)
+# ============================================================
+@app.route('/deleted-force')
+def deleted_force_page():
+    username = request.args.get('user', '').strip()
+    reason = request.args.get('reason', 'Vi phạm điều khoản nghiêm trọng').strip()
+    user_id = request.args.get('id', '—').strip()
+    deleted_by = request.args.get('by', 'Admin').strip()
+
+    return render_template(
+        'deleted_force.html',
+        username=username or 'Unknown',
+        user_id=user_id,
+        reason=reason,
+        deleted_by=deleted_by
+    )
+
+
+# ============================================================
+# DELETED PAGE (user tự xác nhận)
 # ============================================================
 @app.route('/deleted')
 def deleted_page():
@@ -950,12 +968,11 @@ def confirm_delete():
     username = session['username']
     if username not in users:
         session.clear()
-        return jsonify({'success': False, 'error': 'Tài khoản không tồn tại!'}), 404
-    user = users[username]
+        return jsonify({'success': False, 'error': 'Tài khoản không tồn tại!'}), 404    user = users[username]
     if user.get('status') != 'pending_delete':
         return jsonify({'success': False, 'error': 'Không ở trạng thái chờ xóa!'}), 400
 
-    print(f"🗑️ XÓA VĨNH VIỄN: {username} (ID: {user.get('user_id', '—')})")
+    print(f"🗑️ XÓA VĨNH VIỄN: {username}")
     delete_user_db(username)
     session.clear()
 
@@ -1008,12 +1025,19 @@ def acknowledge_warnings():
 @app.route('/')
 @login_required
 def index():
-    user = check_and_auto_unban(session['username'])
+    users = load_users()
+    username = session.get('username', '')
 
-    if user.get('status') == 'banned' and not is_super_admin(session['username']):
-        uname = session.get('username', '')
+    # User bị xóa
+    if username not in users:
         session.clear()
-        return redirect(url_for('banned_page', user=uname))
+        return redirect(url_for('deleted_force_page', user=username))
+
+    user = check_and_auto_unban(username)
+
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        session.clear()
+        return redirect(url_for('banned_page', user=username))
 
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
@@ -1021,11 +1045,11 @@ def index():
     return render_template(
         'index.html',
         methods=METHODS,
-        username=user.get('display_name', session.get('username')),
-        real_username=session.get('username'),
+        username=user.get('display_name', username),
+        real_username=username,
         user_id=user.get('user_id', '—'),
         role=user.get('role', 'user'),
-        is_super_admin=is_super_admin(session['username'])
+        is_super_admin=is_super_admin(username)
     )
 
 
@@ -1033,16 +1057,30 @@ def index():
 @login_required
 def api_process():
     try:
-        user = check_and_auto_unban(session['username'])
+        users = load_users()
+        username = session['username']
 
-        if user.get('status') == 'banned' and not is_super_admin(session['username']):
+        # User bị xóa
+        if username not in users:
+            session.clear()
+            return jsonify({
+                'success': False,
+                'deleted': True,
+                'kicked': True,
+                'error': 'Tài khoản đã bị xóa!',
+                'redirect': '/deleted-force'
+            }), 403
+
+        user = check_and_auto_unban(username)
+
+        if user.get('status') == 'banned' and not is_super_admin(username):
             ban_info = user.get('ban_info', {}) or {}
             return jsonify({
                 'success': False, 'error': 'Tài khoản đã bị BAN!',
                 'banned': True, 'blocked': True,
                 'ban_info': ban_info,
                 'user_id': user.get('user_id', '—'),
-                'username': session['username']
+                'username': username
             }), 403
 
         if user.get('status') == 'pending_delete':
@@ -1068,17 +1106,16 @@ def api_process():
 
         result = process(text, method, action, key)
 
-        users = load_users()
         history = user.get('history', [])
         history.insert(0, {
             'method': method, 'action': action,
             'input_preview': text[:50], 'output_preview': result[:50],
             'time': datetime.now().isoformat()
         })
-        users[session['username']]['history'] = history[:20]
-        save_user(session['username'], users[session['username']])
+        users[username]['history'] = history[:20]
+        save_user(username, users[username])
 
-        log_activity(session['username'], action, f'{method}: {text[:30]}')
+        log_activity(username, action, f'{method}: {text[:30]}')
 
         return jsonify({
             'success': True, 'result': result,
@@ -1176,7 +1213,6 @@ def admin_ban():
             return jsonify({'success': False, 'error': '🚫 Không thể ban Super Admin!'}), 403
 
         target_id = users[target].get('user_id', '—')
-
         ban_info = {
             'user_id': target_id,
             'reason': reason,
@@ -1208,7 +1244,6 @@ def admin_unban():
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
-
         target_id = users[target].get('user_id', '—')
         users[target]['status'] = 'warned' if users[target].get('warnings') else 'active'
         users[target]['ban_info'] = None
@@ -1240,7 +1275,6 @@ def admin_warn():
             return jsonify({'success': False, 'error': '🚫 Không thể cảnh báo Super Admin!'}), 403
 
         target_id = users[target].get('user_id', '—')
-
         warnings = users[target].get('warnings', [])
         warnings.append({
             'user_id': target_id,
@@ -1359,6 +1393,7 @@ def admin_stats():
 @app.route('/api/admin/delete', methods=['POST'])
 @super_admin_required
 def admin_delete():
+    """Đánh dấu xóa — user phải xác nhận"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -1390,6 +1425,56 @@ def admin_delete():
             'success': True,
             'message': f'⚠️ Đã đánh dấu xóa user ID {target_id}',
             'delete_info': users[target]['delete_info']
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+@app.route('/api/admin/force-delete', methods=['POST'])
+@super_admin_required
+def admin_force_delete():
+    """ÉP BUỘC XÓA — Xóa vĩnh viễn ngay lập tức + KICK user"""
+    try:
+        data = request.get_json()
+        target = data.get('username', '').strip()
+        reason = data.get('reason', 'Vi phạm nghiêm trọng').strip() or 'Vi phạm nghiêm trọng'
+        confirm_text = data.get('confirm_text', '').strip()
+
+        if not target:
+            return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
+
+        if usernames_match(target, session['username']):
+            return jsonify({'success': False, 'error': '🚫 KHÔNG THỂ TỰ ÉP BUỘC XÓA CHÍNH MÌNH!'}), 400
+
+        users = load_users()
+        if target not in users:
+            return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
+        if is_super_admin(target):
+            return jsonify({'success': False, 'error': '🚫 Không thể ép buộc xóa Super Admin!'}), 403
+
+        target_id = users[target].get('user_id', '—')
+
+        if confirm_text != target_id:
+            return jsonify({
+                'success': False,
+                'error': f'⚠️ Bạn phải gõ chính xác ID "{target_id}" để xác nhận!'
+            }), 400
+
+        # Log trước khi xóa
+        log_activity(session['username'], 'force_delete',
+                     f"Ép buộc xóa user ID {target_id} — Lý do: {reason}")
+
+        # XÓA VĨNH VIỄN
+        print(f"⚡ ÉP BUỘC XÓA: {target} (ID: {target_id}) — Bởi: {session['username']} — Lý do: {reason}")
+        delete_user_db(target)
+
+        return jsonify({
+            'success': True,
+            'message': f'⚡ Đã ÉP BUỘC XÓA vĩnh viễn user ID {target_id}',
+            'deleted_username': target,
+            'deleted_user_id': target_id,
+            'reason': reason,
+            'kicked': True
         })
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
