@@ -30,15 +30,14 @@
     <!-- Layout 2 cột: TRÁI = input, PHẢI = output -->
     <div class="main">
 
-        <!-- === CỘT TRÁI: NHẬP VĂN BẢN === -->
-        <div class="panel panel-input">
+        <!-- === CỘT TRÁI === -->
+        <div class="panel">
             <div class="panel-header">
                 <span class="panel-icon">📝</span>
                 <span class="panel-title">Văn bản đầu vào</span>
                 <span class="char-count" id="char-count">0 ký tự</span>
             </div>
 
-            <!-- Thuật toán -->
             <div class="row">
                 <label>🔧 Thuật toán</label>
                 <select id="algo-select">
@@ -54,18 +53,16 @@
                 </select>
             </div>
 
-            <!-- Key -->
             <div class="row">
                 <label>🔑 Khóa (nếu cần)</label>
                 <input type="text" id="key-input" placeholder="VD: SECRET, 3, 5,8, KEY...">
             </div>
 
-            <!-- Textarea input -->
             <textarea id="input-text" placeholder="Nhập văn bản cần mã hóa / giải mã tại đây..."></textarea>
         </div>
 
-        <!-- === CỘT PHẢI: KẾT QUẢ === -->
-        <div class="panel panel-output">
+        <!-- === CỘT PHẢI === -->
+        <div class="panel">
             <div class="panel-header">
                 <span class="panel-icon">✨</span>
                 <span class="panel-title">Kết quả</span>
@@ -73,16 +70,16 @@
             </div>
 
             <textarea id="output-text" readonly placeholder="Kết quả sẽ hiển thị ở đây..."></textarea>
-
-            <!-- Nút hành động -->
-            <div class="actions">
-                <button class="btn btn-primary" id="btn-encode">🔒 Mã hóa</button>
-                <button class="btn btn-secondary" id="btn-decode">🔓 Giải mã</button>
-                <button class="btn" id="btn-copy">📋 Copy</button>
-                <button class="btn" id="btn-swap">⇅ Đảo</button>
-                <button class="btn" id="btn-clear">🗑 Xóa</button>
-            </div>
         </div>
+    </div>
+
+    <!-- === NÚT HÀNH ĐỘNG Ở DƯỚI === -->
+    <div class="actions-bar">
+        <button class="btn btn-primary" id="btn-encode">🔒 Mã hóa</button>
+        <button class="btn btn-secondary" id="btn-decode">🔓 Giải mã</button>
+        <button class="btn" id="btn-copy">📋 Copy</button>
+        <button class="btn" id="btn-swap">⇅ Đảo</button>
+        <button class="btn" id="btn-clear">🗑 Xóa</button>
     </div>
 
     <!-- Lịch sử -->
