@@ -1,7 +1,8 @@
 """
 Module chứa hơn 70 kiểu mã hóa / giải mã
-Mỗi nhóm có dict riêng: { method_name: (encode_func, decode_func) }
-decode_func = None nếu là one-way (hash, uuid, random)
+Sắp xếp theo nhóm: Base → Numeric → Classical → Transposition → Symbolic
+                   → Modern → Hash → Web → Transfer → Compression
+                   → Identity → Style → Vietnamese → Translate
 """
 import base64
 import codecs
@@ -18,17 +19,133 @@ import lzma
 import string
 import random
 import re
-from deep_translator import GoogleTranslator
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from deep_translator import GoogleTranslator
 
 
 # ════════════════════════════════════════════════════════════
-#  ĐỊNH NGHĨA CÁC HÀM ENCODE / DECODE
+#  DANH SÁCH PHƯƠNG PHÁP (theo nhóm)
 # ════════════════════════════════════════════════════════════
+METHODS = {
+    # ── Base ────────────────────────────────────────────────
+    "base64":        "Base64",
+    "base64url":     "Base64 URL-safe",
+    "base32":        "Base32",
+    "base85":        "Base85 (Ascii85)",
+    "base16":        "Base16 (Hex)",
+    "base58":        "Base58",
 
-# ─── BASE ───────────────────────────────────────────────────
+    # ── Numeric ─────────────────────────────────────────────
+    "hex":           "Hexadecimal",
+    "binary":        "Binary (Nhị phân)",
+    "octal":         "Octal (Bát phân)",
+    "decimal":       "Decimal (Thập phân)",
+    "ascii_codes":   "Mã ASCII",
+
+    # ── Classical ───────────────────────────────────────────
+    "caesar":        "Caesar Cipher",
+    "rot13":         "ROT13",
+    "rot5":          "ROT5 (số)",
+    "rot18":         "ROT18",
+    "rot47":         "ROT47",
+    "atbash":        "Atbash",
+    "affine":        "Affine Cipher",
+    "vigenere":      "Vigenère",
+    "beaufort":      "Beaufort",
+    "autokey":       "Autokey Cipher",
+
+    # ── Transposition ───────────────────────────────────────
+    "playfair":      "Playfair",
+    "hill":          "Hill Cipher (2x2)",
+    "railfence":     "Rail Fence",
+    "columnar":      "Columnar Transposition",
+
+    # ── Symbolic ────────────────────────────────────────────
+    "bacon":         "Bacon Cipher",
+    "polybius":      "Polybius Square",
+    "morse":         "Mã Morse",
+    "tap_code":      "Tap Code",
+    "nato":          "NATO Phonetic",
+    "pigpen":        "Pigpen Cipher",
+
+    # ── Modern ──────────────────────────────────────────────
+    "aes":           "AES (Fernet)",
+    "xor":           "XOR Cipher",
+    "reverse":       "Đảo ngược chuỗi",
+    "reverse_words": "Đảo ngược từ",
+    "swap_case":     "Đổi hoa/thường",
+    "leet":          "Leet Speak (1337)",
+
+    # ── Hash (1 chiều) ──────────────────────────────────────
+    "md5":           "MD5 (không giải mã)",
+    "sha1":          "SHA-1 (không giải mã)",
+    "sha224":        "SHA-224 (không giải mã)",
+    "sha256":        "SHA-256 (không giải mã)",
+    "sha384":        "SHA-384 (không giải mã)",
+    "sha512":        "SHA-512 (không giải mã)",
+    "sha3_256":      "SHA3-256 (không giải mã)",
+    "sha3_512":      "SHA3-512 (không giải mã)",
+    "blake2b":       "BLAKE2b (không giải mã)",
+    "blake2s":       "BLAKE2s (không giải mã)",
+    "crc32":         "CRC32 (không giải mã)",
+
+    # ── Web ─────────────────────────────────────────────────
+    "url":           "URL Encode",
+    "url_plus":      "URL Encode (dấu +)",
+    "html_entities": "HTML Entities",
+    "html_decimal":  "HTML Decimal",
+    "html_hex":      "HTML Hex",
+    "js_escape":     "JavaScript Escape",
+    "unicode_escape":"Unicode Escape",
+    "punycode":      "Punycode",
+
+    # ── Transfer ────────────────────────────────────────────
+    "quoted_printable": "Quoted-Printable",
+    "uuencode":      "UUencode",
+    "xxencode":      "XXencode",
+
+    # ── Compression ─────────────────────────────────────────
+    "zlib":          "Zlib (Base64)",
+    "gzip":          "Gzip (Base64)",
+    "bz2":           "BZip2 (Base64)",
+    "lzma":          "LZMA (Base64)",
+
+    # ── Identity ────────────────────────────────────────────
+    "uuid":          "UUID v4 (ngẫu nhiên)",
+    "random_hex":    "Random Hex",
+
+    # ── Style ───────────────────────────────────────────────
+    "json_escape":   "JSON Escape",
+    "backslash_escape": "Backslash Escape",
+    "unicode_full":  "Unicode Full-width",
+    "zalgo":         "Zalgo Text",
+    "upside_down":   "Upside Down",
+    "mirror":        "Mirror Text",
+    "small_caps":    "Small Caps",
+    "bubble":        "Bubble Text",
+    "strikethrough": "Strikethrough",
+    "superscript":   "Superscript",
+    "subscript":     "Subscript",
+    "invisible":     "Invisible Text",
+
+    # ── Vietnamese ──────────────────────────────────────────
+    "viet_uni":      "Vietnamese Unicode (Telex mở rộng)",
+
+    # ── Translate ───────────────────────────────────────────
+    "to_english":    "Dịch sang tiếng Anh",
+    "to_vietnamese": "Dịch sang tiếng Việt",
+}
+
+HASH_METHODS = {'md5','sha1','sha224','sha256','sha384','sha512',
+                'sha3_256','sha3_512','blake2b','blake2s','crc32'}
+ONE_WAY_ONLY = HASH_METHODS | {'uuid','random_hex','to_english','to_vietnamese'}
+
+
+# ════════════════════════════════════════════════════════════
+#  1. BASE FAMILY
+# ════════════════════════════════════════════════════════════
 def base64_encode(t): return base64.b64encode(t.encode()).decode()
 def base64_decode(t): return base64.b64decode(t.encode()).decode()
 
@@ -55,6 +172,7 @@ def base58_encode(t):
         if b == 0: res = '1' + res
         else: break
     return res or '1'
+
 def base58_decode(t):
     n = 0
     for c in t:
@@ -66,7 +184,10 @@ def base58_decode(t):
         else: break
     return (b'\x00' * pad + res).decode()
 
-# ─── NUMERIC ────────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  2. NUMERIC (Hex / Binary / Octal / Decimal / ASCII)
+# ════════════════════════════════════════════════════════════
 def hex_encode(t): return ' '.join(format(ord(c), '02x') for c in t)
 def hex_decode(t): return ''.join(chr(int(h, 16)) for h in t.strip().split())
 
@@ -82,7 +203,10 @@ def decimal_decode(t): return ''.join(chr(int(d)) for d in t.strip().split())
 def ascii_codes_encode(t): return ' '.join(str(ord(c)) for c in t)
 def ascii_codes_decode(t): return ''.join(chr(int(d)) for d in t.strip().split())
 
-# ─── CLASSICAL ──────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  3. CLASSICAL (Caesar / ROT / Atbash / Affine / Vigenere / ...)
+# ════════════════════════════════════════════════════════════
 def caesar_cipher(t, shift):
     r = []
     for ch in t:
@@ -115,6 +239,7 @@ def affine_encrypt(t, a=5, b=8):
             r.append(chr((a * (ord(ch) - base) + b) % 26 + base))
         else: r.append(ch)
     return ''.join(r)
+
 def affine_decrypt(t, a=5, b=8):
     a_inv = pow(a, -1, 26)
     r = []
@@ -137,6 +262,7 @@ def vigenere_encrypt(t, key):
             ki += 1
         else: r.append(ch)
     return ''.join(r)
+
 def vigenere_decrypt(t, key):
     if not key: key = 'KEY'
     key = key.upper()
@@ -176,6 +302,7 @@ def autokey_encrypt(t, key):
             r.append(chr((ord(ch) - base + shift) % 26 + base))
         else: r.append(ch)
     return ''.join(r)
+
 def autokey_decrypt(t, key):
     if not key: key = 'KEY'
     key = key.upper()
@@ -191,15 +318,20 @@ def autokey_decrypt(t, key):
         else: r.append(ch)
     return ''.join(r)
 
-# ─── TRANSPOSITION ──────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  4. TRANSPOSITION (Playfair / Hill / Railfence / Columnar)
+# ════════════════════════════════════════════════════════════
 def _playfair_matrix(key):
     key = key.upper().replace('J', 'I')
     seen, matrix = set(), []
     for c in key + string.ascii_uppercase:
         if c == 'J': continue
         if c not in seen:
-            seen.add(c); matrix.append(c)
+            seen.add(c)
+            matrix.append(c)
     return [matrix[i*5:(i+1)*5] for i in range(5)]
+
 def _playfair_pos(matrix, ch):
     for i, row in enumerate(matrix):
         if ch in row: return i, row.index(ch)
@@ -217,12 +349,16 @@ def playfair_encrypt(t, key):
         ra, ca = _playfair_pos(matrix, a)
         rb, cb = _playfair_pos(matrix, b)
         if ra == rb:
-            result.append(matrix[ra][(ca+1) % 5]); result.append(matrix[rb][(cb+1) % 5])
+            result.append(matrix[ra][(ca+1) % 5])
+            result.append(matrix[rb][(cb+1) % 5])
         elif ca == cb:
-            result.append(matrix[(ra+1) % 5][ca]); result.append(matrix[(rb+1) % 5][cb])
+            result.append(matrix[(ra+1) % 5][ca])
+            result.append(matrix[(rb+1) % 5][cb])
         else:
-            result.append(matrix[ra][cb]); result.append(matrix[rb][ca])
+            result.append(matrix[ra][cb])
+            result.append(matrix[rb][ca])
     return ''.join(result)
+
 def playfair_decrypt(t, key):
     if not key: key = 'KEY'
     matrix = _playfair_matrix(key)
@@ -233,11 +369,14 @@ def playfair_decrypt(t, key):
         ra, ca = _playfair_pos(matrix, a)
         rb, cb = _playfair_pos(matrix, b)
         if ra == rb:
-            result.append(matrix[ra][(ca-1) % 5]); result.append(matrix[rb][(cb-1) % 5])
+            result.append(matrix[ra][(ca-1) % 5])
+            result.append(matrix[rb][(cb-1) % 5])
         elif ca == cb:
-            result.append(matrix[(ra-1) % 5][ca]); result.append(matrix[(rb-1) % 5][cb])
+            result.append(matrix[(ra-1) % 5][ca])
+            result.append(matrix[(rb-1) % 5][cb])
         else:
-            result.append(matrix[ra][cb]); result.append(matrix[rb][ca])
+            result.append(matrix[ra][cb])
+            result.append(matrix[rb][ca])
     return ''.join(result)
 
 def hill_encrypt(t, key='3,3,2,5'):
@@ -252,6 +391,7 @@ def hill_encrypt(t, key='3,3,2,5'):
         result.append(chr((k[0]*x + k[1]*y) % 26 + 65))
         result.append(chr((k[2]*x + k[3]*y) % 26 + 65))
     return ''.join(result)
+
 def hill_decrypt(t, key='3,3,2,5'):
     try: k = [int(x) for x in key.split(',')]
     except: k = [3,3,2,5]
@@ -281,6 +421,7 @@ def railfence_encrypt(t, rails=3):
         elif rail == rails - 1: direction = -1
         rail += direction
     return ''.join(''.join(r) for r in fence)
+
 def railfence_decrypt(t, rails=3):
     try: rails = int(rails)
     except: rails = 3
@@ -294,13 +435,16 @@ def railfence_decrypt(t, rails=3):
         elif rail == rails - 1: direction = -1
         rail += direction
     counts = [pattern.count(i) for i in range(rails)]
-    fence, idx = [], 0
+    fence = []
+    idx = 0
     for c in counts:
-        fence.append(list(t[idx:idx+c])); idx += c
+        fence.append(list(t[idx:idx+c]))
+        idx += c
     pointers = [0] * rails
     result = []
     for r in pattern:
-        result.append(fence[r][pointers[r]]); pointers[r] += 1
+        result.append(fence[r][pointers[r]])
+        pointers[r] += 1
     return ''.join(result)
 
 def columnar_encrypt(t, key='KEY'):
@@ -311,24 +455,32 @@ def columnar_encrypt(t, key='KEY'):
     for i, ch in enumerate(t):
         cols[i % len(key)].append(ch)
     result = []
-    for i in order: result.extend(cols[i])
+    for i in order:
+        result.extend(cols[i])
     return ''.join(result)
+
 def columnar_decrypt(t, key='KEY'):
     if not key: key = 'KEY'
     key = key.upper()
     n = len(key)
     order = sorted(range(n), key=lambda i: key[i])
     col_len = [len(t) // n] * n
-    for i in range(len(t) % n): col_len[i] += 1
-    cols, idx = [''] * n, 0
+    for i in range(len(t) % n):
+        col_len[i] += 1
+    cols = [''] * n
+    idx = 0
     for i in order:
-        cols[i] = t[idx:idx+col_len[i]]; idx += col_len[i]
+        cols[i] = t[idx:idx+col_len[i]]
+        idx += col_len[i]
     result = []
     for i in range(len(t)):
         result.append(cols[i % n][i // n])
     return ''.join(result)
 
-# ─── SYMBOLIC ───────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  5. SYMBOLIC (Bacon / Polybius / Morse / Tap / NATO / Pigpen)
+# ════════════════════════════════════════════════════════════
 def bacon_encode(t):
     result = []
     for ch in t.upper():
@@ -337,6 +489,7 @@ def bacon_encode(t):
             result.append(format(n, '05b').replace('0', 'A').replace('1', 'B'))
         else: result.append(ch)
     return ' '.join(result)
+
 def bacon_decode(t):
     result = []
     for code in t.split():
@@ -356,6 +509,7 @@ def polybius_encode(t):
             result.append(f'{i//5+1}{i%5+1}')
         else: result.append(ch)
     return ' '.join(result)
+
 def polybius_decode(t):
     matrix = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'
     result = []
@@ -375,6 +529,7 @@ MORSE = {
     '8': '---..', '9': '----.', ' ': '/'
 }
 MORSE_REV = {v: k for k, v in MORSE.items()}
+
 def morse_encode(t): return ' '.join(MORSE.get(c.upper(), c) for c in t)
 def morse_decode(t): return ''.join(MORSE_REV.get(c, '') for c in t.split())
 
@@ -389,6 +544,7 @@ def tap_encode(t):
             result.append('.'*row + ' ' + '.'*col)
         else: result.append(ch)
     return ' / '.join(result)
+
 def tap_decode(t):
     matrix = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'
     result = []
@@ -406,6 +562,7 @@ NATO = {'A':'Alfa','B':'Bravo','C':'Charlie','D':'Delta','E':'Echo','F':'Foxtrot
         'S':'Sierra','T':'Tango','U':'Uniform','V':'Victor','W':'Whiskey',
         'X':'X-ray','Y':'Yankee','Z':'Zulu'}
 NATO_REV = {v.upper(): k for k, v in NATO.items()}
+
 def nato_encode(t): return ' '.join(NATO.get(c.upper(), c) for c in t)
 def nato_decode(t): return ''.join(NATO_REV.get(w.upper(), '') for w in t.split())
 
@@ -417,6 +574,7 @@ def pigpen_encode(t):
             result.append(f'[{n//9+1},{n%9+1}]')
         else: result.append(ch)
     return ' '.join(result)
+
 def pigpen_decode(t):
     result = []
     for code in t.split():
@@ -426,7 +584,10 @@ def pigpen_decode(t):
             if 0 <= n < 26: result.append(chr(n+65))
     return ''.join(result)
 
-# ─── MODERN ─────────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  6. MODERN (AES / XOR / Reverse / Leet)
+# ════════════════════════════════════════════════════════════
 def xor_cipher(t, key):
     if not key: key = 'KEY'
     return ''.join(chr(ord(c) ^ ord(key[i % len(key)])) for i, c in enumerate(t))
@@ -443,16 +604,21 @@ def leet_decode(t): return ''.join(LEET_REV.get(c, c) for c in t)
 def _derive_key(password, salt=b'ma-hoa-salt-2024'):
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
     return base64.urlsafe_b64encode(kdf.derive(password.encode()))
+
 def aes_encrypt(t, password):
     if not password: password = 'default'
     f = Fernet(_derive_key(password))
     return f.encrypt(t.encode()).decode()
+
 def aes_decrypt(t, password):
     if not password: password = 'default'
     f = Fernet(_derive_key(password))
     return f.decrypt(t.encode()).decode()
 
-# ─── HASH ───────────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  7. HASH (một chiều)
+# ════════════════════════════════════════════════════════════
 def hash_md5(t):     return hashlib.md5(t.encode()).hexdigest()
 def hash_sha1(t):    return hashlib.sha1(t.encode()).hexdigest()
 def hash_sha224(t):  return hashlib.sha224(t.encode()).hexdigest()
@@ -465,7 +631,10 @@ def hash_blake2b(t): return hashlib.blake2b(t.encode()).hexdigest()
 def hash_blake2s(t): return hashlib.blake2s(t.encode()).hexdigest()
 def hash_crc32(t):   return format(zlib.crc32(t.encode()) & 0xffffffff, '08x')
 
-# ─── WEB ────────────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  8. WEB (URL / HTML / JS / Unicode / Punycode)
+# ════════════════════════════════════════════════════════════
 def url_encode(t): return urllib.parse.quote(t, safe='')
 def url_decode(t): return urllib.parse.unquote(t)
 def url_plus_encode(t): return urllib.parse.quote_plus(t)
@@ -484,42 +653,62 @@ def js_escape_decode(t):
     return re.sub(r'\\x([0-9a-fA-F]{2})|\\u([0-9a-fA-F]{4})',
                   lambda m: chr(int(m.group(1),16) if m.group(1) else int(m.group(2),16)), t)
 
-def unicode_escape_encode(t): return ''.join(f'\\u{ord(c):04x}' for c in t)
+def unicode_escape_encode(t):
+    return ''.join(f'\\u{ord(c):04x}' for c in t)
 def unicode_escape_decode(t):
     return re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1),16)), t)
 
 def punycode_encode(t): return t.encode('punycode').decode()
 def punycode_decode(t): return t.encode().decode('punycode')
 
-# ─── TRANSFER ───────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  9. TRANSFER (Quoted-Printable / UUencode / XXencode)
+# ════════════════════════════════════════════════════════════
 def quoted_printable_encode(t): return quopri.encodestring(t.encode()).decode()
 def quoted_printable_decode(t): return quopri.decodestring(t.encode()).decode()
+
 def uuencode_encode(t): return codecs.encode(t.encode(), 'uu').decode()
 def uuencode_decode(t): return codecs.decode(t.encode(), 'uu').decode()
+
 def xxencode_encode(t): return codecs.encode(t.encode(), 'uu').decode()
 def xxencode_decode(t): return codecs.decode(t.encode(), 'uu').decode()
 
-# ─── COMPRESSION ────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  10. COMPRESSION (Zlib / Gzip / Bz2 / Lzma)
+# ════════════════════════════════════════════════════════════
 def zlib_encode(t): return base64.b64encode(zlib.compress(t.encode())).decode()
 def zlib_decode(t): return zlib.decompress(base64.b64decode(t)).decode()
+
 def gzip_encode(t): return base64.b64encode(gzip.compress(t.encode())).decode()
 def gzip_decode(t): return gzip.decompress(base64.b64decode(t)).decode()
+
 def bz2_encode(t): return base64.b64encode(bz2.compress(t.encode())).decode()
 def bz2_decode(t): return bz2.decompress(base64.b64decode(t)).decode()
+
 def lzma_encode(t): return base64.b64encode(lzma.compress(t.encode())).decode()
 def lzma_decode(t): return lzma.decompress(base64.b64decode(t)).decode()
 
-# ─── IDENTITY ───────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  11. IDENTITY (UUID / Random)
+# ════════════════════════════════════════════════════════════
 def uuid_gen(t): return str(uuid.uuid4())
 def random_hex(t): return ''.join(random.choices('0123456789abcdef', k=32))
 
-# ─── STYLE ──────────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  12. STYLE (JSON / Backslash / Unicode style / ...)
+# ════════════════════════════════════════════════════════════
 def json_escape_encode(t): return json.dumps(t)[1:-1]
 def json_escape_decode(t): return json.loads(f'"{t}"')
+
 def backslash_escape_encode(t):
     return t.replace('\\', '\\\\').replace('\n', '\\n').replace('\t', '\\t').replace('"', '\\"')
 def backslash_escape_decode(t):
     return t.replace('\\n', '\n').replace('\\t', '\t').replace('\\"', '"').replace('\\\\', '\\')
+
 def unicode_full_encode(t):
     return ''.join(chr(ord(c) + 0xFEE0) if 33 <= ord(c) <= 126 else c for c in t)
 def unicode_full_decode(t):
@@ -534,16 +723,21 @@ UPSIDE = {'a':'ɐ','b':'q','c':'ɔ','d':'p','e':'ǝ','f':'ɟ','g':'ƃ','h':'ɥ',
           'j':'ɾ','k':'ʞ','l':'l','m':'ɯ','n':'u','o':'o','p':'d','q':'b','r':'ɹ',
           's':'s','t':'ʇ','u':'n','v':'ʌ','w':'ʍ','x':'x','y':'ʎ','z':'z'}
 UPSIDE_REV = {v:k for k,v in UPSIDE.items()}
-def upside_down_encode(t): return ''.join(UPSIDE.get(c.lower(), c) for c in t)[::-1]
-def upside_down_decode(t): return ''.join(UPSIDE_REV.get(c, c) for c in t[::-1])
+def upside_down_encode(t):
+    return ''.join(UPSIDE.get(c.lower(), c) for c in t)[::-1]
+def upside_down_decode(t):
+    return ''.join(UPSIDE_REV.get(c, c) for c in t[::-1])
+
 def mirror_encode(t): return t[::-1]
 
 SMALL_CAPS = {'a':'ᴀ','b':'ʙ','c':'ᴄ','d':'ᴅ','e':'ᴇ','f':'ꜰ','g':'ɢ','h':'ʜ','i':'ɪ',
               'j':'ᴊ','k':'ᴋ','l':'ʟ','m':'ᴍ','n':'ɴ','o':'ᴏ','p':'ᴘ','q':'ǫ','r':'ʀ',
               's':'ꜱ','t':'ᴛ','u':'ᴜ','v':'ᴠ','w':'ᴡ','x':'x','y':'ʏ','z':'ᴢ'}
 SMALL_CAPS_REV = {v:k for k,v in SMALL_CAPS.items()}
-def small_caps_encode(t): return ''.join(SMALL_CAPS.get(c.lower(), c) for c in t)
-def small_caps_decode(t): return ''.join(SMALL_CAPS_REV.get(c, c) for c in t)
+def small_caps_encode(t):
+    return ''.join(SMALL_CAPS.get(c.lower(), c) for c in t)
+def small_caps_decode(t):
+    return ''.join(SMALL_CAPS_REV.get(c, c) for c in t)
 
 BUBBLE = {chr(65+i): chr(0x24B6+i) for i in range(26)}
 BUBBLE.update({chr(97+i): chr(0x24D0+i) for i in range(26)})
@@ -573,7 +767,10 @@ def invisible_encode(t):
     return ''.join('\u200b' if c == ' ' else c for c in t) + ' '
 def invisible_decode(t): return t.replace('\u200b', ' ')
 
-# ─── VIETNAMESE ─────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════
+#  13. VIETNAMESE (Telex mở rộng)
+# ════════════════════════════════════════════════════════════
 VIET_MAP = {
     'á': ('a','s'), 'à': ('a','f'), 'ả': ('a','r'), 'ã': ('a','x'), 'ạ': ('a','j'),
     'â': ('a','w'), 'ấ': ('a','ws'), 'ầ': ('a','wf'), 'ẩ': ('a','wr'),
@@ -632,219 +829,170 @@ def viet_uni_decode(t):
 
 
 # ════════════════════════════════════════════════════════════
-#  📦  ĐỊNH NGHĨA TỪNG NHÓM:  { method: (encode, decode) }
+#  14. TRANSLATE (Anh ⇄ Việt)
 # ════════════════════════════════════════════════════════════
-
-BASE = {
-    "base64":     (base64_encode,     base64_decode),
-    "base64url":  (base64url_encode,  base64url_decode),
-    "base32":     (base32_encode,     base32_decode),
-    "base85":     (base85_encode,     base85_decode),
-    "base16":     (base16_encode,     base16_decode),
-    "base58":     (base58_encode,     base58_decode),
+LANGUAGES = {
+    "en": "Tiếng Anh",
+    "vi": "Tiếng Việt",
 }
 
-NUMERIC = {
-    "hex":         (hex_encode,         hex_decode),
-    "binary":      (binary_encode,      binary_decode),
-    "octal":       (octal_encode,       octal_decode),
-    "decimal":     (decimal_encode,     decimal_decode),
-    "ascii_codes": (ascii_codes_encode, ascii_codes_decode),
-}
 
-CLASSICAL = {
-    "caesar":   (caesar_cipher,      caesar_cipher),   # cần key, xử lý riêng
-    "rot13":    (rot13,              rot13),
-    "rot5":     (rot5,               rot5),
-    "rot18":    (rot18,              rot18),
-    "rot47":    (rot47,              rot47),
-    "atbash":   (atbash,             atbash),
-    "affine":   (affine_encrypt,     affine_decrypt),
-    "vigenere": (vigenere_encrypt,   vigenere_decrypt),
-    "beaufort": (beaufort_encrypt,   beaufort_decrypt),
-    "autokey":  (autokey_encrypt,    autokey_decrypt),
-}
+def translate(text: str, source: str = "auto", target: str = "en") -> str:
+    """Dịch văn bản. source='auto'|'en'|'vi', target='en'|'vi'."""
+    if not text:
+        raise ValueError("Văn bản trống!")
+    if target not in LANGUAGES:
+        raise ValueError(f"Ngôn ngữ đích không hỗ trợ: {target}")
+    try:
+        return GoogleTranslator(source=source, target=target).translate(text)
+    except Exception as e:
+        raise ValueError(f"Lỗi dịch: {e}")
 
-TRANSPOSITION = {
-    "playfair":  (playfair_encrypt,  playfair_decrypt),
-    "hill":      (hill_encrypt,      hill_decrypt),
-    "railfence": (railfence_encrypt, railfence_decrypt),
-    "columnar":  (columnar_encrypt,  columnar_decrypt),
-}
 
-SYMBOLIC = {
-    "bacon":    (bacon_encode,    bacon_decode),
-    "polybius": (polybius_encode, polybius_decode),
-    "morse":    (morse_encode,    morse_decode),
-    "tap_code": (tap_encode,      tap_decode),
-    "nato":     (nato_encode,     nato_decode),
-    "pigpen":   (pigpen_encode,   pigpen_decode),
-}
+def to_english(text: str) -> str:
+    """Dịch sang tiếng Anh (auto-detect nguồn)."""
+    return translate(text, source="auto", target="en")
 
-MODERN = {
-    "aes":          (aes_encrypt,    aes_decrypt),
-    "xor":          (xor_cipher,     xor_cipher),
-    "reverse":      (reverse_str,    reverse_str),
-    "reverse_words":(reverse_words,  reverse_words),
-    "swap_case":    (swap_case,      swap_case),
-    "leet":         (leet_encode,    leet_decode),
-}
 
-HASH = {
-    "md5":      (hash_md5,     None),
-    "sha1":     (hash_sha1,    None),
-    "sha224":   (hash_sha224,  None),
-    "sha256":   (hash_sha256,  None),
-    "sha384":   (hash_sha384,  None),
-    "sha512":   (hash_sha512,  None),
-    "sha3_256": (hash_sha3_256,None),
-    "sha3_512": (hash_sha3_512,None),
-    "blake2b":  (hash_blake2b, None),
-    "blake2s":  (hash_blake2s, None),
-    "crc32":    (hash_crc32,   None),
-}
+def to_vietnamese(text: str) -> str:
+    """Dịch sang tiếng Việt (auto-detect nguồn)."""
+    return translate(text, source="auto", target="vi")
 
-WEB = {
-    "url":            (url_encode,            url_decode),
-    "url_plus":       (url_plus_encode,       url_plus_decode),
-    "html_entities":  (html_entities_encode,  html_entities_decode),
-    "html_decimal":   (html_decimal_encode,   html_decimal_decode),
-    "html_hex":       (html_hex_encode,       html_hex_decode),
-    "js_escape":      (js_escape_encode,      js_escape_decode),
-    "unicode_escape": (unicode_escape_encode, unicode_escape_decode),
-    "punycode":       (punycode_encode,       punycode_decode),
-}
 
-TRANSFER = {
-    "quoted_printable": (quoted_printable_encode, quoted_printable_decode),
-    "uuencode":         (uuencode_encode,         uuencode_decode),
-    "xxencode":         (xxencode_encode,         xxencode_decode),
-}
+def detect_language(text: str) -> str:
+    """Phát hiện ngôn ngữ. Trả về 'en', 'vi', hoặc 'unknown'."""
+    if not text:
+        return "unknown"
+    try:
+        return GoogleTranslator(source="auto", target="en").detect(text)
+    except Exception:
+        return "unknown"
 
-COMPRESSION = {
-    "zlib": (zlib_encode, zlib_decode),
-    "gzip": (gzip_encode, gzip_decode),
-    "bz2":  (bz2_encode,  bz2_decode),
-    "lzma": (lzma_encode, lzma_decode),
-}
 
-IDENTITY = {
-    "uuid":       (uuid_gen,   None),
-    "random_hex": (random_hex, None),
-}
+def auto_translate(text: str) -> dict:
+    """Tự phát hiện ngôn ngữ và dịch sang ngôn ngữ còn lại."""
+    if not text:
+        raise ValueError("Văn bản trống!")
 
-STYLE = {
-    "json_escape":      (json_escape_encode,      json_escape_decode),
-    "backslash_escape": (backslash_escape_encode, backslash_escape_decode),
-    "unicode_full":     (unicode_full_encode,     unicode_full_decode),
-    "zalgo":            (zalgo_encode,            zalgo_decode),
-    "upside_down":      (upside_down_encode,      upside_down_decode),
-    "mirror":           (mirror_encode,           mirror_encode),
-    "small_caps":       (small_caps_encode,       small_caps_decode),
-    "bubble":           (bubble_encode,           bubble_decode),
-    "strikethrough":    (strikethrough_encode,    strikethrough_decode),
-    "superscript":      (superscript_encode,      superscript_decode),
-    "subscript":        (subscript_encode,        subscript_decode),
-    "invisible":        (invisible_encode,        invisible_decode),
-}
+    detected = detect_language(text)
+    if detected == "vi":
+        target = "en"
+    elif detected == "en":
+        target = "vi"
+    else:
+        target = "en"
 
-VIETNAMESE = {
-    "viet_uni": (viet_uni_encode, viet_uni_decode),
-}
+    result = translate(text, source=detected if detected != "unknown" else "auto", target=target)
+    return {"detected": detected, "target": target, "result": result}
 
 
 # ════════════════════════════════════════════════════════════
-#  🗂️  GOM TẤT CẢ NHÓM LẠI
-# ════════════════════════════════════════════════════════════
-ALL_GROUPS = {
-    "Base":          BASE,
-    "Numeric":       NUMERIC,
-    "Classical":     CLASSICAL,
-    "Transposition": TRANSPOSITION,
-    "Symbolic":      SYMBOLIC,
-    "Modern":        MODERN,
-    "Hash":          HASH,
-    "Web":           WEB,
-    "Transfer":      TRANSFER,
-    "Compression":   COMPRESSION,
-    "Identity":      IDENTITY,
-    "Style":         STYLE,
-    "Vietnamese":    VIETNAMESE,
-}
-
-# Tên hiển thị đẹp
-DISPLAY_NAMES = {
-    "base64": "Base64", "base64url": "Base64 URL-safe",
-    "base32": "Base32", "base85": "Base85 (Ascii85)",
-    "base16": "Base16 (Hex)", "base58": "Base58",
-    "hex": "Hexadecimal", "binary": "Binary (Nhị phân)",
-    "octal": "Octal (Bát phân)", "decimal": "Decimal (Thập phân)",
-    "ascii_codes": "Mã ASCII",
-    "caesar": "Caesar Cipher", "rot13": "ROT13", "rot5": "ROT5 (số)",
-    "rot18": "ROT18", "rot47": "ROT47", "atbash": "Atbash",
-    "affine": "Affine Cipher", "vigenere": "Vigenère",
-    "beaufort": "Beaufort", "autokey": "Autokey Cipher",
-    "playfair": "Playfair", "hill": "Hill Cipher (2x2)",
-    "railfence": "Rail Fence", "columnar": "Columnar Transposition",
-    "bacon": "Bacon Cipher", "polybius": "Polybius Square",
-    "morse": "Mã Morse", "tap_code": "Tap Code",
-    "nato": "NATO Phonetic", "pigpen": "Pigpen Cipher",
-    "aes": "AES (Fernet)", "xor": "XOR Cipher",
-    "reverse": "Đảo ngược chuỗi", "reverse_words": "Đảo ngược từ",
-    "swap_case": "Đổi hoa/thường", "leet": "Leet Speak (1337)",
-    "md5": "MD5 (không giải mã)", "sha1": "SHA-1 (không giải mã)",
-    "sha224": "SHA-224 (không giải mã)", "sha256": "SHA-256 (không giải mã)",
-    "sha384": "SHA-384 (không giải mã)", "sha512": "SHA-512 (không giải mã)",
-    "sha3_256": "SHA3-256 (không giải mã)", "sha3_512": "SHA3-512 (không giải mã)",
-    "blake2b": "BLAKE2b (không giải mã)", "blake2s": "BLAKE2s (không giải mã)",
-    "crc32": "CRC32 (không giải mã)",
-    "url": "URL Encode", "url_plus": "URL Encode (dấu +)",
-    "html_entities": "HTML Entities", "html_decimal": "HTML Decimal",
-    "html_hex": "HTML Hex", "js_escape": "JavaScript Escape",
-    "unicode_escape": "Unicode Escape", "punycode": "Punycode",
-    "quoted_printable": "Quoted-Printable",
-    "uuencode": "UUencode", "xxencode": "XXencode",
-    "zlib": "Zlib (Base64)", "gzip": "Gzip (Base64)",
-    "bz2": "BZip2 (Base64)", "lzma": "LZMA (Base64)",
-    "uuid": "UUID v4 (ngẫu nhiên)", "random_hex": "Random Hex",
-    "json_escape": "JSON Escape", "backslash_escape": "Backslash Escape",
-    "unicode_full": "Unicode Full-width", "zalgo": "Zalgo Text",
-    "upside_down": "Upside Down", "mirror": "Mirror Text",
-    "small_caps": "Small Caps", "bubble": "Bubble Text",
-    "strikethrough": "Strikethrough", "superscript": "Superscript",
-    "subscript": "Subscript", "invisible": "Invisible Text",
-    "viet_uni": "Vietnamese Unicode (Telex mở rộng)",
-}
-
-# Gộp tất cả thành 1 registry phẳng để tra cứu nhanh
-REGISTRY = {}
-for _group in ALL_GROUPS.values():
-    REGISTRY.update(_group)
-
-# Danh sách one-way (hash, uuid, random)
-ONE_WAY_ONLY = {k for k, (enc, dec) in REGISTRY.items() if dec is None}
-
-# ════════════════════════════════════════════════════════════
-#  🔁  TƯƠNG THÍCH NGƯỢC: tái tạo METHODS phẳng từ ALL_GROUPS
-# ════════════════════════════════════════════════════════════
-METHODS = {}
-for _group in ALL_GROUPS.values():
-    for _m in _group:
-        METHODS[_m] = DISPLAY_NAMES.get(_m, _m)
-
-# ════════════════════════════════════════════════════════════
-#  🚀  HÀM XỬ LÝ CHÍNH
+#  HÀM XỬ LÝ CHÍNH
 # ════════════════════════════════════════════════════════════
 def process(text: str, method: str, action: str, key: str = '') -> str:
     if not text:
         raise ValueError('Văn bản trống!')
 
-    if method not in REGISTRY:
-        raise ValueError(f'Phương pháp không hỗ trợ: {method}')
-
-    # One-way -> luôn encrypt
     if method in ONE_WAY_ONLY:
         action = 'encrypt'
+
+    enc_map = {
+        # Base
+        'base64': base64_encode, 'base64url': base64url_encode,
+        'base32': base32_encode, 'base85': base85_encode,
+        'base16': base16_encode, 'base58': base58_encode,
+        # Numeric
+        'hex': hex_encode, 'binary': binary_encode,
+        'octal': octal_encode, 'decimal': decimal_encode,
+        'ascii_codes': ascii_codes_encode,
+        # Classical
+        'rot13': rot13, 'rot5': rot5, 'rot18': rot18, 'rot47': rot47,
+        'atbash': atbash,
+        # Symbolic
+        'morse': morse_encode, 'tap_code': tap_encode,
+        'nato': nato_encode, 'pigpen': pigpen_encode,
+        'bacon': bacon_encode, 'polybius': polybius_encode,
+        # Modern
+        'reverse': reverse_str, 'reverse_words': reverse_words,
+        'swap_case': swap_case, 'leet': leet_encode,
+        # Hash
+        'md5': hash_md5, 'sha1': hash_sha1, 'sha224': hash_sha224,
+        'sha256': hash_sha256, 'sha384': hash_sha384, 'sha512': hash_sha512,
+        'sha3_256': hash_sha3_256, 'sha3_512': hash_sha3_512,
+        'blake2b': hash_blake2b, 'blake2s': hash_blake2s, 'crc32': hash_crc32,
+        # Web
+        'url': url_encode, 'url_plus': url_plus_encode,
+        'html_entities': html_entities_encode,
+        'html_decimal': html_decimal_encode, 'html_hex': html_hex_encode,
+        'js_escape': js_escape_encode, 'unicode_escape': unicode_escape_encode,
+        'punycode': punycode_encode,
+        # Transfer
+        'quoted_printable': quoted_printable_encode,
+        'uuencode': uuencode_encode, 'xxencode': xxencode_encode,
+        # Compression
+        'zlib': zlib_encode, 'gzip': gzip_encode,
+        'bz2': bz2_encode, 'lzma': lzma_encode,
+        # Identity
+        'uuid': uuid_gen, 'random_hex': random_hex,
+        # Style
+        'json_escape': json_escape_encode,
+        'backslash_escape': backslash_escape_encode,
+        'unicode_full': unicode_full_encode,
+        'zalgo': zalgo_encode, 'upside_down': upside_down_encode,
+        'mirror': reverse_str, 'small_caps': small_caps_encode,
+        'bubble': bubble_encode, 'strikethrough': strikethrough_encode,
+        'superscript': superscript_encode, 'subscript': subscript_encode,
+        'invisible': invisible_encode,
+        # Vietnamese
+        'viet_uni': viet_uni_encode,
+        # Translate
+        'to_english': to_english,
+        'to_vietnamese': to_vietnamese,
+    }
+
+    dec_map = {
+        # Base
+        'base64': base64_decode, 'base64url': base64url_decode,
+        'base32': base32_decode, 'base85': base85_decode,
+        'base16': base16_decode, 'base58': base58_decode,
+        # Numeric
+        'hex': hex_decode, 'binary': binary_decode,
+        'octal': octal_decode, 'decimal': decimal_decode,
+        'ascii_codes': ascii_codes_decode,
+        # Classical
+        'rot13': rot13, 'rot5': rot5, 'rot18': rot18, 'rot47': rot47,
+        'atbash': atbash,
+        # Symbolic
+        'morse': morse_decode, 'tap_code': tap_decode,
+        'nato': nato_decode, 'pigpen': pigpen_decode,
+        'bacon': bacon_decode, 'polybius': polybius_decode,
+        # Modern
+        'reverse': reverse_str, 'reverse_words': reverse_words,
+        'swap_case': swap_case, 'leet': leet_decode,
+        # Web
+        'url': url_decode, 'url_plus': url_plus_decode,
+        'html_entities': html_entities_decode,
+        'html_decimal': html_decimal_decode, 'html_hex': html_hex_decode,
+        'js_escape': js_escape_decode, 'unicode_escape': unicode_escape_decode,
+        'punycode': punycode_decode,
+        # Transfer
+        'quoted_printable': quoted_printable_decode,
+        'uuencode': uuencode_decode, 'xxencode': xxencode_decode,
+        # Compression
+        'zlib': zlib_decode, 'gzip': gzip_decode,
+        'bz2': bz2_decode, 'lzma': lzma_decode,
+        # Style
+        'json_escape': json_escape_decode,
+        'backslash_escape': backslash_escape_decode,
+        'unicode_full': unicode_full_decode,
+        'zalgo': zalgo_decode, 'upside_down': upside_down_decode,
+        'mirror': reverse_str, 'small_caps': small_caps_decode,
+        'bubble': bubble_decode, 'strikethrough': strikethrough_decode,
+        'superscript': superscript_decode, 'subscript': subscript_decode,
+        'invisible': invisible_decode,
+        # Vietnamese
+        'viet_uni': viet_uni_decode,
+    }
 
     # Các method cần key / tham số riêng
     if method == 'caesar':
@@ -874,32 +1022,10 @@ def process(text: str, method: str, action: str, key: str = '') -> str:
     if method == 'aes':
         return aes_encrypt(text, key) if action == 'encrypt' else aes_decrypt(text, key)
 
-    # Các method đơn giản: tra registry
-    enc_func, dec_func = REGISTRY[method]
+    # Các method đơn giản
     if action == 'encrypt':
-        return enc_func(text)
+        if method in enc_map: return enc_map[method](text)
     else:
-        if dec_func is None:
-            raise ValueError(f'Phương pháp {method} không hỗ trợ giải mã!')
-        return dec_func(text)
+        if method in dec_map: return dec_map[method](text)
 
-
-# ════════════════════════════════════════════════════════════
-#  📋  TIỆN ÍCH DUYỆT
-# ════════════════════════════════════════════════════════════
-def list_methods():
-    """Trả về dict: tên nhóm -> list (method, display_name)."""
-    result = {}
-    for group_name, group in ALL_GROUPS.items():
-        result[group_name] = [
-            (m, DISPLAY_NAMES.get(m, m)) for m in group
-        ]
-    return result
-
-
-def get_group(method: str):
-    """Tìm nhóm của một method."""
-    for group_name, group in ALL_GROUPS.items():
-        if method in group:
-            return group_name
-    return None
+    raise ValueError(f'Phương pháp không hỗ trợ: {method}')
