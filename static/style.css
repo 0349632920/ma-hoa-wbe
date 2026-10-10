@@ -1652,3 +1652,169 @@ body.decode-mode .action-btn.primary {
     .ban-duration-grid { grid-template-columns: repeat(2, 1fr); }
     .ban-duration-btn.permanent { grid-column: span 2; }
 }
+
+/* ============================================================
+   BUTTONS — THÊM MỚI
+   ============================================================ */
+.btn {
+    padding: 10px 18px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--fg);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    user-select: none;
+    line-height: 1.2;
+}
+.btn:hover {
+    border-color: var(--blue-light);
+    background: var(--bg2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
+}
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.6; cursor: wait; transform: none; }
+
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--blue-light), var(--purple));
+    box-shadow: 0 6px 24px rgba(37, 99, 235, 0.55);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--green), var(--green-light));
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+}
+.btn-secondary:hover {
+    background: linear-gradient(135deg, var(--green-light), var(--green));
+    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.55);
+}
+
+.btn-block { width: 100%; justify-content: center; }
+
+.actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+/* Row layout cho form */
+.row { margin-bottom: 14px; }
+.row label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--fg-dim);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+select {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+select:focus { border-color: var(--cyan); }
+optgroup { color: var(--cyan); font-weight: 700; background: var(--bg2); }
+option { color: var(--fg); background: var(--bg2); }
+
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus {
+    border-color: var(--cyan);
+}
+
+/* History items */
+.history-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 12px;
+}
+.history-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    transition: border-color 0.2s;
+}
+.history-item:hover { border-color: var(--blue-light); }
+.history-item .meta {
+    color: var(--fg-dim);
+    font-size: 11px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.history-item .text {
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+    font-size: 12px;
+    color: var(--fg);
+}
+.history-item .del {
+    color: var(--red);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+    transition: transform 0.15s;
+}
+.history-item .del:hover { transform: scale(1.3); }
+.muted { color: var(--fg-dim); font-size: 13px; }
+
+/* Container cho index page (không dùng .main) */
+.container {
+    max-width: 1400px;
+    margin: 24px auto;
+    padding: 0 16px;
+    display: grid;
+    gap: 24px;
+}
+
+/* Panel đơn giản */
+.panel .row { margin-bottom: 14px; }
