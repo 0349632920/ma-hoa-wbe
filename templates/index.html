@@ -83,10 +83,13 @@
               👑 Admin Panel
             </button>
             {% endif %}
+            <button class="dropdown-item game-item" onclick="window.location.href='/game'">
+              🎮 Play Game
+            </button>
             <button class="dropdown-item" onclick="showHistory()">🕐 Lịch sử gần đây</button>
+            <button class="dropdown-item" onclick="window.location.href='/translate'">🌐 Dịch thuật</button>
             <button class="dropdown-item danger" onclick="logout()">🚪 Đăng xuất</button>
 
-            <!-- DROPDOWN CREDIT -->
             <div class="dropdown-credit">
               <div class="dropdown-credit-line"></div>
               <div class="dropdown-credit-label">💻 Made by</div>
@@ -99,7 +102,6 @@
                   <div class="dropdown-creator-name dropdown-killer-name">Sát Nhân</div>
                   <div class="dropdown-creator-role dropdown-killer-role">Co-Founder</div>
                 </a>
-
                 <a href="https://www.tiktok.com/@dungg_haha" target="_blank" class="dropdown-creator dropdown-dung" title="TikTok: @dungg_haha">
                   <div class="dropdown-creator-avatar dropdown-dung-avatar">
                     <div class="avatar-fallback">D</div>
@@ -108,7 +110,6 @@
                   <div class="dropdown-creator-name dropdown-dung-name">Dũng</div>
                   <div class="dropdown-creator-role dropdown-dung-role">Designer</div>
                 </a>
-
                 <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="dropdown-creator dropdown-hung" title="TikTok: @tienhung0707">
                   <div class="dropdown-creator-avatar dropdown-hung-avatar">
                     <div class="avatar-fallback">H</div>
@@ -117,7 +118,6 @@
                   <div class="dropdown-creator-name dropdown-hung-name">Hùng ⭐</div>
                   <div class="dropdown-creator-role dropdown-hung-role">Developer</div>
                 </a>
-
                 <a href="https://www.tiktok.com/@minhchaudepzai246" target="_blank" class="dropdown-creator dropdown-chau" title="TikTok: @minhchaudepzai246">
                   <div class="dropdown-creator-avatar dropdown-chau-avatar">
                     <div class="avatar-fallback">C</div>
@@ -126,7 +126,6 @@
                   <div class="dropdown-creator-name dropdown-chau-name">Minh Châu</div>
                   <div class="dropdown-creator-role dropdown-chau-role">🛡️ Vệ sĩ</div>
                 </a>
-
                 <a href="https://www.tiktok.com/@ngoc021215" target="_blank" class="dropdown-creator dropdown-ngoc" title="TikTok: @ngoc021215">
                   <div class="dropdown-creator-avatar dropdown-ngoc-avatar">
                     <div class="avatar-fallback">N</div>
@@ -142,7 +141,6 @@
       </div>
     </header>
 
-    <!-- TASKBAR -->
     <div class="taskbar">
       <button class="task-btn active" data-action="encrypt" id="tabEncrypt">
         <span class="task-icon">🔒</span>
@@ -155,7 +153,6 @@
       <div class="task-indicator" id="taskIndicator"></div>
     </div>
 
-    <!-- METHOD PICKER -->
     <div class="method-picker-section">
       <label>🎯 Kiểu mã hóa:</label>
       <button class="method-picker-btn" id="openPickerBtn">
@@ -168,13 +165,11 @@
       </button>
     </div>
 
-    <!-- KEY -->
     <div id="keySection" class="key-section hidden">
       <label id="keyLabel">🔑 Khóa:</label>
       <input type="text" id="keyInput" placeholder="Nhập khóa...">
     </div>
 
-    <!-- WARNINGS -->
     <div id="hashWarning" class="hash-warning hidden">
       ⚠️ Phương pháp này là <strong>mã hóa 1 chiều</strong> — không thể giải mã!
     </div>
@@ -182,7 +177,6 @@
       💡 Đang ở <strong>chế độ Giải mã</strong> — dán văn bản đã mã hóa vào ô bên trái.
     </div>
 
-    <!-- IO -->
     <div class="io-section">
       <div class="box">
         <div class="box-header">
@@ -205,19 +199,18 @@
       <button class="btn primary" id="actionBtn" onclick="runAction()">🔒 Mã Hóa Ngay</button>
       <button class="btn swap" onclick="swapText()">🔄 Đảo Chiều</button>
       <button class="btn copy" onclick="copyResult()">📋 Sao Chép</button>
+      <button class="btn game" onclick="window.location.href='/game'">🎮 Play Game</button>
+      <button class="btn translate" onclick="goToTranslate()">🌐 Dịch</button>
       <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
     </div>
 
-    <!-- FOOTER CREDIT -->
     <footer class="page-footer">
       <div class="footer-divider">
         <span class="footer-line"></span>
         <span class="footer-star">✨</span>
         <span class="footer-line"></span>
       </div>
-
       <div class="footer-label">💻 Được phát triển bởi</div>
-
       <div class="footer-creators">
         <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="footer-creator footer-killer" title="TikTok: @fan.yu.juhoon">
           <div class="footer-avatar footer-killer-avatar">
@@ -230,7 +223,6 @@
           </div>
           <div class="footer-tiktok footer-killer-badge">🎵</div>
         </a>
-
         <a href="https://www.tiktok.com/@dungg_haha" target="_blank" class="footer-creator dung-creator" title="TikTok: @dungg_haha">
           <div class="footer-avatar dung-avatar">
             <div class="avatar-fallback">D</div>
@@ -242,7 +234,6 @@
           </div>
           <div class="footer-tiktok dung-badge">🎵</div>
         </a>
-
         <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="footer-creator hung-creator" title="TikTok: @tienhung0707">
           <div class="footer-avatar hung-avatar">
             <div class="avatar-fallback">H</div>
@@ -254,7 +245,6 @@
           </div>
           <div class="footer-tiktok hung-badge">🎵</div>
         </a>
-
         <a href="https://www.tiktok.com/@minhchaudepzai246" target="_blank" class="footer-creator chau-creator" title="TikTok: @minhchaudepzai246">
           <div class="footer-avatar chau-avatar">
             <div class="avatar-fallback">C</div>
@@ -266,7 +256,6 @@
           </div>
           <div class="footer-tiktok chau-badge">🎵</div>
         </a>
-
         <a href="https://www.tiktok.com/@ngoc021215" target="_blank" class="footer-creator ngoc-creator" title="TikTok: @ngoc021215">
           <div class="footer-avatar ngoc-avatar">
             <div class="avatar-fallback">N</div>
@@ -279,7 +268,6 @@
           <div class="footer-tiktok ngoc-badge">🎵</div>
         </a>
       </div>
-
       <div class="footer-copy">
         © 2026 <strong>Mã Hóa Tool</strong> — Made with ❤️
       </div>
@@ -337,6 +325,18 @@
         <div class="logout-step" data-step="3"><span class="logout-step-icon">✅</span><span>Hoàn tất</span></div>
       </div>
       <p class="logout-loading-note" id="logoutNote">Đang kết thúc phiên làm việc an toàn...</p>
+    </div>
+  </div>
+
+  <!-- UNBAN RELOAD OVERLAY -->
+  <div class="unban-reload-overlay" id="unbanReloadOverlay">
+    <div class="unban-reload-content">
+      <div class="unban-icon">🎉</div>
+      <h2 class="unban-title">Bạn đã được gỡ ban!</h2>
+      <p class="unban-subtitle">Đang tải lại trang...</p>
+      <div class="unban-progress-bar">
+        <div class="unban-progress-fill"></div>
+      </div>
     </div>
   </div>
 
@@ -472,13 +472,80 @@
     </div>
   </div>
 
-  <!-- TOAST -->
   <div id="toast" class="toast"></div>
 
+  <style>
+    /* Nút Play Game */
+    .btn.game {
+      background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+    }
+    .btn.game:hover {
+      background: linear-gradient(135deg, #e67e22 0%, #c0392b 100%);
+      box-shadow: 0 8px 24px rgba(243, 156, 18, 0.6);
+      transform: translateY(-2px);
+    }
+    .btn.game::before {
+      content: '🎮';
+      margin-right: 6px;
+    }
+
+    /* Dropdown item Game */
+    .dropdown-item.game-item {
+      background: linear-gradient(135deg, rgba(243, 156, 18, 0.15), rgba(231, 76, 60, 0.15));
+      color: #e67e22;
+      font-weight: 700;
+    }
+    .dropdown-item.game-item:hover {
+      background: linear-gradient(135deg, rgba(243, 156, 18, 0.25), rgba(231, 76, 60, 0.25));
+    }
+
+    /* Unban overlay */
+    .unban-reload-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    .unban-reload-overlay.show { opacity: 1; visibility: visible; }
+    .unban-reload-content { text-align: center; color: #fff; padding: 30px; max-width: 400px; }
+    .unban-icon {
+      font-size: 90px; margin-bottom: 20px;
+      animation: unbanBounce 0.8s ease infinite alternate;
+    }
+    @keyframes unbanBounce {
+      from { transform: translateY(0) scale(1); }
+      to   { transform: translateY(-15px) scale(1.08); }
+    }
+    .unban-title { font-size: 26px; font-weight: 800; margin-bottom: 10px; }
+    .unban-subtitle { font-size: 15px; opacity: 0.95; margin-bottom: 25px; }
+    .unban-progress-bar {
+      width: 100%; height: 6px; background: rgba(255,255,255,0.3);
+      border-radius: 10px; overflow: hidden;
+    }
+    .unban-progress-fill {
+      height: 100%; width: 0%; background: #fff; border-radius: 10px;
+      box-shadow: 0 0 12px rgba(255,255,255,0.9);
+      animation: unbanProgress 1.5s ease-out forwards;
+    }
+    @keyframes unbanProgress {
+      0%   { width: 0%; }
+      60%  { width: 80%; }
+      100% { width: 100%; }
+    }
+  </style>
+
   <script>
-    // ==========================================
-    // SPLASH SCREEN
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  SPLASH SCREEN
+    // ══════════════════════════════════════════════════════════
     const splashMessages = [
       'Đang khởi tạo...',
       'Đang tải các phương pháp mã hóa...',
@@ -535,9 +602,9 @@
       setTimeout(runSplash, 200);
     });
 
-    // ==========================================
-    // STATE
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  STATE
+    // ══════════════════════════════════════════════════════════
     let currentMethod = 'base64';
     let currentAction = 'encrypt';
     let isTransitioning = false;
@@ -548,6 +615,7 @@
     let lastStatus = null;
     let lastWarningsCount = 0;
     let isHandlingBlock = false;
+    let wasBanned = false;
     const POLL_INTERVAL = 3000;
 
     const oneWayMethods = new Set([
@@ -602,9 +670,9 @@
     const processingIcon = document.getElementById('processingIcon');
     const processingText = document.getElementById('processingText');
 
-    // ==========================================
-    // USER MENU
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  USER MENU
+    // ══════════════════════════════════════════════════════════
     const userMenu = document.getElementById('userMenu');
     const userBtn = document.getElementById('userBtn');
 
@@ -617,9 +685,9 @@
       if (!userMenu.contains(e.target)) userMenu.classList.remove('open');
     });
 
-    // ==========================================
-    // LOAD USER INFO
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  LOAD USER INFO
+    // ══════════════════════════════════════════════════════════
     async function loadUserInfo() {
       try {
         const res = await fetch('/api/me', {
@@ -628,7 +696,6 @@
         if (res.status === 401) { window.location.href = '/login'; return; }
         const data = await res.json();
 
-        // ===== USER BỊ XÓA — KICK =====
         if (data.deleted) {
           isHandlingBlock = true;
           stopPolling();
@@ -640,6 +707,7 @@
         }
 
         if (data.banned) {
+          wasBanned = true;
           stopPolling();
           showBanBlock(data.ban_info || {}, data.username || '', data.user_id || '—');
           playBanSound();
@@ -675,9 +743,9 @@
       } catch (e) { console.error(e); }
     }
 
-    // ==========================================
-    // POLLING — 3s
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  POLLING — 3s (phát hiện unban)
+    // ══════════════════════════════════════════════════════════
     async function pollStatus() {
       if (isHandlingBlock) return;
       if (isPolling) return;
@@ -699,7 +767,14 @@
 
         const data = await res.json();
 
-        // ===== USER BỊ XÓA — KICK =====
+        // ═══ PHÁT HIỆN UNBAN ═══
+        if (data.success && wasBanned && !data.banned) {
+          wasBanned = false;
+          stopPolling();
+          showUnbanReload();
+          return;
+        }
+
         if (data.deleted) {
           isHandlingBlock = true;
           stopPolling();
@@ -711,6 +786,7 @@
         }
 
         if (data.banned) {
+          wasBanned = true;
           isHandlingBlock = true;
           stopPolling();
           showBanBlock(data.ban_info || {}, data.username || '', data.user_id || '—');
@@ -758,7 +834,6 @@
 
     function startPolling() {
       if (pollInterval) clearInterval(pollInterval);
-      console.log('🔄 Polling started (3s)');
       pollInterval = setInterval(pollStatus, POLL_INTERVAL);
     }
 
@@ -766,7 +841,6 @@
       if (pollInterval) {
         clearInterval(pollInterval);
         pollInterval = null;
-        console.log('⏹️ Polling stopped');
       }
     }
 
@@ -776,9 +850,21 @@
       }
     });
 
-    // ==========================================
-    // MODAL ĐĂNG XUẤT
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  SHOW UNBAN RELOAD
+    // ══════════════════════════════════════════════════════════
+    function showUnbanReload() {
+      const overlay = document.getElementById('unbanReloadOverlay');
+      if (overlay) overlay.classList.add('show');
+      showToast('✅ Bạn đã được gỡ ban! Đang tải lại...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1800);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  MODAL ĐĂNG XUẤT
+    // ══════════════════════════════════════════════════════════
     function logout() {
       userMenu.classList.remove('open');
       document.getElementById('logoutOverlay').classList.add('show');
@@ -842,9 +928,9 @@
       }
     }
 
-    // ==========================================
-    // HISTORY
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  HISTORY
+    // ══════════════════════════════════════════════════════════
     async function showHistory() {
       userMenu.classList.remove('open');
       historyModalOverlay.classList.add('show');
@@ -906,9 +992,9 @@
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
     }
 
-    // ==========================================
-    // LOADING SCREEN
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  LOADING SCREEN
+    // ══════════════════════════════════════════════════════════
     function showLoadingScreen(action, callback) {
       if (isTransitioning) return;
       isTransitioning = true;
@@ -989,9 +1075,9 @@
     tabEncrypt.addEventListener('click', () => setAction('encrypt'));
     tabDecrypt.addEventListener('click', () => setAction('decrypt'));
 
-    // ==========================================
-    // MODAL PHƯƠNG PHÁP
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  MODAL PHƯƠNG PHÁP
+    // ══════════════════════════════════════════════════════════
     function openModal() {
       modalOverlay.classList.add('show');
       document.body.style.overflow = 'hidden';
@@ -1097,9 +1183,9 @@
       }
     }
 
-    // ==========================================
-    // RUN ACTION
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  RUN ACTION
+    // ══════════════════════════════════════════════════════════
     async function runAction() {
       const text = document.getElementById('input').value;
       const key = document.getElementById('keyInput').value;
@@ -1121,7 +1207,6 @@
         const data = await res.json();
         hideProcessing();
 
-        // ===== USER BỊ XÓA — KICK =====
         if (data.deleted) {
           isHandlingBlock = true;
           stopPolling();
@@ -1140,6 +1225,7 @@
         }
 
         if (data.banned) {
+          wasBanned = true;
           isHandlingBlock = true;
           stopPolling();
           showBanBlock(data.ban_info || {}, data.username || '', data.user_id || '—');
@@ -1171,9 +1257,9 @@
       }
     }
 
-    // ==========================================
-    // BAN / WARN BLOCK
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  BAN / WARN BLOCK
+    // ══════════════════════════════════════════════════════════
     function showBanBlock(banInfo, username, user_id) {
       document.getElementById('blockUserId').textContent = user_id || '—';
       document.getElementById('blockUsername').textContent = username || '—';
@@ -1234,9 +1320,9 @@
       window.location.href = '/warned';
     }
 
-    // ==========================================
-    // ÂM THANH
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  ÂM THANH
+    // ══════════════════════════════════════════════════════════
     function playBanSound() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1274,9 +1360,22 @@
       } catch (e) {}
     }
 
-    // ==========================================
-    // UTILS
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  CHUYỂN SANG TRANG DỊCH
+    // ══════════════════════════════════════════════════════════
+    function goToTranslate() {
+      const text = document.getElementById('input').value.trim();
+      if (text) {
+        const preview = text.length > 500 ? text.slice(0, 500) : text;
+        window.location.href = '/translate?text=' + encodeURIComponent(preview);
+      } else {
+        window.location.href = '/translate';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  UTILS
+    // ══════════════════════════════════════════════════════════
     function swapText() {
       const out = document.getElementById('output').value;
       if (!out) return showToast('⚠️ Chưa có kết quả!', true);
@@ -1332,9 +1431,9 @@
       setTimeout(() => t.classList.remove('show'), 2200);
     }
 
-    // ==========================================
-    // INIT
-    // ==========================================
+    // ══════════════════════════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════════════════════════
     document.getElementById('input').addEventListener('input', updateCounts);
     const defaultBtn = document.querySelector('.method-btn[data-method="base64"]');
     if (defaultBtn) defaultBtn.classList.add('active');
