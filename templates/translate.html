@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dịch thuật — Anh ⇄ Việt</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        * { box-sizing: border-box; }
+
+        /* ════════════════════════════════════════════════════════
+           LOADING SCREEN
+           ════════════════════════════════════════════════════════ */
+        #loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: #fff;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        #loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .loader-logo {
+            font-size: 3em;
+            margin-bottom: 20px;
+            animation: float 2s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-12px); }
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255,255,255,0.25);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loader-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+        .loader-bar {
+            width: 240px;
+            height: 6px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .loader-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #fff;
+            border-radius: 3px;
+            animation: fill 1.8s ease-in-out forwards;
+        }
+        @keyframes fill {
+            0%   { width: 0%; }
+            40%  { width: 55%; }
+            70%  { width: 80%; }
+            100% { width: 100%; }
+        }
+
+        /* ════════════════════════════════════════════════════════
+           TRANG CHÍNH
+           ════════════════════════════════════════════════════════ */
+        body {
+            font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #222;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        body.loaded { opacity: 1; }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 1.6em;
+            margin: 0 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #f8f9fb;
+            border-radius: 8px;
+        }
+        .toolbar label {
+            font-size: 0.9em;
+            color: #555;
+        }
+        select, button, textarea {
+            font-family: inherit;
+            font-size: 0.95em;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccd;
+            background: #fff;
+            outline: none;
+        }
+        select:focus, textarea:focus { border-color: #4a90e2; }
+        select:disabled { background: #eee; color: #999; }
+        button {
+            cursor: pointer;
+            background: #4a90e2;
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            transition: background 0.15s;
+        }
+        button:hover { background: #357abd; }
+        button.secondary {
+            background: #fff;
+            color: #4a90e2;
+            border: 1px solid #4a90e2;
+        }
+        button.secondary:hover { background: #eef4fb; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .editor {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 700px) {
+            .editor { grid-template-columns: 1fr; }
+        }
+        .pane {
+            display: flex;
+            flex-direction: column;
+        }
+        .pane-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .pane-header span {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pane textarea {
+            width: 100%;
+            min-height: 220px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .status {
+            margin-top: 12px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            background: #eef4fb;
+            color: #333;
+            min-height: 20px;
+        }
+        .status.error   { background: #fdecec; color: #b3261e; }
+        .status.success { background: #eaf7ee; color: #1e7a3a; }
+        .status.loading { background: #fff8e6; color: #8a6d00; }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 16px;
+            color: #4a90e2;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .back:hover { text-decoration: underline; }
+        .swap {
+            font-size: 1.2em;
+            padding: 6px 10px;
+            background: transparent;
+            color: #4a90e2;
+            border: none;
+            cursor: pointer;
+        }
+        .swap:hover { background: #eef4fb; border-radius: 6px; }
+        .char-count { font-size: 0.8em; color: #999; }
+    </style>
+</head>
+<body>
+
+    <!-- ════════════════════════════════════════════════════════
+         MÀN HÌNH LOADING
+         ════════════════════════════════════════════════════════ -->
+    <div id="loading-screen">
+        <div class="loader-logo">🌐</div>
+        <div class="spinner"></div>
+        <div class="loader-text">Đang tải...</div>
+        <div class="loader-bar">
+            <div class="loader-bar-fill"></div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         NỘI DUNG CHÍNH
+         ════════════════════════════════════════════════════════ -->
+    <div class="container">
+        <a href="/" class="back">← Về trang chủ</a>
+        <h1>🌐 Dịch thuật — Anh ⇄ Việt</h1>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <label for="mode">Chế độ:</label>
+            <select id="mode">
+                <option value="auto">Tự động (Anh ⇄ Việt)</option>
+                <option value="manual">Thủ công</option>
+            </select>
+
+            <label for="source">Từ:</label>
+            <select id="source" disabled>
+                <option value="auto">Tự phát hiện</option>
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">Tiếng Anh</option>
+            </select>
+
+            <button type="button" class="swap" id="swapBtn" title="Đổi chiều">⇄</button>
+
+            <label for="target">Sang:</label>
+            <select id="target">
+                <option value="en">Tiếng Anh</option>
+                <option value="vi">Tiếng Việt</option>
+            </select>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor">
+            <div class="pane">
+                <div class="pane-header">
+                    <span>Văn bản gốc</span>
+                    <span class="char-count" id="srcCount">0 ký tự</span>
+                </div>
+                <textarea id="input" placeholder="Nhập văn bản cần dịch..."></textarea>
+            </div>
+            <div class="pane">
+                <div class="pane-header">
+                    <span>Bản dịch</span>
+                    <button type="button" class="secondary" id="copyBtn"
+                            style="padding:4px 10px; font-size:0.8em;">📋 Copy</button>
+                </div>
+                <textarea id="output" placeholder="Kết quả sẽ hiện ở đây..." readonly></textarea>
+            </div>
+        </div>
+
+        <!-- Nút hành động -->
+        <div class="actions">
+            <button type="button" id="translateBtn">🌐 Dịch</button>
+            <button type="button" class="secondary" id="toEnBtn">🇬🇧 Sang Anh</button>
+            <button type="button" class="secondary" id="toViBtn">🇻🇳 Sang Việt</button>
+            <button type="button" class="secondary" id="detectBtn">🔍 Phát hiện ngôn ngữ</button>
+            <button type="button" class="secondary" id="clearBtn">🗑 Xoá</button>
+        </div>
+
+        <!-- Trạng thái -->
+        <div class="status" id="status">Sẵn sàng.</div>
+    </div>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+
+        // ════════════════════════════════════════════════════════
+        //  LOADING SCREEN
+        // ════════════════════════════════════════════════════════
+        window.addEventListener("load", () => {
+            // Đợi progress bar chạy xong (~1.8s) rồi fade out
+            setTimeout(() => {
+                $("loading-screen").classList.add("hidden");
+                document.body.classList.add("loaded");
+            }, 1900);
+        });
+
+        // Fallback: nếu vì lý do gì loading screen không tự ẩn sau 5s
+        setTimeout(() => {
+            const ls = $("loading-screen");
+            if (ls && !ls.classList.contains("hidden")) {
+                ls.classList.add("hidden");
+                document.body.classList.add("loaded");
+            }
+        }, 5000);
+
+        // ════════════════════════════════════════════════════════
+        //  UI EVENTS
+        // ════════════════════════════════════════════════════════
+        $("mode").addEventListener("change", (e) => {
+            $("source").disabled = (e.target.value === "auto");
+        });
+
+        $("input").addEventListener("input", () => {
+            $("srcCount").textContent = $("input").value.length + " ký tự";
+        });
+
+        $("swapBtn").addEventListener("click", () => {
+            const src = $("source");
+            const tgt = $("target");
+            const oldTgt = tgt.value;
+            const oldSrc = src.value === "auto"
+                ? (oldTgt === "en" ? "vi" : "en")
+                : src.value;
+            src.value = oldTgt;
+            tgt.value = oldSrc;
+            // Đảo nội dung 2 ô
+            const tmp = $("input").value;
+            $("input").value = $("output").value;
+            $("output").value = tmp;
+        });
+
+        $("copyBtn").addEventListener("click", async () => {
+            const text = $("output").value;
+            if (!text) return;
+            try {
+                await navigator.clipboard.writeText(text);
+                setStatus("✅ Đã copy vào clipboard", "success");
+            } catch {
+                setStatus("❌ Không copy được", "error");
+            }
+        });
+
+        $("clearBtn").addEventListener("click", () => {
+            $("input").value = "";
+            $("output").value = "";
+            $("srcCount").textContent = "0 ký tự";
+            setStatus("Sẵn sàng.");
+        });
+
+        // ════════════════════════════════════════════════════════
+        //  STATUS
+        // ════════════════════════════════════════════════════════
+        function setStatus(msg, type = "") {
+            const el = $("status");
+            el.textContent = msg;
+            el.className = "status" + (type ? " " + type : "");
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  DỊCH
+        // ════════════════════════════════════════════════════════
+        async function doTranslate(targetOverride) {
+            const text = $("input").value.trim();
+            if (!text) {
+                setStatus("⚠️ Nhập văn bản trước đã!", "error");
+                return;
+            }
+
+            const mode   = $("mode").value;
+            const source = $("source").value;
+            let   target = $("target").value;
+            if (targetOverride) target = targetOverride;
+
+            setStatus("⏳ Đang dịch...", "loading");
+
+            try {
+                const res = await fetch("/api/translate", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ text, source, target, mode })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    setStatus("❌ " + data.error, "error");
+                    return;
+                }
+
+                $("output").value = data.result;
+                setStatus(
+                    `✅ ${data.source} → ${data.target}` +
+                    (data.detected ? ` (phát hiện: ${data.detected})` : ""),
+                    "success"
+                );
+            } catch (e) {
+                setStatus("❌ Lỗi kết nối: " + e.message, "error");
+            }
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  PHÁT HIỆN NGÔN NGỮ
+        // ════════════════════════════════════════════════════════
+        async function doDetect() {
+            const text = $("input").value.trim();
+            if (!text) {
+                setStatus("⚠️ Nhập văn bản trước đã!", "error");
+                return;
+            }
+            setStatus("🔍 Đang phát hiện...", "loading");
+            try {
+                const res = await fetch("/api/detect", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ text })
+                });
+                const data = await res.json();
+                if (data.error) {
+                    setStatus("❌ " + data.error, "error");
+                    return;
+                }
+                const names = { en: "Tiếng Anh", vi: "Tiếng Việt" };
+                setStatus(`🔍 Phát hiện: ${data.detected} (${names[data.detected] || "?"})`, "success");
+            } catch (e) {
+                setStatus("❌ Lỗi kết nối: " + e.message, "error");
+            }
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  GẮN SỰ KIỆN
+        // ════════════════════════════════════════════════════════
+        $("translateBtn").addEventListener("click", () => doTranslate());
+        $("toEnBtn").addEventListener("click", () => doTranslate("en"));
+        $("toViBtn").addEventListener("click", () => doTranslate("vi"));
+        $("detectBtn").addEventListener("click", doDetect);
+
+        // Ctrl+Enter để dịch nhanh
+        $("input").addEventListener("keydown", (e) => {
+            if (e.ctrlKey && e.key === "Enter") doTranslate();
+        });
+    </script>
+</body>
+</html>
