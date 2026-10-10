@@ -24,7 +24,7 @@ from functools import lru_cache
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from deep_translator import GoogleTranslator
+import requests
 
 
 # ════════════════════════════════════════════════════════════
@@ -831,21 +831,48 @@ def viet_uni_decode(t):
 
 
 # ════════════════════════════════════════════════════════════
-#  14. TRANSLATE (Anh ⇄ Việt) — có retry + cache
+#  14. TRANSLATE — dùng LibreTranslate (không Google)
 # ════════════════════════════════════════════════════════════
 LANGUAGES = {
     "en": "Tiếng Anh",
     "vi": "Tiếng Việt",
 }
 
+# Các instance LibreTranslate public (thử lần lượt)
+LIBRE_ENDPOINTS = [
+    "https://libretranslate.com/translate",
+    "https://translate.argosopentech.com/translate",
+    "https://libretranslate.de/translate",
+    "https://translate.terraprint.co/translate",
+]
+
+# Nếu bạn self-host, thêm endpoint của bạn vào đầu danh sách:
+# LIBRE_ENDPOINTS = ["http://localhost:5000/translate"] + LIBRE_ENDPOINTS
+
+
+def _libre_request(endpoint: str, text: str, source: str, target: str,
+                   timeout: int = 15) -> str:
+    """Gọi 1 endpoint LibreTranslate."""
+    payload = {
+        "q": text,
+        "source": source,
+        "target": target,
+        "format": "text",
+    }
+    r = requests.post(endpoint, json=payload, timeout=timeout)
+    r.raise_for_status()
+    data = r.json()
+    if "translatedText" not in data:
+        raise ValueError(f"Response không hợp lệ: {data}")
+    return data["translatedText"]
+
 
 def translate(text: str, source: str = "auto", target: str = "en",
-              max_retries: int = 3) -> str:
+              max_retries: int = 2) -> str:
     """
-    Dịch văn bản với retry + delay khi bị rate limit.
+    Dịch bằng LibreTranslate, tự động fallback qua nhiều endpoint.
     - source: 'auto' | 'en' | 'vi'
     - target: 'en' | 'vi'
-    - max_retries: số lần thử lại khi gặp rate limit
     """
     if not text:
         raise ValueError("Văn bản trống!")
@@ -854,25 +881,23 @@ def translate(text: str, source: str = "auto", target: str = "en",
 
     last_err = None
     for attempt in range(max_retries):
-        try:
-            return GoogleTranslator(source=source, target=target).translate(text)
-        except Exception as e:
-            last_err = e
-            err_msg = str(e).lower()
-
-            # Rate limit → đợi rồi thử lại
-            if "too many requests" in err_msg or "429" in err_msg:
-                wait = 2 ** attempt  # 1s, 2s, 4s
-                print(f"⏳ Rate limit, đợi {wait}s rồi thử lại "
-                      f"(lần {attempt+1}/{max_retries})...")
-                time.sleep(wait)
-                continue
-
-            # Lỗi khác → báo luôn
-            raise ValueError(f"Lỗi dịch: {e}")
+        for endpoint in LIBRE_ENDPOINTS:
+            try:
+                return _libre_request(endpoint, text, source, target)
+            except Exception as e:
+                last_err = e
+                err = str(e).lower()
+                # Rate limit → đợi rồi thử endpoint kế
+                if "too many" in err or "429" in err or "rate" in err:
+                    wait = 2 ** attempt
+                    print(f"⏳ {endpoint} bị rate limit, đợi {wait}s...")
+                    time.sleep(wait)
+                else:
+                    print(f"⚠️ {endpoint} lỗi: {e}")
+                continue  # thử endpoint kế tiếp
 
     raise ValueError(
-        "Google Translate đang giới hạn tần suất. "
+        "Tất cả server dịch đều đang bận hoặc bị giới hạn. "
         "Vui lòng đợi vài giây rồi thử lại. "
         f"Chi tiết: {last_err}"
     )
@@ -880,7 +905,7 @@ def translate(text: str, source: str = "auto", target: str = "en",
 
 @lru_cache(maxsize=500)
 def translate_cached(text: str, source: str, target: str) -> str:
-    """Cache kết quả dịch — tránh gọi Google cho cùng text."""
+    """Cache kết quả dịch — tránh gọi lại cho cùng text."""
     return translate(text, source=source, target=target)
 
 
@@ -895,13 +920,21 @@ def to_vietnamese(text: str) -> str:
 
 
 def detect_language(text: str) -> str:
-    """Phát hiện ngôn ngữ. Trả về 'en', 'vi', hoặc 'unknown'."""
+    """Phát hiện ngôn ngữ. LibreTranslate không có API detect chuẩn,
+    nên ta dùng heuristic đơn giản dựa trên ký tự tiếng Việt."""
     if not text:
         return "unknown"
-    try:
-        return GoogleTranslator(source="auto", target="en").detect(text)
-    except Exception:
-        return "unknown"
+
+    # Nếu có ký tự tiếng Việt có dấu → chắc chắn là tiếng Việt
+    viet_chars = set("ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ")
+    if any(c.lower() in viet_chars for c in text):
+        return "vi"
+
+    # Nếu chỉ có ASCII chữ cái → đoán là tiếng Anh
+    if re.fullmatch(r'[a-zA-Z0-9\s\.,!?\'"\-]+', text):
+        return "en"
+
+    return "unknown"
 
 
 def auto_translate(text: str) -> dict:
