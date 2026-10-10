@@ -3,13 +3,12 @@
 import os
 import re
 import time
-import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import timedelta
 from functools import wraps
 
 from flask import (Flask, render_template, request, jsonify, session,
-                   redirect, url_for, flash)
+                   redirect, url_for)
 from dotenv import load_dotenv
 import bcrypt
 
@@ -51,15 +50,19 @@ def get_db():
     if "sslmode" not in url:
         sep = "&" if "?" in url else "?"
         url = f"{url}{sep}sslmode=require"
-    conn = psycopg2.connect(url, cursor_factory=RealDictCursor)
-    return conn
+    try:
+        conn = psycopg2.connect(url, cursor_factory=RealDictCursor)
+        return conn
+    except Exception as e:
+        print(f"[DB] Kết nối thất bại: {e}")
+        return None
 
 
 def init_db():
     """Tạo bảng + migrate cột thiếu (an toàn cho DB cũ và mới)"""
     conn = get_db()
     if not conn:
-        print("[DB] Không kết nối được DB")
+        print("[DB] Không kết nối được DB - bỏ qua init")
         return
     try:
         with conn, conn.cursor() as cur:
@@ -153,9 +156,26 @@ def init_db():
         print("[DB] Khởi tạo + migrate thành công")
     except Exception as e:
         print(f"[DB] Lỗi init_db: {e}")
-        raise
     finally:
         conn.close()
+
+
+# ==================== AUTO INIT DB ====================
+_db_initialized = False
+
+
+@app.before_request
+def ensure_db_initialized():
+    """Chỉ init DB 1 lần duy nhất khi có request đầu tiên.
+    An toàn với gunicorn nhiều worker vì dùng IF NOT EXISTS."""
+    global _db_initialized
+    if _db_initialized:
+        return
+    _db_initialized = True
+    try:
+        init_db()
+    except Exception as e:
+        print(f"[DB] Init warning: {e}")
 
 
 # ==================== DECORATORS ====================
@@ -189,7 +209,7 @@ def login_page():
             return redirect(url_for("index"))
         return render_template("login.html")
 
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
     action = data.get("action", "login")
@@ -209,7 +229,7 @@ def login_page():
 
     conn = get_db()
     if not conn:
-        return jsonify({"error": "DB chưa cấu hình"}), 500
+        return jsonify({"error": "DB chưa cấu hình hoặc không kết nối được"}), 500
 
     try:
         with conn, conn.cursor() as cur:
@@ -275,6 +295,9 @@ def login_page():
             session["username"] = username
             session["role"] = row["role"]
             return jsonify({"ok": True, "redirect": url_for("index")})
+    except Exception as e:
+        print(f"[Login] Lỗi: {e}")
+        return jsonify({"error": f"Lỗi server: {str(e)}"}), 500
     finally:
         conn.close()
 
@@ -803,15 +826,15 @@ def banned_page():
 # ==================== ERROR HANDLERS ====================
 @app.errorhandler(404)
 def not_found(e):
-    return render_template("index.html", grouped=get_grouped(),
-                           group_order=GROUP_ORDER,
-                           username=session.get("username"),
-                           is_admin=session.get("role") == "admin",
-                           error="404 - Không tìm thấy"), 404
+    return redirect(url_for("index"))
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    return jsonify({"error": "Server error - xem log Render"}), 500
 
 
 # ==================== MAIN ====================
-# CHỈ init_db() khi chạy trực tiếp, KHÔNG chạy khi gunicorn import
 if __name__ == "__main__":
     init_db()
     port = int(os.getenv("PORT", 5000))
