@@ -1868,3 +1868,58 @@ input[type="number"]:focus {
         height: 260px;
     }
 }
+/* ============================================================
+   LAYOUT: INPUT TRÁI — OUTPUT PHẢI — NÚT Ở DƯỚI
+   ============================================================ */
+.main .panel textarea {
+    height: 380px;
+}
+
+.main .panel .row {
+    margin-bottom: 14px;
+}
+
+/* Nút hành động ở dưới — 1 hàng ngang */
+.actions-bar {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    max-width: 1400px;
+    margin: 0 auto 24px;
+    padding: 0 16px;
+    flex-wrap: wrap;
+}
+
+.actions-bar .btn {
+    flex: 1;
+    min-width: 140px;
+    max-width: 220px;
+    padding: 14px 20px;
+    font-size: 15px;
+}
+
+/* Cột output: textarea màu xanh lá */
+.panel:last-of-type textarea {
+    color: var(--green);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+.panel:last-of-type textarea:focus {
+    border-color: var(--green);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .main .panel textarea {
+        height: 240px;
+    }
+    .actions-bar .btn {
+        flex: 1 1 calc(50% - 12px);
+        max-width: none;
+    }
+}
+
+@media (max-width: 500px) {
+    .actions-bar .btn {
+        flex: 1 1 100%;
+    }
+}
