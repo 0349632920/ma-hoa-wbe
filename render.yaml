@@ -11,6 +11,6 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: ADMIN_USER
-        value: admin
+        value: Hùng
       - key: ADMIN_PASSWORD
         value: admin123
