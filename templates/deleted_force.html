@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ Bạn đã bị xóa — Mã Hóa Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background: #0a0a0f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 30% 40%, rgba(220, 38, 38, 0.4), transparent 50%),
+        radial-gradient(circle at 70% 60%, rgba(185, 28, 28, 0.3), transparent 50%);
+      animation: bgFlash 1.5s ease-in-out infinite;
+    }
+
+    @keyframes bgFlash {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .kick-container {
+      position: relative;
+      z-index: 2;
+      max-width: 640px;
+      width: 100%;
+      background: #1f1f27;
+      border-radius: 12px;
+      border: 2px solid #dc2626;
+      box-shadow:
+        0 0 0 1px rgba(220, 38, 38, 0.3),
+        0 30px 100px rgba(220, 38, 38, 0.5),
+        0 0 200px rgba(220, 38, 38, 0.2);
+      overflow: hidden;
+      animation: kickShake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    }
+
+    @keyframes kickShake {
+      0% { transform: translateX(-50px) scale(0.9); opacity: 0; }
+      15% { transform: translateX(35px) scale(0.95); }
+      30% { transform: translateX(-25px) scale(0.97); }
+      45% { transform: translateX(15px) scale(0.99); }
+      60% { transform: translateX(-10px) scale(1); }
+      80% { transform: translateX(5px) scale(1); }
+      100% { transform: translateX(0) scale(1); opacity: 1; }
+    }
+
+    .kick-header {
+      background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
+      padding: 26px 32px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kick-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 12px,
+        rgba(0, 0, 0, 0.15) 12px,
+        rgba(0, 0, 0, 0.15) 24px
+      );
+      animation: stripeSlide 3s linear infinite;
+    }
+
+    @keyframes stripeSlide {
+      0% { background-position: 0 0; }
+      100% { background-position: 34px 34px; }
+    }
+
+    .kick-icon {
+      position: relative;
+      z-index: 2;
+      width: 60px;
+      height: 60px;
+      background: #0a0a0f;
+      border: 3px solid white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 900;
+      color: white;
+      flex-shrink: 0;
+      animation: kickIconShake 1s ease-in-out infinite;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+
+    @keyframes kickIconShake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-15deg) scale(1.05); }
+      75% { transform: rotate(15deg) scale(1.05); }
+    }
+
+    .kick-header-text {
+      position: relative;
+      z-index: 2;
+      color: white;
+    }
+
+    .kick-header h1 {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    .kick-header p {
+      font-size: 13px;
+      opacity: 0.85;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .kick-body {
+      padding: 32px 36px;
+      color: #e5e7eb;
+    }
+
+    .kick-reason-box {
+      background: linear-gradient(135deg, #2d1b1b, #451a1a);
+      border: 2px solid #dc2626;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+
+    .kick-reason-label {
+      font-size: 11px;
+      color: #fca5a5;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .kick-reason-text {
+      font-size: 16px;
+      color: #fff;
+      font-weight: 600;
+      line-height: 1.5;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px 16px;
+      border-radius: 8px;
+      border-left: 3px solid #dc2626;
+    }
+
+    .kick-info {
+      background: #2a2a35;
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+    }
+
+    .kick-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #38383f;
+      font-size: 14px;
+    }
+
+    .kick-info-row:last-child { border-bottom: none; }
+
+    .kick-info-label {
+      color: #9ca3af;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .kick-info-value {
+      color: #fff;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: #1
