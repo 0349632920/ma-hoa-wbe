@@ -1,5 +1,5 @@
 """
-Game utilities — Leaderboard, Daily, Rewards, Random, PvP (typing race), Meme
+Game utilities — Leaderboard, Daily, Rewards, Random, PvP (typing race + AFK), Meme
 """
 import random
 import hashlib
@@ -131,7 +131,7 @@ def pick_random_method(exclude_one_way: bool = False, exclude_key: bool = False)
 
 
 # ═══════════════════════════════════════════════════════════
-#  ⚔️ PVP — ĐUA GÕ CHỮ TIẾNG ANH
+#  ⚔️ PVP — ĐUA GÕ CHỮ TIẾNG ANH + AFK DETECTION
 # ═══════════════════════════════════════════════════════════
 PVP_ROOMS = {}
 FRIENDS_DB = {}
@@ -142,6 +142,10 @@ DEFAULT_QUESTIONS = 10
 DEFAULT_ROUNDS = 3
 POINTS_PER_CORRECT = 100
 MAX_SPEED_BONUS = 50
+
+# ⏰ AFK Detection
+AFK_TIMEOUT = 30          # 30 giây không trả lời → AFK
+AFK_WARNING_INTERVAL = 10 # Nhắc lại cảnh báo mỗi 10s
 
 # Danh sách từ tiếng Anh để đua gõ
 PVP_WORDS = [
@@ -165,7 +169,7 @@ PVP_WORDS = [
     "hacking", "testing", "writing", "reading", "speaking",
     # Dài hơn (9-11 ký tự)
     "encryption", "decryption", "programming", "javascript",
-    "typescript", "framework", "structure", "developer",
+    "typescript", "framework", "structure",
     "connection", "networking", "challenge", "adventure",
     "creative", "carefully", "beautiful", "wonderful",
 ]
@@ -245,7 +249,6 @@ def create_pvp_room(host_username: str, host_display: str,
     if rules is None:
         rules = {"rounds": DEFAULT_ROUNDS, "questions_per_round": DEFAULT_QUESTIONS}
 
-    # Validate rules
     try:
         rules["rounds"] = max(1, min(7, int(rules.get("rounds", DEFAULT_ROUNDS))))
         rules["questions_per_round"] = max(5, min(30, int(rules.get("questions_per_round", DEFAULT_QUESTIONS))))
@@ -284,6 +287,12 @@ def create_pvp_room(host_username: str, host_display: str,
         "created_at": now,
         "last_activity": now,
         "finished_at": None,
+        # ⏰ AFK tracking
+        "afk_warnings": {},       # { username: [timestamps] }
+        "last_afk_check": now,
+        # 🚪 Leave tracking
+        "left_user": None,
+        "left_display": None,
     }
     PVP_ROOMS[code] = room
     return room
@@ -538,6 +547,8 @@ def vote_rematch(code: str, username: str) -> dict:
             r["question_started_at"] = None
             r["started_at"] = None
         room["rematch_votes"] = []
+        room["left_user"] = None
+        room["left_display"] = None
         room["last_activity"] = time.time()
         return {"success": True, "restarted": True, "message": "Cả 2 đồng ý! Trận mới bắt đầu!"}
     return {"success": True, "votes": votes, "message": "Đã vote. Chờ đối thủ..."}
@@ -596,6 +607,9 @@ def start_pvp_room(code: str, host_username: str) -> dict:
     r["scores"] = {room["host"]: 0, room["guest"]: 0}
 
     room["last_activity"] = time.time()
+    room["afk_warnings"] = {}
+    room["left_user"] = None
+    room["left_display"] = None
     return {"success": True, "room": room}
 
 
@@ -628,7 +642,6 @@ def submit_pvp_answer(code: str, username: str, answer: str) -> dict:
     user_answer = answer.lower().strip()
     correct = (user_answer == correct_answer)
 
-    # Tính điểm: đúng 100 + bonus tốc độ (max 50)
     points = 0
     if correct:
         speed_bonus = max(0, int(MAX_SPEED_BONUS - time_taken * 2))
@@ -647,7 +660,6 @@ def submit_pvp_answer(code: str, username: str, answer: str) -> dict:
     if host_answered and guest_answered:
         r["current_index"] += 1
         if r["current_index"] >= questions_count:
-            # Hết ván
             host_score = r["scores"].get(room["host"], 0)
             guest_score = r["scores"].get(room["guest"], 0)
             if host_score > guest_score:
@@ -712,6 +724,128 @@ def leave_pvp_room(code: str, username: str) -> dict:
     return {"success": True}
 
 
+# ═══════════════════════════════════════════════════════════
+#  🚪 RỜI TRẬN GIỮA CHỪNG
+# ═══════════════════════════════════════════════════════════
+def leave_match(code: str, username: str) -> dict:
+    """Rời trận đang chơi — người rời bị xử thua."""
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": True, "destroyed": True}
+
+    room = PVP_ROOMS[code]
+
+    if room["status"] == "playing":
+        # Đang chơi → xử thua, đối thủ thắng
+        opponent = room["guest"] if room["host"] == username else room["host"]
+        if opponent:
+            room["round_wins"][opponent] = room["round_wins"].get(opponent, 0) + 999
+        room["status"] = "finished"
+        room["finished_at"] = time.time()
+        room["left_user"] = username
+        room["left_display"] = room["host_display"] if username == room["host"] else room["guest_display"]
+        room["last_activity"] = time.time()
+        return {"success": True, "left": True, "room": room,
+                "message": f"{room['left_display']} đã rời trận!"}
+
+    # Đang chờ → xóa khỏi phòng
+    return leave_pvp_room(code, username)
+
+
+# ═══════════════════════════════════════════════════════════
+#  ⏰ AFK DETECTION (chỉ trong game, không ảnh hưởng web)
+# ═══════════════════════════════════════════════════════════
+def heartbeat(code: str, username: str) -> dict:
+    """Client gọi mỗi 5s để báo còn online."""
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": False, "error": "Không tìm thấy phòng!"}
+    room = PVP_ROOMS[code]
+    if username not in (room["host"], room["guest"]):
+        return {"success": False, "error": "Bạn không ở trong phòng!"}
+
+    # Cập nhật heartbeat
+    room.setdefault("heartbeats", {})[username] = time.time()
+    room["last_activity"] = time.time()
+
+    # Xóa cảnh báo AFK nếu user quay lại
+    warnings = room.get("afk_warnings", {})
+    if username in warnings:
+        del warnings[username]
+
+    return {"success": True, "heartbeat_at": room["heartbeats"][username]}
+
+
+def check_afk_status(code: str, username: str) -> dict:
+    """
+    Kiểm tra trạng thái AFK của cả 2 người chơi.
+    Dùng để hiển thị cảnh báo trong Game Hub.
+    """
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": False, "error": "Không tìm thấy phòng!"}
+
+    room = PVP_ROOMS[code]
+    if username not in (room["host"], room["guest"]):
+        return {"success": False, "error": "Bạn không ở trong phòng!"}
+
+    now = time.time()
+    heartbeats = room.get("heartbeats", {})
+    opponent = room["guest"] if room["host"] == username else room["host"]
+
+    # Thời gian AFK của bạn
+    my_last = heartbeats.get(username, room.get("created_at", now))
+    my_afk = round(now - my_last, 1)
+
+    # Thời gian AFK của đối thủ
+    opp_afk = 999
+    if opponent:
+        opp_last = heartbeats.get(opponent, room.get("created_at", now))
+        opp_afk = round(now - opp_last, 1)
+
+    return {
+        "success": True,
+        "your_afk_seconds": my_afk,
+        "opponent_afk_seconds": opp_afk if opponent else 0,
+        "opponent_is_afk": bool(opponent and opp_afk >= AFK_TIMEOUT),
+        "opponent_warning": bool(opponent and opp_afk >= AFK_TIMEOUT),
+        "afk_timeout": AFK_TIMEOUT,
+    }
+
+
+def add_afk_warning(code: str, username: str) -> dict:
+    """Thêm cảnh báo AFK cho user (hiện trong game)."""
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": False, "error": "Không tìm thấy phòng!"}
+    room = PVP_ROOMS[code]
+    warnings = room.setdefault("afk_warnings", {})
+    user_warnings = warnings.setdefault(username, [])
+    now = time.time()
+
+    # Chỉ thêm nếu chưa có cảnh báo gần đây (trong 10s)
+    if not user_warnings or (now - user_warnings[-1]) >= AFK_WARNING_INTERVAL:
+        user_warnings.append(now)
+        room["last_activity"] = now
+        return {"success": True, "warning_added": True, "count": len(user_warnings)}
+
+    return {"success": True, "warning_added": False, "count": len(user_warnings)}
+
+
+def get_afk_warnings(code: str, username: str) -> dict:
+    """Lấy cảnh báo AFK của user (để hiện trong Game Hub)."""
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": False, "error": "Không tìm thấy phòng!"}
+    room = PVP_ROOMS[code]
+    warnings = room.get("afk_warnings", {})
+    return {
+        "success": True,
+        "your_warnings": warnings.get(username, []),
+        "total_warnings": sum(len(w) for w in warnings.values()),
+    }
+
+
 # ─── 12. Lịch sử ───
 def add_match_to_history(user: dict, opponent_display: str,
                           my_score: int, opp_score: int,
@@ -771,7 +905,8 @@ def init_game_data() -> dict:
         "rewards_claimed": [],
         "meme_count": 0,
         "pvp_stats": {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0},
-        "match_history": []
+        "match_history": [],
+        "afk_warnings_count": 0,
     }
 
 
