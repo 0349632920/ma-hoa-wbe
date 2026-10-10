@@ -204,4 +204,244 @@
       font-weight: 700;
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
-      background: #1
+      background: #1a1a22;
+      padding: 4px 12px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .kick-info-value.id {
+      color: #fca5a5;
+      background: #3d1a1a;
+      border: 1px solid #dc2626;
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+
+    .kick-warning {
+      background: linear-gradient(135deg, #451a1a, #2d1b1b);
+      border-left: 4px solid #dc2626;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #fca5a5;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+
+    .kick-warning strong { color: #fef2f2; font-weight: 800; }
+
+    .kick-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .kick-btn {
+      flex: 1;
+      padding: 14px 22px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .kick-btn.primary {
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      color: white;
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+    }
+
+    .kick-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(220, 38, 38, 0.8);
+    }
+
+    .kick-btn.secondary {
+      background: #2a2a35;
+      color: #d1d5db;
+    }
+
+    .kick-btn.secondary:hover {
+      background: #38383f;
+      transform: translateY(-2px);
+    }
+
+    .kick-footer {
+      background: #17171c;
+      padding: 14px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #6b7280;
+      font-family: 'JetBrains Mono', monospace;
+      border-top: 1px solid #2a2a35;
+    }
+
+    .kick-footer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #3d1a1a;
+      color: #fca5a5;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 11px;
+      border: 1px solid #dc2626;
+    }
+
+    .particle {
+      position: absolute;
+      font-size: 20px;
+      opacity: 0.4;
+      animation: particleFloat 3s ease-out infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes particleFloat {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .kick-header { padding: 20px 22px; }
+      .kick-body { padding: 24px 22px; }
+      .kick-header h1 { font-size: 20px; }
+      .kick-icon { width: 48px; height: 48px; font-size: 24px; }
+      .kick-actions { flex-direction: column; }
+      .kick-footer { padding: 12px 22px; font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="particle" style="left: 10%; animation-delay: 0s;">💀</div>
+  <div class="particle" style="left: 25%; animation-delay: 0.5s;">⚡</div>
+  <div class="particle" style="left: 45%; animation-delay: 1s;">🔥</div>
+  <div class="particle" style="left: 65%; animation-delay: 1.5s;">💀</div>
+  <div class="particle" style="left: 85%; animation-delay: 2s;">⚡</div>
+
+  <div class="kick-container">
+    <div class="kick-header">
+      <div class="kick-icon">✕</div>
+      <div class="kick-header-text">
+        <h1>Bạn đã bị xóa</h1>
+        <p>You have been deleted from Mã Hóa Tool</p>
+      </div>
+    </div>
+
+    <div class="kick-body">
+      <div class="kick-reason-box">
+        <div class="kick-reason-label">
+          <span>🚫</span>
+          <span>Lý do xóa</span>
+        </div>
+        <div class="kick-reason-text">{{ reason }}</div>
+      </div>
+
+      <div class="kick-info">
+        <div class="kick-info-row">
+          <span class="kick-info-label">🆔 User ID</span>
+          <span class="kick-info-value id">{{ user_id }}</span>
+        </div>
+        <div class="kick-info-row">
+          <span class="kick-info-label">👤 Username</span>
+          <span class="kick-info-value">{{ username }}</span>
+        </div>
+        <div class="kick-info-row">
+          <span class="kick-info-label">👑 Xóa bởi</span>
+          <span class="kick-info-value">{{ deleted_by }}</span>
+        </div>
+        <div class="kick-info-row">
+          <span class="kick-info-label">📅 Thời gian</span>
+          <span class="kick-info-value" id="deleteTime">—</span>
+        </div>
+      </div>
+
+      <div class="kick-warning">
+        ⚠️ <strong>Tài khoản đã bị XÓA VĨNH VIỄN khỏi hệ thống.</strong>
+        Bạn không thể đăng nhập hoặc sử dụng bất kỳ tính năng nào.
+        Mọi dữ liệu (lịch sử, cảnh báo, log) đã bị xóa hoàn toàn.
+      </div>
+
+      <div class="kick-actions">
+        <button class="kick-btn primary" onclick="appeal()">
+          📧 Khiếu nại
+        </button>
+        <button class="kick-btn secondary" onclick="window.location.href='/login'">
+          🚪 Về trang đăng nhập
+        </button>
+      </div>
+    </div>
+
+    <div class="kick-footer">
+      <span>⚡ Mã Hóa Tool — Force Delete System</span>
+      <span class="kick-footer-badge">
+        🔒 DELETED
+      </span>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('deleteTime').textContent = 
+      new Date().toLocaleString('vi-VN');
+
+    function playKickSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [220, 180, 150, 120];
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+          gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.2);
+          osc.start(ctx.currentTime + i * 0.15);
+          osc.stop(ctx.currentTime + i * 0.15 + 0.25);
+        });
+      } catch (e) {}
+    }
+
+    document.addEventListener('click', function playOnce() {
+      playKickSound();
+      document.removeEventListener('click', playOnce);
+    }, { once: true });
+
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        try { playKickSound(); } catch (e) {}
+      }, 500);
+    });
+
+    function appeal() {
+      alert(
+        '📧 Đã ghi nhận yêu cầu khiếu nại!\n\n' +
+        'Mã User ID: {{ user_id }}\n' +
+        'Lý do xóa: {{ reason }}\n\n' +
+        'Admin sẽ xem xét và phản hồi qua email trong 24-48 giờ.\n\n' +
+        'Cảm ơn bạn đã phản hồi.'
+      );
+    }
+  </script>
+</body>
+</html>
