@@ -15,7 +15,6 @@ app.secret_key = os.getenv('SECRET_KEY', 'change-me-in-production')
 app.permanent_session_lifetime = timedelta(days=7)
 
 USERS_FILE = 'users.json'
-
 SUPER_ADMIN_USERNAME = os.getenv('ADMIN_USER', 'admin')
 SUPER_ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 
@@ -323,6 +322,7 @@ def login():
 
         user = users[found_user]
 
+        # Kiểm tra ban
         if user.get('status') == 'banned' and not is_super_admin(found_user):
             return jsonify({
                 'success': False,
@@ -339,13 +339,11 @@ def login():
         log.insert(0, {'action': 'login', 'detail': f'Đăng nhập lần {users[found_user]["login_count"]}', 'time': now})
         users[found_user]['activity_log'] = log[:50]
 
-        users[found_user]['warnings_shown'] = False
         save_users(users)
 
         session.permanent = remember
         session['username'] = found_user
         session['login_time'] = now
-        session['warnings_shown'] = False
 
         warnings = user.get('warnings', [])
 
@@ -400,7 +398,7 @@ def me():
 
 
 # ============================================================
-# BAN & WARN PAGES
+# BAN PAGE (giữ nguyên)
 # ============================================================
 @app.route('/banned')
 def banned_page():
@@ -440,6 +438,9 @@ def banned_page():
     )
 
 
+# ============================================================
+# WARNED PAGE — GIỮ LẠI cho nút "Xem chi tiết"
+# ============================================================
 @app.route('/warned')
 def warned_page():
     if 'username' not in session:
@@ -456,11 +457,7 @@ def warned_page():
         return redirect(url_for('banned_page', user=session['username']))
 
     warnings = user.get('warnings', [])
-
-    if not session.get('warnings_shown') and warnings:
-        return render_template('warned.html', username=session['username'], warnings=warnings)
-
-    return redirect(url_for('index'))
+    return render_template('warned.html', username=session['username'], warnings=warnings)
 
 
 @app.route('/api/acknowledge-warnings', methods=['POST'])
@@ -475,7 +472,7 @@ def acknowledge_warnings():
 
 
 # ============================================================
-# ROUTES CHÍNH
+# ROUTES CHÍNH — KHÔNG CHUYỂN HƯỚNG SANG /WARNED NỮA!
 # ============================================================
 @app.route('/')
 @login_required
@@ -483,15 +480,14 @@ def index():
     users = load_users()
     user = users.get(session['username'], {})
 
+    # CHỈ CHẶN BAN → chuyển trang ban
     if user.get('status') == 'banned' and not is_super_admin(session['username']):
         uname = session.get('username', '')
         session.clear()
         return redirect(url_for('banned_page', user=uname))
 
-    warnings = user.get('warnings', [])
-    if warnings and not session.get('warnings_shown') and not is_super_admin(session['username']):
-        return redirect(url_for('warned_page'))
-
+    # WARN → VẪN VÀO TRANG CHỦ BÌNH THƯỜNG
+    # (JavaScript sẽ tự hiện modal toàn màn hình)
     return render_template(
         'index.html',
         methods=METHODS,
@@ -501,6 +497,9 @@ def index():
     )
 
 
+# ============================================================
+# API PROCESS — CHẶN NẾU BAN/WARN
+# ============================================================
 @app.route('/api/process', methods=['POST'])
 @login_required
 def api_process():
@@ -508,14 +507,30 @@ def api_process():
         users = load_users()
         user = users.get(session['username'], {})
 
+        # BAN
         if user.get('status') == 'banned' and not is_super_admin(session['username']):
-            uname = session.get('username', '')
-            session.clear()
             return jsonify({
-                'success': False, 'error': 'Tài khoản đã bị ban!',
-                'banned': True, 'redirect': f'/banned?user={uname}'
+                'success': False,
+                'error': 'Tài khoản đã bị BAN!',
+                'banned': True,
+                'blocked': True,
+                'ban_info': user.get('ban_info', {}) or {},
+                'username': session['username']
             }), 403
 
+        # WARN
+        warnings = user.get('warnings', [])
+        if warnings and user.get('status') == 'warned' and not is_super_admin(session['username']):
+            return jsonify({
+                'success': False,
+                'error': f'Bạn có {len(warnings)} cảnh báo từ admin!',
+                'warned': True,
+                'blocked': True,
+                'warnings': warnings,
+                'username': session['username']
+            }), 403
+
+        # XỬ LÝ BÌNH THƯỜNG
         data = request.get_json()
         text = data.get('text', '').strip()
         method = data.get('method', 'base64')
@@ -624,14 +639,14 @@ def admin_ban():
         if target == session['username']:
             return jsonify({
                 'success': False,
-                'error': '🚫 KHÔNG THỂ TỰ BAN CHÍNH MÌNH!\n\nBạn là Super Admin duy nhất.'
+                'error': '🚫 KHÔNG THỂ TỰ BAN CHÍNH MÌNH!'
             }), 400
 
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
         if is_super_admin(target):
-            return jsonify({'success': False, 'error': '🚫 Không thể ban Super Admin khác!'}), 403
+            return jsonify({'success': False, 'error': '🚫 Không thể ban Super Admin!'}), 403
 
         users[target]['status'] = 'banned'
         users[target]['ban_info'] = {
@@ -682,10 +697,7 @@ def admin_warn():
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
 
         if target == session['username']:
-            return jsonify({
-                'success': False,
-                'error': '🚫 KHÔNG THỂ TỰ CẢNH BÁO CHÍNH MÌNH!'
-            }), 400
+            return jsonify({'success': False, 'error': '🚫 KHÔNG THỂ TỰ CẢNH BÁO!'}), 400
 
         users = load_users()
         if target not in users:
@@ -797,10 +809,7 @@ def admin_delete():
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
 
         if target == session['username']:
-            return jsonify({
-                'success': False,
-                'error': '🚫 KHÔNG THỂ TỰ XÓA CHÍNH MÌNH!'
-            }), 400
+            return jsonify({'success': False, 'error': '🚫 KHÔNG THỂ TỰ XÓA!'}), 400
 
         users = load_users()
         if target not in users:
