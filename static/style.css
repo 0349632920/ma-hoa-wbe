@@ -3110,3 +3110,22 @@ textarea:focus {
     font-size: 8px;
   }
 }
+/* ═══════════════════════════════════════════
+   NÚT DỊCH
+   ═══════════════════════════════════════════ */
+.btn.translate {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+}
+
+.btn.translate:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn.translate:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
