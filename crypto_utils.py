@@ -19,6 +19,8 @@ import lzma
 import string
 import random
 import re
+import time
+from functools import lru_cache
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -186,7 +188,7 @@ def base58_decode(t):
 
 
 # ════════════════════════════════════════════════════════════
-#  2. NUMERIC (Hex / Binary / Octal / Decimal / ASCII)
+#  2. NUMERIC
 # ════════════════════════════════════════════════════════════
 def hex_encode(t): return ' '.join(format(ord(c), '02x') for c in t)
 def hex_decode(t): return ''.join(chr(int(h, 16)) for h in t.strip().split())
@@ -205,7 +207,7 @@ def ascii_codes_decode(t): return ''.join(chr(int(d)) for d in t.strip().split()
 
 
 # ════════════════════════════════════════════════════════════
-#  3. CLASSICAL (Caesar / ROT / Atbash / Affine / Vigenere / ...)
+#  3. CLASSICAL
 # ════════════════════════════════════════════════════════════
 def caesar_cipher(t, shift):
     r = []
@@ -320,7 +322,7 @@ def autokey_decrypt(t, key):
 
 
 # ════════════════════════════════════════════════════════════
-#  4. TRANSPOSITION (Playfair / Hill / Railfence / Columnar)
+#  4. TRANSPOSITION
 # ════════════════════════════════════════════════════════════
 def _playfair_matrix(key):
     key = key.upper().replace('J', 'I')
@@ -479,7 +481,7 @@ def columnar_decrypt(t, key='KEY'):
 
 
 # ════════════════════════════════════════════════════════════
-#  5. SYMBOLIC (Bacon / Polybius / Morse / Tap / NATO / Pigpen)
+#  5. SYMBOLIC
 # ════════════════════════════════════════════════════════════
 def bacon_encode(t):
     result = []
@@ -586,7 +588,7 @@ def pigpen_decode(t):
 
 
 # ════════════════════════════════════════════════════════════
-#  6. MODERN (AES / XOR / Reverse / Leet)
+#  6. MODERN
 # ════════════════════════════════════════════════════════════
 def xor_cipher(t, key):
     if not key: key = 'KEY'
@@ -617,7 +619,7 @@ def aes_decrypt(t, password):
 
 
 # ════════════════════════════════════════════════════════════
-#  7. HASH (một chiều)
+#  7. HASH
 # ════════════════════════════════════════════════════════════
 def hash_md5(t):     return hashlib.md5(t.encode()).hexdigest()
 def hash_sha1(t):    return hashlib.sha1(t.encode()).hexdigest()
@@ -633,7 +635,7 @@ def hash_crc32(t):   return format(zlib.crc32(t.encode()) & 0xffffffff, '08x')
 
 
 # ════════════════════════════════════════════════════════════
-#  8. WEB (URL / HTML / JS / Unicode / Punycode)
+#  8. WEB
 # ════════════════════════════════════════════════════════════
 def url_encode(t): return urllib.parse.quote(t, safe='')
 def url_decode(t): return urllib.parse.unquote(t)
@@ -663,7 +665,7 @@ def punycode_decode(t): return t.encode().decode('punycode')
 
 
 # ════════════════════════════════════════════════════════════
-#  9. TRANSFER (Quoted-Printable / UUencode / XXencode)
+#  9. TRANSFER
 # ════════════════════════════════════════════════════════════
 def quoted_printable_encode(t): return quopri.encodestring(t.encode()).decode()
 def quoted_printable_decode(t): return quopri.decodestring(t.encode()).decode()
@@ -676,7 +678,7 @@ def xxencode_decode(t): return codecs.decode(t.encode(), 'uu').decode()
 
 
 # ════════════════════════════════════════════════════════════
-#  10. COMPRESSION (Zlib / Gzip / Bz2 / Lzma)
+#  10. COMPRESSION
 # ════════════════════════════════════════════════════════════
 def zlib_encode(t): return base64.b64encode(zlib.compress(t.encode())).decode()
 def zlib_decode(t): return zlib.decompress(base64.b64decode(t)).decode()
@@ -692,14 +694,14 @@ def lzma_decode(t): return lzma.decompress(base64.b64decode(t)).decode()
 
 
 # ════════════════════════════════════════════════════════════
-#  11. IDENTITY (UUID / Random)
+#  11. IDENTITY
 # ════════════════════════════════════════════════════════════
 def uuid_gen(t): return str(uuid.uuid4())
 def random_hex(t): return ''.join(random.choices('0123456789abcdef', k=32))
 
 
 # ════════════════════════════════════════════════════════════
-#  12. STYLE (JSON / Backslash / Unicode style / ...)
+#  12. STYLE
 # ════════════════════════════════════════════════════════════
 def json_escape_encode(t): return json.dumps(t)[1:-1]
 def json_escape_decode(t): return json.loads(f'"{t}"')
@@ -769,7 +771,7 @@ def invisible_decode(t): return t.replace('\u200b', ' ')
 
 
 # ════════════════════════════════════════════════════════════
-#  13. VIETNAMESE (Telex mở rộng)
+#  13. VIETNAMESE
 # ════════════════════════════════════════════════════════════
 VIET_MAP = {
     'á': ('a','s'), 'à': ('a','f'), 'ả': ('a','r'), 'ã': ('a','x'), 'ạ': ('a','j'),
@@ -829,7 +831,7 @@ def viet_uni_decode(t):
 
 
 # ════════════════════════════════════════════════════════════
-#  14. TRANSLATE (Anh ⇄ Việt)
+#  14. TRANSLATE (Anh ⇄ Việt) — có retry + cache
 # ════════════════════════════════════════════════════════════
 LANGUAGES = {
     "en": "Tiếng Anh",
@@ -837,26 +839,59 @@ LANGUAGES = {
 }
 
 
-def translate(text: str, source: str = "auto", target: str = "en") -> str:
-    """Dịch văn bản. source='auto'|'en'|'vi', target='en'|'vi'."""
+def translate(text: str, source: str = "auto", target: str = "en",
+              max_retries: int = 3) -> str:
+    """
+    Dịch văn bản với retry + delay khi bị rate limit.
+    - source: 'auto' | 'en' | 'vi'
+    - target: 'en' | 'vi'
+    - max_retries: số lần thử lại khi gặp rate limit
+    """
     if not text:
         raise ValueError("Văn bản trống!")
     if target not in LANGUAGES:
         raise ValueError(f"Ngôn ngữ đích không hỗ trợ: {target}")
-    try:
-        return GoogleTranslator(source=source, target=target).translate(text)
-    except Exception as e:
-        raise ValueError(f"Lỗi dịch: {e}")
+
+    last_err = None
+    for attempt in range(max_retries):
+        try:
+            return GoogleTranslator(source=source, target=target).translate(text)
+        except Exception as e:
+            last_err = e
+            err_msg = str(e).lower()
+
+            # Rate limit → đợi rồi thử lại
+            if "too many requests" in err_msg or "429" in err_msg:
+                wait = 2 ** attempt  # 1s, 2s, 4s
+                print(f"⏳ Rate limit, đợi {wait}s rồi thử lại "
+                      f"(lần {attempt+1}/{max_retries})...")
+                time.sleep(wait)
+                continue
+
+            # Lỗi khác → báo luôn
+            raise ValueError(f"Lỗi dịch: {e}")
+
+    raise ValueError(
+        "Google Translate đang giới hạn tần suất. "
+        "Vui lòng đợi vài giây rồi thử lại. "
+        f"Chi tiết: {last_err}"
+    )
+
+
+@lru_cache(maxsize=500)
+def translate_cached(text: str, source: str, target: str) -> str:
+    """Cache kết quả dịch — tránh gọi Google cho cùng text."""
+    return translate(text, source=source, target=target)
 
 
 def to_english(text: str) -> str:
     """Dịch sang tiếng Anh (auto-detect nguồn)."""
-    return translate(text, source="auto", target="en")
+    return translate_cached(text, "auto", "en")
 
 
 def to_vietnamese(text: str) -> str:
     """Dịch sang tiếng Việt (auto-detect nguồn)."""
-    return translate(text, source="auto", target="vi")
+    return translate_cached(text, "auto", "vi")
 
 
 def detect_language(text: str) -> str:
@@ -882,7 +917,7 @@ def auto_translate(text: str) -> dict:
     else:
         target = "en"
 
-    result = translate(text, source=detected if detected != "unknown" else "auto", target=target)
+    result = translate_cached(text, detected if detected != "unknown" else "auto", target)
     return {"detected": detected, "target": target, "result": result}
 
 
