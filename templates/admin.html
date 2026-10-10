@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>👑 Admin Panel — Mã Hóa Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 25px;
+    }
+
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .admin-header {
+      background: #fff;
+      border-radius: 20px;
+      padding: 25px 32px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .admin-title {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .crown-icon {
+      font-size: 42px;
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 18px;
+      box-shadow: 0 8px 20px rgba(253,160,133,0.4);
+    }
+
+    .admin-title h1 {
+      font-size: 26px;
+      color: #333;
+      font-weight: 800;
+    }
+
+    .admin-title p {
+      color: #888;
+      font-size: 14px;
+      margin-top: 3px;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-back, .btn-logout {
+      padding: 11px 22px;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: white;
+      transition: 0.3s;
+    }
+
+    .btn-back { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .btn-logout { background: linear-gradient(135deg, #fa709a, #fee140); }
+
+    .btn-back:hover, .btn-logout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      transition: 0.3s;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      border-color: #667eea;
+    }
+
+    .stat-icon {
+      font-size: 32px;
+      width: 55px;
+      height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.blue { background: #e0e5ff; }
+    .stat-icon.green { background: #e0f7ec; }
+    .stat-icon.yellow { background: #fff3cd; }
+    .stat-icon.red { background: #ffebee; }
+    .stat-icon.purple { background: #f0e5ff; }
+    .stat-icon.orange { background: #ffe5e0; }
+
+    .stat-info h3 {
+      font-size: 26px;
+      color: #333;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-info p {
+      font-size: 13px;
+      color: #888;
+      font-weight: 600;
+    }
+
+    /* Main panel */
+    .panel {
+      background: #fff;
+      border-radius: 20px;
+      padding: 25px 30px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .panel-header h2 {
+      font-size: 20px;
+      color: #333;
+      font-weight: 800;
+    }
+
+    .panel-tools {
+      display: flex;
+      gap: 10px;
+    }
+
+    .search-user {
+      padding: 10px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      min-width: 220px;
+      transition: 0.3s;
+    }
+
+    .search-user:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+    }
+
+    .btn-refresh {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+
+    .btn-refresh:hover { transform: translateY(-2px); }
+
+    /* Users table */
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .users-table thead {
+      background: #f7f7fb;
+    }
+
+    .users-table th {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #e5e5f0;
+    }
+
+    .users-table td {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: #333;
+      border-bottom: 1px solid #f0f0f5;
+    }
+
+    .users-table tbody tr {
+      transition: 0.2s;
+    }
+
+    .users-table tbody tr:hover {
+      background: #fafbff;
+    }
+
+    .users-table tbody tr.banned-row {
+      background: #fff5f5;
+    }
+
+    .users-table tbody tr.warned-row {
+      background: #fffbf0;
+    }
+
+    /* User cell */
+    .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar-sm {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .user-cell-info strong {
+      display: block;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .user-cell-info small {
+      font-size: 11px;
+      color: #999;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge.admin { background: #fff3cd; color: #856404; }
+    .badge.user { background: #e0e5ff; color: #4c51bf; }
+    .badge.active { background: #e0f7ec; color: #0a6b57; }
+    .badge.warned { background: #fff3cd; color: #856404; }
+    .badge.banned { background: #ffebee; color: #c0392b; }
+
+    /* Action buttons */
+    .actions-cell {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+      color: white;
+    }
+
+    .action-btn:hover { transform: translateY(-1px); }
+    .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .action-btn.ban { background: #e74c3c; }
+    .action-btn.unban { background: #27ae60; }
+    .action-btn.warn { background: #f39c12; }
+    .action-btn.reset { background: #3498db; }
+    .action-btn.delete { background: #95a5a6; }
+    .action-btn.detail { background: #667eea; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,20,40,0.65);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.3s;
+    }
+
+    .modal-overlay.show { opacity: 1; visibility: visible; }
+
+    .modal {
+      background: white;
+      border-radius: 20px;
+      max-width: 550px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+      transform: scale(0.9);
+      transition: 0.3s;
+    }
+
+    .modal-overlay.show .modal { transform: scale(1); }
+
+    .modal-header {
+      padding: 22px 26px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .modal-header.warn-header { background: linear-gradient(135deg, #f39c12, #f1c40f); }
+    .modal-header.ban-header { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .modal-header.detail-header { background: linear-gradient(135deg, #11998e, #38ef7d); }
+
+    .modal-header h3 { font-size: 19px; font-weight: 800; margin-bottom: 4px; }
+    .modal-header p { font-size: 13px; opacity: 0.9; }
+
+    .modal-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255,255,255,0.35);
+      transform: rotate(90deg);
+    }
+
+    .modal-body {
+      padding: 24px 26px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: 0.3s;
+    }
+
+    .form-group textarea { min-height: 90px; resize: vertical; }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      padding: 18px 26px;
+      border-top: 1px solid #eee;
+      background: #fafbff;
+      justify-content: flex-end;
+    }
+
+    .btn-modal {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.3s;
+      color: white;
+    }
+
+    .btn-modal.cancel { background: #e5e5f0; color: #555; }
+    .btn-modal.confirm-warn { background: linear-gradient(135deg, #f39c12, #f1c40f); }
+    .btn-modal.confirm-ban { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+    .btn-modal:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+    /* Detail modal */
+    .detail-section {
+      margin-bottom: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #f0f0f5;
+    }
+
+    .detail-section:last-child { border-bottom: none; }
+
+    .detail-section h4 {
+      font-size: 13px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+
+    .detail-row span:first-child { color: #888; }
+    .detail-row span:last-child { color: #333; font-weight: 600; }
+
+    .warning-item {
+      padding: 10px 14px;
+      background: #fff8e1;
+      border-left: 3px solid #f39c12;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .warning-item small { color: #999; display: block; margin-top: 4px; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #333;
+      color: white;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-size: 15px;
+      opacity: 0;
+      transition: 0.4s;
+      pointer-events: none;
+      z-index: 9999;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.35);
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* Responsive */
+    @media (max-width: 800px) {
+      .users-table { display: block; overflow-x: auto; white-space: nowrap; }
+    }
+
+    @media (max-width: 500px) {
+      body { padding: 15px; }
+      .admin-header { padding: 20px; }
+      .crown-icon { width: 55px; height: 55px; font-size: 32px; }
+      .admin-title h1 { font-size: 20px; }
+      .panel { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- Header -->
+    <div class="admin-header">
+      <div class="admin-title">
+        <div class="crown-icon">👑</div>
+        <div>
+          <h1>Admin Panel</h1>
+          <p>Xin chào, <strong>{{ username }}</strong> — Quản trị hệ thống</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="btn-back" onclick="window.location.href='/'">🔐 Về trang chính</button>
+        <button class="btn-logout" onclick="logout()">🚪 Đăng xuất</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card" onclick="filterByStatus('all')">
+        <div class="stat-icon blue">👥</div>
+        <div class="stat-info">
+          <h3 id="statTotal">-</h3>
+          <p>Tổng người dùng</p>
+        </div>
+      </div>
+      <div class="stat-card" onclick="filterByStatus('active')">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info">
+          <h3 id="statActive">-</h3>
+          <p>Đang hoạt động</p>
+        </div>
+      </div>
+      <div class="stat-card" onclick="filterByStatus('warned')">
+        <div class="stat-icon yellow">⚠️</div>
+        <div class="stat-info">
+          <h3 id="statWarned">-</h3>
+          <p>Bị cảnh báo</p>
+        </div>
+      </div>
+      <div class="stat-card" onclick="filterByStatus('banned')">
+        <div class="stat-icon red">🚫</div>
+        <div class="stat-info">
+          <h3 id="statBanned">-</h3>
+          <p>Bị ban</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">👑</div>
+        <div class="stat-info">
+          <h3 id="statAdmins">-</h3>
+          <p>Admin</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange">🔍</div>
+        <div class="stat-info">
+          <h3 id="statSuspicious">-</h3>
+          <p>Nghi ngờ</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2 id="panelTitle">📋 Danh sách người dùng</h2>
+        <div class="panel-tools">
+          <input type="text" class="search-user" id="searchUser"
+                 placeholder="🔍 Tìm username...">
+          <button class="btn-refresh" onclick="loadUsers()">🔄 Làm mới</button>
+        </div>
+      </div>
+
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Người dùng</th>
+            <th>Vai trò</th>
+            <th>Trạng thái</th>
+            <th>Số lần đăng nhập</th>
+            <th>Cảnh báo</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:#999">Đang tải...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CẢNH BÁO ===== -->
+  <div class="modal-overlay" id="warnModal">
+    <div class="modal">
+      <div class="modal-header warn-header">
+        <div>
+          <h3>⚠️ Cảnh báo người dùng</h3>
+          <p id="warnTargetName">—</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('warnModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>📝 Lý do cảnh báo:</label>
+          <textarea id="warnReason" placeholder="VD: Spam yêu cầu, sử dụng từ ngữ không phù hợp..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('warnModal')">Hủy</button>
+        <button class="btn-modal confirm-warn" onclick="confirmWarn()">⚠️ Gửi cảnh báo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL BAN ===== -->
+  <div class="modal-overlay" id="banModal">
+    <div class="modal">
+      <div class="modal-header ban-header">
+        <div>
+          <h3>🚫 Ban người dùng</h3>
+          <p id="banTargetName">—</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('banModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>📝 Lý do ban:</label>
+          <textarea id="banReason" placeholder="VD: Vi phạm nghiêm trọng, spam hệ thống..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('banModal')">Hủy</button>
+        <button class="btn-modal confirm-ban" onclick="confirmBan()">🚫 Ban ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CHI TIẾT ===== -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal">
+      <div class="modal-header detail-header">
+        <div>
+          <h3>👤 Chi tiết người dùng</h3>
+          <p id="detailTargetName">—</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+      </div>
+      <div class="modal-body" id="detailBody">Đang tải...</div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('detailModal')">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let allUsers = [];
+    let currentFilter = 'all';
+    let pendingTarget = null;
+
+    // ===== LOAD STATS + USERS =====
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('statTotal').textContent = data.stats.total;
+          document.getElementById('statActive').textContent = data.stats.active;
+          document.getElementById('statWarned').textContent = data.stats.warned;
+          document.getElementById('statBanned').textContent = data.stats.banned;
+          document.getElementById('statAdmins').textContent = data.stats.admins;
+          document.getElementById('statSuspicious').textContent = data.stats.suspicious;
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadUsers() {
+      try {
+        const res = await fetch('/api/admin/users');
+        const data = await res.json();
+        if (data.success) {
+          allUsers = data.users;
+          renderUsers();
+        }
+      } catch (e) {
+        document.getElementById('usersTableBody').innerHTML =
+          '<tr><td colspan="6" style="text-align:center;padding:40px;color:#e74c3c">❌ Lỗi tải dữ liệu</td></tr>';
+      }
+    }
+
+    function renderUsers() {
+      const search = document.getElementById('searchUser').value.toLowerCase().trim();
+      const tbody = document.getElementById('usersTableBody');
+
+      let filtered = allUsers.filter(u => {
+        if (currentFilter !== 'all' && u.status !== currentFilter) return false;
+        if (search && !u.username.toLowerCase().includes(search)) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#999">😕 Không có người dùng nào</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(u => {
+        const rowClass = u.status === 'banned' ? 'banned-row' :
+                        u.status === 'warned' ? 'warned-row' : '';
+        const roleBadge = u.role === 'admin'
+          ? '<span class="badge admin">👑 Admin</span>'
+          : '<span class="badge user">👤 User</span>';
+        const statusBadge = u.status === 'banned'
+          ? '<span class="badge banned">🚫 Bị ban</span>'
+          : u.status === 'warned'
+          ? '<span class="badge warned">⚠️ Cảnh báo</span>'
+          : '<span class="badge active">✅ Hoạt động</span>';
+
+        // Actions
+        let actions = '';
+        if (u.role !== 'admin') {
+          if (u.status === 'banned') {
+            actions += `<button class="action-btn unban" onclick="unbanUser('${u.username}')">✅ Gỡ ban</button>`;
+          } else {
+            actions += `<button class="action-btn warn" onclick="openWarnModal('${u.username}')">⚠️ Cảnh báo</button>`;
+            actions += `<button class="action-btn ban" onclick="openBanModal('${u.username}')">🚫 Ban</button>`;
+          }
+          if (u.warnings_count > 0) {
+            actions += `<button class="action-btn reset" onclick="resetWarnings('${u.username}')">🔄 Reset</button>`;
+          }
+          actions += `<button class="action-btn delete" onclick="deleteUser('${u.username}')">🗑️</button>`;
+        }
+        actions += `<button class="action-btn detail" onclick="showDetail('${u.username}')">👁️</button>`;
+
+        return `
+          <tr class="${rowClass}">
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar-sm">${u.username[0].toUpperCase()}</div>
+                <div class="user-cell-info">
+                  <strong>${escapeHtml(u.username)}</strong>
+                  <small>${u.last_login ? 'Lần cuối: ' + formatTime(u.last_login) : 'Chưa đăng nhập'}</small>
+                </div>
+              </div>
+            </td>
+            <td>${roleBadge}</td>
+            <td>${statusBadge}</td>
+            <td><strong>${u.login_count}</strong></td>
+            <td>${u.warnings_count > 0
+              ? `<span class="badge warned">${u.warnings_count} cảnh báo</span>`
+              : '<span style="color:#999">—</span>'}</td>
+            <td><div class="actions-cell">${actions}</div></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ===== FILTER =====
+    function filterByStatus(status) {
+      currentFilter = status;
+      const titles = {
+        'all': '📋 Danh sách người dùng',
+        'active': '✅ Người dùng đang hoạt động',
+        'warned': '⚠️ Người dùng bị cảnh báo',
+        'banned': '🚫 Người dùng bị ban'
+      };
+      document.getElementById('panelTitle').textContent = titles[status] || titles['all'];
+      renderUsers();
+    }
+
+    // ===== SEARCH =====
+    document.getElementById('searchUser').addEventListener('input', renderUsers);
+
+    // ===== WARN =====
+    function openWarnModal(username) {
+      pendingTarget = username;
+      document.getElementById('warnTargetName').textContent = username;
+      document.getElementById('warnReason').value = '';
+      document.getElementById('warnModal').classList.add('show');
+    }
+
+    async function confirmWarn() {
+      const reason = document.getElementById('warnReason').value.trim();
+      if (!reason) {
+        showToast('⚠️ Vui lòng nhập lý do!', true);
+        return;
+      }
+      try {
+        const res = await fetch('/api/admin/warn', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: pendingTarget, reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('⚠️ ' + data.message);
+          closeModal('warnModal');
+          loadUsers();
+          loadStats();
+        } else {
+          showToast('❌ ' + data.error, true);
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối!', true);
+      }
+    }
+
+    // ===== BAN =====
+    function openBanModal(username) {
+      pendingTarget = username;
+      document.getElementById('banTargetName').textContent = username;
+      document.getElementById('banReason').value = '';
+      document.getElementById('banModal').classList.add('show');
+    }
+
+    async function confirmBan() {
+      const reason = document.getElementById('banReason').value.trim() || 'Vi phạm điều khoản';
+      try {
+        const res = await fetch('/api/admin/ban', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: pendingTarget, reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('🚫 ' + data.message);
+          closeModal('banModal');
+          loadUsers();
+          loadStats();
+        } else {
+          showToast('❌ ' + data.error, true);
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối!', true);
+      }
+    }
+
+    // ===== UNBAN =====
+    async function unbanUser(username) {
+      if (!confirm(`Gỡ ban cho "${username}"?`)) return;
+      try {
+        const res = await fetch('/api/admin/unban', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✅ ' + data.message);
+          loadUsers();
+          loadStats();
+        } else {
+          showToast('❌ ' + data.error, true);
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối!', true);
+      }
+    }
+
+    // ===== RESET WARNINGS =====
+    async function resetWarnings(username) {
+      if (!confirm(`Xóa hết cảnh báo của "${username}"?`)) return;
+      try {
+        const res = await fetch('/api/admin/reset-warnings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('🔄 ' + data.message);
+          loadUsers();
+          loadStats();
+        } else {
+          showToast('❌ ' + data.error, true);
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối!', true);
+      }
+    }
+
+    // ===== DELETE =====
+    async function deleteUser(username) {
+      if (!confirm(`⚠️ XÓA VĨNH VIỄN tài khoản "${username}"?\n\nKhông thể hoàn tác!`)) return;
+      try {
+        const res = await fetch('/api/admin/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('🗑️ ' + data.message);
+          loadUsers();
+          loadStats();
+        } else {
+          showToast('❌ ' + data.error, true);
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối!', true);
+      }
+    }
+
+    // ===== DETAIL =====
+    async function showDetail(username) {
+      document.getElementById('detailTargetName').textContent = username;
+      document.getElementById('detailBody').innerHTML = 'Đang tải...';
+      document.getElementById('detailModal').classList.add('show');
+
+      try {
+        const res = await fetch(`/api/admin/user/${username}`);
+        const data = await res.json();
+        if (!data.success) {
+          document.getElementById('detailBody').innerHTML = '❌ ' + data.error;
+          return;
+        }
+
+        const u = data.user;
+        const warningsHtml = u.warnings.length > 0
+          ? u.warnings.map(w => `
+              <div class="warning-item">
+                ⚠️ ${escapeHtml(w.reason)}
+                <small>${formatTime(w.time)} — bởi ${w.by}</small>
+              </div>
+            `).join('')
+          : '<p style="color:#999;font-size:13px">Không có cảnh báo nào</p>';
+
+        const logsHtml = u.activity_log.length > 0
+          ? u.activity_log.slice(0, 10).map(l => `
+              <div class="detail-row">
+                <span>${escapeHtml(l.action)}</span>
+                <span>${formatTime(l.time)}</span>
+              </div>
+            `).join('')
+          : '<p style="color:#999;font-size:13px">Không có log</p>';
+
+        document.getElementById('detailBody').innerHTML = `
+          <div class="detail-section">
+            <h4>📌 Thông tin cơ bản</h4>
+            <div class="detail-row"><span>Username:</span><span>${escapeHtml(u.username)}</span></div>
+            <div class="detail-row"><span>Vai trò:</span><span>${u.role}</span></div>
+            <div class="detail-row"><span>Trạng thái:</span><span>${u.status}</span></div>
+            <div class="detail-row"><span>Ngày tạo:</span><span>${formatTime(u.created_at)}</span></div>
+            <div class="detail-row"><span>Lần đăng nhập cuối:</span><span>${formatTime(u.last_login)}</span></div>
+            <div class="detail-row"><span>Số lần đăng nhập:</span><span>${u.login_count}</span></div>
+            <div class="detail-row"><span>Hoạt động gần đây:</span><span>${u.suspicious_score}/5 phút</span></div>
+          </div>
+
+          ${u.ban_info ? `
+            <div class="detail-section">
+              <h4>🚫 Thông tin ban</h4>
+              <div class="detail-row"><span>Lý do:</span><span>${escapeHtml(u.ban_info.reason)}</span></div>
+              <div class="detail-row"><span>Thời gian:</span><span>${formatTime(u.ban_info.time)}</span></div>
+              <div class="detail-row"><span>Bởi:</span><span>${escapeHtml(u.ban_info.by)}</span></div>
+            </div>
+          ` : ''}
+
+          <div class="detail-section">
+            <h4>⚠️ Cảnh báo (${u.warnings.length})</h4>
+            ${warningsHtml}
+          </div>
+
+          <div class="detail-section">
+            <h4>📊 Hoạt động gần đây</h4>
+            ${logsHtml}
+          </div>
+        `;
+      } catch (e) {
+        document.getElementById('detailBody').innerHTML = '❌ Lỗi tải chi tiết!';
+      }
+    }
+
+    // ===== MODAL UTILS =====
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('show');
+      });
+    });
+
+    // ===== LOGOUT =====
+    async function logout() {
+      if (!confirm('Đăng xuất khỏi admin panel?')) return;
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/login';
+    }
+
+    // ===== HELPERS =====
+    function formatTime(iso) {
+      if (!iso) return '—';
+      try {
+        return new Date(iso).toLocaleString('vi-VN');
+      } catch { return iso; }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      })[c]);
+    }
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = isError ? '#e74c3c' : '#27ae60';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ===== INIT =====
+    loadStats();
+    loadUsers();
+    setInterval(loadStats, 30000); // refresh stats mỗi 30s
+  </script>
+</body>
+</html>
