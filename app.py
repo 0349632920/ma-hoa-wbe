@@ -1,5 +1,9 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from crypto_utils import process, METHODS, ONE_WAY_ONLY
+from crypto_utils import (
+    process, METHODS, ONE_WAY_ONLY,
+    translate, to_english, to_vietnamese, auto_translate, detect_language,
+    LANGUAGES,
+)
 from dotenv import load_dotenv
 from functools import wraps
 from datetime import datetime, timedelta
@@ -539,6 +543,27 @@ def log_activity(username, action, detail=''):
 
 
 # ============================================================
+# FORMAT DURATION
+# ============================================================
+def _format_duration(delta: timedelta) -> str:
+    """Format timedelta thành chuỗi đẹp: '1 giờ 30 phút', '3 ngày'..."""
+    total_seconds = int(delta.total_seconds())
+    days = total_seconds // 86400
+    hours = (total_seconds % 86400) // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+
+    parts = []
+    if days:    parts.append(f'{days} ngày')
+    if hours:   parts.append(f'{hours} giờ')
+    if minutes: parts.append(f'{minutes} phút')
+    if not parts and seconds:
+        parts.append(f'{seconds} giây')
+
+    return ' '.join(parts) if parts else '0 phút'
+
+
+# ============================================================
 # DECORATORS
 # ============================================================
 def login_required(f):
@@ -592,7 +617,6 @@ def login_page():
     if 'username' in session:
         users = load_users()
         user = users.get(session['username'], {})
-        # User bị xóa
         if session['username'] not in users:
             session.clear()
             return redirect(url_for('login_page'))
@@ -785,7 +809,6 @@ def me():
     users = load_users()
     username = session['username']
 
-    # ===== USER BỊ XÓA — KICK =====
     if username not in users:
         session.clear()
         return jsonify({
@@ -878,6 +901,7 @@ def banned_page():
             ban_until_display = ban_until[:19].replace('T', ' ')
 
     is_temp_ban = ban_info.get('is_temp_ban', False)
+    duration_label = ban_info.get('duration_label', 'Vĩnh viễn')
 
     return render_template(
         'banned.html',
@@ -889,12 +913,13 @@ def banned_page():
         ban_id=ban_id,
         ban_until_display=ban_until_display,
         ban_until_iso=ban_until_iso,
-        is_temp_ban=is_temp_ban
+        is_temp_ban=is_temp_ban,
+        duration_label=duration_label
     )
 
 
 # ============================================================
-# TRANG BỊ ÉP BUỘC XÓA (Roblox style)
+# TRANG BỊ ÉP BUỘC XÓA
 # ============================================================
 @app.route('/deleted-force')
 def deleted_force_page():
@@ -913,7 +938,7 @@ def deleted_force_page():
 
 
 # ============================================================
-# DELETED PAGE (user tự xác nhận)
+# DELETED PAGE
 # ============================================================
 @app.route('/deleted')
 def deleted_page():
@@ -968,8 +993,8 @@ def confirm_delete():
     username = session['username']
     if username not in users:
         session.clear()
-        return jsonify({'success': False, 'error': 'Tài khoản không tồn tại!'}), 404    
-        user = users[username]
+        return jsonify({'success': False, 'error': 'Tài khoản không tồn tại!'}), 404
+    user = users[username]
     if user.get('status') != 'pending_delete':
         return jsonify({'success': False, 'error': 'Không ở trạng thái chờ xóa!'}), 400
 
@@ -1029,7 +1054,6 @@ def index():
     users = load_users()
     username = session.get('username', '')
 
-    # User bị xóa
     if username not in users:
         session.clear()
         return redirect(url_for('deleted_force_page', user=username))
@@ -1054,6 +1078,84 @@ def index():
     )
 
 
+# ============================================================
+# TRANG DỊCH THUẬT
+# ============================================================
+@app.route('/translate')
+@login_required
+def translate_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+    return render_template('translate.html')
+
+
+# ============================================================
+# API DỊCH THUẬT
+# ============================================================
+@app.route('/api/translate', methods=['GET', 'POST'])
+@login_required
+def api_translate():
+    if request.method == 'GET':
+        return jsonify({
+            'languages': LANGUAGES,
+            'modes': ['manual', 'auto']
+        })
+
+    data = request.get_json(silent=True) or request.form
+    text   = (data.get('text')   or '').strip()
+    source = (data.get('source') or 'auto').strip()
+    target = (data.get('target') or 'en').strip()
+    mode   = (data.get('mode')   or 'manual').strip().lower()
+
+    if not text:
+        return jsonify({'error': 'Văn bản trống!'}), 400
+
+    try:
+        if mode == 'auto':
+            info = auto_translate(text)
+            return jsonify({
+                'result':   info['result'],
+                'source':   info['detected'],
+                'target':   info['target'],
+                'detected': info['detected'],
+            })
+
+        if target not in LANGUAGES:
+            return jsonify({'error': f'Ngôn ngữ đích không hỗ trợ: {target}'}), 400
+
+        result = translate(text, source=source, target=target)
+        return jsonify({
+            'result': result,
+            'source': source,
+            'target': target,
+        })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'Lỗi server: {e}'}), 500
+
+
+@app.route('/api/detect', methods=['POST'])
+@login_required
+def api_detect():
+    data = request.get_json(silent=True) or request.form
+    text = (data.get('text') or '').strip()
+    if not text:
+        return jsonify({'error': 'Văn bản trống!'}), 400
+    try:
+        return jsonify({'detected': detect_language(text)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/process', methods=['POST'])
 @login_required
 def api_process():
@@ -1061,7 +1163,6 @@ def api_process():
         users = load_users()
         username = session['username']
 
-        # User bị xóa
         if username not in users:
             session.clear()
             return jsonify({
@@ -1193,14 +1294,33 @@ def admin_users():
 # ============================================================
 # ADMIN ACTIONS
 # ============================================================
+
+# ════════════════════════════════════════════════════════════
+#  🚫 BAN với THỜI GIAN TÙY CHỈNH
+# ════════════════════════════════════════════════════════════
 @app.route('/api/admin/ban', methods=['POST'])
 @super_admin_required
 def admin_ban():
+    """
+    Ban user với thời gian tùy chỉnh.
+    Body:
+        {
+            "username": "user1",
+            "reason":   "Spam",
+            "duration": "15min" | "30min" | "1h" | "6h" | "12h" |
+                        "1day" | "3days" | "7days" | "30days" |
+                        "permanent" | "custom",
+            "custom_value": 5,          # chỉ dùng khi duration="custom"
+            "custom_unit":  "hours"     # 'minutes' | 'hours' | 'days'
+        }
+    """
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
         reason = data.get('reason', 'Vi phạm điều khoản').strip() or 'Vi phạm điều khoản'
         duration = data.get('duration', 'permanent')
+        custom_value = data.get('custom_value')
+        custom_unit = data.get('custom_unit', 'hours')
 
         if not target:
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
@@ -1214,24 +1334,80 @@ def admin_ban():
             return jsonify({'success': False, 'error': '🚫 Không thể ban Super Admin!'}), 403
 
         target_id = users[target].get('user_id', '—')
+        now = datetime.now()
+
+        # ═══ KHỞI TẠO BAN_INFO ═══
         ban_info = {
             'user_id': target_id,
             'reason': reason,
-            'time': datetime.now().isoformat(),
-            'by': session['username']
+            'time': now.isoformat(),
+            'by': session['username'],
+            'duration_label': 'Vĩnh viễn',
+            'is_temp_ban': False
         }
-        if duration == '1day':
-            ban_info['ban_until'] = (datetime.now() + timedelta(days=1)).isoformat()
-            ban_info['is_temp_ban'] = True
-        else:
+
+        # ═══ MAP DURATION → TIMEDELTA ═══
+        duration_map = {
+            '15min':  timedelta(minutes=15),
+            '30min':  timedelta(minutes=30),
+            '1h':     timedelta(hours=1),
+            '6h':     timedelta(hours=6),
+            '12h':    timedelta(hours=12),
+            '1day':   timedelta(days=1),
+            '3days':  timedelta(days=3),
+            '7days':  timedelta(days=7),
+            '30days': timedelta(days=30),
+        }
+
+        if duration == 'permanent':
+            ban_info['duration_label'] = 'Vĩnh viễn'
             ban_info['is_temp_ban'] = False
 
+        elif duration in duration_map:
+            delta = duration_map[duration]
+            ban_info['ban_until'] = (now + delta).isoformat()
+            ban_info['is_temp_ban'] = True
+            ban_info['duration_label'] = _format_duration(delta)
+
+        elif duration == 'custom':
+            # Validate custom
+            try:
+                custom_value = int(custom_value)
+            except (TypeError, ValueError):
+                return jsonify({'success': False, 'error': 'Giá trị thời gian không hợp lệ!'}), 400
+
+            if custom_value <= 0:
+                return jsonify({'success': False, 'error': 'Thời gian phải > 0!'}), 400
+            if custom_value > 3650:
+                return jsonify({'success': False, 'error': 'Thời gian tối đa 3650!'}), 400
+
+            if custom_unit == 'minutes':
+                delta = timedelta(minutes=custom_value)
+            elif custom_unit == 'hours':
+                delta = timedelta(hours=custom_value)
+            elif custom_unit == 'days':
+                delta = timedelta(days=custom_value)
+            else:
+                return jsonify({'success': False, 'error': 'Đơn vị không hợp lệ!'}), 400
+
+            ban_info['ban_until'] = (now + delta).isoformat()
+            ban_info['is_temp_ban'] = True
+            ban_info['duration_label'] = _format_duration(delta)
+
+        else:
+            return jsonify({'success': False, 'error': f'Thời gian không hợp lệ: {duration}'}), 400
+
+        # ═══ LƯU ═══
         users[target]['status'] = 'banned'
         users[target]['ban_info'] = ban_info
         save_user(target, users[target])
 
-        msg = f'🚫 Đã ban user ID {target_id}' + (' (1 ngày)' if duration == '1day' else ' (vĩnh viễn)')
-        return jsonify({'success': True, 'message': msg, 'ban_info': ban_info})
+        msg = f'🚫 Đã ban user ID {target_id} ({ban_info["duration_label"]})'
+        return jsonify({
+            'success': True,
+            'message': msg,
+            'ban_info': ban_info
+        })
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -1297,7 +1473,8 @@ def admin_warn():
                 'time': datetime.now().isoformat(),
                 'by': session['username'],
                 'ban_until': (datetime.now() + timedelta(days=1)).isoformat(),
-                'is_temp_ban': True
+                'is_temp_ban': True,
+                'duration_label': '1 ngày'
             }
 
         save_user(target, users[target])
@@ -1394,7 +1571,6 @@ def admin_stats():
 @app.route('/api/admin/delete', methods=['POST'])
 @super_admin_required
 def admin_delete():
-    """Đánh dấu xóa — user phải xác nhận"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -1434,7 +1610,6 @@ def admin_delete():
 @app.route('/api/admin/force-delete', methods=['POST'])
 @super_admin_required
 def admin_force_delete():
-    """ÉP BUỘC XÓA — Xóa vĩnh viễn ngay lập tức + KICK user"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -1461,11 +1636,9 @@ def admin_force_delete():
                 'error': f'⚠️ Bạn phải gõ chính xác ID "{target_id}" để xác nhận!'
             }), 400
 
-        # Log trước khi xóa
         log_activity(session['username'], 'force_delete',
                      f"Ép buộc xóa user ID {target_id} — Lý do: {reason}")
 
-        # XÓA VĨNH VIỄN
         print(f"⚡ ÉP BUỘC XÓA: {target} (ID: {target_id}) — Bởi: {session['username']} — Lý do: {reason}")
         delete_user_db(target)
 
