@@ -1,3 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔐 Mã Hóa Tool</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- SPLASH SCREEN -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-bg">
+      <span class="floating-emoji" style="--delay:0s;--x:10%;--y:20%">🔐</span>
+      <span class="floating-emoji" style="--delay:0.5s;--x:80%;--y:15%">🔒</span>
+      <span class="floating-emoji" style="--delay:1s;--x:20%;--y:75%">🔑</span>
+      <span class="floating-emoji" style="--delay:1.5s;--x:75%;--y:80%">🛡️</span>
+      <span class="floating-emoji" style="--delay:0.8s;--x:50%;--y:10%">💻</span>
+      <span class="floating-emoji" style="--delay:1.2s;--x:15%;--y:50%">⚡</span>
+      <span class="floating-emoji" style="--delay:0.3s;--x:85%;--y:45%">🎯</span>
+      <span class="floating-emoji" style="--delay:1.7s;--x:55%;--y:85%">✨</span>
+    </div>
+    <div class="splash-content">
+      <div class="splash-logo">
+        <div class="logo-shield">
+          <div class="logo-inner">🔐</div>
+          <div class="logo-ring"></div>
+          <div class="logo-ring ring-2"></div>
+        </div>
+      </div>
+      <h1 class="splash-title">
+        <span>Mã Hóa</span> <span class="gradient-text">Tool</span>
+      </h1>
+      <p class="splash-subtitle">Công cụ mã hóa & giải mã đa phương pháp</p>
+      <div class="splash-progress">
+        <div class="splash-progress-fill" id="splashProgress"></div>
+      </div>
+      <p class="splash-status" id="splashStatus">Đang khởi tạo...</p>
+      <div class="splash-steps">
+        <div class="splash-step" data-step="1"><div class="step-dot"></div><span>Khởi động</span></div>
+        <div class="splash-step" data-step="2"><div class="step-dot"></div><span>Tải phương pháp</span></div>
+        <div class="splash-step" data-step="3"><div class="step-dot"></div><span>Sẵn sàng</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="container" id="mainContainer">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🔐</div>
+        <div>
+          <h1>Mã Hóa <span>Tool</span></h1>
+          <p>{{ methods|length }}+ kiểu mã hóa & giải mã</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="stats-badge">📊 {{ methods|length }} phương pháp</div>
+        <div class="user-menu" id="userMenu">
+          <button class="user-btn" id="userBtn">
+            <div class="user-avatar">{{ username[0]|upper }}</div>
+            <div class="user-info">
+              <strong>{{ username }}</strong>
+              <small>{% if is_super_admin %}👑 Super Admin{% elif role == 'admin' %}👑 Admin{% else %}Đã đăng nhập{% endif %}</small>
+            </div>
+            <span class="user-arrow">▼</span>
+          </button>
+          <div class="user-dropdown" id="userDropdown">
+            <div class="user-dropdown-header">
+              <div class="user-avatar large">{{ username[0]|upper }}</div>
+              <div>
+                <strong>{{ username }}</strong>
+                <small id="userLoginInfo">Đang tải...</small>
+              </div>
+            </div>
+            <div class="user-id-box">
+              <span class="user-id-label">🆔 ID:</span>
+              <code class="user-id-value">{{ user_id }}</code>
+            </div>
+            {% if role == 'admin' or is_super_admin %}
+            <button class="dropdown-item admin-item" onclick="window.location.href='/admin'">
+              👑 Admin Panel
+            </button>
+            {% endif %}
+            <button class="dropdown-item" onclick="showHistory()">🕐 Lịch sử gần đây</button>
+            <button class="dropdown-item danger" onclick="logout()">🚪 Đăng xuất</button>
+
+            <!-- DROPDOWN CREDIT -->
+            <div class="dropdown-credit">
+              <div class="dropdown-credit-line"></div>
+              <div class="dropdown-credit-label">💻 Made by</div>
+              <div class="dropdown-creators">
+                <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="dropdown-creator dropdown-killer" title="TikTok: @fan.yu.juhoon">
+                  <div class="dropdown-creator-avatar dropdown-killer-avatar">
+                    <div class="avatar-fallback">🔪</div>
+                    <img src="https://unavatar.io/tiktok/fan.yu.juhoon" alt="Sát Nhân" class="dropdown-creator-avatar-img" onerror="this.style.display='none'">
+                  </div>
+                  <div class="dropdown-creator-name dropdown-killer-name">Sát Nhân</div>
+                  <div class="dropdown-creator-role dropdown-killer-role">Co-Founder</div>
+                </a>
+
+                <a href="https://www.tiktok.com/@dungg_haha" target="_blank" class="dropdown-creator dropdown-dung" title="TikTok: @dungg_haha">
+                  <div class="dropdown-creator-avatar dropdown-dung-avatar">
+                    <div class="avatar-fallback">D</div>
+                    <img src="https://unavatar.io/tiktok/dungg_haha" alt="Dũng" class="dropdown-creator-avatar-img" onerror="this.style.display='none'">
+                  </div>
+                  <div class="dropdown-creator-name dropdown-dung-name">Dũng</div>
+                  <div class="dropdown-creator-role dropdown-dung-role">Designer</div>
+                </a>
+
+                <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="dropdown-creator dropdown-hung" title="TikTok: @tienhung0707">
+                  <div class="dropdown-creator-avatar dropdown-hung-avatar">
+                    <div class="avatar-fallback">H</div>
+                    <img src="https://unavatar.io/tiktok/tienhung0707" alt="Hùng" class="dropdown-creator-avatar-img" onerror="this.style.display='none'">
+                  </div>
+                  <div class="dropdown-creator-name dropdown-hung-name">Hùng ⭐</div>
+                  <div class="dropdown-creator-role dropdown-hung-role">Developer</div>
+                </a>
+
+                <a href="https://www.tiktok.com/@minhchaudepzai246" target="_blank" class="dropdown-creator dropdown-chau" title="TikTok: @minhchaudepzai246">
+                  <div class="dropdown-creator-avatar dropdown-chau-avatar">
+                    <div class="avatar-fallback">C</div>
+                    <img src="https://unavatar.io/tiktok/minhchaudepzai246" alt="Minh Châu" class="dropdown-creator-avatar-img" onerror="this.style.display='none'">
+                  </div>
+                  <div class="dropdown-creator-name dropdown-chau-name">Minh Châu</div>
+                  <div class="dropdown-creator-role dropdown-chau-role">🛡️ Vệ sĩ</div>
+                </a>
+
+                <a href="https://www.tiktok.com/@ngoc021215" target="_blank" class="dropdown-creator dropdown-ngoc" title="TikTok: @ngoc021215">
+                  <div class="dropdown-creator-avatar dropdown-ngoc-avatar">
+                    <div class="avatar-fallback">N</div>
+                    <img src="https://unavatar.io/tiktok/ngoc021215" alt="Minh Ngọc" class="dropdown-creator-avatar-img" onerror="this.style.display='none'">
+                  </div>
+                  <div class="dropdown-creator-name dropdown-ngoc-name">Minh Ngọc</div>
+                  <div class="dropdown-creator-role dropdown-ngoc-role">Supporter</div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- TASKBAR -->
+    <div class="taskbar">
+      <button class="task-btn active" data-action="encrypt" id="tabEncrypt">
+        <span class="task-icon">🔒</span>
+        <div class="task-text"><strong>Mã Hóa</strong><small>Encrypt</small></div>
+      </button>
+      <button class="task-btn" data-action="decrypt" id="tabDecrypt">
+        <span class="task-icon">🔓</span>
+        <div class="task-text"><strong>Giải Mã</strong><small>Decrypt</small></div>
+      </button>
+      <div class="task-indicator" id="taskIndicator"></div>
+    </div>
+
+    <!-- METHOD PICKER -->
+    <div class="method-picker-section">
+      <label>🎯 Kiểu mã hóa:</label>
+      <button class="method-picker-btn" id="openPickerBtn">
+        <span class="picker-icon">🔤</span>
+        <span class="picker-text">
+          <strong id="selectedMethodName">Base64</strong>
+          <small id="selectedMethodCode">base64</small>
+        </span>
+        <span class="picker-arrow">▼</span>
+      </button>
+    </div>
+
+    <!-- KEY -->
+    <div id="keySection" class="key-section hidden">
+      <label id="keyLabel">🔑 Khóa:</label>
+      <input type="text" id="keyInput" placeholder="Nhập khóa...">
+    </div>
+
+    <!-- WARNINGS -->
+    <div id="hashWarning" class="hash-warning hidden">
+      ⚠️ Phương pháp này là <strong>mã hóa 1 chiều</strong> — không thể giải mã!
+    </div>
+    <div id="decryptNotice" class="decrypt-notice hidden">
+      💡 Đang ở <strong>chế độ Giải mã</strong> — dán văn bản đã mã hóa vào ô bên trái.
+    </div>
+
+    <!-- IO -->
+    <div class="io-section">
+      <div class="box">
+        <div class="box-header">
+          <label id="inputLabel">📝 Văn bản gốc</label>
+          <span class="char-count" id="inputCount">0 ký tự</span>
+        </div>
+        <textarea id="input" placeholder="Nhập văn bản cần mã hóa..."></textarea>
+      </div>
+      <div class="box">
+        <div class="box-header">
+          <label id="outputLabel">✅ Kết quả mã hóa</label>
+          <span class="char-count" id="outputCount">0 ký tự</span>
+        </div>
+        <textarea id="output" placeholder="Kết quả sẽ hiển thị ở đây..." readonly></textarea>
+      </div>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="buttons">
+      <button class="btn primary" id="actionBtn" onclick="runAction()">🔒 Mã Hóa Ngay</button>
+      <button class="btn swap" onclick="swapText()">🔄 Đảo Chiều</button>
+      <button class="btn copy" onclick="copyResult()">📋 Sao Chép</button>
+      <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
+    </div>
+
+    <!-- FOOTER CREDIT -->
+    <footer class="page-footer">
+      <div class="footer-divider">
+        <span class="footer-line"></span>
+        <span class="footer-star">✨</span>
+        <span class="footer-line"></span>
+      </div>
+
+      <div class="footer-label">💻 Được phát triển bởi</div>
+
+      <div class="footer-creators">
+        <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="footer-creator footer-killer" title="TikTok: @fan.yu.juhoon">
+          <div class="footer-avatar footer-killer-avatar">
+            <div class="avatar-fallback">🔪</div>
+            <img src="https://unavatar.io/tiktok/fan.yu.juhoon" alt="Sát Nhân" class="footer-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="footer-info">
+            <div class="footer-name footer-killer-name">Sát Nhân</div>
+            <div class="footer-role footer-killer-role">Co-Founder</div>
+          </div>
+          <div class="footer-tiktok footer-killer-badge">🎵</div>
+        </a>
+
+        <a href="https://www.tiktok.com/@dungg_haha" target="_blank" class="footer-creator dung-creator" title="TikTok: @dungg_haha">
+          <div class="footer-avatar dung-avatar">
+            <div class="avatar-fallback">D</div>
+            <img src="https://unavatar.io/tiktok/dungg_haha" alt="Dũng" class="footer-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="footer-info">
+            <div class="footer-name dung-name">Dũng</div>
+            <div class="footer-role dung-role">Designer</div>
+          </div>
+          <div class="footer-tiktok dung-badge">🎵</div>
+        </a>
+
+        <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="footer-creator hung-creator" title="TikTok: @tienhung0707">
+          <div class="footer-avatar hung-avatar">
+            <div class="avatar-fallback">H</div>
+            <img src="https://unavatar.io/tiktok/tienhung0707" alt="Hùng" class="footer-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="footer-info">
+            <div class="footer-name hung-name">Hùng ⭐</div>
+            <div class="footer-role hung-role">Developer & Founder</div>
+          </div>
+          <div class="footer-tiktok hung-badge">🎵</div>
+        </a>
+
+        <a href="https://www.tiktok.com/@minhchaudepzai246" target="_blank" class="footer-creator chau-creator" title="TikTok: @minhchaudepzai246">
+          <div class="footer-avatar chau-avatar">
+            <div class="avatar-fallback">C</div>
+            <img src="https://unavatar.io/tiktok/minhchaudepzai246" alt="Minh Châu" class="footer-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="footer-info">
+            <div class="footer-name chau-name">Minh Châu</div>
+            <div class="footer-role chau-role">🛡️ Vệ sĩ của Hùng</div>
+          </div>
+          <div class="footer-tiktok chau-badge">🎵</div>
+        </a>
+
+        <a href="https://www.tiktok.com/@ngoc021215" target="_blank" class="footer-creator ngoc-creator" title="TikTok: @ngoc021215">
+          <div class="footer-avatar ngoc-avatar">
+            <div class="avatar-fallback">N</div>
+            <img src="https://unavatar.io/tiktok/ngoc021215" alt="Minh Ngọc" class="footer-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="footer-info">
+            <div class="footer-name ngoc-name">Minh Ngọc</div>
+            <div class="footer-role ngoc-role">Supporter</div>
+          </div>
+          <div class="footer-tiktok ngoc-badge">🎵</div>
+        </a>
+      </div>
+
+      <div class="footer-copy">
+        © 2026 <strong>Mã Hóa Tool</strong> — Made with ❤️
+      </div>
+    </footer>
+  </div>
 
   <!-- LOADING OVERLAY -->
   <div class="loading-overlay" id="loadingOverlay">
@@ -341,6 +628,7 @@
         if (res.status === 401) { window.location.href = '/login'; return; }
         const data = await res.json();
 
+        // ===== USER BỊ XÓA — KICK =====
         if (data.deleted) {
           isHandlingBlock = true;
           stopPolling();
@@ -411,6 +699,7 @@
 
         const data = await res.json();
 
+        // ===== USER BỊ XÓA — KICK =====
         if (data.deleted) {
           isHandlingBlock = true;
           stopPolling();
@@ -832,6 +1121,7 @@
         const data = await res.json();
         hideProcessing();
 
+        // ===== USER BỊ XÓA — KICK =====
         if (data.deleted) {
           isHandlingBlock = true;
           stopPolling();
@@ -982,19 +1272,6 @@
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.6);
       } catch (e) {}
-    }
-
-    // ==========================================
-    // CHUYỂN SANG TRANG DỊCH
-    // ==========================================
-    function goToTranslate() {
-      const text = document.getElementById('input').value.trim();
-      if (text) {
-        const preview = text.length > 500 ? text.slice(0, 500) : text;
-        window.location.href = '/translate?text=' + encodeURIComponent(preview);
-      } else {
-        window.location.href = '/translate';
-      }
     }
 
     // ==========================================
