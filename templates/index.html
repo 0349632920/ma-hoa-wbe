@@ -9,9 +9,7 @@
 </head>
 <body>
 
-  <!-- ============================================
-       SPLASH SCREEN
-       ============================================ -->
+  <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
     <div class="splash-bg">
       <span class="floating-emoji" style="--delay:0s;--x:10%;--y:20%">🔐</span>
@@ -47,9 +45,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       NỘI DUNG CHÍNH
-       ============================================ -->
+  <!-- MAIN CONTAINER -->
   <div class="container" id="mainContainer">
     <header>
       <div class="logo">
@@ -157,9 +153,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       LOADING OVERLAY
-       ============================================ -->
+  <!-- LOADING OVERLAY -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-content">
       <div class="loading-animation">
@@ -190,9 +184,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL CHỌN PHƯƠNG PHÁP
-       ============================================ -->
+  <!-- MODAL PHƯƠNG PHÁP -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <div class="modal-header">
@@ -219,9 +211,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL LỊCH SỬ
-       ============================================ -->
+  <!-- MODAL LỊCH SỬ -->
   <div class="modal-overlay" id="historyModalOverlay">
     <div class="modal modal-history">
       <div class="modal-header history-header">
@@ -274,7 +264,6 @@
 
       <div class="blocked-actions">
         <button class="blocked-btn danger" onclick="goToBanPage()">📄 Xem chi tiết</button>
-        <button class="blocked-btn secondary" onclick="closeBanBlock()">✕ Đóng</button>
       </div>
 
       <p class="blocked-footer">🔒 Nếu cho rằng đây là nhầm lẫn, hãy liên hệ admin</p>
@@ -307,8 +296,8 @@
       <div class="blocked-info warn-info-list" id="warnListContainer"></div>
 
       <div class="blocked-actions">
-        <button class="blocked-btn warn-btn" onclick="goToWarnPage()">📄 Xem chi tiết</button>
-        <button class="blocked-btn secondary" onclick="closeWarnBlock()">✕ Đóng</button>
+        <button class="blocked-btn warn-btn" onclick="acknowledgeWarn()">✅ Tôi đã hiểu</button>
+        <button class="blocked-btn secondary" onclick="goToWarnPage()">📄 Xem chi tiết</button>
       </div>
 
       <p class="blocked-footer">💡 Cảnh báo sẽ biến mất khi admin xóa cho bạn</p>
@@ -319,7 +308,7 @@
 
   <script>
     // ==========================================
-    // SPLASH SCREEN
+    // SPLASH
     // ==========================================
     const splashMessages = [
       'Đang khởi tạo...',
@@ -383,6 +372,7 @@
     let currentMethod = 'base64';
     let currentAction = 'encrypt';
     let isTransitioning = false;
+    let warnAcknowledged = false;  // Đánh dấu đã bấm "Tôi đã hiểu"
 
     const oneWayMethods = new Set([
       'md5','sha1','sha224','sha256','sha384','sha512',
@@ -460,7 +450,6 @@
         if (res.status === 401) { window.location.href = '/login'; return; }
         const data = await res.json();
 
-        // BỊ BAN → chuyển trang ban
         if (data.banned) {
           window.location.href = data.redirect || '/login';
           return;
@@ -470,12 +459,14 @@
           const el = document.getElementById('userLoginInfo');
           if (el) el.textContent = `Đăng nhập ${data.login_count} lần`;
 
-          // BỊ WARN → HIỆN MODAL TOÀN MÀN HÌNH NGAY SAU SPLASH
+          // BỊ WARN → hiện modal toàn màn hình (nếu chưa acknowledge)
           if (data.warnings && data.warnings.length > 0 && data.status === 'warned') {
             setTimeout(() => {
-              showWarnBlock(data.warnings, data.username);
-              playWarnSound();
-            }, 2200); // Sau splash (2s) + 0.2s delay
+              if (!warnAcknowledged) {
+                showWarnBlock(data.warnings, data.username);
+                playWarnSound();
+              }
+            }, 2200);
           }
         }
       } catch (e) { console.error(e); }
@@ -661,11 +652,11 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (document.getElementById('banBlockOverlay').classList.contains('show')) {
-          closeBanBlock();
-          return;
+          return; // Không cho đóng ban bằng ESC
         }
         if (document.getElementById('warnBlockOverlay').classList.contains('show')) {
-          closeWarnBlock();
+          // Đóng = acknowledge luôn
+          acknowledgeWarn();
           return;
         }
         if (historyModalOverlay.classList.contains('show')) closeHistoryModal();
@@ -777,8 +768,8 @@
           return;
         }
 
-        // BỊ CẢNH BÁO
-        if (data.warned) {
+        // BỊ CẢNH BÁO — chỉ hiện nếu chưa acknowledge
+        if (data.warned && !warnAcknowledged) {
           showWarnBlock(data.warnings || [], data.username || '');
           playWarnSound();
           return;
@@ -816,11 +807,6 @@
       document.body.style.overflow = 'hidden';
     }
 
-    function closeBanBlock() {
-      document.getElementById('banBlockOverlay').classList.remove('show');
-      document.body.style.overflow = '';
-    }
-
     function goToBanPage() {
       window.location.href = '/banned?user=' + encodeURIComponent(
         document.getElementById('blockUsername').textContent
@@ -854,9 +840,29 @@
       document.body.style.overflow = 'hidden';
     }
 
-    function closeWarnBlock() {
+    // ==========================================
+    // ACKNOWLEDGE WARN — BẤM "TÔI ĐÃ HIỂU"
+    // ==========================================
+    async function acknowledgeWarn() {
+      try {
+        // Gọi API đánh dấu đã xem
+        await fetch('/api/acknowledge-warnings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (e) {
+        console.error('Lỗi acknowledge:', e);
+      }
+
+      // Đánh dấu local
+      warnAcknowledged = true;
+
+      // Đóng modal
       document.getElementById('warnBlockOverlay').classList.remove('show');
       document.body.style.overflow = '';
+
+      // Thông báo
+      showToast('✅ Đã ghi nhận! Bạn có thể sử dụng web bình thường.');
     }
 
     function goToWarnPage() {
