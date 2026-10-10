@@ -10,29 +10,20 @@ from game_utils import (
     generate_meme_template,
     points_to_level, level_to_next, add_points, update_streak,
     ensure_game_data, init_game_data, REWARDS, MEME_TEMPLATES,
-    # ⚔️ PvP — 12 tính năng
+    # ⚔️ PvP
     create_pvp_room, join_pvp_room, start_pvp_room,
     submit_pvp_answer, get_pvp_room, leave_pvp_room,
     cleanup_old_rooms,
-    # 1. Danh sách phòng public
     list_public_rooms, broadcast_player_joined,
-    # 2. Private/Public + 5. Tuỳ chỉnh luật
     update_room_rules,
-    # 3. Bạn bè
     send_friend_request, accept_friend_request, decline_friend_request,
     get_friends, get_friend_requests, remove_friend,
     invite_friend_to_room, get_room_invites,
-    # 4. Chat
     send_chat_message, get_chat_messages,
-    # 6. Link share
     get_room_share_link,
-    # 8. Xem trước đối thủ
     get_opponent_info,
-    # 9. Kick
     kick_guest,
-    # 11. Rematch
     vote_rematch,
-    # 12. Lịch sử đấu
     add_match_to_history,
 )
 from dotenv import load_dotenv
@@ -1131,9 +1122,6 @@ def game_page():
     return render_template('game.html')
 
 
-# ────────────────────────────────────────────────────────────
-#  LEADERBOARD
-# ────────────────────────────────────────────────────────────
 @app.route('/api/game/leaderboard')
 @login_required
 def api_leaderboard():
@@ -1164,9 +1152,6 @@ def api_leaderboard():
     return jsonify({'success': True, 'leaderboard': board[:50]})
 
 
-# ────────────────────────────────────────────────────────────
-#  DAILY
-# ────────────────────────────────────────────────────────────
 @app.route('/api/game/daily')
 @login_required
 def api_daily():
@@ -1239,9 +1224,6 @@ def api_daily_submit():
                         'message': 'Sai rồi! Thử lại vào ngày mai nhé!'})
 
 
-# ────────────────────────────────────────────────────────────
-#  REWARDS
-# ────────────────────────────────────────────────────────────
 @app.route('/api/game/rewards')
 @login_required
 def api_rewards():
@@ -1296,9 +1278,6 @@ def api_claim_reward():
                     'level': points_to_level(game['points'])})
 
 
-# ────────────────────────────────────────────────────────────
-#  RANDOM
-# ────────────────────────────────────────────────────────────
 @app.route('/api/game/random-method')
 @login_required
 def api_random_method():
@@ -1308,23 +1287,9 @@ def api_random_method():
     return jsonify({'success': True, **result})
 
 
-# ════════════════════════════════════════════════════════════
-#  ⚔️ PVP — 12 TÍNH NĂNG
-# ════════════════════════════════════════════════════════════
-
-def _get_user_display(username: str) -> dict:
-    """Lấy thông tin hiển thị user."""
-    users = load_users()
-    user = users.get(username, {})
-    return {
-        'username': username,
-        'display_name': user.get('display_name', username),
-        'user_id': user.get('user_id', '—'),
-        'level': points_to_level(user.get('game', {}).get('points', 0)),
-    }
-
-
-# ═══ 1 + 2 + 5. Tạo phòng với private/public + rules ═══
+# ═══════════════════════════════════════════════════════════
+#  ⚔️ PVP — ĐUA GÕ CHỮ TIẾNG ANH
+# ═══════════════════════════════════════════════════════════
 @app.route('/api/pvp/create', methods=['POST'])
 @login_required
 def api_pvp_create():
@@ -1332,28 +1297,21 @@ def api_pvp_create():
     username = session['username']
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
-
     data = request.get_json() or {}
     is_public = bool(data.get('is_public', True))
     rules = data.get('rules', {})
-
     user = users[username]
     display = user.get('display_name', username)
     level = points_to_level(user.get('game', {}).get('points', 0))
-
     try:
         room = create_pvp_room(username, display, is_public=is_public,
                                host_level=level, rules=rules)
-        return jsonify({
-            'success': True,
-            'code': room['code'],
-            'room': _sanitize_room(room, username)
-        })
+        return jsonify({'success': True, 'code': room['code'],
+                        'room': _sanitize_room(room, username)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# ═══ 1. Danh sách phòng public ═══
 @app.route('/api/pvp/rooms')
 @login_required
 def api_pvp_list_rooms():
@@ -1361,7 +1319,6 @@ def api_pvp_list_rooms():
     return jsonify({'success': True, 'rooms': rooms})
 
 
-# ═══ Join phòng ═══
 @app.route('/api/pvp/join', methods=['POST'])
 @login_required
 def api_pvp_join():
@@ -1369,28 +1326,19 @@ def api_pvp_join():
     username = session['username']
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
-
     data = request.get_json()
     code = (data.get('code') or '').strip().upper()
     if not code:
         return jsonify({'success': False, 'error': 'Nhập mã phòng!'}), 400
-
     user = users[username]
     display = user.get('display_name', username)
     level = points_to_level(user.get('game', {}).get('points', 0))
-
     result = join_pvp_room(code, username, display, level)
     if not result['success']:
         return jsonify(result), 404
-
-    # 7. Thông báo có người vào
     broadcast_player_joined(code)
-
-    return jsonify({
-        'success': True,
-        'code': code,
-        'room': _sanitize_room(result['room'], username)
-    })
+    return jsonify({'success': True, 'code': code,
+                    'room': _sanitize_room(result['room'], username)})
 
 
 @app.route('/api/pvp/start', methods=['POST'])
@@ -1424,23 +1372,15 @@ def api_pvp_submit():
     answer = (data.get('answer') or '').strip()
     if not code or not answer:
         return jsonify({'success': False, 'error': 'Thiếu dữ liệu!'}), 400
-
     result = submit_pvp_answer(code, username, answer)
     if not result['success']:
         return jsonify(result), 400
-
     room = result['room']
-    # 12. Nếu trận kết thúc → lưu lịch sử cho cả 2
     if room['status'] == 'finished':
         _save_match_history(room, username)
-
-    return jsonify({
-        'success': True,
-        'correct': result['correct'],
-        'points': result['points'],
-        'time_taken': result['time_taken'],
-        'room': _sanitize_room(room, username)
-    })
+    return jsonify({'success': True, 'correct': result['correct'],
+                    'points': result['points'], 'time_taken': result['time_taken'],
+                    'room': _sanitize_room(room, username)})
 
 
 @app.route('/api/pvp/leave', methods=['POST'])
@@ -1453,7 +1393,6 @@ def api_pvp_leave():
     return jsonify(result)
 
 
-# ═══ 3. Bạn bè ═══
 @app.route('/api/friends')
 @login_required
 def api_get_friends():
@@ -1462,7 +1401,6 @@ def api_get_friends():
     friend_names = get_friends(username)
     requests = get_friend_requests(username)
     invites = get_room_invites(username)
-
     friends_data = []
     for f in friend_names:
         if f in users:
@@ -1474,23 +1412,16 @@ def api_get_friends():
                 'status': users[f].get('status', 'active'),
                 'pvp_wins': users[f].get('game', {}).get('pvp_stats', {}).get('wins', 0),
             })
-
-    return jsonify({
-        'success': True,
-        'friends': friends_data,
-        'requests': requests,
-        'invites': invites
-    })
+    return jsonify({'success': True, 'friends': friends_data,
+                    'requests': requests, 'invites': invites})
 
 
 @app.route('/api/friends/search')
 @login_required
 def api_search_users():
-    """Tìm user để kết bạn."""
     q = (request.args.get('q') or '').strip().lower()
     if not q or len(q) < 2:
         return jsonify({'success': True, 'users': []})
-
     username = session['username']
     users = load_users()
     friends = get_friends(username)
@@ -1564,16 +1495,13 @@ def api_invite_friend():
     return jsonify(result), (200 if result['success'] else 400)
 
 
-# ═══ 4. Chat ═══
 @app.route('/api/pvp/chat/<code>', methods=['GET', 'POST'])
 @login_required
 def api_pvp_chat(code):
     username = session['username']
-
     if request.method == 'GET':
         messages = get_chat_messages(code)
         return jsonify({'success': True, 'messages': messages})
-
     data = request.get_json()
     message = data.get('message', '')
     users = load_users()
@@ -1585,7 +1513,6 @@ def api_pvp_chat(code):
     return jsonify({'success': True, 'messages': messages})
 
 
-# ═══ 5. Rules ═══
 @app.route('/api/pvp/rules', methods=['POST'])
 @login_required
 def api_update_rules():
@@ -1597,7 +1524,6 @@ def api_update_rules():
     return jsonify(result), (200 if result['success'] else 400)
 
 
-# ═══ 6. Link share ═══
 @app.route('/api/pvp/share-link/<code>')
 @login_required
 def api_share_link(code):
@@ -1605,7 +1531,6 @@ def api_share_link(code):
     return jsonify({'success': True, 'link': link})
 
 
-# ═══ 8. Xem đối thủ ═══
 @app.route('/api/pvp/opponent/<code>')
 @login_required
 def api_pvp_opponent(code):
@@ -1618,7 +1543,6 @@ def api_pvp_opponent(code):
     return jsonify({'success': True, 'opponent': opponent})
 
 
-# ═══ 9. Kick ═══
 @app.route('/api/pvp/kick', methods=['POST'])
 @login_required
 def api_pvp_kick():
@@ -1629,7 +1553,6 @@ def api_pvp_kick():
     return jsonify(result), (200 if result['success'] else 400)
 
 
-# ═══ 11. Rematch ═══
 @app.route('/api/pvp/rematch', methods=['POST'])
 @login_required
 def api_pvp_rematch():
@@ -1640,7 +1563,6 @@ def api_pvp_rematch():
     return jsonify(result)
 
 
-# ═══ 12. Lịch sử đấu ═══
 @app.route('/api/pvp/history')
 @login_required
 def api_pvp_history():
@@ -1652,51 +1574,28 @@ def api_pvp_history():
 
 
 def _save_match_history(room: dict, requestor: str):
-    """Lưu lịch sử khi trận kết thúc."""
     users = load_users()
     host = room['host']
     guest = room['guest']
     if not guest:
         return
-
-    host_game = users.get(host, {}).get('game', {})
-    guest_game = users.get(guest, {}).get('game', {})
-
-    # Tính tổng điểm + ván thắng
     host_score = sum(r['scores'].get(host, 0) for r in room['rounds'])
     guest_score = sum(r['scores'].get(guest, 0) for r in room['rounds'])
     host_wins = room['round_wins'].get(host, 0)
     guest_wins = room['round_wins'].get(guest, 0)
-
     host_result = 'win' if host_wins > guest_wins else ('loss' if host_wins < guest_wins else 'draw')
     guest_result = 'win' if guest_wins > host_wins else ('loss' if guest_wins < host_wins else 'draw')
-
-    # Lưu cho host
     if host in users:
-        add_match_to_history(
-            users[host],
-            room['guest_display'],
-            host_score, guest_score,
-            host_wins, guest_wins,
-            host_result
-        )
+        add_match_to_history(users[host], room['guest_display'],
+                             host_score, guest_score, host_wins, guest_wins, host_result)
         save_user(host, users[host])
-
-    # Lưu cho guest
     if guest in users:
-        add_match_to_history(
-            users[guest],
-            room['host_display'],
-            guest_score, host_score,
-            guest_wins, host_wins,
-            guest_result
-        )
+        add_match_to_history(users[guest], room['host_display'],
+                             guest_score, host_score, guest_wins, host_wins, guest_result)
         save_user(guest, users[guest])
 
 
-# ═══ Sanitize ═══
 def _sanitize_room(room: dict, username: str) -> dict:
-    """Chuẩn hóa room data cho client."""
     opponent = room["guest"] if room["host"] == username else room["host"]
     is_host = (room["host"] == username)
 
@@ -1741,11 +1640,11 @@ def _sanitize_room(room: dict, username: str) -> dict:
         q_idx = r["current_index"]
         if 0 <= q_idx < total_q:
             q = r["questions"][q_idx]
+            # ═══ CHỈ HIỆN TỪ TIẾNG ANH ═══
             safe["current_question"] = {
                 "index": q_idx,
-                "display": q["display"],
-                "method": q["method"],
-                "length": len(q["word"]),
+                "word": q["word"],
+                "display": q["word"],
             }
             opp_answered = q_idx in r["answers"].get(opponent, {}) if opponent else False
             safe["opponent_answered"] = opp_answered
@@ -1803,9 +1702,6 @@ def _sanitize_room(room: dict, username: str) -> dict:
     return safe
 
 
-# ────────────────────────────────────────────────────────────
-#  MEME
-# ────────────────────────────────────────────────────────────
 @app.route('/api/game/meme/templates')
 @login_required
 def api_meme_templates():
@@ -1836,9 +1732,6 @@ def api_meme_generate():
     return jsonify({'success': True, 'meme': meme})
 
 
-# ────────────────────────────────────────────────────────────
-#  USER GAME STATS
-# ────────────────────────────────────────────────────────────
 @app.route('/api/game/me')
 @login_required
 def api_game_me():
@@ -1849,21 +1742,14 @@ def api_game_me():
     user = users[username]
     game = ensure_game_data(user)
     level_info = level_to_next(game.get('points', 0))
-
     board = []
     for uname, udata in users.items():
         g = udata.get('game', {})
         board.append((uname, g.get('points', 0)))
     board.sort(key=lambda x: -x[1])
     rank = next((i + 1 for i, (u, _) in enumerate(board) if u == username), 0)
-
-    return jsonify({
-        'success': True,
-        'game': game,
-        'level_info': level_info,
-        'rank': rank,
-        'total_users': len(board)
-    })
+    return jsonify({'success': True, 'game': game, 'level_info': level_info,
+                    'rank': rank, 'total_users': len(board)})
 
 
 # ============================================================
@@ -2303,8 +2189,6 @@ def health():
         'database': 'supabase' if has_database() else 'json_local',
         'total_methods': len(METHODS),
         'total_users': len(users),
-        'total_pvp_rooms': len(__import__('game_utils').PVP_ROOMS),
-        'total_friends': sum(len(v) for v in __import__('game_utils').FRIENDS_DB.values()),
         'super_admin': SUPER_ADMIN_USERNAME,
         'super_admin_exists': any(usernames_match(u, SUPER_ADMIN_USERNAME) for u in users.keys())
     })
