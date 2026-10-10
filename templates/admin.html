@@ -317,7 +317,7 @@
     .action-btn.detail { background: #667eea; }
     .action-btn.refresh { background: linear-gradient(135deg, #16a085, #1abc9c); }
 
-    /* Modal chung */
+    /* Modal */
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(20,20,40,0.65);
@@ -449,28 +449,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Loading table */
-    .loading-table {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 20px;
-      color: #999;
-    }
-    .loading-table-spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #e0e5ff;
-      border-top-color: #667eea;
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-      margin-bottom: 16px;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
     /* Toast */
     .toast {
       position: fixed; bottom: 30px; left: 50%;
@@ -486,9 +464,149 @@
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    @media (max-width: 800px) {
-      .users-table { display: block; overflow-x: auto; white-space: nowrap; }
+    /* ============================================
+       MÀN HÌNH LOADING KHI THỰC HIỆN HÀNH ĐỘNG
+       ============================================ */
+    .action-loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
     }
+
+    .action-loading-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Nền theo hành động */
+    .action-loading-overlay.ban-mode {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 50%, #8b0000 100%);
+    }
+    .action-loading-overlay.warn-mode {
+      background: linear-gradient(135deg, #f39c12 0%, #e67e22 50%, #d35400 100%);
+    }
+    .action-loading-overlay.refresh-mode {
+      background: linear-gradient(135deg, #16a085 0%, #1abc9c 50%, #0e6655 100%);
+    }
+    .action-loading-overlay.unban-mode {
+      background: linear-gradient(135deg, #27ae60 0%, #16a085 50%, #0e6655 100%);
+    }
+    .action-loading-overlay.delete-mode {
+      background: linear-gradient(135deg, #8e44ad 0%, #6c3483 50%, #4a235a 100%);
+    }
+    .action-loading-overlay.reset-mode {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 50%, #1a5276 100%);
+    }
+
+    .action-loading-content {
+      text-align: center;
+      color: white;
+      max-width: 480px;
+      width: 100%;
+      position: relative;
+      z-index: 2;
+    }
+
+    .action-loading-animation {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-loading-icon {
+      font-size: 75px;
+      position: relative;
+      z-index: 2;
+      animation: actionIconPulse 1.6s ease-in-out infinite;
+      filter: drop-shadow(0 10px 30px rgba(255,255,255,0.5));
+    }
+
+    @keyframes actionIconPulse {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.15) rotate(-8deg); }
+    }
+
+    .action-loading-ring {
+      position: absolute;
+      inset: 0;
+      border: 3px solid rgba(255,255,255,0.7);
+      border-radius: 50%;
+      animation: actionRingExpand 2.2s ease-out infinite;
+    }
+    .action-loading-ring.ring-2 { animation-delay: 0.7s; }
+    .action-loading-ring.ring-3 { animation-delay: 1.4s; }
+
+    @keyframes actionRingExpand {
+      0% { transform: scale(0.4); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    .action-loading-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+
+    .action-loading-subtitle {
+      font-size: 15px;
+      opacity: 0.95;
+      margin-bottom: 32px;
+      font-weight: 500;
+    }
+
+    .action-loading-progress {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .action-loading-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #fff, #ffe0b2);
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(255,255,255,0.9);
+      transition: width 0.4s ease-out;
+      position: relative;
+    }
+    .action-loading-progress-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+      animation: actionShine 1.2s linear infinite;
+    }
+    @keyframes actionShine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .action-loading-note {
+      font-size: 13px;
+      opacity: 0.9;
+      font-weight: 500;
+      min-height: 20px;
+      transition: 0.3s;
+    }
+
     @media (max-width: 500px) {
       body { padding: 15px; }
       .admin-header { padding: 20px; }
@@ -498,6 +616,14 @@
       .splash-title { font-size: 30px; }
       .splash-crown { width: 110px; height: 110px; }
       .crown-icon { font-size: 55px; }
+      .action-loading-title { font-size: 22px; }
+      .action-loading-animation { width: 110px; height: 110px; }
+      .action-loading-icon { font-size: 55px; }
+      .action-loading-subtitle { font-size: 13px; }
+    }
+
+    @media (max-width: 800px) {
+      .users-table { display: block; overflow-x: auto; white-space: nowrap; }
     }
   </style>
 </head>
@@ -603,12 +729,7 @@
           </tr>
         </thead>
         <tbody id="usersTableBody">
-          <tr><td colspan="6">
-            <div class="loading-table">
-              <div class="loading-table-spinner"></div>
-              <span>Đang tải...</span>
-            </div>
-          </td></tr>
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:#999">Đang tải...</td></tr>
         </tbody>
       </table>
     </div>
@@ -918,11 +1039,34 @@
     </div>
   </div>
 
+  <!-- ============================================
+       MÀN HÌNH LOADING KHI THỰC HIỆN HÀNH ĐỘNG
+       ============================================ -->
+  <div class="action-loading-overlay" id="actionLoadingOverlay">
+    <div class="action-loading-content">
+      <div class="action-loading-animation">
+        <div class="action-loading-icon" id="actionLoadingIcon">🔒</div>
+        <div class="action-loading-ring"></div>
+        <div class="action-loading-ring ring-2"></div>
+        <div class="action-loading-ring ring-3"></div>
+      </div>
+
+      <h2 class="action-loading-title" id="actionLoadingTitle">Đang xử lý...</h2>
+      <p class="action-loading-subtitle" id="actionLoadingSubtitle">Vui lòng chờ trong giây lát</p>
+
+      <div class="action-loading-progress">
+        <div class="action-loading-progress-fill" id="actionLoadingProgress"></div>
+      </div>
+
+      <p class="action-loading-note" id="actionLoadingNote">Đang gửi yêu cầu...</p>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
     // ==========================================
-    // SPLASH + DATA LOADING STATE
+    // SPLASH SCREEN
     // ==========================================
     const splashMessages = [
       'Đang xác thực quyền Admin...',
@@ -935,12 +1079,10 @@
     const splashProgress = document.getElementById('splashProgress');
     const splashStatus = document.getElementById('splashStatus');
 
-    // ===== BIẾN THEO DÕI =====
-    let splashMinTimeDone = false;   // Splash đã hiện đủ lâu chưa
-    let dataLoaded = false;          // Data đã load xong chưa
-    let splashFinished = false;      // Splash đã đóng chưa
+    let splashMinTimeDone = false;
+    let dataLoaded = false;
+    let splashFinished = false;
 
-    // ===== HÀM KIỂM TRA VÀ ĐÓNG SPLASH =====
     function tryFinishSplash() {
       if (splashFinished) return;
 
@@ -955,10 +1097,7 @@
           document.getElementById('adminSplash').classList.add('hide');
           document.body.style.overflow = '';
           document.getElementById('adminContainer').classList.add('show');
-
-          // ===== RENDER DATA VÀO DOM =====
           renderAllData();
-
           console.log('✅ Splash finished — Admin Panel ready');
         }, 400);
       }
@@ -973,23 +1112,18 @@
     }
 
     function runSplash() {
-      // Giai đoạn 1: Xác thực
       splashProgress.style.width = '25%';
       splashStatus.textContent = splashMessages[0];
       markSplashStep(1, 'active');
 
-      // Giai đoạn 2: Bắt đầu load data song song
       setTimeout(() => {
         splashProgress.style.width = '50%';
         splashStatus.textContent = splashMessages[1];
         markSplashStep(1, 'done');
         markSplashStep(2, 'active');
-
-        // BẮT ĐẦU LOAD DATA SONG SONG
         loadAllDataForSplash();
       }, 400);
 
-      // Giai đoạn 3: Sau 1.2s nếu chưa xong
       setTimeout(() => {
         if (!dataLoaded) {
           splashProgress.style.width = '75%';
@@ -997,7 +1131,6 @@
         }
       }, 1200);
 
-      // Đánh dấu splash đã đủ lâu
       setTimeout(() => {
         splashMinTimeDone = true;
         console.log('⏱️ Splash min time done');
@@ -1005,38 +1138,25 @@
       }, 1800);
     }
 
-    // ==========================================
-    // LOAD TOÀN BỘ DATA CHO SPLASH
-    // ==========================================
     async function loadAllDataForSplash() {
       console.log('📦 Đang tải data cho splash...');
-
       try {
         await Promise.all([
           loadStatsForSplash(),
           loadUsersForSplash()
         ]);
-
         dataLoaded = true;
         console.log('✅ Data loaded for splash');
-
         markSplashStep(2, 'done');
         markSplashStep(3, 'active');
         splashProgress.style.width = '90%';
         splashStatus.textContent = splashMessages[3];
-
         tryFinishSplash();
-
       } catch (e) {
         console.error('❌ Lỗi load data:', e);
-
-        // Dù lỗi vẫn đóng splash để vào admin
         dataLoaded = true;
         splashStatus.textContent = '⚠️ Có lỗi tải data — vẫn vào được';
-
-        setTimeout(() => {
-          tryFinishSplash();
-        }, 500);
+        setTimeout(() => { tryFinishSplash(); }, 500);
       }
     }
 
@@ -1070,11 +1190,7 @@
       }
     }
 
-    // ==========================================
-    // RENDER DATA SAU KHI SPLASH ĐÓNG
-    // ==========================================
     function renderAllData() {
-      // Render stats
       if (window._statsCache) {
         const s = window._statsCache;
         document.getElementById('statTotal').textContent = s.total;
@@ -1084,8 +1200,61 @@
         document.getElementById('statAdmins').textContent = s.admins;
         document.getElementById('statSuspicious').textContent = s.suspicious;
       }
-      // Render users
       renderUsers();
+    }
+
+    window.addEventListener('load', () => {
+      document.body.style.overflow = 'hidden';
+      setTimeout(runSplash, 200);
+    });
+
+    // ==========================================
+    // MÀN HÌNH LOADING KHI THỰC HIỆN HÀNH ĐỘNG
+    // ==========================================
+    function showActionLoading(actionType, title, subtitle) {
+      const overlay = document.getElementById('actionLoadingOverlay');
+      const icon = document.getElementById('actionLoadingIcon');
+      const titleEl = document.getElementById('actionLoadingTitle');
+      const subtitleEl = document.getElementById('actionLoadingSubtitle');
+      const progressEl = document.getElementById('actionLoadingProgress');
+      const noteEl = document.getElementById('actionLoadingNote');
+
+      const config = {
+        'ban': { icon: '🚫', mode: 'ban-mode', note: 'Đang khóa tài khoản...' },
+        'warn': { icon: '⚠️', mode: 'warn-mode', note: 'Đang gửi cảnh báo...' },
+        'refresh': { icon: '♻️', mode: 'refresh-mode', note: 'Đang làm mới trạng thái...' },
+        'unban': { icon: '✅', mode: 'unban-mode', note: 'Đang gỡ ban...' },
+        'delete': { icon: '🗑️', mode: 'delete-mode', note: 'Đang đánh dấu xóa...' },
+        'reset': { icon: '🔄', mode: 'reset-mode', note: 'Đang xóa cảnh báo...' }
+      };
+
+      const cfg = config[actionType] || config['refresh'];
+
+      icon.textContent = cfg.icon;
+      titleEl.textContent = title || 'Đang xử lý...';
+      subtitleEl.textContent = subtitle || 'Vui lòng chờ trong giây lát';
+      noteEl.textContent = cfg.note;
+
+      overlay.className = 'action-loading-overlay ' + cfg.mode;
+      overlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+
+      progressEl.style.transition = 'none';
+      progressEl.style.width = '0%';
+      setTimeout(() => {
+        progressEl.style.transition = 'width 1.5s ease-out';
+        progressEl.style.width = '100%';
+      }, 50);
+
+      setTimeout(() => { noteEl.textContent = 'Đang gửi yêu cầu đến server...'; }, 400);
+      setTimeout(() => { noteEl.textContent = 'Đang chờ phản hồi...'; }, 900);
+      setTimeout(() => { noteEl.textContent = 'Sắp hoàn tất...'; }, 1400);
+    }
+
+    function hideActionLoading() {
+      const overlay = document.getElementById('actionLoadingOverlay');
+      overlay.classList.remove('show');
+      document.body.style.overflow = '';
     }
 
     // ==========================================
@@ -1101,9 +1270,6 @@
     let refreshTarget = null;
     let refreshAllTargets = [];
 
-    // ==========================================
-    // LOAD STATS (dùng cho reload)
-    // ==========================================
     async function loadStats() {
       try {
         const res = await fetch('/api/admin/stats');
@@ -1119,9 +1285,6 @@
       } catch (e) { console.error(e); }
     }
 
-    // ==========================================
-    // LOAD USERS (dùng cho reload)
-    // ==========================================
     async function loadUsers() {
       try {
         const res = await fetch('/api/admin/users');
@@ -1129,7 +1292,6 @@
         if (data.success) {
           allUsers = data.users;
           renderUsers();
-          console.log(`🔄 Reloaded ${data.users.length} users`);
         }
       } catch (e) {
         document.getElementById('usersTableBody').innerHTML =
@@ -1137,9 +1299,6 @@
       }
     }
 
-    // ==========================================
-    // RENDER USERS TABLE
-    // ==========================================
     function renderUsers() {
       const search = document.getElementById('searchUser').value.toLowerCase().trim();
       const tbody = document.getElementById('usersTableBody');
@@ -1275,6 +1434,13 @@
       if (!reason) { showToast('⚠️ Nhập lý do!', true); return; }
 
       const ban1Day = document.getElementById('ban1DayCheck').checked;
+      closeModal('warnModal');
+
+      if (ban1Day) {
+        showActionLoading('ban', '⚠️🚫 Đang warn + ban 1 ngày...', `User: ${pendingTarget}`);
+      } else {
+        showActionLoading('warn', '⚠️ Đang gửi cảnh báo...', `User: ${pendingTarget}`);
+      }
 
       try {
         const res = await fetch('/api/admin/warn', {
@@ -1283,12 +1449,20 @@
           body: JSON.stringify({ username: pendingTarget, reason, ban_1_day: ban1Day })
         });
         const data = await res.json();
+
+        await new Promise(r => setTimeout(r, 1500));
+        hideActionLoading();
+
         if (data.success) {
           showToast(data.banned ? '🚫 ' + data.message : '⚠️ ' + data.message);
-          closeModal('warnModal');
           loadUsers(); loadStats();
-        } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
+        } else {
+          showToast('❌ ' + data.error, true);
+        }
+      } catch (e) {
+        hideActionLoading();
+        showToast('❌ Lỗi kết nối!', true);
+      }
     }
 
     // ==========================================
@@ -1305,6 +1479,10 @@
     async function confirmBan() {
       const reason = document.getElementById('banReason').value.trim() || 'Vi phạm điều khoản';
       const duration = document.querySelector('input[name="banDuration"]:checked').value;
+      closeModal('banModal');
+
+      showActionLoading('ban', '🚫 Đang BAN người dùng...', `User: ${pendingTarget}`);
+
       try {
         const res = await fetch('/api/admin/ban', {
           method: 'POST',
@@ -1312,12 +1490,20 @@
           body: JSON.stringify({ username: pendingTarget, reason, duration })
         });
         const data = await res.json();
+
+        await new Promise(r => setTimeout(r, 1500));
+        hideActionLoading();
+
         if (data.success) {
           showToast('🚫 ' + data.message);
-          closeModal('banModal');
           loadUsers(); loadStats();
-        } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
+        } else {
+          showToast('❌ ' + data.error, true);
+        }
+      } catch (e) {
+        hideActionLoading();
+        showToast('❌ Lỗi kết nối!', true);
+      }
     }
 
     // ==========================================
@@ -1347,6 +1533,10 @@
 
     async function confirmUnban() {
       if (!unbanTarget) return;
+      closeModal('unbanModal');
+
+      showActionLoading('unban', '✅ Đang gỡ ban...', `User: ${unbanTarget}`);
+
       try {
         const res = await fetch('/api/admin/unban', {
           method: 'POST',
@@ -1354,12 +1544,20 @@
           body: JSON.stringify({ username: unbanTarget })
         });
         const data = await res.json();
+
+        await new Promise(r => setTimeout(r, 1500));
+        hideActionLoading();
+
         if (data.success) {
           showToast('✅ ' + data.message);
-          closeModal('unbanModal');
           loadUsers(); loadStats();
-        } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
+        } else {
+          showToast('❌ ' + data.error, true);
+        }
+      } catch (e) {
+        hideActionLoading();
+        showToast('❌ Lỗi kết nối!', true);
+      }
     }
 
     // ==========================================
@@ -1374,6 +1572,10 @@
 
     async function confirmCancelDelete() {
       if (!cancelDeleteTarget) return;
+      closeModal('cancelDeleteModal');
+
+      showActionLoading('refresh', '↩️ Đang hủy đánh dấu xóa...', `User: ${cancelDeleteTarget}`);
+
       try {
         const res = await fetch('/api/admin/cancel-delete', {
           method: 'POST',
@@ -1381,12 +1583,18 @@
           body: JSON.stringify({ username: cancelDeleteTarget })
         });
         const data = await res.json();
+
+        await new Promise(r => setTimeout(r, 1500));
+        hideActionLoading();
+
         if (data.success) {
           showToast('↩️ ' + data.message);
-          closeModal('cancelDeleteModal');
           loadUsers(); loadStats();
         } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
+      } catch (e) {
+        hideActionLoading();
+        showToast('❌ Lỗi kết nối!', true);
+      }
     }
 
     // ==========================================
@@ -1402,6 +1610,10 @@
     async function confirmDelete() {
       if (!deleteTarget) return;
       const reason = document.getElementById('deleteReasonInput').value.trim() || 'Vi phạm điều khoản nghiêm trọng';
+      closeModal('deleteModal');
+
+      showActionLoading('delete', '🗑️ Đang đánh dấu xóa...', `User: ${deleteTarget}`);
+
       try {
         const res = await fetch('/api/admin/delete', {
           method: 'POST',
@@ -1409,12 +1621,18 @@
           body: JSON.stringify({ username: deleteTarget, reason })
         });
         const data = await res.json();
+
+        await new Promise(r => setTimeout(r, 1500));
+        hideActionLoading();
+
         if (data.success) {
           showToast('⚠️ ' + data.message);
-          closeModal('deleteModal');
           loadUsers(); loadStats();
         } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
+      } catch (e) {
+        hideActionLoading();
+        showToast('❌ Lỗi kết nối!', true);
+      }
     }
 
     // ==========================================
@@ -1440,6 +1658,10 @@
 
     async function confirmReset() {
       if (!resetTarget) return;
+      closeModal('resetModal');
+
+      showActionLoading('reset', '🔄 Đang xóa cảnh báo...', `User: ${resetTarget}`);
+
       try {
         const res = await fetch('/api/admin/reset-warnings', {
           method: 'POST',
@@ -1447,12 +1669,18 @@
           body: JSON.stringify({ username: resetTarget })
         });
         const data = await res.json();
+
+        await new Promise(r => setTimeout(r, 1500));
+        hideActionLoading();
+
         if (data.success) {
           showToast('🔄 ' + data.message);
-          closeModal('resetModal');
           loadUsers(); loadStats();
         } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
+      } catch (e) {
+        hideActionLoading();
+        showToast('❌ Lỗi kết nối!', true);
+      }
     }
 
     // ==========================================
@@ -1483,19 +1711,33 @@
       if (!refreshTarget) return;
       const keepHistory = document.getElementById('keepHistoryCheck').checked;
       const keepLog = document.getElementById('keepLogCheck').checked;
+      closeModal('refreshModal');
+
+      showActionLoading('refresh', '♻️ Đang làm mới trạng thái...', `User: ${refreshTarget}`);
+
       try {
         const res = await fetch('/api/admin/refresh-status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: refreshTarget, keep_history: keepHistory, keep_log: keepLog })
+          body: JSON.stringify({
+            username: refreshTarget,
+            keep_history: keepHistory,
+            keep_log: keepLog
+          })
         });
         const data = await res.json();
+
+        await new Promise(r => setTimeout(r, 1500));
+        hideActionLoading();
+
         if (data.success) {
           showToast('♻️ ' + data.message);
-          closeModal('refreshModal');
           loadUsers(); loadStats();
         } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
+      } catch (e) {
+        hideActionLoading();
+        showToast('❌ Lỗi kết nối!', true);
+      }
     }
 
     // ==========================================
@@ -1525,6 +1767,10 @@
 
     async function confirmRefreshAll() {
       if (refreshAllTargets.length === 0) return;
+      closeModal('refreshAllModal');
+
+      showActionLoading('refresh', '♻️ Đang làm mới nhiều tài khoản...', `${refreshAllTargets.length} user`);
+
       try {
         const res = await fetch('/api/admin/refresh-multiple', {
           method: 'POST',
@@ -1532,12 +1778,18 @@
           body: JSON.stringify({ usernames: refreshAllTargets.map(u => u.username) })
         });
         const data = await res.json();
+
+        await new Promise(r => setTimeout(r, 1500));
+        hideActionLoading();
+
         if (data.success) {
           showToast('♻️ ' + data.message);
-          closeModal('refreshAllModal');
           loadUsers(); loadStats();
         } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
+      } catch (e) {
+        hideActionLoading();
+        showToast('❌ Lỗi kết nối!', true);
+      }
     }
 
     // ==========================================
@@ -1645,6 +1897,7 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (document.getElementById('actionLoadingOverlay').classList.contains('show')) return;
         document.querySelectorAll('.modal-overlay.show').forEach(modal => {
           modal.classList.remove('show');
         });
@@ -1671,14 +1924,6 @@
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2500);
     }
-
-    // ==========================================
-    // INIT
-    // ==========================================
-    window.addEventListener('load', () => {
-      document.body.style.overflow = 'hidden';
-      setTimeout(runSplash, 200);
-    });
 
     // Auto refresh stats mỗi 30s (chỉ khi đã vào admin)
     setInterval(() => {
