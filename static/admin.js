@@ -1,537 +1,235 @@
-// ============================================================
-// STATE
-// ============================================================
-let adminState = {
-    users: [],
-    history: [],
-    currentTab: "users",
-    confirmCallback: null,
-    banTarget: null,
-    loaded: false,
-};
+const $ = id => document.getElementById(id);
 
-// ============================================================
-// KHỞI TẠO — có loading screen
-// ============================================================
-document.addEventListener("DOMContentLoaded", async () => {
-    startLoadingAnimation();
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
 
-    try {
-        // Tải song song stats, users, history
-        await Promise.all([
-            loadStats(),
-            loadUsers(),
-            loadHistory(),
-        ]);
-
-        // Đợi thêm 1.2s để loading mượt
-        setTimeout(() => {
-            hideLoadingScreen();
-        }, 1200);
-
-    } catch (e) {
-        console.error("Lỗi khởi tạo admin:", e);
-        setTimeout(() => {
-            hideLoadingScreen();
-        }, 500);
-    }
-
-    bindEvents();
-    initAvatar();
+// ==================== TABS ====================
+document.querySelectorAll('.admin-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector(`.admin-panel[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+    });
 });
 
-// ============================================================
-// LOADING SCREEN
-// ============================================================
-function startLoadingAnimation() {
-    const bar = document.getElementById("loading-bar");
-    if (!bar) return;
-
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress += Math.random() * 15 + 5;
-        if (progress > 95) progress = 95;
-        bar.style.width = progress + "%";
-    }, 200);
-
-    adminState._loadingInterval = interval;
-}
-
-function hideLoadingScreen() {
-    const loading = document.getElementById("admin-loading");
-    const content = document.getElementById("admin-content");
-    const bar = document.getElementById("loading-bar");
-
-    if (bar) bar.style.width = "100%";
-
-    if (loading) {
-        loading.classList.add("fade-out");
-        setTimeout(() => {
-            loading.style.display = "none";
-        }, 500);
-    }
-
-    if (content) {
-        content.style.display = "block";
-        content.classList.add("fade-in");
-    }
-
-    if (adminState._loadingInterval) {
-        clearInterval(adminState._loadingInterval);
-    }
-
-    adminState.loaded = true;
-}
-
-// ============================================================
-// INIT AVATAR
-// ============================================================
-function initAvatar() {
-    const nameEl = document.querySelector(".user-name");
-    const avatarEl = document.getElementById("user-avatar");
-    if (nameEl && avatarEl) {
-        avatarEl.textContent = nameEl.textContent.trim().charAt(0).toUpperCase();
-    }
-}
-
-// ============================================================
-// BIND EVENTS
-// ============================================================
-function bindEvents() {
-    document.querySelectorAll(".admin-tab").forEach(tab => {
-        tab.addEventListener("click", () => {
-            const target = tab.dataset.tab;
-            adminState.currentTab = target;
-
-            document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-
-            document.getElementById("tab-users").classList.toggle("hidden", target !== "users");
-            document.getElementById("tab-history").classList.toggle("hidden", target !== "history");
-        });
-    });
-
-    document.getElementById("user-search").addEventListener("input", (e) => {
-        filterUsers(e.target.value.toLowerCase());
-    });
-
-    document.getElementById("history-search").addEventListener("input", () => {
-        loadHistory();
-    });
-
-    document.getElementById("history-mode").addEventListener("change", () => {
-        loadHistory();
-    });
-
-    document.getElementById("btn-refresh-users").addEventListener("click", loadUsers);
-    document.getElementById("btn-refresh-history").addEventListener("click", loadHistory);
-    document.getElementById("btn-clear-history").addEventListener("click", () => {
-        showConfirm(
-            "🗑 Xóa hết lịch sử?",
-            "Toàn bộ lịch sử mã hóa của tất cả users sẽ bị xóa. Không thể hoàn tác!",
-            async () => {
-                try {
-                    const res = await fetch("/api/admin/history/clear", {
-                        method: "POST",
-                        credentials: "include"
-                    });
-                    if (res.ok) {
-                        showToast("✅ Đã xóa toàn bộ lịch sử");
-                        loadHistory();
-                        loadStats();
-                    } else {
-                        const data = await res.json();
-                        showToast("❌ " + (data.error || "Lỗi xóa"), true);
-                    }
-                } catch (e) {
-                    showToast("❌ Lỗi kết nối", true);
-                }
-            }
-        );
-    });
-
-    // Confirm Modal
-    document.getElementById("confirm-cancel").addEventListener("click", closeConfirm);
-    document.getElementById("confirm-ok").addEventListener("click", () => {
-        const cb = adminState.confirmCallback;
-        closeConfirm();
-        if (cb) cb();
-    });
-    document.getElementById("confirm-modal").addEventListener("click", (e) => {
-        if (e.target.id === "confirm-modal") closeConfirm();
-    });
-
-    // Ban Modal
-    document.getElementById("ban-cancel").addEventListener("click", closeBanModal);
-    document.getElementById("ban-confirm").addEventListener("click", confirmBan);
-    document.getElementById("ban-modal").addEventListener("click", (e) => {
-        if (e.target.id === "ban-modal") closeBanModal();
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            closeConfirm();
-            closeBanModal();
-        }
-    });
-}
-
-// ============================================================
-// LOAD STATS
-// ============================================================
+// ==================== STATS ====================
 async function loadStats() {
     try {
-        const res = await fetch("/api/admin/stats", { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
-
-        document.getElementById("stat-total-users").textContent = data.total_users || 0;
-        document.getElementById("stat-banned").textContent = data.banned_users || 0;
-        document.getElementById("stat-admins").textContent = data.admin_users || 0;
-        document.getElementById("stat-guests").textContent = data.guest_users || 0;
-        document.getElementById("stat-encodes").textContent = data.total_encodes || 0;
-        document.getElementById("stat-decodes").textContent = data.total_decodes || 0;
-    } catch (e) {
-        console.error("Lỗi load stats:", e);
-    }
+        const res = await fetch('/api/admin/stats');
+        const s = await res.json();
+        $('stats').innerHTML = `
+            <div class="stat-card"><div class="num">${s.total_users || 0}</div><div class="lbl">👥 Người dùng</div></div>
+            <div class="stat-card"><div class="num">${s.banned_users || 0}</div><div class="lbl">🚫 Bị khóa</div></div>
+            <div class="stat-card"><div class="num">${s.total_history || 0}</div><div class="lbl">📜 Lịch sử</div></div>
+            <div class="stat-card"><div class="num">${s.deleted_users || 0}</div><div class="lbl">🗑 Đã xóa</div></div>
+        `;
+    } catch (e) { /* ignore */ }
 }
 
-// ============================================================
-// LOAD USERS
-// ============================================================
+// ==================== USERS ====================
 async function loadUsers() {
-    const tbody = document.getElementById("users-tbody");
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Đang tải...</td></tr>';
-
     try {
-        const res = await fetch("/api/admin/users", { credentials: "include" });
-        if (!res.ok) {
-            tbody.innerHTML = '<tr><td colspan="7" class="empty-row">❌ Không có quyền admin</td></tr>';
-            return;
-        }
-        adminState.users = await res.json();
-        renderUsers(adminState.users);
-    } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-row">❌ Lỗi kết nối</td></tr>';
-    }
+        const res = await fetch('/api/admin/users');
+        const users = await res.json();
+        $('users-body').innerHTML = users.map(u => `
+            <tr>
+                <td>${u.id}</td>
+                <td>${escapeHtml(u.username)}</td>
+                <td>${u.role === 'admin' ? '<span class="badge badge-admin">Admin</span>' : 'User'}</td>
+                <td><span class="badge badge-${u.status}">${u.status}</span></td>
+                <td>${u.warning_count}/3</td>
+                <td>${u.last_login ? new Date(u.last_login).toLocaleString('vi-VN') : '—'}</td>
+                <td>
+                    <button class="btn btn-sm" onclick="openWarnModal(${u.id}, '${escapeHtml(u.username)}')">⚠️ Cảnh báo</button>
+                    ${u.status === 'active'
+                        ? `<button class="btn btn-sm" onclick="openBanModal(${u.id}, '${escapeHtml(u.username)}')">🚫 Khóa</button>`
+                        : `<button class="btn btn-sm" onclick="unbanUser(${u.id})">✅ Mở</button>`}
+                    <button class="btn btn-sm" onclick="delUser(${u.id})">🗑</button>
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" class="muted" style="text-align:center">Chưa có user</td></tr>';
+    } catch (e) { /* ignore */ }
 }
 
-function filterUsers(query) {
-    if (!query) {
-        renderUsers(adminState.users);
-        return;
-    }
-    const filtered = adminState.users.filter(u =>
-        u.username.toLowerCase().includes(query)
-    );
-    renderUsers(filtered);
+async function unbanUser(id) {
+    if (!confirm('Mở khóa user này?')) return;
+    await fetch(`/api/admin/unban/${id}`, {method: 'POST'});
+    loadUsers(); loadStats(); loadBans();
 }
 
-function renderUsers(users) {
-    const tbody = document.getElementById("users-tbody");
-    tbody.innerHTML = "";
-
-    if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Chưa có user nào</td></tr>';
-        return;
-    }
-
-    for (const u of users) {
-        const tr = document.createElement("tr");
-
-        const tdId = document.createElement("td");
-        tdId.textContent = u.id;
-        tdId.className = "td-id";
-        tr.appendChild(tdId);
-
-        const tdUser = document.createElement("td");
-        tdUser.textContent = u.username;
-        tdUser.className = "td-username";
-        tr.appendChild(tdUser);
-
-        const tdRole = document.createElement("td");
-        if (u.is_admin) {
-            tdRole.innerHTML = '<span class="badge badge-admin">👑 Admin</span>';
-        } else if (u.username.startsWith("guest_")) {
-            tdRole.innerHTML = '<span class="badge badge-guest">👤 Guest</span>';
-        } else {
-            tdRole.innerHTML = '<span class="badge badge-user">👤 User</span>';
-        }
-        tr.appendChild(tdRole);
-
-        const tdStatus = document.createElement("td");
-        if (u.is_banned) {
-            tdStatus.innerHTML = '<span class="badge badge-banned">🚫 Cấm vĩnh viễn</span>';
-        } else {
-            tdStatus.innerHTML = '<span class="badge badge-active">✅ Hoạt động</span>';
-        }
-        tr.appendChild(tdStatus);
-
-        const tdCount = document.createElement("td");
-        tdCount.textContent = u.op_count || 0;
-        tr.appendChild(tdCount);
-
-        const tdDate = document.createElement("td");
-        tdDate.textContent = u.created_at || "-";
-        tdDate.className = "td-date";
-        tr.appendChild(tdDate);
-
-        const tdActions = document.createElement("td");
-        tdActions.className = "td-actions";
-
-        if (!u.is_admin) {
-            if (u.is_banned) {
-                const btnUnban = document.createElement("button");
-                btnUnban.className = "admin-action-btn unban";
-                btnUnban.textContent = "✅ Mở cấm";
-                btnUnban.addEventListener("click", () => unbanUser(u.id, u.username));
-                tdActions.appendChild(btnUnban);
-            } else {
-                const btnBan = document.createElement("button");
-                btnBan.className = "admin-action-btn ban";
-                btnBan.textContent = "🚫 Cấm";
-                btnBan.addEventListener("click", () => openBanModal(u.id, u.username));
-                tdActions.appendChild(btnBan);
-            }
-
-            const btnDel = document.createElement("button");
-            btnDel.className = "admin-action-btn delete";
-            btnDel.textContent = "🗑 Xóa";
-            btnDel.addEventListener("click", () => deleteUser(u.id, u.username));
-            tdActions.appendChild(btnDel);
-        }
-
-        const btnHistory = document.createElement("button");
-        btnHistory.className = "admin-action-btn history";
-        btnHistory.textContent = "📜 Lịch sử";
-        btnHistory.addEventListener("click", () => viewUserHistory(u.username));
-        tdActions.appendChild(btnHistory);
-
-        tr.appendChild(tdActions);
-        tbody.appendChild(tr);
-    }
-}
-
-// ============================================================
-// BAN USER
-// ============================================================
-function openBanModal(userId, username) {
-    adminState.banTarget = { userId, username };
-    document.getElementById("ban-username").textContent = username;
-    document.getElementById("ban-reason").value = "";
-    document.getElementById("ban-modal").classList.add("show");
-}
-
-function closeBanModal() {
-    document.getElementById("ban-modal").classList.remove("show");
-    adminState.banTarget = null;
-}
-
-async function confirmBan() {
-    if (!adminState.banTarget) return;
-
-    const { userId, username } = adminState.banTarget;
-    const reason = document.getElementById("ban-reason").value.trim();
-
-    const confirmBtn = document.getElementById("ban-confirm");
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = "⏳ Đang cấm...";
-
-    try {
-        const res = await fetch(`/api/admin/users/${userId}/ban`, {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reason })
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-            showToast(`✅ Đã cấm user "${username}" vĩnh viễn`);
-            closeBanModal();
-            await loadUsers();
-            await loadStats();
-        } else {
-            showToast(`❌ ${data.error || "Lỗi không xác định"}`, true);
-        }
-    } catch (e) {
-        showToast("❌ Lỗi kết nối: " + e.message, true);
-    } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = "🚫 Cấm vĩnh viễn";
-    }
-}
-
-// ============================================================
-// UNBAN USER
-// ============================================================
-async function unbanUser(userId, username) {
-    showConfirm(
-        `✅ Mở cấm user "${username}"?`,
-        "User này sẽ có thể đăng nhập và sử dụng lại bình thường.",
-        async () => {
-            try {
-                const res = await fetch(`/api/admin/users/${userId}/unban`, {
-                    method: "POST",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" }
-                });
-
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    showToast(`✅ Đã mở cấm user "${username}"`);
-                    await loadUsers();
-                    await loadStats();
-                } else {
-                    showToast(`❌ ${data.error || "Lỗi không xác định"}`, true);
-                }
-            } catch (e) {
-                showToast("❌ Lỗi kết nối: " + e.message, true);
-            }
-        }
-    );
-}
-
-// ============================================================
-// DELETE USER
-// ============================================================
-function deleteUser(userId, username) {
-    showConfirm(
-        `🗑 Xóa user "${username}"?`,
-        "Toàn bộ lịch sử của user này cũng sẽ bị xóa. Không thể hoàn tác!",
-        async () => {
-            try {
-                const res = await fetch(`/api/admin/users/${userId}`, {
-                    method: "DELETE",
-                    credentials: "include"
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    showToast(`✅ Đã xóa user "${username}"`);
-                    await loadUsers();
-                    await loadStats();
-                } else {
-                    showToast(`❌ ${data.error || "Lỗi không xác định"}`, true);
-                }
-            } catch (e) {
-                showToast("❌ Lỗi kết nối", true);
-            }
-        }
-    );
-}
-
-// ============================================================
-// VIEW USER HISTORY
-// ============================================================
-function viewUserHistory(username) {
-    document.getElementById("history-search").value = username;
-    document.querySelectorAll(".admin-tab").forEach(t => {
-        t.classList.toggle("active", t.dataset.tab === "history");
+async function delUser(id) {
+    const reason = prompt('Lý do xóa:', 'Vi phạm');
+    if (reason === null) return;
+    await fetch(`/api/admin/user/${id}`, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({reason})
     });
-    document.getElementById("tab-users").classList.add("hidden");
-    document.getElementById("tab-history").classList.remove("hidden");
-    adminState.currentTab = "history";
-    loadHistory();
+    loadUsers(); loadStats();
 }
 
-// ============================================================
-// LOAD HISTORY
-// ============================================================
+// ==================== WARNINGS LIST ====================
+async function loadWarnings() {
+    try {
+        const res = await fetch('/api/admin/warnings');
+        const rows = await res.json();
+        const icons = {notice: '📘', warning: '⚠️', danger: '🚨'};
+        $('warnings-body').innerHTML = rows.map(w => `
+            <tr>
+                <td>${w.id}</td>
+                <td>${escapeHtml(w.username || '—')}</td>
+                <td>${escapeHtml(w.title)}</td>
+                <td>${escapeHtml(w.reason).slice(0, 40)}</td>
+                <td>${icons[w.severity] || '⚠️'} ${w.severity}</td>
+                <td>${w.acknowledged ? '✅' : '⏳'}</td>
+                <td>${escapeHtml(w.moderator)}</td>
+                <td>${new Date(w.created_at).toLocaleString('vi-VN')}</td>
+                <td><button class="btn btn-sm" onclick="delWarning(${w.id})">🗑</button></td>
+            </tr>
+        `).join('') || '<tr><td colspan="9" class="muted" style="text-align:center">Chưa có cảnh báo</td></tr>';
+    } catch (e) { /* ignore */ }
+}
+
+async function delWarning(id) {
+    if (!confirm('Xóa cảnh báo này?')) return;
+    await fetch(`/api/admin/warnings/${id}`, {method: 'DELETE'});
+    loadWarnings();
+}
+
+// ==================== BANS LIST ====================
+async function loadBans() {
+    try {
+        const res = await fetch('/api/admin/bans');
+        const rows = await res.json();
+        $('bans-body').innerHTML = rows.map(b => `
+            <tr>
+                <td>${b.id}</td>
+                <td>${escapeHtml(b.username || '—')}</td>
+                <td>${escapeHtml(b.reason || '').slice(0, 40)}</td>
+                <td>${escapeHtml(b.moderator || '')}</td>
+                <td>${new Date(b.banned_at).toLocaleString('vi-VN')}</td>
+                <td>${b.is_permanent ? '∞' : (b.expires_at ? new Date(b.expires_at).toLocaleString('vi-VN') : '—')}</td>
+                <td>${b.is_permanent ? '🚫 Vĩnh viễn' : '⏱ Tạm thời'}</td>
+                <td>${b.is_active
+                    ? `<button class="btn btn-sm" onclick="unbanUser(${b.user_id})">✅ Mở</button>`
+                    : '<span class="muted">Đã hết</span>'}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="8" class="muted" style="text-align:center">Chưa có ban</td></tr>';
+    } catch (e) { /* ignore */ }
+}
+
+// ==================== HISTORY ====================
 async function loadHistory() {
-    const tbody = document.getElementById("history-tbody");
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Đang tải...</td></tr>';
+    try {
+        const res = await fetch('/api/admin/history');
+        const rows = await res.json();
+        $('history-body').innerHTML = rows.map(r => `
+            <tr>
+                <td>${escapeHtml(r.username || '—')}</td>
+                <td>${r.algo_label}</td>
+                <td>${r.operation === 'encode' ? '🔒' : '🔓'}</td>
+                <td title="${escapeHtml(r.input_text)}">${escapeHtml(r.input_text).slice(0, 40)}</td>
+                <td title="${escapeHtml(String(r.output_text))}">${escapeHtml(String(r.output_text)).slice(0, 40)}</td>
+                <td>${new Date(r.created_at).toLocaleString('vi-VN')}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="6" class="muted" style="text-align:center">Chưa có lịch sử</td></tr>';
+    } catch (e) { /* ignore */ }
+}
 
-    const username = document.getElementById("history-search").value.trim();
-    const mode = document.getElementById("history-mode").value;
+// ==================== WARN MODAL ====================
+function openWarnModal(uid, username) {
+    $('warn-user-id').value = uid;
+    $('warn-username').textContent = username;
+    $('warn-title').value = '';
+    $('warn-reason').value = '';
+    $('warn-severity').value = 'warning';
+    $('warn-modal-overlay').style.display = 'flex';
+}
 
-    const params = new URLSearchParams();
-    if (username) params.append("username", username);
-    if (mode) params.append("mode", mode);
-    params.append("limit", "200");
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'warn-modal-close' || e.target.id === 'warn-modal-cancel') {
+        $('warn-modal-overlay').style.display = 'none';
+    }
+    if (e.target.id === 'warn-modal-overlay') {
+        e.target.style.display = 'none';
+    }
+});
+
+$('warn-modal-submit').onclick = async () => {
+    const uid = parseInt($('warn-user-id').value);
+    const title = $('warn-title').value.trim();
+    const reason = $('warn-reason').value.trim();
+    const severity = $('warn-severity').value;
+
+    if (!title) { alert('Nhập tiêu đề!'); return; }
+    if (!reason) { alert('Nhập lý do!'); return; }
 
     try {
-        const res = await fetch(`/api/admin/history?${params}`, { credentials: "include" });
-        if (!res.ok) {
-            tbody.innerHTML = '<tr><td colspan="7" class="empty-row">❌ Không có quyền admin</td></tr>';
-            return;
-        }
+        const res = await fetch(`/api/admin/warn/${uid}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title, reason, severity})
+        });
         const data = await res.json();
-        renderHistory(data);
-    } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-row">❌ Lỗi kết nối</td></tr>';
-    }
-}
-
-function renderHistory(items) {
-    const tbody = document.getElementById("history-tbody");
-    tbody.innerHTML = "";
-
-    if (!items || items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Chưa có lịch sử</td></tr>';
-        return;
-    }
-
-    for (const h of items) {
-        const tr = document.createElement("tr");
-
-        tr.appendChild(mkCell(h.id, "td-id"));
-        tr.appendChild(mkCell(h.username, "td-username"));
-
-        const tdMode = document.createElement("td");
-        if (h.mode === "encode") {
-            tdMode.innerHTML = '<span class="badge badge-encode">🔒 Mã hóa</span>';
+        if (data.ok) {
+            $('warn-modal-overlay').style.display = 'none';
+            alert(`✅ Đã gửi cảnh báo!\nSố lần vi phạm: ${data.warning_count}/3`
+                + (data.auto_banned ? '\n🚫 Tài khoản đã bị khóa tự động!' : ''));
+            loadUsers(); loadWarnings(); loadStats(); loadBans();
         } else {
-            tdMode.innerHTML = '<span class="badge badge-decode">🔓 Giải mã</span>';
+            alert('❌ ' + (data.error || 'Lỗi'));
         }
-        tr.appendChild(tdMode);
+    } catch (e) { alert('Lỗi kết nối'); }
+};
 
-        tr.appendChild(mkCell(h.algo, "td-algo"));
-        tr.appendChild(mkCell(truncate(h.input_text, 60), "td-input"));
-        tr.appendChild(mkCell(truncate(h.output_text, 60), "td-output"));
-        tr.appendChild(mkCell(h.created_at, "td-date"));
+// ==================== BAN MODAL ====================
+function openBanModal(uid, username) {
+    $('ban-user-id').value = uid;
+    $('ban-username').textContent = username;
+    $('ban-reason').value = '';
+    $('ban-duration').value = '0';
+    $('ban-modal-overlay').style.display = 'flex';
+}
 
-        tbody.appendChild(tr);
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'ban-modal-close' || e.target.id === 'ban-modal-cancel') {
+        $('ban-modal-overlay').style.display = 'none';
     }
-}
+    if (e.target.id === 'ban-modal-overlay') {
+        e.target.style.display = 'none';
+    }
+});
 
-function mkCell(text, className) {
-    const td = document.createElement("td");
-    td.textContent = text || "";
-    if (className) td.className = className;
-    return td;
-}
+$('ban-modal-submit').onclick = async () => {
+    const uid = parseInt($('ban-user-id').value);
+    const reason = $('ban-reason').value.trim() || 'Vi phạm quy định';
+    const duration = parseInt($('ban-duration').value);
 
-function truncate(text, max) {
-    if (!text) return "";
-    return text.length > max ? text.substring(0, max) + "..." : text;
-}
+    try {
+        const res = await fetch(`/api/admin/ban/${uid}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({reason, duration_hours: duration})
+        });
+        const data = await res.json();
+        if (data.ok) {
+            $('ban-modal-overlay').style.display = 'none';
+            alert(`✅ Đã khóa user ${uid}`);
+            loadUsers(); loadBans(); loadStats();
+        } else {
+            alert('❌ ' + (data.error || 'Lỗi'));
+        }
+    } catch (e) { alert('Lỗi kết nối'); }
+};
 
-// ============================================================
-// CONFIRM MODAL
-// ============================================================
-function showConfirm(title, text, callback) {
-    document.getElementById("confirm-title").textContent = title;
-    document.getElementById("confirm-text").textContent = text;
-    adminState.confirmCallback = callback;
-    document.getElementById("confirm-modal").classList.add("show");
-}
-
-function closeConfirm() {
-    document.getElementById("confirm-modal").classList.remove("show");
-    adminState.confirmCallback = null;
-}
-
-// ============================================================
-// TOAST
-// ============================================================
-let toastTimer = null;
-function showToast(msg, isError = false) {
-    const toast = document.getElementById("toast");
-    toast.textContent = msg;
-    toast.classList.toggle("error", isError);
-    toast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("show"), 2500);
-}
+// ==================== INIT ====================
+loadStats();
+loadUsers();
+loadWarnings();
+loadBans();
+loadHistory();
+setInterval(() => { loadStats(); loadUsers(); }, 30000);
