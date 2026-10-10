@@ -16,7 +16,6 @@ app.permanent_session_lifetime = timedelta(days=7)
 
 USERS_FILE = 'users.json'
 
-# 👑 SUPER ADMIN — người duy nhất có toàn quyền
 SUPER_ADMIN_USERNAME = os.getenv('ADMIN_USER', 'admin')
 SUPER_ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 
@@ -65,22 +64,13 @@ def verify_password(password, stored):
 
 
 def is_super_admin(username):
-    """Check xem có phải Super Admin không"""
     return username and username.lower() == SUPER_ADMIN_USERNAME.lower()
 
 
 # ============================================================
-# KHỞI TẠO SUPER ADMIN — BẤT TỬ
+# KHỞI TẠO SUPER ADMIN
 # ============================================================
 def init_super_admin():
-    """
-    Tạo/nâng cấp SUPER ADMIN.
-    Luôn đảm bảo:
-      - role = 'super_admin'
-      - status = 'active' (tự gỡ ban nếu bị ban)
-      - password khớp env
-      - không có warnings
-    """
     users = load_users()
     now = datetime.now().isoformat()
 
@@ -95,11 +85,7 @@ def init_super_admin():
             'status': 'active',
             'warnings': [],
             'ban_info': None,
-            'activity_log': [{
-                'action': 'system',
-                'detail': 'Super Admin được tạo tự động',
-                'time': now
-            }],
+            'activity_log': [{'action': 'system', 'detail': 'Super Admin tạo tự động', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
             'protected': True
@@ -108,46 +94,35 @@ def init_super_admin():
         print(f"👑 Đã tạo SUPER ADMIN: {SUPER_ADMIN_USERNAME}")
         return
 
-    # Đã có → nâng cấp & bảo vệ
     changed = False
     user = users[SUPER_ADMIN_USERNAME]
 
     if user.get('role') != 'super_admin':
         user['role'] = 'super_admin'
         changed = True
-        print(f"👑 Đã nâng cấp {SUPER_ADMIN_USERNAME} → SUPER ADMIN")
 
     if user.get('status') != 'active':
         user['status'] = 'active'
         user['ban_info'] = None
         changed = True
-        print(f"✅ Đã tự gỡ ban cho Super Admin")
 
     if not verify_password(SUPER_ADMIN_PASSWORD, user.get('password', '')):
         user['password'] = hash_password(SUPER_ADMIN_PASSWORD)
         changed = True
-        print(f"🔑 Đã đồng bộ mật khẩu Super Admin từ ENV")
 
     if user.get('warnings'):
         user['warnings'] = []
         user['warnings_shown'] = True
         changed = True
-        print(f"🧹 Đã xóa cảnh báo của Super Admin")
 
     if not user.get('protected'):
         user['protected'] = True
         changed = True
 
     defaults = {
-        'created_at': now,
-        'last_login': None,
-        'login_count': 0,
-        'history': [],
-        'warnings': [],
-        'ban_info': None,
-        'activity_log': [],
-        'suspicious_score': 0,
-        'warnings_shown': True
+        'created_at': now, 'last_login': None, 'login_count': 0,
+        'history': [], 'warnings': [], 'ban_info': None,
+        'activity_log': [], 'suspicious_score': 0, 'warnings_shown': True
     }
     for k, v in defaults.items():
         if k not in user:
@@ -156,6 +131,7 @@ def init_super_admin():
 
     if changed:
         save_users(users)
+        print(f"👑 Đã cập nhật SUPER ADMIN: {SUPER_ADMIN_USERNAME}")
     else:
         print(f"✓ Super Admin {SUPER_ADMIN_USERNAME} đã sẵn sàng")
 
@@ -166,11 +142,7 @@ def log_activity(username, action, detail=''):
         return
 
     log = users[username].get('activity_log', [])
-    log.insert(0, {
-        'action': action,
-        'detail': detail,
-        'time': datetime.now().isoformat()
-    })
+    log.insert(0, {'action': action, 'detail': detail, 'time': datetime.now().isoformat()})
     users[username]['activity_log'] = log[:50]
 
     try:
@@ -178,13 +150,12 @@ def log_activity(username, action, detail=''):
         recent = [l for l in log if datetime.fromisoformat(l['time']) > five_min_ago]
         users[username]['suspicious_score'] = len(recent)
 
-        # Auto-warn TRỪ super admin
         if (len(recent) >= SUSPICIOUS_THRESHOLD
             and users[username].get('status') == 'active'
             and users[username].get('role') != 'super_admin'):
             warnings = users[username].get('warnings', [])
             warnings.append({
-                'reason': f'Hoạt động bất thường: {len(recent)} thao tác trong 5 phút',
+                'reason': f'Hoạt động bất thường: {len(recent)} thao tác/5 phút',
                 'time': datetime.now().isoformat(),
                 'by': 'system'
             })
@@ -212,7 +183,6 @@ def login_required(f):
 
 
 def admin_required(f):
-    """Chỉ admin/super_admin"""
     @wraps(f)
     def wrapper(*args, **kwargs):
         if 'username' not in session:
@@ -231,7 +201,6 @@ def admin_required(f):
 
 
 def super_admin_required(f):
-    """CHỈ Super Admin"""
     @wraps(f)
     def wrapper(*args, **kwargs):
         if 'username' not in session:
@@ -241,14 +210,14 @@ def super_admin_required(f):
 
         if not is_super_admin(session['username']):
             if request.path.startswith('/api/'):
-                return jsonify({'success': False, 'error': 'Chỉ Super Admin mới có quyền này!'}), 403
+                return jsonify({'success': False, 'error': 'Chỉ Super Admin mới có quyền!'}), 403
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return wrapper
 
 
 # ============================================================
-# AUTH
+# AUTH ROUTES
 # ============================================================
 @app.route('/login')
 def login_page():
@@ -275,11 +244,10 @@ def register():
         if len(username) > 30:
             return jsonify({'success': False, 'error': 'Tên đăng nhập tối đa 30 ký tự!'}), 400
         if not username.replace('_', '').replace('.', '').isalnum():
-            return jsonify({'success': False, 'error': 'Tên chỉ được chứa chữ, số, dấu _ và .'}), 400
+            return jsonify({'success': False, 'error': 'Tên chỉ chứa chữ, số, dấu _ và .'}), 400
         if len(password) < 6:
             return jsonify({'success': False, 'error': 'Mật khẩu phải có ít nhất 6 ký tự!'}), 400
 
-        # Không cho đăng ký trùng tên super admin
         if username.lower() == SUPER_ADMIN_USERNAME.lower():
             return jsonify({'success': False, 'error': 'Tên này đã được bảo vệ!'}), 400
 
@@ -298,11 +266,7 @@ def register():
             'status': 'active',
             'warnings': [],
             'ban_info': None,
-            'activity_log': [{
-                'action': 'register',
-                'detail': 'Đăng ký tài khoản mới',
-                'time': now
-            }],
+            'activity_log': [{'action': 'register', 'detail': 'Đăng ký mới', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
             'protected': False
@@ -337,7 +301,6 @@ def login():
 
         users = load_users()
 
-        # Nếu là super admin → ưu tiên check env
         if username.lower() == SUPER_ADMIN_USERNAME.lower():
             if SUPER_ADMIN_USERNAME not in users:
                 init_super_admin()
@@ -345,7 +308,6 @@ def login():
 
             if password != SUPER_ADMIN_PASSWORD and not verify_password(password, users[SUPER_ADMIN_USERNAME]['password']):
                 return jsonify({'success': False, 'error': 'Sai tên đăng nhập hoặc mật khẩu!'}), 401
-
             found_user = SUPER_ADMIN_USERNAME
         else:
             found_user = None
@@ -356,13 +318,11 @@ def login():
 
             if not found_user:
                 return jsonify({'success': False, 'error': 'Sai tên đăng nhập hoặc mật khẩu!'}), 401
-
             if not verify_password(password, users[found_user]['password']):
                 return jsonify({'success': False, 'error': 'Sai tên đăng nhập hoặc mật khẩu!'}), 401
 
         user = users[found_user]
 
-        # Kiểm tra ban (super admin miễn nhiễm)
         if user.get('status') == 'banned' and not is_super_admin(found_user):
             return jsonify({
                 'success': False,
@@ -371,17 +331,12 @@ def login():
                 'redirect': f'/banned?user={found_user}'
             }), 403
 
-        # Cập nhật login info
         now = datetime.now().isoformat()
         users[found_user]['last_login'] = now
         users[found_user]['login_count'] = user.get('login_count', 0) + 1
 
         log = users[found_user].get('activity_log', [])
-        log.insert(0, {
-            'action': 'login',
-            'detail': f'Đăng nhập lần {users[found_user]["login_count"]}',
-            'time': now
-        })
+        log.insert(0, {'action': 'login', 'detail': f'Đăng nhập lần {users[found_user]["login_count"]}', 'time': now})
         users[found_user]['activity_log'] = log[:50]
 
         users[found_user]['warnings_shown'] = False
@@ -425,15 +380,13 @@ def me():
         uname = session.get('username', '')
         session.clear()
         return jsonify({
-            'success': False,
-            'banned': True,
+            'success': False, 'banned': True,
             'error': 'Tài khoản đã bị ban!',
             'redirect': f'/banned?user={uname}'
         }), 403
 
     return jsonify({
-        'success': True,
-        'logged_in': True,
+        'success': True, 'logged_in': True,
         'username': session['username'],
         'role': user.get('role', 'user'),
         'is_super_admin': is_super_admin(session['username']),
@@ -447,7 +400,7 @@ def me():
 
 
 # ============================================================
-# BAN & WARNING PAGES
+# BAN & WARN PAGES
 # ============================================================
 @app.route('/banned')
 def banned_page():
@@ -464,15 +417,11 @@ def banned_page():
         return redirect(url_for('login_page'))
 
     user = users[found_user]
-
     if user.get('status') != 'banned':
         return redirect(url_for('login_page'))
 
     ban_info = user.get('ban_info', {}) or {}
-
-    ban_id = hashlib.md5(
-        f"{found_user}{ban_info.get('time', '')}".encode()
-    ).hexdigest()[:12].upper()
+    ban_id = hashlib.md5(f"{found_user}{ban_info.get('time', '')}".encode()).hexdigest()[:12].upper()
 
     banned_at = ban_info.get('time', '')
     if banned_at:
@@ -509,11 +458,7 @@ def warned_page():
     warnings = user.get('warnings', [])
 
     if not session.get('warnings_shown') and warnings:
-        return render_template(
-            'warned.html',
-            username=session['username'],
-            warnings=warnings
-        )
+        return render_template('warned.html', username=session['username'], warnings=warnings)
 
     return redirect(url_for('index'))
 
@@ -567,10 +512,8 @@ def api_process():
             uname = session.get('username', '')
             session.clear()
             return jsonify({
-                'success': False,
-                'error': 'Tài khoản đã bị ban!',
-                'banned': True,
-                'redirect': f'/banned?user={uname}'
+                'success': False, 'error': 'Tài khoản đã bị ban!',
+                'banned': True, 'redirect': f'/banned?user={uname}'
             }), 403
 
         data = request.get_json()
@@ -583,21 +526,18 @@ def api_process():
             return jsonify({'success': False, 'error': 'Văn bản trống!'}), 400
         if method not in METHODS:
             return jsonify({'success': False, 'error': 'Phương pháp không hợp lệ!'}), 400
-
         if action == 'decrypt' and method in ONE_WAY_ONLY:
             return jsonify({
                 'success': False,
-                'error': f'Phương pháp "{METHODS[method]}" là mã hóa 1 chiều — không thể giải mã!'
+                'error': f'Phương pháp "{METHODS[method]}" là mã hóa 1 chiều!'
             }), 400
 
         result = process(text, method, action, key)
 
         history = user.get('history', [])
         history.insert(0, {
-            'method': method,
-            'action': action,
-            'input_preview': text[:50],
-            'output_preview': result[:50],
+            'method': method, 'action': action,
+            'input_preview': text[:50], 'output_preview': result[:50],
             'time': datetime.now().isoformat()
         })
         users[session['username']]['history'] = history[:20]
@@ -606,10 +546,8 @@ def api_process():
         log_activity(session['username'], action, f'{method}: {text[:30]}')
 
         return jsonify({
-            'success': True,
-            'result': result,
-            'method': method,
-            'action': action,
+            'success': True, 'result': result,
+            'method': method, 'action': action,
             'one_way': method in ONE_WAY_ONLY
         })
     except Exception as e:
@@ -672,13 +610,9 @@ def admin_users():
     return jsonify({'success': True, 'users': result})
 
 
-# ============================================================
-# ADMIN ACTIONS — CHỈ SUPER ADMIN + CHẶN TỰ BAN/WARN/XÓA
-# ============================================================
 @app.route('/api/admin/ban', methods=['POST'])
 @super_admin_required
 def admin_ban():
-    """Ban user — 🚫 CHẶN tự ban chính mình"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -687,25 +621,17 @@ def admin_ban():
         if not target:
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
 
-        # 🚫 CHẶN TỰ BAN
         if target == session['username']:
             return jsonify({
                 'success': False,
-                'error': '🚫 KHÔNG THỂ TỰ BAN CHÍNH MÌNH!\n\n'
-                         'Bạn là Super Admin duy nhất. Nếu tự ban, bạn sẽ mất '
-                         'quyền truy cập và không ai có thể gỡ ban cho bạn.'
+                'error': '🚫 KHÔNG THỂ TỰ BAN CHÍNH MÌNH!\n\nBạn là Super Admin duy nhất.'
             }), 400
 
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
-
-        # 🚫 CHẶN BAN SUPER ADMIN KHÁC
         if is_super_admin(target):
-            return jsonify({
-                'success': False,
-                'error': '🚫 Không thể ban Super Admin khác!'
-            }), 403
+            return jsonify({'success': False, 'error': '🚫 Không thể ban Super Admin khác!'}), 403
 
         users[target]['status'] = 'banned'
         users[target]['ban_info'] = {
@@ -727,7 +653,6 @@ def admin_ban():
 @app.route('/api/admin/unban', methods=['POST'])
 @super_admin_required
 def admin_unban():
-    """Gỡ ban — CHỈ Super Admin"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -748,7 +673,6 @@ def admin_unban():
 @app.route('/api/admin/warn', methods=['POST'])
 @super_admin_required
 def admin_warn():
-    """Cảnh báo user — 🚫 CHẶN tự warn chính mình"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -757,25 +681,17 @@ def admin_warn():
         if not target:
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
 
-        # 🚫 CHẶN TỰ WARN
         if target == session['username']:
             return jsonify({
                 'success': False,
-                'error': '🚫 KHÔNG THỂ TỰ CẢNH BÁO CHÍNH MÌNH!\n\n'
-                         'Hãy cảnh báo user khác. Nếu tự cảnh báo, bạn sẽ bị '
-                         'chuyển đến trang cảnh báo và phải xác nhận.'
+                'error': '🚫 KHÔNG THỂ TỰ CẢNH BÁO CHÍNH MÌNH!'
             }), 400
 
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
-
-        # 🚫 CHẶN WARN SUPER ADMIN KHÁC
         if is_super_admin(target):
-            return jsonify({
-                'success': False,
-                'error': '🚫 Không thể cảnh báo Super Admin khác!'
-            }), 403
+            return jsonify({'success': False, 'error': '🚫 Không thể cảnh báo Super Admin!'}), 403
 
         warnings = users[target].get('warnings', [])
         warnings.append({
@@ -803,7 +719,6 @@ def admin_warn():
 @app.route('/api/admin/reset-warnings', methods=['POST'])
 @super_admin_required
 def admin_reset_warnings():
-    """Xóa cảnh báo — CHỈ Super Admin"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -826,7 +741,6 @@ def admin_reset_warnings():
 @app.route('/api/admin/user/<username>')
 @admin_required
 def admin_user_detail(username):
-    """Chi tiết user — admin nào cũng xem được"""
     users = load_users()
     user = users.get(username)
     if not user:
@@ -865,12 +779,9 @@ def admin_stats():
     return jsonify({
         'success': True,
         'stats': {
-            'total': total,
-            'active': active,
-            'warned': warned,
-            'banned': banned,
-            'admins': admins,
-            'suspicious': suspicious
+            'total': total, 'active': active,
+            'warned': warned, 'banned': banned,
+            'admins': admins, 'suspicious': suspicious
         }
     })
 
@@ -878,7 +789,6 @@ def admin_stats():
 @app.route('/api/admin/delete', methods=['POST'])
 @super_admin_required
 def admin_delete():
-    """Xóa user — 🚫 CHẶN tự xóa chính mình"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -886,25 +796,17 @@ def admin_delete():
         if not target:
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
 
-        # 🚫 CHẶN TỰ XÓA
         if target == session['username']:
             return jsonify({
                 'success': False,
-                'error': '🚫 KHÔNG THỂ TỰ XÓA CHÍNH MÌNH!\n\n'
-                         'Bạn là Super Admin duy nhất. Hãy để user khác xóa '
-                         'hoặc xóa thủ công file users.json nếu muốn reset.'
+                'error': '🚫 KHÔNG THỂ TỰ XÓA CHÍNH MÌNH!'
             }), 400
 
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
-
-        # 🚫 CHẶN XÓA SUPER ADMIN KHÁC
         if is_super_admin(target):
-            return jsonify({
-                'success': False,
-                'error': '🚫 Không thể xóa Super Admin khác!'
-            }), 403
+            return jsonify({'success': False, 'error': '🚫 Không thể xóa Super Admin!'}), 403
 
         del users[target]
         save_users(users)
@@ -914,64 +816,6 @@ def admin_delete():
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
 
-@app.route('/api/admin/promote', methods=['POST'])
-@super_admin_required
-def admin_promote():
-    """Nâng user lên admin — CHỈ Super Admin"""
-    try:
-        data = request.get_json()
-        target = data.get('username', '').strip()
-
-        if not target:
-            return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
-
-        users = load_users()
-        if target not in users:
-            return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
-
-        if users[target].get('role') == 'super_admin':
-            return jsonify({'success': False, 'error': 'Đã là Super Admin!'}), 400
-
-        users[target]['role'] = 'admin'
-        save_users(users)
-
-        return jsonify({'success': True, 'message': f'👑 Đã nâng {target} lên Admin'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
-
-
-@app.route('/api/admin/demote', methods=['POST'])
-@super_admin_required
-def admin_demote():
-    """Hạ admin xuống user — CHỈ Super Admin"""
-    try:
-        data = request.get_json()
-        target = data.get('username', '').strip()
-
-        if not target:
-            return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
-
-        if target == session['username']:
-            return jsonify({'success': False, 'error': 'Không thể tự hạ cấp!'}), 400
-
-        users = load_users()
-        if target not in users:
-            return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
-
-        if is_super_admin(target):
-            return jsonify({'success': False, 'error': 'Không thể hạ Super Admin!'}), 403
-
-        users[target]['role'] = 'user'
-        save_users(users)
-
-        return jsonify({'success': True, 'message': f'👤 Đã hạ {target} xuống User'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
-
-
-# ============================================================
-# HEALTH CHECK
-# ============================================================
 @app.route('/health')
 def health():
     users = load_users()
@@ -980,8 +824,7 @@ def health():
         'total_methods': len(METHODS),
         'total_users': len(users),
         'super_admin': SUPER_ADMIN_USERNAME,
-        'super_admin_exists': SUPER_ADMIN_USERNAME in users,
-        'super_admin_role': users.get(SUPER_ADMIN_USERNAME, {}).get('role', 'none')
+        'super_admin_exists': SUPER_ADMIN_USERNAME in users
     })
 
 
