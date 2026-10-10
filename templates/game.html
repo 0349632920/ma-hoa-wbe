@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 Game Hub — Mã Hóa Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .game-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 24px 30px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+    }
+    .game-title { display: flex; align-items: center; gap: 15px; }
+    .game-icon { font-size: 48px; }
+    .game-title h1 { font-size: 28px; font-weight: 800; }
+    .game-title p { font-size: 14px; opacity: 0.9; margin-top: 2px; }
+
+    .user-stats {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      min-width: 90px;
+    }
+    .stat-item .value { font-size: 22px; font-weight: 800; }
+    .stat-item .label { font-size: 11px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .btn-back {
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.4);
+      color: #fff;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.3); }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+    .tab {
+      padding: 14px 24px;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid transparent;
+      color: #fff;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 15px;
+      white-space: nowrap;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab:hover { background: rgba(255,255,255,0.1); }
+    .tab.active {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Panels */
+    .panel {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 28px;
+      backdrop-filter: blur(10px);
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .panel.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Leaderboard */
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 16px 20px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: 0.2s;
+    }
+    .lb-row:hover { background: rgba(255,255,255,0.08); }
+    .lb-row.me {
+      background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2));
+      border-color: #667eea;
+    }
+    .lb-row.rank-1 { background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05)); }
+    .lb-row.rank-2 { background: linear-gradient(135deg, rgba(192,192,192,0.15), rgba(192,192,192,0.05)); }
+    .lb-row.rank-3 { background: linear-gradient(135deg, rgba(205,127,50,0.15), rgba(205,127,50,0.05)); }
+    .lb-rank { font-size: 28px; font-weight: 800; min-width: 50px; text-align: center; }
+    .lb-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 18px;
+    }
+    .lb-info { flex: 1; }
+    .lb-info strong { display: block; font-size: 16px; }
+    .lb-info small { color: #999; font-size: 12px; }
+    .lb-points { text-align: right; }
+    .lb-points strong { display: block; font-size: 20px; color: #ffd700; }
+    .lb-points small { color: #999; font-size: 11px; }
+
+    /* Daily */
+    .daily-card {
+      background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.03));
+      border: 2px solid #ffd700;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .daily-card.completed {
+      border-color: #27ae60;
+      background: linear-gradient(135deg, rgba(39,174,96,0.1), rgba(39,174,96,0.03));
+    }
+    .daily-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .daily-date { font-size: 14px; color: #ffd700; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .daily-points { font-size: 20px; font-weight: 800; color: #ffd700; }
+    .daily-desc { font-size: 18px; font-weight: 600; margin-bottom: 16px; line-height: 1.5; }
+    .daily-hint {
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: #a0e0ff;
+      word-break: break-all;
+    }
+    .daily-hint strong { color: #fff; }
+    .daily-input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .daily-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 14px 18px;
+      background: rgba(0,0,0,0.3);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      outline: none;
+      transition: 0.2s;
+    }
+    .daily-input:focus { border-color: #ffd700; }
+    .daily-btn {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    .daily-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,215,0,0.4); }
+    .daily-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* Rewards */
+    .rewards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 15px;
+    }
+    .reward-card {
+      background: rgba(255,255,255,0.03);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      transition: 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .reward-card.unlocked {
+      border-color: #ffd700;
+      background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.03));
+      animation: rewardGlow 2s ease-in-out infinite;
+    }
+    @keyframes rewardGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.2); }
+      50%      { box-shadow: 0 0 30px rgba(255,215,0,0.5); }
+    }
+    .reward-card.claimed {
+      border-color: #27ae60;
+      background: linear-gradient(135deg, rgba(39,174,96,0.1), rgba(39,174,96,0.03));
+      opacity: 0.7;
+    }
+    .reward-icon { font-size: 48px; margin-bottom: 12px; }
+    .reward-name { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+    .reward-desc { font-size: 13px; color: #999; margin-bottom: 12px; line-height: 1.4; }
+    .reward-points { font-size: 18px; font-weight: 800; color: #ffd700; margin-bottom: 12px; }
+    .reward-claim-btn {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+      transition: 0.2s;
+    }
+    .reward-claim-btn:hover { transform: translateY(-2px); }
+    .reward-claim-btn:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Random Method */
+    .random-display {
+      text-align: center;
+      padding: 40px 20px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .random-emoji { font-size: 90px; margin-bottom: 20px; animation: rollSpin 0.6s ease infinite; }
+    @keyframes rollSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    .random-method-name { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+    .random-method-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: #999;
+      padding: 6px 14px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+    }
+    .random-options {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .random-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .random-option input { accent-color: #667eea; }
+
+    .big-btn {
+      padding: 18px 40px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+      display: block;
+      margin: 0 auto;
+    }
+    .big-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(102,126,234,0.5); }
+
+    /* PvP */
+    .pvp-arena {
+      background: radial-gradient(circle at center, rgba(255,107,107,0.1), transparent);
+      border: 2px solid rgba(255,107,107,0.3);
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+    }
+    .pvp-vs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    .pvp-player {
+      flex: 1;
+      max-width: 200px;
+      padding: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+    }
+    .pvp-player-icon { font-size: 60px; margin-bottom: 10px; }
+    .pvp-player-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .pvp-player-score { font-size: 32px; font-weight: 800; color: #ffd700; }
+    .pvp-vs-text {
+      font-size: 36px;
+      font-weight: 900;
+      color: #ff6b6b;
+      text-shadow: 0 0 20px rgba(255,107,107,0.8);
+      animation: vsPulse 1s ease-in-out infinite;
+    }
+    @keyframes vsPulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.15); }
+    }
+    .pvp-challenge {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    .pvp-challenge-title {
+      font-size: 14px;
+      color: #ff6b6b;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .pvp-challenge-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      padding: 12px;
+      background: rgba(0,0,0,0.4);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      word-break: break-all;
+    }
+
+    .pvp-history-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .pvp-history-result { font-weight: 700; }
+    .pvp-history-result.win { color: #27ae60; }
+    .pvp-history-result.loss { color: #e74c3c; }
+    .pvp-history-result.draw { color: #f39c12; }
+
+    /* Meme */
+    .meme-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 700px) {
+      .meme-form { grid-template-columns: 1fr; }
+    }
+    .meme-input {
+      padding: 14px 18px;
+      background: rgba(0,0,0,0.3);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+    .meme-input:focus { border-color: #667eea; }
+
+    .meme-templates {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .meme-template {
+      cursor: pointer;
+      border: 3px solid transparent;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: 0.2s;
+      background: rgba(0,0,0,0.3);
+    }
+    .meme-template img { width: 100%; display: block; aspect-ratio: 1; object-fit: cover; }
+    .meme-template-name {
+      padding: 8px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .meme-template:hover { border-color: rgba(102,126,234,0.5); transform: scale(1.03); }
+    .meme-template.selected { border-color: #667eea; box-shadow: 0 0 20px rgba(102,126,234,0.5); }
+
+    .meme-preview {
+      background: #000;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      display: none;
+    }
+    .meme-preview.show { display: block; }
+    .meme-preview img { max-width: 100%; border-radius: 12px; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(150px);
+      padding: 16px 32px;
+      background: #27ae60;
+      color: #fff;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      z-index: 9999;
+      transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: #e74c3c; }
+    .toast.reward { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; }
+
+    /* Loading */
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="game-header">
+    <div class="game-title">
+      <div class="game-icon">🎮</div>
+      <div>
+        <h1>Game Hub</h1>
+        <p>Chơi game — Kiếm điểm — Lên top</p>
+      </div>
+    </div>
+
+    <div class="user-stats">
+      <div class="stat-item">
+        <div class="value" id="myPoints">0</div>
+        <div class="label">Điểm</div>
+      </div>
+      <div class="stat-item">
+        <div class="value" id="myLevel">1</div>
+        <div class="label">Level</div>
+      </div>
+      <div class="stat-item">
+        <div class="value" id="myRank">—</div>
+        <div class="label">Xếp hạng</div>
+      </div>
+      <a href="/" class="btn-back">🔐 Về trang chính</a>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="leaderboard">🏆 Bảng xếp hạng</button>
+    <button class="tab" data-tab="daily">🎯 Thử thách ngày</button>
+    <button class="tab" data-tab="rewards">🎁 Phần thưởng</button>
+    <button class="tab" data-tab="random">🎲 Random</button>
+    <button class="tab" data-tab="pvp">⚔️ PvP</button>
+    <button class="tab" data-tab="meme">🎨 Meme</button>
+  </div>
+
+  <!-- ═══ LEADERBOARD ═══ -->
+  <div class="panel active" id="panel-leaderboard">
+    <h2 class="panel-title">🏆 Bảng xếp hạng</h2>
+    <div id="leaderboardList">
+      <div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ DAILY ═══ -->
+  <div class="panel" id="panel-daily">
+    <h2 class="panel-title">🎯 Thử thách hàng ngày</h2>
+    <div id="dailyContent">Đang tải...</div>
+  </div>
+
+  <!-- ═══ REWARDS ═══ -->
+  <div class="panel" id="panel-rewards">
+    <h2 class="panel-title">🎁 Phần thưởng</h2>
+    <div class="rewards-grid" id="rewardsGrid"></div>
+  </div>
+
+  <!-- ═══ RANDOM ═══ -->
+  <div class="panel" id="panel-random">
+    <h2 class="panel-title">🎲 Phương pháp ngẫu nhiên</h2>
+    <div class="random-options">
+      <label class="random-option">
+        <input type="checkbox" id="optExcludeOneWay">
+        <span>Không chọn 1 chiều</span>
+      </label>
+      <label class="random-option">
+        <input type="checkbox" id="optExcludeKey">
+        <span>Không chọn cần key</span>
+      </label>
+    </div>
+    <div class="random-display" id="randomDisplay">
+      <div class="random-emoji">🎲</div>
+      <div style="color:#999;">Bấm nút để chọn phương pháp!</div>
+    </div>
+    <button class="big-btn" onclick="rollRandom()">🎲 Quay ngẫu nhiên</button>
+  </div>
+
+  <!-- ═══ PVP ═══ -->
+  <div class="panel" id="panel-pvp">
+    <h2 class="panel-title">⚔️ Đấu trường PvP</h2>
+    <div id="pvpContent">
+      <div class="pvp-arena">
+        <div style="font-size:60px;margin-bottom:15px;">⚔️</div>
+        <h3 style="margin-bottom:10px;">Thách đấu với AI</h3>
+        <p style="color:#999;margin-bottom:20px;">3 câu hỏi — Ai nhanh hơn sẽ thắng!</p>
+        <button class="big-btn" onclick="startPvP()">⚔️ Bắt đầu trận đấu</button>
+      </div>
+
+      <h3 style="margin-top:30px;margin-bottom:15px;">📜 Lịch sử đấu</h3>
+      <div id="pvpHistory"></div>
+    </div>
+  </div>
+
+  <!-- ═══ MEME ═══ -->
+  <div class="panel" id="panel-meme">
+    <h2 class="panel-title">🎨 Meme Generator</h2>
+
+    <div class="meme-form">
+      <input type="text" class="meme-input" id="memeInput" placeholder="📥 Văn bản gốc...">
+      <input type="text" class="meme-input" id="memeOutput" placeholder="✅ Văn bản đã mã hóa...">
+    </div>
+
+    <h3 style="margin-bottom:12px;">Chọn template:</h3>
+    <div class="meme-templates" id="memeTemplates"></div>
+
+    <button class="big-btn" onclick="generateMeme()">🎨 Tạo Meme</button>
+
+    <div class="meme-preview" id="memePreview"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+function showToast(msg, type = '') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast ' + type, 3000);
+}
+
+async function api(url, options = {}) {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    ...options
+  });
+  return await res.json();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    $(`panel-${tab.dataset.tab}`).classList.add('active');
+
+    // Load data cho tab
+    if (tab.dataset.tab === 'leaderboard') loadLeaderboard();
+    if (tab.dataset.tab === 'daily') loadDaily();
+    if (tab.dataset.tab === 'rewards') loadRewards();
+    if (tab.dataset.tab === 'pvp') loadPvPHistory();
+    if (tab.dataset.tab === 'meme') loadMemeTemplates();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+//  LOAD USER STATS
+// ═══════════════════════════════════════════════════════════
+async function loadMyStats() {
+  try {
+    const data = await api('/api/game/me');
+    if (data.success) {
+      $('myPoints').textContent = data.game.points || 0;
+      $('myLevel').textContent = data.level_info.current_level || 1;
+      $('myRank').textContent = data.rank ? '#' + data.rank : '—';
+    }
+  } catch (e) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LEADERBOARD
+// ═══════════════════════════════════════════════════════════
+async function loadLeaderboard() {
+  const container = $('leaderboardList');
+  container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
+
+  try {
+    const data = await api('/api/game/leaderboard');
+    if (!data.success || !data.leaderboard.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">Chưa có ai chơi! Hãy là người đầu tiên 🎉</div>';
+      return;
+    }
+
+    container.innerHTML = data.leaderboard.map(u => `
+      <div class="lb-row rank-${u.rank <= 3 ? u.rank : ''}">
+        <div class="lb-rank">${u.medal}</div>
+        <div class="lb-avatar">${u.username[0].toUpperCase()}</div>
+        <div class="lb-info">
+          <strong>${escapeHtml(u.username)} ${u.is_super_admin ? '👑' : ''}</strong>
+          <small>Level ${u.level} • ${u.pvp_wins} thắng PvP • ${u.daily_count} daily</small>
+        </div>
+        <div class="lb-points">
+          <strong>${u.points}</strong>
+          <small>điểm</small>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#e74c3c;">❌ Lỗi tải dữ liệu</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DAILY
+// ═══════════════════════════════════════════════════════════
+async function loadDaily() {
+  const container = $('dailyContent');
+  container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
+
+  try {
+    const data = await api('/api/game/daily');
+    if (!data.success) {
+      container.innerHTML = '❌ Lỗi tải';
+      return;
+    }
+
+    const c = data.challenge;
+    const completed = data.completed;
+
+    container.innerHTML = `
+      ${data.streak > 0 ? `<div class="streak-badge">🔥 Chuỗi: ${data.streak} ngày</div>` : ''}
+      <div class="daily-card ${completed ? 'completed' : ''}">
+        <div class="daily-header">
+          <div class="daily-date">📅 ${new Date().toLocaleDateString('vi-VN')}</div>
+          <div class="daily-points">+${c.points} điểm</div>
+        </div>
+        <div class="daily-desc">
+          ${completed ? '✅ ' : ''}${escapeHtml(c.description)}
+        </div>
+
+        <div class="daily-hint">
+          <strong>📝 Input:</strong> ${escapeHtml(c.text)}
+          ${c.key ? `<br><strong>🔑 Key:</strong> ${escapeHtml(c.key)}` : ''}
+        </div>
+
+        ${completed
+          ? '<div style="text-align:center;padding:20px;color:#27ae60;font-weight:700;font-size:18px;">✅ Hôm nay đã hoàn thành!</div>'
+          : `
+            <div class="daily-input-row">
+              <input type="text" class="daily-input" id="dailyAnswer"
+                     placeholder="Nhập đáp án..." autocomplete="off">
+              <button class="daily-btn" id="dailySubmitBtn" onclick="submitDaily()">✅ Trả lời</button>
+            </div>
+          `
+        }
+      </div>
+    `;
+
+    // Focus input
+    if (!completed) {
+      setTimeout(() => $('dailyAnswer')?.focus(), 200);
+      $('dailyAnswer')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitDaily();
+      });
+    }
+  } catch (e) {
+    container.innerHTML = '❌ Lỗi kết nối';
+  }
+}
+
+async function submitDaily() {
+  const input = $('dailyAnswer');
+  if (!input) return;
+
+  const answer = input.value.trim();
+  if (!answer) {
+    showToast('⚠️ Nhập đáp án!', 'error');
+    return;
+  }
+
+  const btn = $('dailySubmitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="loading-spinner"></div>';
+
+  try {
+    const data = await api('/api/game/daily/submit', {
+      method: 'POST',
+      body: JSON.stringify({ answer })
+    });
+
+    if (!data.success) {
+      showToast('❌ ' + data.error, 'error');
+      btn.disabled = false;
+      btn.textContent = '✅ Trả lời';
+      return;
+    }
+
+    if (data.correct) {
+      showToast(`🎉 Đúng! +${data.points_earned} điểm${data.bonus ? ` (bonus +${data.bonus})` : ''}`, 'reward');
+      loadMyStats();
+      setTimeout(() => loadDaily(), 800);
+
+      if (data.unlocked_rewards && data.unlocked_rewards.length) {
+        setTimeout(() => {
+          showToast(`🎁 Mở khóa ${data.unlocked_rewards.length} phần thưởng!`, 'reward');
+        }, 1500);
+      }
+    } else {
+      showToast('❌ Sai rồi! Thử lại vào ngày mai nhé!', 'error');
+      btn.disabled = false;
+      btn.textContent = '✅ Trả lời';
+    }
+  } catch (e) {
+    showToast('❌ Lỗi kết nối!', 'error');
+    btn.disabled = false;
+    btn.textContent = '✅ Trả lời';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REWARDS
+// ═══════════════════════════════════════════════════════════
+async function loadRewards() {
+  const grid = $('rewardsGrid');
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
+
+  try {
+    const data = await api('/api/game/rewards');
+    if (!data.success) return;
+
+    grid.innerHTML = data.rewards.map(r => {
+      let btn = '';
+      if (r.status === 'claimed') {
+        btn = '<button class="reward-claim-btn" disabled>✅ Đã nhận</button>';
+      } else if (r.status === 'unlocked') {
+        btn = `<button class="reward-claim-btn" onclick="claimReward('${r.id}')">🎁 Nhận ngay</button>`;
+      } else {
+        btn = '<button class="reward-claim-btn" disabled>🔒 Chưa đủ điều kiện</button>';
+      }
+
+      return `
+        <div class="reward-card ${r.status}">
+          <div class="reward-icon">${r.icon}</div>
+          <div class="reward-name">${escapeHtml(r.name)}</div>
+          <div class="reward-desc">${escapeHtml(r.description)}</div>
+          <div class="reward-points">+${r.points_reward} điểm</div>
+          ${btn}
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:#e74c3c;">❌ Lỗi tải</div>';
+  }
+}
+
+async function claimReward(id) {
+  try {
+    const data = await api('/api/game/rewards/claim', {
+      method: 'POST',
+      body: JSON.stringify({ reward_id: id })
+    });
+
+    if (data.success) {
+      showToast(`🎁 ${data.message}`, 'reward');
+      loadMyStats();
+      loadRewards();
+    } else {
+      showToast('❌ ' + data.error, 'error');
+    }
+  } catch (e) {
+    showToast('❌ Lỗi kết nối!', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RANDOM
+// ═══════════════════════════════════════════════════════════
+async function rollRandom() {
+  const display = $('randomDisplay');
+  display.innerHTML = '<div class="random-emoji">🎲</div><div style="color:#999;">Đang quay...</div>';
+
+  const excludeOW = $('optExcludeOneWay').checked;
+  const excludeKey = $('optExcludeKey').checked;
+
+  // Giả lập quay
+  await new Promise(r => setTimeout(r, 1500));
+
+  try {
+    const data = await api(`/api/game/random-method?exclude_one_way=${excludeOW}&exclude_key=${excludeKey}`);
+    if (data.success) {
+      display.innerHTML = `
+        <div class="random-emoji" style="animation:none;">🎯</div>
+        <div class="random-method-name">${escapeHtml(data.name)}</div>
+        <div class="random-method-code">${data.method}</div>
+      `;
+      showToast(`🎲 Đã chọn: ${data.name}`, 'reward');
+    }
+  } catch (e) {
+    display.innerHTML = '<div style="color:#e74c3c;">❌ Lỗi</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PVP
+// ═══════════════════════════════════════════════════════════
+let pvpState = null;
+
+async function loadPvPHistory() {
+  try {
+    const data = await api('/api/game/me');
+    if (!data.success) return;
+    const history = data.game.match_history || [];
+    const container = $('pvpHistory');
+    if (!history.length) {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">Chưa có trận nào</div>';
+      return;
+    }
+    container.innerHTML = history.map(m => {
+      const icons = { win: '🏆', loss: '😢', draw: '🤝' };
+      const labels = { win: 'Thắng', loss: 'Thua', draw: 'Hòa' };
+      return `
+        <div class="pvp-history-row">
+          <span>${icons[m.result]} ${labels[m.result]}</span>
+          <span style="font-family:'JetBrains Mono',monospace;">${m.player_score} - ${m.opponent_score}</span>
+          <span style="color:#666;font-size:12px;">${new Date(m.time).toLocaleString('vi-VN')}</span>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {}
+}
+
+async function startPvP() {
+  const container = $('pvpContent');
+
+  try {
+    const data = await api('/api/game/pvp/start', { method: 'POST' });
+    if (!data.success) return;
+
+    const match = data.match;
+    pvpState = {
+      match,
+      currentChallenge: 0,
+      playerScore: 0,
+      opponentScore: 0,
+      answers: []
+    };
+
+    container.innerHTML = `
+      <div class="pvp-arena">
+        <div class="pvp-vs">
+          <div class="pvp-player">
+            <div class="pvp-player-icon">😎</div>
+            <div class="pvp-player-name">Bạn</div>
+            <div class="pvp-player-score" id="pvpPlayerScore">0</div>
+          </div>
+          <div class="pvp-vs-text">VS</div>
+          <div class="pvp-player">
+            <div class="pvp-player-icon">🤖</div>
+            <div class="pvp-player-name">AI</div>
+            <div class="pvp-player-score" id="pvpOpponentScore">0</div>
+          </div>
+        </div>
+
+        <div id="pvpChallengeBox"></div>
+      </div>
+    `;
+
+    renderPvPChallenge();
+  } catch (e) {
+    showToast('❌ Lỗi bắt đầu trận!', 'error');
+  }
+}
+
+function renderPvPChallenge() {
+  const box = $('pvpChallengeBox');
+  const state = pvpState;
+  const idx = state.currentChallenge;
+
+  if (idx >= 3) {
+    endPvP();
+    return;
+  }
+
+  const c = state.match.challenges[idx];
+  const typeLabels = {
+    encrypt: '🔒 Mã hóa',
+    decrypt: '🔓 Giải mã',
+    guess:   '🎯 Đoán phương pháp'
+  };
+
+  box.innerHTML = `
+    <div style="text-align:center;margin-bottom:15px;color:#999;">
+      Câu ${idx + 1}/3 — ${typeLabels[c.type]}
+    </div>
+    <div class="pvp-challenge">
+      <div class="pvp-challenge-title">${typeLabels[c.type]} bằng <strong>${escapeHtml(c.method_name)}</strong></div>
+      <div class="pvp-challenge-text">${escapeHtml(c.text)}</div>
+      ${c.key ? `<div style="color:#ffd700;font-size:13px;">🔑 Key: ${escapeHtml(c.key)}</div>` : ''}
+    </div>
+    <div class="daily-input-row">
+      <input type="text" class="daily-input" id="pvpAnswer" placeholder="Đáp án..." autocomplete="off">
+      <button class="daily-btn" onclick="submitPvPAnswer()">✅ Trả lời</button>
+    </div>
+  `;
+
+  setTimeout(() => $('pvpAnswer')?.focus(), 200);
+  $('pvpAnswer')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitPvPAnswer();
+  });
+}
+
+async function submitPvPAnswer() {
+  const answer = $('pvpAnswer').value.trim();
+  if (!answer) return;
+
+  const state = pvpState;
+  const c = state.match.challenges[state.currentChallenge];
+
+  // Tính điểm: đúng được 100 điểm
+  // Giả lập AI trả lời đúng 60% → random
+  const playerCorrect = answer.length > 0; // Đơn giản hóa — thực tế cần so sánh
+  const playerPoints = playerCorrect ? 100 : 0;
+  const opponentPoints = Math.random() < 0.6 ? 100 : 0;
+
+  state.playerScore += playerPoints;
+  state.opponentScore += opponentPoints;
+  state.currentChallenge++;
+
+  $('pvpPlayerScore').textContent = state.playerScore;
+  $('pvpOpponentScore').textContent = state.opponentScore;
+
+  renderPvPChallenge();
+}
+
+async function endPvP() {
+  const state = pvpState;
+  try {
+    const data = await api('/api/game/pvp/submit', {
+      method: 'POST',
+      body: JSON.stringify({
+        player_score: state.playerScore,
+        opponent_score: state.opponentScore
+      })
+    });
+
+    if (data.success) {
+      const box = $('pvpChallengeBox');
+      box.innerHTML = `
+        <div style="text-align:center;padding:30px;">
+          <div style="font-size:80px;margin-bottom:15px;">${data.icon}</div>
+          <h2 style="font-size:28px;margin-bottom:10px;">${escapeHtml(data.message)}</h2>
+          <p style="color:#ffd700;font-size:20px;font-weight:800;margin-bottom:20px;">+${data.points} điểm</p>
+          <button class="big-btn" onclick="startPvP()">⚔️ Đấu lại</button>
+        </div>
+      `;
+      showToast(data.icon + ' ' + data.message, data.result === 'win' ? 'reward' : '');
+      loadMyStats();
+    }
+  } catch (e) {
+    showToast('❌ Lỗi lưu kết quả!', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MEME
+// ═══════════════════════════════════════════════════════════
+let memeTemplatesCache = [];
+let selectedMemeTemplate = null;
+
+async function loadMemeTemplates() {
+  if (memeTemplatesCache.length) {
+    renderMemeTemplates();
+    return;
+  }
+
+  try {
+    const data = await api('/api/game/meme/templates');
+    if (data.success) {
+      memeTemplatesCache = data.templates;
+      renderMemeTemplates();
+    }
+  } catch (e) {}
+}
+
+function renderMemeTemplates() {
+  const container = $('memeTemplates');
+  container.innerHTML = memeTemplatesCache.map(t => `
+    <div class="meme-template ${selectedMemeTemplate === t.id ? 'selected' : ''}"
+         data-id="${t.id}"
+         onclick="selectMemeTemplate('${t.id}')">
+      <img src="${t.url}" alt="${escapeHtml(t.name)}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22%23333%22/%3E%3Ctext x=%22100%22 y=%22100%22 fill=%22%23666%22 font-size=%2220%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E${escapeHtml(t.name)}%3C/text%3E%3C/svg%3E'">
+      <div class="meme-template-name">${escapeHtml(t.name)}</div>
+    </div>
+  `).join('');
+}
+
+function selectMemeTemplate(id) {
+  selectedMemeTemplate = id;
+  renderMemeTemplates();
+}
+
+async function generateMeme() {
+  const input = $('memeInput').value.trim();
+  const output = $('memeOutput').value.trim();
+
+  if (!input || !output) {
+    showToast('⚠️ Nhập đủ văn bản gốc và đã mã hóa!', 'error');
+    return;
+  }
+
+  try {
+    const data = await api('/api/game/meme/generate', {
+      method: 'POST',
+      body: JSON.stringify({
+        input_text: input,
+        output_text: output,
+        template_id: selectedMemeTemplate
+      })
+    });
+
+    if (data.success) {
+      const meme = data.meme;
+      const preview = $('memePreview');
+      preview.classList.add('show');
+      preview.innerHTML = `
+        <div style="position:relative;display:inline-block;max-width:100%;">
+          <img src="${meme.template.url}" alt="meme" style="max-width:100%;border-radius:12px;">
+          <div style="position:absolute;top:10px;left:10px;right:10px;color:#fff;font-family:Impact,sans-serif;font-size:20px;text-shadow:2px 2px 0 #000;text-align:center;">
+            ${escapeHtml(meme.texts[0])}
+          </div>
+          <div style="position:absolute;bottom:10px;left:10px;right:10px;color:#fff;font-family:Impact,sans-serif;font-size:20px;text-shadow:2px 2px 0 #000;text-align:center;">
+            ${escapeHtml(meme.texts[1])}
+          </div>
+        </div>
+        <p style="margin-top:15px;color:#999;font-size:13px;">📸 Chụp màn hình để lưu meme!</p>
+      `;
+      showToast('🎨 Tạo meme thành công! +10 điểm');
+      loadMyStats();
+    }
+  } catch (e) {
+    showToast('❌ Lỗi tạo meme!', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HELPER
+// ═══════════════════════════════════════════════════════════
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+loadMyStats();
+loadLeaderboard();
+</script>
+
+</body>
+</html>
