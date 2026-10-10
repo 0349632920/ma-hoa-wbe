@@ -10,10 +10,30 @@ from game_utils import (
     generate_meme_template,
     points_to_level, level_to_next, add_points, update_streak,
     ensure_game_data, init_game_data, REWARDS, MEME_TEMPLATES,
-    # ⚔️ PvP mới
+    # ⚔️ PvP — 12 tính năng
     create_pvp_room, join_pvp_room, start_pvp_room,
     submit_pvp_answer, get_pvp_room, leave_pvp_room,
-    cleanup_old_rooms, QUESTIONS_PER_ROUND, TOTAL_ROUNDS,
+    cleanup_old_rooms,
+    # 1. Danh sách phòng public
+    list_public_rooms, broadcast_player_joined,
+    # 2. Private/Public + 5. Tuỳ chỉnh luật
+    update_room_rules,
+    # 3. Bạn bè
+    send_friend_request, accept_friend_request, decline_friend_request,
+    get_friends, get_friend_requests, remove_friend,
+    invite_friend_to_room, get_room_invites,
+    # 4. Chat
+    send_chat_message, get_chat_messages,
+    # 6. Link share
+    get_room_share_link,
+    # 8. Xem trước đối thủ
+    get_opponent_info,
+    # 9. Kick
+    kick_guest,
+    # 11. Rematch
+    vote_rematch,
+    # 12. Lịch sử đấu
+    add_match_to_history,
 )
 from dotenv import load_dotenv
 from functools import wraps
@@ -49,6 +69,9 @@ SUSPICIOUS_THRESHOLD = 50
 WARN_THRESHOLD = 30
 MAX_WARN_BEFORE_BAN_OPTION = 3
 PENDING_DELETE_DAYS = 7
+
+DEFAULT_QUESTIONS_PER_ROUND = 10
+DEFAULT_TOTAL_ROUNDS = 3
 
 
 # ============================================================
@@ -236,17 +259,14 @@ def verify_password(password, stored):
 def generate_user_id(users=None):
     if users is None:
         users = load_users()
-
     existing_ids = set()
     for u_data in users.values():
         if u_data.get('user_id'):
             existing_ids.add(str(u_data['user_id']))
-
     for _ in range(100):
         new_id = str(random.randint(1000000000, 9999999999))
         if new_id not in existing_ids:
             return new_id
-
     base_id = 1000000000
     while str(base_id) in existing_ids:
         base_id += 1
@@ -306,10 +326,8 @@ def seed_accounts():
                 failed += 1
                 continue
             if len(password) < 6:
-                print(f"  ⚠️ Bỏ qua {username}: password < 6 ký tự")
                 failed += 1
                 continue
-
             if role not in ('super_admin', 'admin', 'user'):
                 role = 'user'
 
@@ -318,7 +336,6 @@ def seed_accounts():
                 if usernames_match(u, username):
                     exists = True
                     break
-
             if exists:
                 skipped += 1
                 continue
@@ -339,11 +356,7 @@ def seed_accounts():
                 'warnings': [],
                 'ban_info': None,
                 'delete_info': None,
-                'activity_log': [{
-                    'action': 'seed',
-                    'detail': f'Tạo tự động — ID: {user_id}',
-                    'time': now
-                }],
+                'activity_log': [{'action': 'seed', 'detail': f'Tạo tự động — ID: {user_id}', 'time': now}],
                 'suspicious_score': 0,
                 'warnings_shown': True,
                 'protected': (role == 'super_admin'),
@@ -351,14 +364,12 @@ def seed_accounts():
             }
             created += 1
             print(f"  ✅ Đã tạo: {username} ({role}) — ID: {user_id}")
-
         except Exception as e:
             print(f"  ❌ Lỗi: {acc.get('username', '?')}: {e}")
             failed += 1
 
     if created > 0:
         save_users(users)
-
     print(f"📊 Seed: {created} tạo mới, {skipped} bỏ qua, {failed} lỗi")
 
 
@@ -378,7 +389,6 @@ def init_super_admin():
 
     if existing_admin is None:
         user_id = generate_user_id(users)
-
         users[admin_name] = {
             'user_id': user_id,
             'password': hash_password(SUPER_ADMIN_PASSWORD),
@@ -392,7 +402,7 @@ def init_super_admin():
             'warnings': [],
             'ban_info': None,
             'delete_info': None,
-            'activity_log': [{'action': 'system', 'detail': f'Super Admin tạo tự động — ID: {user_id}', 'time': now}],
+            'activity_log': [{'action': 'system', 'detail': f'Super Admin — ID: {user_id}', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
             'protected': True,
@@ -406,64 +416,40 @@ def init_super_admin():
     user = users[existing_admin]
 
     if existing_admin != admin_name:
-        print(f"📝 Đổi tên admin: '{existing_admin}' → '{admin_name}'")
         users[admin_name] = user
         delete_user_db(existing_admin)
         existing_admin = admin_name
         changed = True
-
     if user.get('role') != 'super_admin':
-        user['role'] = 'super_admin'
-        changed = True
-
+        user['role'] = 'super_admin'; changed = True
     if user.get('display_name') != SUPER_ADMIN_DISPLAY:
-        user['display_name'] = SUPER_ADMIN_DISPLAY
-        changed = True
-
+        user['display_name'] = SUPER_ADMIN_DISPLAY; changed = True
     if not user.get('user_id'):
-        user['user_id'] = generate_user_id(users)
-        changed = True
-        print(f"🆔 Đã cấp ID cho Super Admin: {user['user_id']}")
-
+        user['user_id'] = generate_user_id(users); changed = True
     if user.get('status') != 'active':
-        user['status'] = 'active'
-        user['ban_info'] = None
-        user['delete_info'] = None
-        changed = True
-
+        user['status'] = 'active'; user['ban_info'] = None; user['delete_info'] = None; changed = True
     if not verify_password(SUPER_ADMIN_PASSWORD, user.get('password', '')):
-        user['password'] = hash_password(SUPER_ADMIN_PASSWORD)
-        changed = True
-
+        user['password'] = hash_password(SUPER_ADMIN_PASSWORD); changed = True
     if user.get('warnings'):
-        user['warnings'] = []
-        user['warnings_shown'] = True
-        changed = True
-
+        user['warnings'] = []; user['warnings_shown'] = True; changed = True
     if not user.get('protected'):
-        user['protected'] = True
-        changed = True
-
+        user['protected'] = True; changed = True
     if 'game' not in user:
-        user['game'] = init_game_data()
-        changed = True
+        user['game'] = init_game_data(); changed = True
 
-    defaults = {
-        'created_at': now, 'last_login': None, 'login_count': 0,
-        'history': [], 'warnings': [], 'ban_info': None,
-        'delete_info': None, 'activity_log': [],
-        'suspicious_score': 0, 'warnings_shown': True
-    }
+    defaults = {'created_at': now, 'last_login': None, 'login_count': 0,
+                'history': [], 'warnings': [], 'ban_info': None,
+                'delete_info': None, 'activity_log': [],
+                'suspicious_score': 0, 'warnings_shown': True}
     for k, v in defaults.items():
         if k not in user:
-            user[k] = v
-            changed = True
+            user[k] = v; changed = True
 
     if changed:
         save_user(admin_name, user)
-        print(f"👑 Đã cập nhật SUPER ADMIN: {admin_name} — ID: {user.get('user_id')}")
+        print(f"👑 Đã cập nhật SUPER ADMIN: {admin_name}")
     else:
-        print(f"✓ Super Admin {admin_name} đã sẵn sàng — ID: {user.get('user_id')}")
+        print(f"✓ Super Admin {admin_name} đã sẵn sàng")
 
 
 # ============================================================
@@ -485,7 +471,6 @@ def auto_unban_expired():
                 user['ban_info'] = None
                 user['warnings_shown'] = False
                 save_user(username, user)
-                print(f"🔓 Auto-unban: {username}")
         except Exception as e:
             print(f"⚠️ Lỗi auto-unban {username}: {e}")
 
@@ -535,7 +520,6 @@ def log_activity(username, action, detail=''):
     log = user.get('activity_log', [])
     log.insert(0, {'action': action, 'detail': detail, 'time': datetime.now().isoformat()})
     user['activity_log'] = log[:50]
-
     try:
         five_min_ago = datetime.now() - timedelta(minutes=5)
         recent = [l for l in log if datetime.fromisoformat(l['time']) > five_min_ago]
@@ -555,27 +539,20 @@ def log_activity(username, action, detail=''):
             user['warnings_shown'] = False
     except Exception as e:
         print(f"⚠️ Lỗi log_activity: {e}")
-
     save_user(username, user)
 
 
-# ============================================================
-# FORMAT DURATION
-# ============================================================
 def _format_duration(delta: timedelta) -> str:
     total_seconds = int(delta.total_seconds())
     days = total_seconds // 86400
     hours = (total_seconds % 86400) // 3600
     minutes = (total_seconds % 3600) // 60
     seconds = total_seconds % 60
-
     parts = []
-    if days:    parts.append(f'{days} ngày')
-    if hours:   parts.append(f'{hours} giờ')
+    if days: parts.append(f'{days} ngày')
+    if hours: parts.append(f'{hours} giờ')
     if minutes: parts.append(f'{minutes} phút')
-    if not parts and seconds:
-        parts.append(f'{seconds} giây')
-
+    if not parts and seconds: parts.append(f'{seconds} giây')
     return ' '.join(parts) if parts else '0 phút'
 
 
@@ -619,7 +596,7 @@ def super_admin_required(f):
             return redirect(url_for('login_page'))
         if not is_super_admin(session['username']):
             if request.path.startswith('/api/'):
-                return jsonify({'success': False, 'error': 'Chỉ Super Admin mới có quyền!'}), 403
+                return jsonify({'success': False, 'error': 'Chỉ Super Admin!'}), 403
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return wrapper
@@ -659,7 +636,6 @@ def register():
             return jsonify({'success': False, 'error': 'Tên đăng nhập tối đa 30 ký tự!'}), 400
         if len(password) < 6:
             return jsonify({'success': False, 'error': 'Mật khẩu phải có ít nhất 6 ký tự!'}), 400
-
         if usernames_match(username, SUPER_ADMIN_USERNAME):
             return jsonify({'success': False, 'error': 'Tên này đã được bảo vệ!'}), 400
 
@@ -726,7 +702,6 @@ def login():
                 if usernames_match(u, SUPER_ADMIN_USERNAME):
                     found_admin = u
                     break
-
             if not found_admin:
                 init_super_admin()
                 users = load_users()
@@ -734,10 +709,8 @@ def login():
                     if usernames_match(u, SUPER_ADMIN_USERNAME):
                         found_admin = u
                         break
-
             if not found_admin:
                 return jsonify({'success': False, 'error': 'Lỗi tạo admin!'}), 500
-
             if password != SUPER_ADMIN_PASSWORD and not verify_password(password, users[found_admin]['password']):
                 return jsonify({'success': False, 'error': 'Sai tên đăng nhập hoặc mật khẩu!'}), 401
             found_user = found_admin
@@ -747,7 +720,6 @@ def login():
                 if usernames_match(u, username):
                     found_user = u
                     break
-
             if not found_user:
                 return jsonify({'success': False, 'error': 'Sai tên đăng nhập hoặc mật khẩu!'}), 401
             if not verify_password(password, users[found_user]['password']):
@@ -758,10 +730,8 @@ def login():
         if user.get('status') == 'banned' and not is_super_admin(found_user):
             ban_info = user.get('ban_info', {}) or {}
             return jsonify({
-                'success': False,
-                'error': 'Tài khoản đã bị BAN!',
-                'banned': True,
-                'ban_info': ban_info,
+                'success': False, 'error': 'Tài khoản đã bị BAN!',
+                'banned': True, 'ban_info': ban_info,
                 'ban_until': ban_info.get('ban_until'),
                 'user_id': user.get('user_id', '—'),
                 'redirect': f'/banned?user={found_user}'
@@ -770,10 +740,8 @@ def login():
         if user.get('status') == 'pending_delete':
             delete_info = user.get('delete_info', {}) or {}
             return jsonify({
-                'success': False,
-                'error': 'Tài khoản đã bị đánh dấu xóa!',
-                'pending_delete': True,
-                'delete_info': delete_info,
+                'success': False, 'error': 'Tài khoản đã bị đánh dấu xóa!',
+                'pending_delete': True, 'delete_info': delete_info,
                 'user_id': user.get('user_id', '—'),
                 'redirect': '/deleted'
             }), 403
@@ -782,13 +750,8 @@ def login():
         now = datetime.now().isoformat()
         users[found_user]['last_login'] = now
         users[found_user]['login_count'] = users[found_user].get('login_count', 0) + 1
-
         log = users[found_user].get('activity_log', [])
-        log.insert(0, {
-            'action': 'login',
-            'detail': f'Đăng nhập lần {users[found_user]["login_count"]}',
-            'time': now
-        })
+        log.insert(0, {'action': 'login', 'detail': f'Đăng nhập lần {users[found_user]["login_count"]}', 'time': now})
         users[found_user]['activity_log'] = log[:50]
         save_user(found_user, users[found_user])
 
@@ -797,7 +760,6 @@ def login():
         session['login_time'] = now
 
         warnings = users[found_user].get('warnings', [])
-
         return jsonify({
             'success': True,
             'message': f'Chào mừng trở lại, {users[found_user].get("display_name", found_user)}!',
@@ -828,37 +790,25 @@ def me():
 
     if username not in users:
         session.clear()
-        return jsonify({
-            'success': False,
-            'deleted': True,
-            'kicked': True,
-            'error': 'Tài khoản đã bị xóa!',
-            'redirect': '/deleted-force'
-        }), 403
+        return jsonify({'success': False, 'deleted': True, 'kicked': True,
+                        'error': 'Tài khoản đã bị xóa!', 'redirect': '/deleted-force'}), 403
 
     user = check_and_auto_unban(username)
 
     if user.get('status') == 'banned' and not is_super_admin(username):
         ban_info = user.get('ban_info', {}) or {}
-        return jsonify({
-            'success': False, 'banned': True,
-            'error': 'Tài khoản đã bị ban!',
-            'ban_info': ban_info,
-            'user_id': user.get('user_id', '—'),
-            'ban_until': ban_info.get('ban_until'),
-            'redirect': f'/banned?user={username}'
-        }), 403
+        return jsonify({'success': False, 'banned': True,
+                        'error': 'Tài khoản đã bị ban!',
+                        'ban_info': ban_info, 'user_id': user.get('user_id', '—'),
+                        'ban_until': ban_info.get('ban_until'),
+                        'redirect': f'/banned?user={username}'}), 403
 
     if user.get('status') == 'pending_delete':
         delete_info = user.get('delete_info', {}) or {}
-        return jsonify({
-            'success': False,
-            'pending_delete': True,
-            'error': 'Tài khoản đã bị đánh dấu xóa!',
-            'delete_info': delete_info,
-            'user_id': user.get('user_id', '—'),
-            'redirect': '/deleted'
-        }), 403
+        return jsonify({'success': False, 'pending_delete': True,
+                        'error': 'Tài khoản đã bị đánh dấu xóa!',
+                        'delete_info': delete_info, 'user_id': user.get('user_id', '—'),
+                        'redirect': '/deleted'}), 403
 
     return jsonify({
         'success': True, 'logged_in': True,
@@ -901,10 +851,8 @@ def banned_page():
 
     banned_at = ban_info.get('time', '')
     if banned_at:
-        try:
-            banned_at = datetime.fromisoformat(banned_at).strftime('%d/%m/%Y %H:%M:%S')
-        except:
-            banned_at = banned_at[:19].replace('T', ' ')
+        try: banned_at = datetime.fromisoformat(banned_at).strftime('%d/%m/%Y %H:%M:%S')
+        except: banned_at = banned_at[:19].replace('T', ' ')
 
     ban_until_display = None
     ban_until_iso = None
@@ -914,14 +862,9 @@ def banned_page():
         try:
             ban_until_dt = datetime.fromisoformat(ban_until)
             ban_until_display = ban_until_dt.strftime('%d/%m/%Y %H:%M:%S')
-        except:
-            ban_until_display = ban_until[:19].replace('T', ' ')
+        except: ban_until_display = ban_until[:19].replace('T', ' ')
 
-    is_temp_ban = ban_info.get('is_temp_ban', False)
-    duration_label = ban_info.get('duration_label', 'Vĩnh viễn')
-
-    return render_template(
-        'banned.html',
+    return render_template('banned.html',
         username=user.get('display_name', found_user),
         user_id=user.get('user_id', '—'),
         reason=ban_info.get('reason', 'Vi phạm điều khoản'),
@@ -930,33 +873,22 @@ def banned_page():
         ban_id=ban_id,
         ban_until_display=ban_until_display,
         ban_until_iso=ban_until_iso,
-        is_temp_ban=is_temp_ban,
-        duration_label=duration_label
-    )
+        is_temp_ban=ban_info.get('is_temp_ban', False),
+        duration_label=ban_info.get('duration_label', 'Vĩnh viễn'))
 
 
 # ============================================================
-# TRANG BỊ ÉP BUỘC XÓA
+# DELETED PAGES
 # ============================================================
 @app.route('/deleted-force')
 def deleted_force_page():
-    username = request.args.get('user', '').strip()
-    reason = request.args.get('reason', 'Vi phạm điều khoản nghiêm trọng').strip()
-    user_id = request.args.get('id', '—').strip()
-    deleted_by = request.args.get('by', 'Admin').strip()
-
-    return render_template(
-        'deleted_force.html',
-        username=username or 'Unknown',
-        user_id=user_id,
-        reason=reason,
-        deleted_by=deleted_by
-    )
+    return render_template('deleted_force.html',
+        username=request.args.get('user', 'Unknown'),
+        user_id=request.args.get('id', '—'),
+        reason=request.args.get('reason', 'Vi phạm điều khoản nghiêm trọng'),
+        deleted_by=request.args.get('by', 'Admin'))
 
 
-# ============================================================
-# DELETED PAGE
-# ============================================================
 @app.route('/deleted')
 def deleted_page():
     if 'username' not in session:
@@ -971,35 +903,25 @@ def deleted_page():
         return redirect(url_for('index'))
 
     delete_info = user.get('delete_info', {}) or {}
-
     deleted_at = delete_info.get('time', '')
     if deleted_at:
-        try:
-            deleted_at = datetime.fromisoformat(deleted_at).strftime('%d/%m/%Y %H:%M:%S')
-        except:
-            deleted_at = deleted_at[:19].replace('T', ' ')
-
+        try: deleted_at = datetime.fromisoformat(deleted_at).strftime('%d/%m/%Y %H:%M:%S')
+        except: deleted_at = deleted_at[:19].replace('T', ' ')
     expires_at_display = None
     expires_at = delete_info.get('expires_at')
     if expires_at:
-        try:
-            expires_at_dt = datetime.fromisoformat(expires_at)
-            expires_at_display = expires_at_dt.strftime('%d/%m/%Y %H:%M:%S')
-        except:
-            expires_at_display = expires_at[:19].replace('T', ' ')
-
+        try: expires_at_display = datetime.fromisoformat(expires_at).strftime('%d/%m/%Y %H:%M:%S')
+        except: expires_at_display = expires_at[:19].replace('T', ' ')
     delete_id = hashlib.md5(f"{username}{delete_info.get('time', '')}".encode()).hexdigest()[:12].upper()
 
-    return render_template(
-        'deleted.html',
+    return render_template('deleted.html',
         username=user.get('display_name', username),
         user_id=user.get('user_id', '—'),
         reason=delete_info.get('reason', 'Vi phạm điều khoản'),
         deleted_at=deleted_at or '—',
         deleted_by=delete_info.get('by', 'System'),
         expires_at_display=expires_at_display,
-        delete_id=delete_id
-    )
+        delete_id=delete_id)
 
 
 @app.route('/api/confirm-delete', methods=['POST'])
@@ -1014,16 +936,9 @@ def confirm_delete():
     user = users[username]
     if user.get('status') != 'pending_delete':
         return jsonify({'success': False, 'error': 'Không ở trạng thái chờ xóa!'}), 400
-
-    print(f"🗑️ XÓA VĨNH VIỄN: {username}")
     delete_user_db(username)
     session.clear()
-
-    return jsonify({
-        'success': True,
-        'message': f'Đã xóa tài khoản {username}',
-        'deleted': True
-    })
+    return jsonify({'success': True, 'message': f'Đã xóa tài khoản {username}', 'deleted': True})
 
 
 # ============================================================
@@ -1042,13 +957,10 @@ def warned_page():
         return redirect(url_for('banned_page', user=session['username']))
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
-    warnings = user.get('warnings', [])
-    return render_template(
-        'warned.html',
+    return render_template('warned.html',
         username=user.get('display_name', session['username']),
         user_id=user.get('user_id', '—'),
-        warnings=warnings
-    )
+        warnings=user.get('warnings', []))
 
 
 @app.route('/api/acknowledge-warnings', methods=['POST'])
@@ -1063,41 +975,31 @@ def acknowledge_warnings():
 
 
 # ============================================================
-# ROUTES CHÍNH
+# MAIN PAGES
 # ============================================================
 @app.route('/')
 @login_required
 def index():
     users = load_users()
     username = session.get('username', '')
-
     if username not in users:
         session.clear()
         return redirect(url_for('deleted_force_page', user=username))
-
     user = check_and_auto_unban(username)
-
     if user.get('status') == 'banned' and not is_super_admin(username):
         session.clear()
         return redirect(url_for('banned_page', user=username))
-
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
-
-    return render_template(
-        'index.html',
+    return render_template('index.html',
         methods=METHODS,
         username=user.get('display_name', username),
         real_username=username,
         user_id=user.get('user_id', '—'),
         role=user.get('role', 'user'),
-        is_super_admin=is_super_admin(username)
-    )
+        is_super_admin=is_super_admin(username))
 
 
-# ============================================================
-# TRANG DỊCH THUẬT
-# ============================================================
 @app.route('/translate')
 @login_required
 def translate_page():
@@ -1114,46 +1016,27 @@ def translate_page():
     return render_template('translate.html')
 
 
-# ============================================================
-# API DỊCH THUẬT
-# ============================================================
 @app.route('/api/translate', methods=['GET', 'POST'])
 @login_required
 def api_translate():
     if request.method == 'GET':
-        return jsonify({
-            'languages': LANGUAGES,
-            'modes': ['manual', 'auto']
-        })
-
+        return jsonify({'languages': LANGUAGES, 'modes': ['manual', 'auto']})
     data = request.get_json(silent=True) or request.form
     text   = (data.get('text')   or '').strip()
     source = (data.get('source') or 'auto').strip()
     target = (data.get('target') or 'en').strip()
     mode   = (data.get('mode')   or 'manual').strip().lower()
-
     if not text:
         return jsonify({'error': 'Văn bản trống!'}), 400
-
     try:
         if mode == 'auto':
             info = auto_translate(text)
-            return jsonify({
-                'result':   info['result'],
-                'source':   info['detected'],
-                'target':   info['target'],
-                'detected': info['detected'],
-            })
-
+            return jsonify({'result': info['result'], 'source': info['detected'],
+                            'target': info['target'], 'detected': info['detected']})
         if target not in LANGUAGES:
             return jsonify({'error': f'Ngôn ngữ đích không hỗ trợ: {target}'}), 400
-
         result = translate(text, source=source, target=target)
-        return jsonify({
-            'result': result,
-            'source': source,
-            'target': target,
-        })
+        return jsonify({'result': result, 'source': source, 'target': target})
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:
@@ -1179,36 +1062,20 @@ def api_process():
     try:
         users = load_users()
         username = session['username']
-
         if username not in users:
             session.clear()
-            return jsonify({
-                'success': False,
-                'deleted': True,
-                'kicked': True,
-                'error': 'Tài khoản đã bị xóa!',
-                'redirect': '/deleted-force'
-            }), 403
-
+            return jsonify({'success': False, 'deleted': True, 'kicked': True,
+                            'error': 'Tài khoản đã bị xóa!', 'redirect': '/deleted-force'}), 403
         user = check_and_auto_unban(username)
-
         if user.get('status') == 'banned' and not is_super_admin(username):
             ban_info = user.get('ban_info', {}) or {}
-            return jsonify({
-                'success': False, 'error': 'Tài khoản đã bị BAN!',
-                'banned': True, 'blocked': True,
-                'ban_info': ban_info,
-                'user_id': user.get('user_id', '—'),
-                'username': username
-            }), 403
-
+            return jsonify({'success': False, 'error': 'Tài khoản đã bị BAN!',
+                            'banned': True, 'blocked': True, 'ban_info': ban_info,
+                            'user_id': user.get('user_id', '—'), 'username': username}), 403
         if user.get('status') == 'pending_delete':
-            return jsonify({
-                'success': False, 'error': 'Tài khoản đã bị đánh dấu xóa!',
-                'pending_delete': True, 'blocked': True,
-                'user_id': user.get('user_id', '—'),
-                'redirect': '/deleted'
-            }), 403
+            return jsonify({'success': False, 'error': 'Tài khoản đã bị đánh dấu xóa!',
+                            'pending_delete': True, 'blocked': True,
+                            'user_id': user.get('user_id', '—'), 'redirect': '/deleted'}), 403
 
         data = request.get_json()
         text = data.get('text', '').strip()
@@ -1221,26 +1088,18 @@ def api_process():
         if method not in METHODS:
             return jsonify({'success': False, 'error': 'Phương pháp không hợp lệ!'}), 400
         if action == 'decrypt' and method in ONE_WAY_ONLY:
-            return jsonify({'success': False, 'error': f'PP "{METHODS[method]}" là mã hóa 1 chiều!'}), 400
+            return jsonify({'success': False, 'error': f'PP "{METHODS[method]}" là 1 chiều!'}), 400
 
         result = process(text, method, action, key)
-
         history = user.get('history', [])
-        history.insert(0, {
-            'method': method, 'action': action,
-            'input_preview': text[:50], 'output_preview': result[:50],
-            'time': datetime.now().isoformat()
-        })
+        history.insert(0, {'method': method, 'action': action,
+                          'input_preview': text[:50], 'output_preview': result[:50],
+                          'time': datetime.now().isoformat()})
         users[username]['history'] = history[:20]
         save_user(username, users[username])
-
         log_activity(username, action, f'{method}: {text[:30]}')
-
-        return jsonify({
-            'success': True, 'result': result,
-            'method': method, 'action': action,
-            'one_way': method in ONE_WAY_ONLY
-        })
+        return jsonify({'success': True, 'result': result, 'method': method,
+                        'action': action, 'one_way': method in ONE_WAY_ONLY})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -1272,7 +1131,9 @@ def game_page():
     return render_template('game.html')
 
 
-# ─── LEADERBOARD ───
+# ────────────────────────────────────────────────────────────
+#  LEADERBOARD
+# ────────────────────────────────────────────────────────────
 @app.route('/api/game/leaderboard')
 @login_required
 def api_leaderboard():
@@ -1303,7 +1164,9 @@ def api_leaderboard():
     return jsonify({'success': True, 'leaderboard': board[:50]})
 
 
-# ─── DAILY ───
+# ────────────────────────────────────────────────────────────
+#  DAILY
+# ────────────────────────────────────────────────────────────
 @app.route('/api/game/daily')
 @login_required
 def api_daily():
@@ -1365,28 +1228,20 @@ def api_daily_submit():
         unlocked = check_rewards(game)
         users[username] = user
         save_user(username, user)
-        return jsonify({
-            'success': True,
-            'correct': True,
-            'points_earned': points_earned,
-            'bonus': bonus,
-            'streak': new_streak,
-            'total_points': game['points'],
-            'level': points_to_level(game['points']),
-            'unlocked_rewards': unlocked
-        })
+        return jsonify({'success': True, 'correct': True, 'points_earned': points_earned,
+                        'bonus': bonus, 'streak': new_streak, 'total_points': game['points'],
+                        'level': points_to_level(game['points']), 'unlocked_rewards': unlocked})
     else:
         users[username] = user
         save_user(username, user)
-        return jsonify({
-            'success': True,
-            'correct': False,
-            'expected_preview': challenge['expected'][:30] + '...' if len(challenge['expected']) > 30 else challenge['expected'],
-            'message': 'Sai rồi! Thử lại vào ngày mai nhé!'
-        })
+        return jsonify({'success': True, 'correct': False,
+                        'expected_preview': challenge['expected'][:30] + '...' if len(challenge['expected']) > 30 else challenge['expected'],
+                        'message': 'Sai rồi! Thử lại vào ngày mai nhé!'})
 
 
-# ─── REWARDS ───
+# ────────────────────────────────────────────────────────────
+#  REWARDS
+# ────────────────────────────────────────────────────────────
 @app.route('/api/game/rewards')
 @login_required
 def api_rewards():
@@ -1404,17 +1259,12 @@ def api_rewards():
         if r['id'] in claimed_ids: status = 'claimed'
         elif r['id'] in unlocked_ids: status = 'unlocked'
         all_rewards.append({**r, 'status': status})
-    return jsonify({
-        'success': True,
-        'rewards': all_rewards,
-        'stats': {
-            'points': game.get('points', 0),
-            'level': points_to_level(game.get('points', 0)),
-            'daily_count': len(game.get('daily_completed', [])),
-            'pvp_wins': game.get('pvp_stats', {}).get('wins', 0),
-            'streak': game.get('streak', 0)
-        }
-    })
+    return jsonify({'success': True, 'rewards': all_rewards,
+                    'stats': {'points': game.get('points', 0),
+                              'level': points_to_level(game.get('points', 0)),
+                              'daily_count': len(game.get('daily_completed', [])),
+                              'pvp_wins': game.get('pvp_stats', {}).get('wins', 0),
+                              'streak': game.get('streak', 0)}})
 
 
 @app.route('/api/game/rewards/claim', methods=['POST'])
@@ -1440,16 +1290,15 @@ def api_claim_reward():
     add_points(user, reward['points_reward'], f"Reward: {reward_id}")
     users[username] = user
     save_user(username, user)
-    return jsonify({
-        'success': True,
-        'message': f'🎁 Nhận được {reward["points_reward"]} điểm!',
-        'points_earned': reward['points_reward'],
-        'total_points': game['points'],
-        'level': points_to_level(game['points'])
-    })
+    return jsonify({'success': True, 'message': f'🎁 Nhận được {reward["points_reward"]} điểm!',
+                    'points_earned': reward['points_reward'],
+                    'total_points': game['points'],
+                    'level': points_to_level(game['points'])})
 
 
-# ─── RANDOM METHOD ───
+# ────────────────────────────────────────────────────────────
+#  RANDOM
+# ────────────────────────────────────────────────────────────
 @app.route('/api/game/random-method')
 @login_required
 def api_random_method():
@@ -1459,9 +1308,23 @@ def api_random_method():
     return jsonify({'success': True, **result})
 
 
-# ═══════════════════════════════════════════════════════════
-#  ⚔️ PVP — NHẬP CHỮ NHANH (3 ván × 10 câu)
-# ═══════════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════
+#  ⚔️ PVP — 12 TÍNH NĂNG
+# ════════════════════════════════════════════════════════════
+
+def _get_user_display(username: str) -> dict:
+    """Lấy thông tin hiển thị user."""
+    users = load_users()
+    user = users.get(username, {})
+    return {
+        'username': username,
+        'display_name': user.get('display_name', username),
+        'user_id': user.get('user_id', '—'),
+        'level': points_to_level(user.get('game', {}).get('points', 0)),
+    }
+
+
+# ═══ 1 + 2 + 5. Tạo phòng với private/public + rules ═══
 @app.route('/api/pvp/create', methods=['POST'])
 @login_required
 def api_pvp_create():
@@ -1469,10 +1332,18 @@ def api_pvp_create():
     username = session['username']
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    data = request.get_json() or {}
+    is_public = bool(data.get('is_public', True))
+    rules = data.get('rules', {})
+
     user = users[username]
     display = user.get('display_name', username)
+    level = points_to_level(user.get('game', {}).get('points', 0))
+
     try:
-        room = create_pvp_room(username, display)
+        room = create_pvp_room(username, display, is_public=is_public,
+                               host_level=level, rules=rules)
         return jsonify({
             'success': True,
             'code': room['code'],
@@ -1482,6 +1353,15 @@ def api_pvp_create():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ═══ 1. Danh sách phòng public ═══
+@app.route('/api/pvp/rooms')
+@login_required
+def api_pvp_list_rooms():
+    rooms = list_public_rooms()
+    return jsonify({'success': True, 'rooms': rooms})
+
+
+# ═══ Join phòng ═══
 @app.route('/api/pvp/join', methods=['POST'])
 @login_required
 def api_pvp_join():
@@ -1489,15 +1369,23 @@ def api_pvp_join():
     username = session['username']
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
     data = request.get_json()
     code = (data.get('code') or '').strip().upper()
     if not code:
         return jsonify({'success': False, 'error': 'Nhập mã phòng!'}), 400
+
     user = users[username]
     display = user.get('display_name', username)
-    result = join_pvp_room(code, username, display)
+    level = points_to_level(user.get('game', {}).get('points', 0))
+
+    result = join_pvp_room(code, username, display, level)
     if not result['success']:
         return jsonify(result), 404
+
+    # 7. Thông báo có người vào
+    broadcast_player_joined(code)
+
     return jsonify({
         'success': True,
         'code': code,
@@ -1514,10 +1402,7 @@ def api_pvp_start():
     result = start_pvp_room(code, username)
     if not result['success']:
         return jsonify(result), 400
-    return jsonify({
-        'success': True,
-        'room': _sanitize_room(result['room'], username)
-    })
+    return jsonify({'success': True, 'room': _sanitize_room(result['room'], username)})
 
 
 @app.route('/api/pvp/room/<code>')
@@ -1527,10 +1412,7 @@ def api_pvp_room(code):
     result = get_pvp_room(code)
     if not result['success']:
         return jsonify(result), 404
-    return jsonify({
-        'success': True,
-        'room': _sanitize_room(result['room'], username)
-    })
+    return jsonify({'success': True, 'room': _sanitize_room(result['room'], username)})
 
 
 @app.route('/api/pvp/submit', methods=['POST'])
@@ -1542,15 +1424,22 @@ def api_pvp_submit():
     answer = (data.get('answer') or '').strip()
     if not code or not answer:
         return jsonify({'success': False, 'error': 'Thiếu dữ liệu!'}), 400
+
     result = submit_pvp_answer(code, username, answer)
     if not result['success']:
         return jsonify(result), 400
+
+    room = result['room']
+    # 12. Nếu trận kết thúc → lưu lịch sử cho cả 2
+    if room['status'] == 'finished':
+        _save_match_history(room, username)
+
     return jsonify({
         'success': True,
         'correct': result['correct'],
         'points': result['points'],
         'time_taken': result['time_taken'],
-        'room': _sanitize_room(result['room'], username)
+        'room': _sanitize_room(room, username)
     })
 
 
@@ -1564,8 +1453,250 @@ def api_pvp_leave():
     return jsonify(result)
 
 
+# ═══ 3. Bạn bè ═══
+@app.route('/api/friends')
+@login_required
+def api_get_friends():
+    username = session['username']
+    users = load_users()
+    friend_names = get_friends(username)
+    requests = get_friend_requests(username)
+    invites = get_room_invites(username)
+
+    friends_data = []
+    for f in friend_names:
+        if f in users:
+            friends_data.append({
+                'username': f,
+                'display_name': users[f].get('display_name', f),
+                'user_id': users[f].get('user_id', '—'),
+                'level': points_to_level(users[f].get('game', {}).get('points', 0)),
+                'status': users[f].get('status', 'active'),
+                'pvp_wins': users[f].get('game', {}).get('pvp_stats', {}).get('wins', 0),
+            })
+
+    return jsonify({
+        'success': True,
+        'friends': friends_data,
+        'requests': requests,
+        'invites': invites
+    })
+
+
+@app.route('/api/friends/search')
+@login_required
+def api_search_users():
+    """Tìm user để kết bạn."""
+    q = (request.args.get('q') or '').strip().lower()
+    if not q or len(q) < 2:
+        return jsonify({'success': True, 'users': []})
+
+    username = session['username']
+    users = load_users()
+    friends = get_friends(username)
+    results = []
+    for uname, udata in users.items():
+        if uname == username:
+            continue
+        if q in uname.lower() or q in udata.get('display_name', '').lower():
+            results.append({
+                'username': uname,
+                'display_name': udata.get('display_name', uname),
+                'user_id': udata.get('user_id', '—'),
+                'level': points_to_level(udata.get('game', {}).get('points', 0)),
+                'is_friend': uname in friends,
+            })
+    return jsonify({'success': True, 'users': results[:20]})
+
+
+@app.route('/api/friends/request', methods=['POST'])
+@login_required
+def api_send_friend_request():
+    username = session['username']
+    data = request.get_json()
+    target = (data.get('username') or '').strip()
+    if not target:
+        return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
+    result = send_friend_request(username, target)
+    return jsonify(result), (200 if result['success'] else 400)
+
+
+@app.route('/api/friends/accept', methods=['POST'])
+@login_required
+def api_accept_friend():
+    username = session['username']
+    data = request.get_json()
+    from_user = (data.get('from') or '').strip()
+    if not from_user:
+        return jsonify({'success': False, 'error': 'Thiếu from!'}), 400
+    result = accept_friend_request(username, from_user)
+    return jsonify(result), (200 if result['success'] else 400)
+
+
+@app.route('/api/friends/decline', methods=['POST'])
+@login_required
+def api_decline_friend():
+    username = session['username']
+    data = request.get_json()
+    from_user = (data.get('from') or '').strip()
+    result = decline_friend_request(username, from_user)
+    return jsonify(result)
+
+
+@app.route('/api/friends/remove', methods=['POST'])
+@login_required
+def api_remove_friend():
+    username = session['username']
+    data = request.get_json()
+    friend = (data.get('friend') or '').strip()
+    result = remove_friend(username, friend)
+    return jsonify(result)
+
+
+@app.route('/api/friends/invite', methods=['POST'])
+@login_required
+def api_invite_friend():
+    username = session['username']
+    data = request.get_json()
+    friend = (data.get('friend') or '').strip()
+    code = (data.get('code') or '').strip().upper()
+    result = invite_friend_to_room(username, friend, code)
+    return jsonify(result), (200 if result['success'] else 400)
+
+
+# ═══ 4. Chat ═══
+@app.route('/api/pvp/chat/<code>', methods=['GET', 'POST'])
+@login_required
+def api_pvp_chat(code):
+    username = session['username']
+
+    if request.method == 'GET':
+        messages = get_chat_messages(code)
+        return jsonify({'success': True, 'messages': messages})
+
+    data = request.get_json()
+    message = data.get('message', '')
+    users = load_users()
+    display = users.get(username, {}).get('display_name', username)
+    result = send_chat_message(code, username, display, message)
+    if not result['success']:
+        return jsonify(result), 400
+    messages = get_chat_messages(code)
+    return jsonify({'success': True, 'messages': messages})
+
+
+# ═══ 5. Rules ═══
+@app.route('/api/pvp/rules', methods=['POST'])
+@login_required
+def api_update_rules():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    rules = data.get('rules', {})
+    result = update_room_rules(code, username, rules)
+    return jsonify(result), (200 if result['success'] else 400)
+
+
+# ═══ 6. Link share ═══
+@app.route('/api/pvp/share-link/<code>')
+@login_required
+def api_share_link(code):
+    link = get_room_share_link(code, request.host_url.rstrip('/'))
+    return jsonify({'success': True, 'link': link})
+
+
+# ═══ 8. Xem đối thủ ═══
+@app.route('/api/pvp/opponent/<code>')
+@login_required
+def api_pvp_opponent(code):
+    username = session['username']
+    result = get_pvp_room(code)
+    if not result['success']:
+        return jsonify(result), 404
+    users = load_users()
+    opponent = get_opponent_info(result['room'], username, users)
+    return jsonify({'success': True, 'opponent': opponent})
+
+
+# ═══ 9. Kick ═══
+@app.route('/api/pvp/kick', methods=['POST'])
+@login_required
+def api_pvp_kick():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    result = kick_guest(code, username)
+    return jsonify(result), (200 if result['success'] else 400)
+
+
+# ═══ 11. Rematch ═══
+@app.route('/api/pvp/rematch', methods=['POST'])
+@login_required
+def api_pvp_rematch():
+    username = session['username']
+    data = request.get_json()
+    code = (data.get('code') or '').strip().upper()
+    result = vote_rematch(code, username)
+    return jsonify(result)
+
+
+# ═══ 12. Lịch sử đấu ═══
+@app.route('/api/pvp/history')
+@login_required
+def api_pvp_history():
+    users = load_users()
+    username = session['username']
+    user = users.get(username, {})
+    game = user.get('game', {})
+    return jsonify({'success': True, 'history': game.get('match_history', [])})
+
+
+def _save_match_history(room: dict, requestor: str):
+    """Lưu lịch sử khi trận kết thúc."""
+    users = load_users()
+    host = room['host']
+    guest = room['guest']
+    if not guest:
+        return
+
+    host_game = users.get(host, {}).get('game', {})
+    guest_game = users.get(guest, {}).get('game', {})
+
+    # Tính tổng điểm + ván thắng
+    host_score = sum(r['scores'].get(host, 0) for r in room['rounds'])
+    guest_score = sum(r['scores'].get(guest, 0) for r in room['rounds'])
+    host_wins = room['round_wins'].get(host, 0)
+    guest_wins = room['round_wins'].get(guest, 0)
+
+    host_result = 'win' if host_wins > guest_wins else ('loss' if host_wins < guest_wins else 'draw')
+    guest_result = 'win' if guest_wins > host_wins else ('loss' if guest_wins < host_wins else 'draw')
+
+    # Lưu cho host
+    if host in users:
+        add_match_to_history(
+            users[host],
+            room['guest_display'],
+            host_score, guest_score,
+            host_wins, guest_wins,
+            host_result
+        )
+        save_user(host, users[host])
+
+    # Lưu cho guest
+    if guest in users:
+        add_match_to_history(
+            users[guest],
+            room['host_display'],
+            guest_score, host_score,
+            guest_wins, host_wins,
+            guest_result
+        )
+        save_user(guest, users[guest])
+
+
+# ═══ Sanitize ═══
 def _sanitize_room(room: dict, username: str) -> dict:
-    """Chuẩn hóa room data — hiển thị điểm đối thủ realtime."""
+    """Chuẩn hóa room data cho client."""
     opponent = room["guest"] if room["host"] == username else room["host"]
     is_host = (room["host"] == username)
 
@@ -1573,29 +1704,33 @@ def _sanitize_room(room: dict, username: str) -> dict:
         "code": room["code"],
         "host": room["host"],
         "host_display": room["host_display"],
+        "host_level": room.get("host_level", 1),
         "guest": room["guest"],
         "guest_display": room["guest_display"],
+        "guest_level": room.get("guest_level"),
+        "is_public": room.get("is_public", True),
+        "rules": room.get("rules", {}),
         "status": room["status"],
         "current_round": room["current_round"],
-        "total_rounds": TOTAL_ROUNDS,
-        "questions_per_round": QUESTIONS_PER_ROUND,
-        "you": username,
-        "is_host": is_host,
-        "opponent": opponent,
-        "opponent_display": room["guest_display"] if is_host else room["host_display"],
         "round_wins": {
             "you": room["round_wins"].get(username, 0),
             "opponent": room["round_wins"].get(opponent, 0) if opponent else 0,
         },
+        "you": username,
+        "is_host": is_host,
+        "opponent": opponent,
+        "opponent_display": room["guest_display"] if is_host else room["host_display"],
     }
 
     round_idx = room["current_round"]
-    if 0 <= round_idx < TOTAL_ROUNDS:
+    if 0 <= round_idx < len(room.get("rounds", [])):
         r = room["rounds"][round_idx]
+        total_q = len(r.get("questions", []))
+
         safe["round_info"] = {
             "index": round_idx,
             "current_index": r["current_index"],
-            "total_questions": QUESTIONS_PER_ROUND,
+            "total_questions": total_q,
             "scores": {
                 "you": r["scores"].get(username, 0),
                 "opponent": r["scores"].get(opponent, 0) if opponent else 0,
@@ -1604,7 +1739,7 @@ def _sanitize_room(room: dict, username: str) -> dict:
         }
 
         q_idx = r["current_index"]
-        if 0 <= q_idx < QUESTIONS_PER_ROUND:
+        if 0 <= q_idx < total_q:
             q = r["questions"][q_idx]
             safe["current_question"] = {
                 "index": q_idx,
@@ -1639,24 +1774,17 @@ def _sanitize_room(room: dict, username: str) -> dict:
         opp_wins = room["round_wins"].get(opponent, 0) if opponent else 0
 
         if my_wins > opp_wins:
-            result = "win"
-            message = "🏆 Bạn thắng trận!"
+            result = "win"; message = "🏆 Bạn thắng trận!"
         elif my_wins < opp_wins:
-            result = "loss"
-            message = "😢 Bạn thua trận!"
+            result = "loss"; message = "😢 Bạn thua trận!"
         else:
-            result = "draw"
-            message = "🤝 Hòa!"
+            result = "draw"; message = "🤝 Hòa!"
 
-        total_you = 0
-        total_opp = 0
-        for r in room["rounds"]:
-            total_you += r["scores"].get(username, 0)
-            total_opp += r["scores"].get(opponent, 0) if opponent else 0
+        total_you = sum(r["scores"].get(username, 0) for r in room["rounds"])
+        total_opp = sum(r["scores"].get(opponent, 0) if opponent else 0 for r in room["rounds"])
 
         safe["final_result"] = {
-            "result": result,
-            "message": message,
+            "result": result, "message": message,
             "your_rounds_won": my_wins,
             "opponent_rounds_won": opp_wins,
             "total_score_you": total_you,
@@ -1675,7 +1803,9 @@ def _sanitize_room(room: dict, username: str) -> dict:
     return safe
 
 
-# ─── MEME ───
+# ────────────────────────────────────────────────────────────
+#  MEME
+# ────────────────────────────────────────────────────────────
 @app.route('/api/game/meme/templates')
 @login_required
 def api_meme_templates():
@@ -1706,7 +1836,9 @@ def api_meme_generate():
     return jsonify({'success': True, 'meme': meme})
 
 
-# ─── USER GAME STATS ───
+# ────────────────────────────────────────────────────────────
+#  USER GAME STATS
+# ────────────────────────────────────────────────────────────
 @app.route('/api/game/me')
 @login_required
 def api_game_me():
@@ -1717,12 +1849,14 @@ def api_game_me():
     user = users[username]
     game = ensure_game_data(user)
     level_info = level_to_next(game.get('points', 0))
+
     board = []
     for uname, udata in users.items():
         g = udata.get('game', {})
         board.append((uname, g.get('points', 0)))
     board.sort(key=lambda x: -x[1])
     rank = next((i + 1 for i, (u, _) in enumerate(board) if u == username), 0)
+
     return jsonify({
         'success': True,
         'game': game,
@@ -1740,14 +1874,12 @@ def api_game_me():
 def admin_panel():
     users = load_users()
     user = users.get(session['username'], {})
-    return render_template(
-        'admin.html',
+    return render_template('admin.html',
         username=user.get('display_name', session['username']),
         real_username=session['username'],
         user_id=user.get('user_id', '—'),
         is_super_admin=is_super_admin(session['username']),
-        role=user.get('role', 'user')
-    )
+        role=user.get('role', 'user'))
 
 
 @app.route('/api/admin/users')
@@ -1787,9 +1919,6 @@ def admin_users():
     return jsonify({'success': True, 'users': result})
 
 
-# ============================================================
-# ADMIN ACTIONS
-# ============================================================
 @app.route('/api/admin/ban', methods=['POST'])
 @super_admin_required
 def admin_ban():
@@ -1814,71 +1943,51 @@ def admin_ban():
 
         target_id = users[target].get('user_id', '—')
         now = datetime.now()
-
-        ban_info = {
-            'user_id': target_id,
-            'reason': reason,
-            'time': now.isoformat(),
-            'by': session['username'],
-            'duration_label': 'Vĩnh viễn',
-            'is_temp_ban': False
-        }
+        ban_info = {'user_id': target_id, 'reason': reason,
+                    'time': now.isoformat(), 'by': session['username'],
+                    'duration_label': 'Vĩnh viễn', 'is_temp_ban': False}
 
         duration_map = {
-            '15min':  timedelta(minutes=15),
-            '30min':  timedelta(minutes=30),
-            '1h':     timedelta(hours=1),
-            '6h':     timedelta(hours=6),
-            '12h':    timedelta(hours=12),
-            '1day':   timedelta(days=1),
-            '3days':  timedelta(days=3),
-            '7days':  timedelta(days=7),
+            '15min': timedelta(minutes=15), '30min': timedelta(minutes=30),
+            '1h': timedelta(hours=1), '6h': timedelta(hours=6),
+            '12h': timedelta(hours=12), '1day': timedelta(days=1),
+            '3days': timedelta(days=3), '7days': timedelta(days=7),
             '30days': timedelta(days=30),
         }
 
         if duration == 'permanent':
             ban_info['duration_label'] = 'Vĩnh viễn'
             ban_info['is_temp_ban'] = False
-
         elif duration in duration_map:
             delta = duration_map[duration]
             ban_info['ban_until'] = (now + delta).isoformat()
             ban_info['is_temp_ban'] = True
             ban_info['duration_label'] = _format_duration(delta)
-
         elif duration == 'custom':
-            try:
-                custom_value = int(custom_value)
+            try: custom_value = int(custom_value)
             except (TypeError, ValueError):
                 return jsonify({'success': False, 'error': 'Giá trị thời gian không hợp lệ!'}), 400
-
             if custom_value <= 0:
                 return jsonify({'success': False, 'error': 'Thời gian phải > 0!'}), 400
             if custom_value > 3650:
-                return jsonify({'success': False, 'error': 'Thời gian tối đa 3650!'}), 400
-
-            if custom_unit == 'minutes':
-                delta = timedelta(minutes=custom_value)
-            elif custom_unit == 'hours':
-                delta = timedelta(hours=custom_value)
-            elif custom_unit == 'days':
-                delta = timedelta(days=custom_value)
+                return jsonify({'success': False, 'error': 'Tối đa 3650!'}), 400
+            if custom_unit == 'minutes': delta = timedelta(minutes=custom_value)
+            elif custom_unit == 'hours': delta = timedelta(hours=custom_value)
+            elif custom_unit == 'days': delta = timedelta(days=custom_value)
             else:
                 return jsonify({'success': False, 'error': 'Đơn vị không hợp lệ!'}), 400
-
             ban_info['ban_until'] = (now + delta).isoformat()
             ban_info['is_temp_ban'] = True
             ban_info['duration_label'] = _format_duration(delta)
-
         else:
             return jsonify({'success': False, 'error': f'Thời gian không hợp lệ: {duration}'}), 400
 
         users[target]['status'] = 'banned'
         users[target]['ban_info'] = ban_info
         save_user(target, users[target])
-
-        msg = f'🚫 Đã ban user ID {target_id} ({ban_info["duration_label"]})'
-        return jsonify({'success': True, 'message': msg, 'ban_info': ban_info})
+        return jsonify({'success': True,
+                        'message': f'🚫 Đã ban user ID {target_id} ({ban_info["duration_label"]})',
+                        'ban_info': ban_info})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -1924,12 +2033,8 @@ def admin_warn():
 
         target_id = users[target].get('user_id', '—')
         warnings = users[target].get('warnings', [])
-        warnings.append({
-            'user_id': target_id,
-            'reason': reason,
-            'time': datetime.now().isoformat(),
-            'by': session['username']
-        })
+        warnings.append({'user_id': target_id, 'reason': reason,
+                        'time': datetime.now().isoformat(), 'by': session['username']})
         users[target]['warnings'] = warnings
         users[target]['warnings_shown'] = False
 
@@ -1949,21 +2054,12 @@ def admin_warn():
             }
 
         save_user(target, users[target])
-
         if ban_1_day:
-            return jsonify({
-                'success': True,
-                'message': f'⚠️🚫 Đã warn + ban 1 ngày user ID {target_id}',
-                'total_warnings': len(warnings),
-                'banned': True
-            })
+            return jsonify({'success': True, 'message': f'⚠️🚫 Đã warn + ban 1 ngày user ID {target_id}',
+                            'total_warnings': len(warnings), 'banned': True})
         else:
-            return jsonify({
-                'success': True,
-                'message': f'⚠️ Đã cảnh báo user ID {target_id}',
-                'total_warnings': len(warnings),
-                'banned': False
-            })
+            return jsonify({'success': True, 'message': f'⚠️ Đã cảnh báo user ID {target_id}',
+                            'total_warnings': len(warnings), 'banned': False})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -2028,15 +2124,10 @@ def admin_stats():
     pending_delete = sum(1 for u in users.values() if u.get('status') == 'pending_delete')
     admins = sum(1 for u in users.values() if u.get('role') in ('admin', 'super_admin'))
     suspicious = sum(1 for u in users.values() if u.get('suspicious_score', 0) >= WARN_THRESHOLD)
-    return jsonify({
-        'success': True,
-        'stats': {
-            'total': total, 'active': active,
-            'warned': warned, 'banned': banned,
-            'pending_delete': pending_delete,
-            'admins': admins, 'suspicious': suspicious
-        }
-    })
+    return jsonify({'success': True, 'stats': {
+        'total': total, 'active': active, 'warned': warned, 'banned': banned,
+        'pending_delete': pending_delete, 'admins': admins, 'suspicious': suspicious
+    }})
 
 
 @app.route('/api/admin/delete', methods=['POST'])
@@ -2046,34 +2137,25 @@ def admin_delete():
         data = request.get_json()
         target = data.get('username', '').strip()
         reason = data.get('reason', 'Vi phạm điều khoản nghiêm trọng').strip() or 'Vi phạm điều khoản nghiêm trọng'
-
         if not target:
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
         if usernames_match(target, session['username']):
             return jsonify({'success': False, 'error': '🚫 KHÔNG THỂ TỰ XÓA!'}), 400
-
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
         if is_super_admin(target):
             return jsonify({'success': False, 'error': '🚫 Không thể xóa Super Admin!'}), 403
-
         target_id = users[target].get('user_id', '—')
         users[target]['status'] = 'pending_delete'
         users[target]['delete_info'] = {
-            'user_id': target_id,
-            'reason': reason,
-            'time': datetime.now().isoformat(),
-            'by': session['username'],
+            'user_id': target_id, 'reason': reason,
+            'time': datetime.now().isoformat(), 'by': session['username'],
             'expires_at': (datetime.now() + timedelta(days=PENDING_DELETE_DAYS)).isoformat()
         }
         save_user(target, users[target])
-
-        return jsonify({
-            'success': True,
-            'message': f'⚠️ Đã đánh dấu xóa user ID {target_id}',
-            'delete_info': users[target]['delete_info']
-        })
+        return jsonify({'success': True, 'message': f'⚠️ Đã đánh dấu xóa user ID {target_id}',
+                        'delete_info': users[target]['delete_info']})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -2086,41 +2168,23 @@ def admin_force_delete():
         target = data.get('username', '').strip()
         reason = data.get('reason', 'Vi phạm nghiêm trọng').strip() or 'Vi phạm nghiêm trọng'
         confirm_text = data.get('confirm_text', '').strip()
-
         if not target:
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
-
         if usernames_match(target, session['username']):
-            return jsonify({'success': False, 'error': '🚫 KHÔNG THỂ TỰ ÉP BUỘC XÓA CHÍNH MÌNH!'}), 400
-
+            return jsonify({'success': False, 'error': '🚫 KHÔNG THỂ TỰ XÓA CHÍNH MÌNH!'}), 400
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
         if is_super_admin(target):
-            return jsonify({'success': False, 'error': '🚫 Không thể ép buộc xóa Super Admin!'}), 403
-
+            return jsonify({'success': False, 'error': '🚫 Không thể xóa Super Admin!'}), 403
         target_id = users[target].get('user_id', '—')
-
         if confirm_text != target_id:
-            return jsonify({
-                'success': False,
-                'error': f'⚠️ Bạn phải gõ chính xác ID "{target_id}" để xác nhận!'
-            }), 400
-
-        log_activity(session['username'], 'force_delete',
-                     f"Ép buộc xóa user ID {target_id} — Lý do: {reason}")
-
-        print(f"⚡ ÉP BUỘC XÓA: {target} (ID: {target_id}) — Bởi: {session['username']} — Lý do: {reason}")
+            return jsonify({'success': False, 'error': f'⚠️ Phải gõ chính xác ID "{target_id}"!'}), 400
+        log_activity(session['username'], 'force_delete', f"Ép buộc xóa ID {target_id} — {reason}")
         delete_user_db(target)
-
-        return jsonify({
-            'success': True,
-            'message': f'⚡ Đã ÉP BUỘC XÓA vĩnh viễn user ID {target_id}',
-            'deleted_username': target,
-            'deleted_user_id': target_id,
-            'reason': reason,
-            'kicked': True
-        })
+        return jsonify({'success': True, 'message': f'⚡ Đã ÉP BUỘC XÓA vĩnh viễn user ID {target_id}',
+                        'deleted_username': target, 'deleted_user_id': target_id,
+                        'reason': reason, 'kicked': True})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -2152,47 +2216,34 @@ def admin_refresh_status():
         target = data.get('username', '').strip()
         keep_history = data.get('keep_history', True)
         keep_log = data.get('keep_log', True)
-
         if not target:
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
         if usernames_match(target, session['username']):
             return jsonify({'success': False, 'error': '🚫 Không thể tự làm mới!'}), 400
-
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
         if is_super_admin(target):
             return jsonify({'success': False, 'error': '🚫 Không thể làm mới Super Admin!'}), 403
-
         user = users[target]
         target_id = user.get('user_id', '—')
         old_status = user.get('status', 'active')
-
         user['status'] = 'active'
         user['warnings'] = []
         user['ban_info'] = None
         user['delete_info'] = None
         user['suspicious_score'] = 0
         user['warnings_shown'] = True
-
         if not keep_history: user['history'] = []
         if not keep_log: user['activity_log'] = []
-
         log = user.get('activity_log', [])
-        log.insert(0, {
-            'action': 'refresh_status',
-            'detail': f'Admin {session["username"]} đã làm mới trạng thái',
-            'time': datetime.now().isoformat()
-        })
+        log.insert(0, {'action': 'refresh_status',
+                      'detail': f'Admin {session["username"]} đã làm mới',
+                      'time': datetime.now().isoformat()})
         user['activity_log'] = log[:50]
-
         save_user(target, user)
-
-        return jsonify({
-            'success': True,
-            'message': f'♻️ Đã làm mới user ID {target_id} (cũ: {old_status})',
-            'old_status': old_status
-        })
+        return jsonify({'success': True, 'message': f'♻️ Đã làm mới user ID {target_id} (cũ: {old_status})',
+                        'old_status': old_status})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -2203,23 +2254,17 @@ def admin_refresh_multiple():
     try:
         data = request.get_json()
         targets = data.get('usernames', [])
-
         if not isinstance(targets, list) or len(targets) == 0:
             return jsonify({'success': False, 'error': 'Danh sách trống!'}), 400
-
         users = load_users()
         refreshed = 0
         failed = 0
-
         for target in targets:
             target = target.strip()
             if not target or target not in users:
-                failed += 1
-                continue
+                failed += 1; continue
             if usernames_match(target, session['username']) or is_super_admin(target):
-                failed += 1
-                continue
-
+                failed += 1; continue
             user = users[target]
             user['status'] = 'active'
             user['warnings'] = []
@@ -2229,13 +2274,8 @@ def admin_refresh_multiple():
             user['warnings_shown'] = True
             save_user(target, user)
             refreshed += 1
-
-        return jsonify({
-            'success': True,
-            'message': f'♻️ Đã làm mới {refreshed} user, {failed} lỗi',
-            'refreshed': refreshed,
-            'failed': failed
-        })
+        return jsonify({'success': True, 'message': f'♻️ Đã làm mới {refreshed} user, {failed} lỗi',
+                        'refreshed': refreshed, 'failed': failed})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -2246,11 +2286,8 @@ def admin_seed():
     try:
         seed_accounts()
         users = load_users()
-        return jsonify({
-            'success': True,
-            'message': f'✅ Đã chạy seed. Tổng user: {len(users)}',
-            'total_users': len(users)
-        })
+        return jsonify({'success': True, 'message': f'✅ Đã chạy seed. Tổng user: {len(users)}',
+                        'total_users': len(users)})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -2266,7 +2303,8 @@ def health():
         'database': 'supabase' if has_database() else 'json_local',
         'total_methods': len(METHODS),
         'total_users': len(users),
-        'total_pvp_rooms': len(cleanup_old_rooms.__module__ and __import__('game_utils').PVP_ROOMS) if False else 0,
+        'total_pvp_rooms': len(__import__('game_utils').PVP_ROOMS),
+        'total_friends': sum(len(v) for v in __import__('game_utils').FRIENDS_DB.values()),
         'super_admin': SUPER_ADMIN_USERNAME,
         'super_admin_exists': any(usernames_match(u, SUPER_ADMIN_USERNAME) for u in users.keys())
     })
