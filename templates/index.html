@@ -82,12 +82,11 @@
             <button class="dropdown-item" onclick="showHistory()">🕐 Lịch sử gần đây</button>
             <button class="dropdown-item danger" onclick="logout()">🚪 Đăng xuất</button>
 
-            <!-- DROPDOWN CREDIT — 2 NGƯỜI TẠO WEB -->
+            <!-- DROPDOWN CREDIT -->
             <div class="dropdown-credit">
               <div class="dropdown-credit-line"></div>
               <div class="dropdown-credit-label">💻 Made by</div>
               <div class="dropdown-creators">
-                <!-- HÙNG — NGƯỜI TẠO WEB -->
                 <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="dropdown-creator" title="TikTok: @tienhung0707">
                   <div class="dropdown-creator-avatar">
                     <div class="avatar-fallback">H</div>
@@ -100,7 +99,6 @@
                   <div class="dropdown-creator-tiktok">🎵</div>
                 </a>
 
-                <!-- SÁT NHÂN -->
                 <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="dropdown-creator dropdown-killer" title="TikTok: @fan.yu.juhoon">
                   <div class="dropdown-creator-avatar dropdown-killer-avatar">
                     <div class="avatar-fallback">🔪</div>
@@ -185,9 +183,7 @@
       <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
     </div>
 
-    <!-- ============================================
-         FOOTER CREDIT — 2 NGƯỜI TẠO WEB
-         ============================================ -->
+    <!-- FOOTER CREDIT -->
     <footer class="page-footer">
       <div class="footer-divider">
         <span class="footer-line"></span>
@@ -198,7 +194,6 @@
       <div class="footer-label">💻 Được phát triển bởi</div>
 
       <div class="footer-creators">
-        <!-- HÙNG — NGƯỜI TẠO WEB -->
         <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="footer-creator" title="TikTok: @tienhung0707">
           <div class="footer-avatar">
             <div class="avatar-fallback">H</div>
@@ -211,7 +206,6 @@
           <div class="footer-tiktok">🎵</div>
         </a>
 
-        <!-- SÁT NHÂN -->
         <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="footer-creator footer-killer" title="TikTok: @fan.yu.juhoon">
           <div class="footer-avatar footer-killer-avatar">
             <div class="avatar-fallback">🔪</div>
@@ -259,6 +253,42 @@
         <div class="spinner-icon" id="processingIcon">🔒</div>
       </div>
       <p class="processing-text" id="processingText">Đang mã hóa...</p>
+    </div>
+  </div>
+
+  <!-- LOGOUT LOADING OVERLAY -->
+  <div class="logout-loading-overlay" id="logoutLoadingOverlay">
+    <div class="logout-loading-content">
+      <div class="logout-loading-animation">
+        <div class="logout-door">🚪</div>
+        <div class="logout-wave"></div>
+        <div class="logout-wave delay-1"></div>
+        <div class="logout-wave delay-2"></div>
+      </div>
+
+      <h2 class="logout-loading-title">Đang đăng xuất...</h2>
+      <p class="logout-loading-subtitle">Vui lòng chờ trong giây lát</p>
+
+      <div class="logout-progress-bar">
+        <div class="logout-progress-fill" id="logoutProgressFill"></div>
+      </div>
+
+      <div class="logout-loading-steps">
+        <div class="logout-step" data-step="1">
+          <span class="logout-step-icon">🔐</span>
+          <span>Xóa phiên</span>
+        </div>
+        <div class="logout-step" data-step="2">
+          <span class="logout-step-icon">🧹</span>
+          <span>Dọn dẹp</span>
+        </div>
+        <div class="logout-step" data-step="3">
+          <span class="logout-step-icon">✅</span>
+          <span>Hoàn tất</span>
+        </div>
+      </div>
+
+      <p class="logout-loading-note" id="logoutNote">Đang kết thúc phiên làm việc an toàn...</p>
     </div>
   </div>
 
@@ -465,7 +495,6 @@
     let isTransitioning = false;
     let warnAcknowledged = false;
 
-    // POLLING
     let pollInterval = null;
     let isPolling = false;
     let lastStatus = null;
@@ -691,15 +720,70 @@
       document.body.style.overflow = '';
     }
 
+    // ==========================================
+    // LOGOUT LOADING + DO LOGOUT
+    // ==========================================
     async function doLogout() {
       closeLogoutModal();
+
+      // ===== HIỆN MÀN HÌNH LOADING ĐĂNG XUẤT =====
+      showLogoutLoading();
+
+      // ===== DỪNG POLLING =====
       stopPolling();
+
       try {
+        // Gọi API logout
         await fetch('/api/logout', { method: 'POST' });
-        showToast('👋 Đã đăng xuất!');
-        setTimeout(() => { window.location.href = '/login'; }, 500);
       } catch (e) {
-        showToast('❌ Lỗi đăng xuất!', true);
+        console.debug('Logout API error:', e);
+      }
+
+      // Chờ 2.5s cho loading hiện đẹp rồi mới chuyển trang
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2600);
+    }
+
+    // ==========================================
+    // HIỆN MÀN HÌNH LOADING ĐĂNG XUẤT
+    // ==========================================
+    function showLogoutLoading() {
+      const overlay = document.getElementById('logoutLoadingOverlay');
+      const progressFill = document.getElementById('logoutProgressFill');
+      const note = document.getElementById('logoutNote');
+
+      overlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+
+      // Progress bar chạy 0% → 100%
+      progressFill.style.transition = 'none';
+      progressFill.style.width = '0%';
+      setTimeout(() => {
+        progressFill.style.transition = 'width 2.2s ease-out';
+        progressFill.style.width = '100%';
+      }, 50);
+
+      // Hiệu ứng 3 bước
+      setTimeout(() => markLogoutStep(1, 'active'), 100);
+      setTimeout(() => markLogoutStep(1, 'done'), 700);
+      setTimeout(() => markLogoutStep(2, 'active'), 700);
+      setTimeout(() => markLogoutStep(2, 'done'), 1300);
+      setTimeout(() => markLogoutStep(3, 'active'), 1300);
+      setTimeout(() => markLogoutStep(3, 'done'), 1900);
+
+      // Đổi note theo từng bước
+      setTimeout(() => { note.textContent = 'Đang đóng phiên làm việc...'; }, 100);
+      setTimeout(() => { note.textContent = 'Đang dọn dẹp cache...'; }, 700);
+      setTimeout(() => { note.textContent = 'Sắp hoàn tất...'; }, 1300);
+      setTimeout(() => { note.textContent = '✅ Đăng xuất thành công!'; }, 1900);
+    }
+
+    function markLogoutStep(n, state) {
+      const el = document.querySelector(`.logout-step[data-step="${n}"]`);
+      if (el) {
+        el.classList.remove('active', 'done');
+        el.classList.add(state);
       }
     }
 
@@ -768,7 +852,7 @@
     }
 
     // ==========================================
-    // LOADING SCREEN
+    // LOADING SCREEN (chuyển chế độ)
     // ==========================================
     function showLoadingScreen(action, callback) {
       if (isTransitioning) return;
