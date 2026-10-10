@@ -74,6 +74,10 @@
                 <small id="userLoginInfo">Đang tải...</small>
               </div>
             </div>
+            <div class="user-id-box">
+              <span class="user-id-label">🆔 ID:</span>
+              <code class="user-id-value">{{ user_id }}</code>
+            </div>
             {% if role == 'admin' or is_super_admin %}
             <button class="dropdown-item admin-item" onclick="window.location.href='/admin'">
               👑 Admin Panel
@@ -204,7 +208,7 @@
       <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
     </div>
 
-    <!-- FOOTER CREDIT — 5 NGƯỜI -->
+    <!-- FOOTER CREDIT -->
     <footer class="page-footer">
       <div class="footer-divider">
         <span class="footer-line"></span>
@@ -215,7 +219,6 @@
       <div class="footer-label">💻 Được phát triển bởi</div>
 
       <div class="footer-creators">
-        <!-- 1. SÁT NHÂN — Đỏ -->
         <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="footer-creator footer-killer" title="TikTok: @fan.yu.juhoon">
           <div class="footer-avatar footer-killer-avatar">
             <div class="avatar-fallback">🔪</div>
@@ -228,7 +231,6 @@
           <div class="footer-tiktok footer-killer-badge">🎵</div>
         </a>
 
-        <!-- 2. DŨNG — Tím -->
         <a href="https://www.tiktok.com/@dungg_haha" target="_blank" class="footer-creator dung-creator" title="TikTok: @dungg_haha">
           <div class="footer-avatar dung-avatar">
             <div class="avatar-fallback">D</div>
@@ -241,7 +243,6 @@
           <div class="footer-tiktok dung-badge">🎵</div>
         </a>
 
-        <!-- 3. HÙNG — XANH LÁ Ở GIỮA ⭐ -->
         <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="footer-creator hung-creator" title="TikTok: @tienhung0707">
           <div class="footer-avatar hung-avatar">
             <div class="avatar-fallback">H</div>
@@ -254,7 +255,6 @@
           <div class="footer-tiktok hung-badge">🎵</div>
         </a>
 
-        <!-- 4. MINH CHÂU — VỆ SĨ CỦA HÙNG 🛡️ -->
         <a href="https://www.tiktok.com/@minhchaudepzai246" target="_blank" class="footer-creator chau-creator" title="TikTok: @minhchaudepzai246">
           <div class="footer-avatar chau-avatar">
             <div class="avatar-fallback">C</div>
@@ -267,7 +267,6 @@
           <div class="footer-tiktok chau-badge">🎵</div>
         </a>
 
-        <!-- 5. MINH NGỌC — Vàng -->
         <a href="https://www.tiktok.com/@ngoc021215" target="_blank" class="footer-creator ngoc-creator" title="TikTok: @ngoc021215">
           <div class="footer-avatar ngoc-avatar">
             <div class="avatar-fallback">N</div>
@@ -398,6 +397,10 @@
       <p class="blocked-subtitle">Không thể mã hóa / giải mã khi tài khoản bị khóa</p>
       <div class="blocked-info">
         <div class="blocked-info-row">
+          <span class="blocked-label">🆔 User ID:</span>
+          <span class="blocked-value" id="blockUserId">—</span>
+        </div>
+        <div class="blocked-info-row">
           <span class="blocked-label">👤 Tài khoản:</span>
           <span class="blocked-value" id="blockUsername">—</span>
         </div>
@@ -462,12 +465,8 @@
           <strong>{{ username }}</strong>?
         </p>
         <div class="logout-actions">
-          <button class="logout-btn cancel" onclick="closeLogoutModal()">
-            ❌ Ở lại
-          </button>
-          <button class="logout-btn confirm" onclick="doLogout()">
-            🚪 Đăng xuất
-          </button>
+          <button class="logout-btn cancel" onclick="closeLogoutModal()">❌ Ở lại</button>
+          <button class="logout-btn confirm" onclick="doLogout()">🚪 Đăng xuất</button>
         </div>
       </div>
     </div>
@@ -478,7 +477,7 @@
 
   <script>
     // ==========================================
-    // SPLASH
+    // SPLASH SCREEN
     // ==========================================
     const splashMessages = [
       'Đang khởi tạo...',
@@ -629,9 +628,20 @@
         if (res.status === 401) { window.location.href = '/login'; return; }
         const data = await res.json();
 
+        // ===== USER BỊ XÓA — KICK =====
+        if (data.deleted) {
+          isHandlingBlock = true;
+          stopPolling();
+          showToast('⚡ Tài khoản đã bị XÓA bởi admin!', true);
+          setTimeout(() => {
+            window.location.href = data.redirect || '/deleted-force';
+          }, 800);
+          return;
+        }
+
         if (data.banned) {
           stopPolling();
-          showBanBlock(data.ban_info || {}, data.username || '');
+          showBanBlock(data.ban_info || {}, data.username || '', data.user_id || '—');
           playBanSound();
           setTimeout(() => {
             window.location.href = data.redirect || ('/banned?user=' + data.username);
@@ -666,7 +676,7 @@
     }
 
     // ==========================================
-    // POLLING
+    // POLLING — 3s
     // ==========================================
     async function pollStatus() {
       if (isHandlingBlock) return;
@@ -689,10 +699,21 @@
 
         const data = await res.json();
 
+        // ===== USER BỊ XÓA — KICK =====
+        if (data.deleted) {
+          isHandlingBlock = true;
+          stopPolling();
+          showToast('⚡ Tài khoản đã bị XÓA bởi admin!', true);
+          setTimeout(() => {
+            window.location.href = data.redirect || '/deleted-force';
+          }, 800);
+          return;
+        }
+
         if (data.banned) {
           isHandlingBlock = true;
           stopPolling();
-          showBanBlock(data.ban_info || {}, data.username || '');
+          showBanBlock(data.ban_info || {}, data.username || '', data.user_id || '—');
           playBanSound();
           showToast('🚫 Bạn đã bị BAN bởi admin!', true);
           setTimeout(() => {
@@ -756,7 +777,7 @@
     });
 
     // ==========================================
-    // LOGOUT
+    // MODAL ĐĂNG XUẤT
     // ==========================================
     function logout() {
       userMenu.classList.remove('open');
@@ -1100,6 +1121,17 @@
         const data = await res.json();
         hideProcessing();
 
+        // ===== USER BỊ XÓA — KICK =====
+        if (data.deleted) {
+          isHandlingBlock = true;
+          stopPolling();
+          showToast('⚡ Tài khoản đã bị XÓA!', true);
+          setTimeout(() => {
+            window.location.href = data.redirect || '/deleted-force';
+          }, 800);
+          return;
+        }
+
         if (data.need_login) {
           stopPolling();
           showToast('⚠️ Phiên hết hạn!', true);
@@ -1110,7 +1142,7 @@
         if (data.banned) {
           isHandlingBlock = true;
           stopPolling();
-          showBanBlock(data.ban_info || {}, data.username || '');
+          showBanBlock(data.ban_info || {}, data.username || '', data.user_id || '—');
           playBanSound();
           setTimeout(() => {
             window.location.href = '/banned?user=' + (data.username || '');
@@ -1142,7 +1174,8 @@
     // ==========================================
     // BAN / WARN BLOCK
     // ==========================================
-    function showBanBlock(banInfo, username) {
+    function showBanBlock(banInfo, username, user_id) {
+      document.getElementById('blockUserId').textContent = user_id || '—';
       document.getElementById('blockUsername').textContent = username || '—';
       document.getElementById('blockReason').textContent = banInfo.reason || 'Vi phạm điều khoản';
       let timeStr = '—';
