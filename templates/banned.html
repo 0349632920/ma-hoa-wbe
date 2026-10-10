@@ -35,7 +35,6 @@
       50% { opacity: 1; }
     }
 
-    /* Khung ban giống Roblox */
     .ban-container {
       position: relative;
       z-index: 2;
@@ -60,7 +59,6 @@
       100% { transform: translateX(0) scale(1); opacity: 1; }
     }
 
-    /* Header đỏ kiểu Roblox */
     .ban-header {
       background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
       padding: 30px 40px;
@@ -97,7 +95,6 @@
       gap: 20px;
     }
 
-    /* Icon ban - hình tròn gạch chéo */
     .ban-icon {
       width: 70px;
       height: 70px;
@@ -144,7 +141,6 @@
       font-weight: 500;
     }
 
-    /* Body */
     .ban-body {
       padding: 35px 40px;
     }
@@ -161,7 +157,6 @@
       font-weight: 700;
     }
 
-    /* Khung thông tin */
     .ban-info {
       background: #f8f9fa;
       border-left: 5px solid #e74c3c;
@@ -205,7 +200,6 @@
       border: 1px solid #fecaca;
     }
 
-    /* Đồng hồ đếm ngược */
     .countdown-box {
       background: linear-gradient(135deg, #fff3cd, #ffe8a3);
       border-left: 5px solid #f39c12;
@@ -213,6 +207,7 @@
       padding: 20px 24px;
       margin-bottom: 25px;
       animation: countdownPulse 2s ease-in-out infinite;
+      transition: all 0.5s ease;
     }
 
     @keyframes countdownPulse {
@@ -277,7 +272,6 @@
       margin-top: 8px;
     }
 
-    /* Badge loại ban */
     .ban-type-badge {
       display: inline-flex;
       align-items: center;
@@ -298,7 +292,6 @@
       color: #c0392b;
     }
 
-    /* Nút liên hệ */
     .ban-actions {
       display: flex;
       gap: 12px;
@@ -343,7 +336,6 @@
       transform: translateY(-2px);
     }
 
-    /* Footer */
     .ban-footer {
       background: #f8f9fa;
       padding: 15px 40px;
@@ -367,7 +359,48 @@
       margin-left: 8px;
     }
 
-    /* Responsive */
+    /* ═══════════════════════════════════════════════════════
+       🎉 BANNER THÔNG BÁO KHI ĐƯỢC GỠ BAN
+       ═══════════════════════════════════════════════════════ */
+    #unbanBanner {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120px);
+      background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+      color: #fff;
+      padding: 18px 32px;
+      border-radius: 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 16px 48px rgba(39, 174, 96, 0.55);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 90vw;
+      pointer-events: none;
+    }
+
+    #unbanBanner.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    #unbanBanner .banner-icon {
+      font-size: 26px;
+      animation: bannerBounce 0.5s ease infinite alternate;
+    }
+
+    @keyframes bannerBounce {
+      from { transform: scale(1); }
+      to   { transform: scale(1.2) rotate(10deg); }
+    }
+
     @media (max-width: 500px) {
       .ban-header { padding: 25px 22px; }
       .ban-body { padding: 25px 22px; }
@@ -383,6 +416,13 @@
   </style>
 </head>
 <body>
+
+  <!-- 🎉 BANNER KHI ĐƯỢC GỠ BAN -->
+  <div id="unbanBanner">
+    <span class="banner-icon">🎉</span>
+    <span>Bạn đã được gỡ ban! Đang tải lại trang...</span>
+  </div>
+
   <div class="ban-container">
     <!-- HEADER -->
     <div class="ban-header">
@@ -397,11 +437,16 @@
 
     <!-- BODY -->
     <div class="ban-body">
-      <!-- Loại ban badge -->
       {% if is_temp_ban %}
       <div class="ban-type-badge">
         <span>⏰</span>
-        <span>Ban tạm thời — Tự động gỡ sau 24 giờ</span>
+        <span>
+          {% if duration_label and duration_label != 'Vĩnh viễn' %}
+            Ban tạm thời — {{ duration_label }}
+          {% else %}
+            Ban tạm thời — Tự động gỡ sau khi hết hạn
+          {% endif %}
+        </span>
       </div>
       {% else %}
       <div class="ban-type-badge permanent">
@@ -419,12 +464,21 @@
         {% endif %}
       </p>
 
-      <!-- Thông tin ban -->
       <div class="ban-info">
+        <div class="ban-info-row">
+          <span class="ban-info-label">🆔 User ID</span>
+          <span class="ban-info-value" style="font-family:'JetBrains Mono',monospace;">{{ user_id }}</span>
+        </div>
         <div class="ban-info-row">
           <span class="ban-info-label">👤 Tài khoản</span>
           <span class="ban-info-value">{{ username }}</span>
         </div>
+        {% if duration_label %}
+        <div class="ban-info-row">
+          <span class="ban-info-label">⏱️ Thời hạn</span>
+          <span class="ban-info-value" style="color:#e74c3c;">{{ duration_label }}</span>
+        </div>
+        {% endif %}
         <div class="ban-info-row">
           <span class="ban-info-label">🚫 Lý do</span>
           <span class="ban-info-value reason">{{ reason }}</span>
@@ -433,14 +487,12 @@
           <span class="ban-info-label">📅 Thời gian ban</span>
           <span class="ban-info-value">{{ banned_at }}</span>
         </div>
-
         {% if ban_until_display %}
         <div class="ban-info-row">
           <span class="ban-info-label">⏰ Ban đến</span>
           <span class="ban-info-value" style="color:#e67e22; font-weight:800;">{{ ban_until_display }}</span>
         </div>
         {% endif %}
-
         <div class="ban-info-row">
           <span class="ban-info-label">👑 Admin ban</span>
           <span class="ban-info-value">{{ banned_by }}</span>
@@ -451,7 +503,6 @@
         </div>
       </div>
 
-      <!-- ĐỒNG HỒ ĐẾM NGƯỢC (nếu ban tạm) -->
       {% if ban_until_display %}
       <div class="countdown-box" id="countdownBox">
         <div class="countdown-title">
@@ -484,7 +535,6 @@
         kèm theo Ban ID trên.
       </p>
 
-      <!-- Nút hành động -->
       <div class="ban-actions">
         <button class="ban-btn primary" onclick="appealBan()">
           📧 Khiếu nại
@@ -495,25 +545,76 @@
       </div>
     </div>
 
-    <!-- FOOTER -->
     <div class="ban-footer">
       <span>🔒 Mã Hóa Tool Security System</span>
-      <span class="ban-countdown-footer" id="countdownFooter">
-        ⏱️ <span id="countdownText">30</span>s
-      </span>
     </div>
   </div>
 
   <script>
-    // ==========================================
-    // DỮ LIỆU TỪ SERVER
-    // ==========================================
+    // ═══════════════════════════════════════════════════════════
+    //  🎯 TỰ ĐỘNG RELOAD KHI ĐƯỢC GỠ BAN (từ Admin Panel)
+    // ═══════════════════════════════════════════════════════════
+    (function() {
+      let isReloading = false;
+      const POLL_INTERVAL = 3000;
+
+      function triggerReload(reason) {
+        if (isReloading) return;
+        isReloading = true;
+        console.log('🔄 Reload vì:', reason);
+
+        const banner = document.getElementById('unbanBanner');
+        if (banner) banner.classList.add('show');
+
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1800);
+      }
+
+      async function checkBanStatus() {
+        if (isReloading) return;
+        try {
+          const res = await fetch('/api/me', {
+            headers: { 'Cache-Control': 'no-cache' },
+            credentials: 'same-origin'
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && !data.banned) {
+              triggerReload('admin gỡ ban');
+              return;
+            }
+          }
+
+          if (res.status === 401) {
+            isReloading = true;
+            window.location.href = '/login';
+            return;
+          }
+        } catch (e) {
+          console.debug('Poll error:', e);
+        }
+      }
+
+      setTimeout(checkBanStatus, 1000);
+      setInterval(checkBanStatus, POLL_INTERVAL);
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !isReloading) {
+          checkBanStatus();
+        }
+      });
+
+      window._checkBanStatus = checkBanStatus;
+    })();
+
+    // ═══════════════════════════════════════════════════════════
+    //  ⏳ ĐỒNG HỒ ĐẾM NGƯỢC
+    // ═══════════════════════════════════════════════════════════
     const banUntilStr = "{{ ban_until_iso or '' }}";
     const isTempBan = {{ 'true' if is_temp_ban else 'false' }};
 
-    // ==========================================
-    // ĐỒNG HỒ ĐẾM NGƯỢC (nếu ban tạm)
-    // ==========================================
     if (isTempBan && banUntilStr) {
       const banUntil = new Date(banUntilStr).getTime();
 
@@ -522,7 +623,6 @@
         const diff = banUntil - now;
 
         if (diff <= 0) {
-          // Hết hạn → hiển thị thông báo + auto reload
           document.getElementById('cdHours').textContent = '00';
           document.getElementById('cdMinutes').textContent = '00';
           document.getElementById('cdSeconds').textContent = '00';
@@ -533,12 +633,18 @@
             box.style.borderLeftColor = '#27ae60';
             box.querySelector('.countdown-title').innerHTML = '<span>✅</span><span>Đã hết hạn ban!</span>';
             box.querySelector('.countdown-info').innerHTML =
-              '🎉 Bạn đã được tự động gỡ ban. Đang chuyển về trang đăng nhập...';
+              '🎉 Bạn đã được tự động gỡ ban. Đang tải lại...';
           }
 
-          // Auto reload sau 2s
+          // Trigger reload
+          const banner = document.getElementById('unbanBanner');
+          if (banner && !banner.classList.contains('show')) {
+            banner.querySelector('span:last-child').textContent = 'Hết hạn ban! Đang tải lại...';
+            banner.classList.add('show');
+          }
+
           setTimeout(() => {
-            window.location.href = '/login';
+            window.location.href = '/';
           }, 2000);
           return;
         }
@@ -556,25 +662,9 @@
       setInterval(updateCountdown, 1000);
     }
 
-    // ==========================================
-    // ĐẾM NGƯỢC 30s Ở FOOTER (kịch tính)
-    // ==========================================
-    let count = 30;
-    const countEl = document.getElementById('countdownText');
-    const interval = setInterval(() => {
-      count--;
-      if (countEl) countEl.textContent = count;
-      if (count <= 0) {
-        clearInterval(interval);
-        const footer = document.getElementById('countdownFooter');
-        if (footer) footer.style.opacity = '0.4';
-        if (countEl) countEl.textContent = '∞';
-      }
-    }, 1000);
-
-    // ==========================================
-    // RUNG CHUỘT NHẸ (hiệu ứng)
-    // ==========================================
+    // ═══════════════════════════════════════════════════════════
+    //  🎨 HIỆU ỨNG RUNG CHUỘT NHẸ
+    // ═══════════════════════════════════════════════════════════
     document.addEventListener('mousemove', () => {
       if (Math.random() > 0.97) {
         document.body.style.transform = `translate(${Math.random()*4-2}px, ${Math.random()*4-2}px)`;
@@ -582,9 +672,9 @@
       }
     });
 
-    // ==========================================
-    // KHIẾU NẠI
-    // ==========================================
+    // ═══════════════════════════════════════════════════════════
+    //  📧 KHIẾU NẠI
+    // ═══════════════════════════════════════════════════════════
     function appealBan() {
       alert(
         '📧 Đã ghi nhận yêu cầu khiếu nại!\n\n' +
