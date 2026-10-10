@@ -409,7 +409,6 @@
     }
     .warning-item small { color: #999; display: block; margin-top: 4px; }
 
-    /* Warn option boxes */
     .warn-warning-box {
       display: none;
       padding: 14px 18px;
@@ -448,6 +447,28 @@
     @keyframes slideDown {
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Loading table */
+    .loading-table {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    .loading-table-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e0e5ff;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     /* Toast */
@@ -582,15 +603,18 @@
           </tr>
         </thead>
         <tbody id="usersTableBody">
-          <tr><td colspan="6" style="text-align:center;padding:40px;color:#999">Đang tải...</td></tr>
+          <tr><td colspan="6">
+            <div class="loading-table">
+              <div class="loading-table-spinner"></div>
+              <span>Đang tải...</span>
+            </div>
+          </td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL WARN
-       ============================================ -->
+  <!-- MODAL WARN -->
   <div class="modal-overlay" id="warnModal">
     <div class="modal">
       <div class="modal-header warn-header">
@@ -623,9 +647,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL BAN
-       ============================================ -->
+  <!-- MODAL BAN -->
   <div class="modal-overlay" id="banModal">
     <div class="modal">
       <div class="modal-header ban-header">
@@ -658,9 +680,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL DETAIL
-       ============================================ -->
+  <!-- MODAL DETAIL -->
   <div class="modal-overlay" id="detailModal">
     <div class="modal">
       <div class="modal-header detail-header">
@@ -674,9 +694,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL RESET WARNINGS
-       ============================================ -->
+  <!-- MODAL RESET -->
   <div class="modal-overlay" id="resetModal">
     <div class="modal" style="max-width: 480px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #3498db, #2980b9);">
@@ -710,9 +728,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL UNBAN
-       ============================================ -->
+  <!-- MODAL UNBAN -->
   <div class="modal-overlay" id="unbanModal">
     <div class="modal" style="max-width: 480px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #27ae60, #16a085);">
@@ -722,9 +738,7 @@
         </div>
         <button class="modal-close" onclick="closeModal('unbanModal')">✕</button>
       </div>
-      <div class="modal-body" id="unbanInfoText">
-        Đang tải...
-      </div>
+      <div class="modal-body" id="unbanInfoText">Đang tải...</div>
       <div class="modal-footer">
         <button class="btn-modal cancel" onclick="closeModal('unbanModal')">❌ Hủy</button>
         <button class="btn-modal" onclick="confirmUnban()"
@@ -735,9 +749,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL CANCEL DELETE
-       ============================================ -->
+  <!-- MODAL CANCEL DELETE -->
   <div class="modal-overlay" id="cancelDeleteModal">
     <div class="modal" style="max-width: 480px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #16a085, #1abc9c);">
@@ -753,9 +765,6 @@
           Bạn có chắc muốn <strong style="color:#16a085;">hủy đánh dấu xóa</strong><br>
           cho tài khoản <strong id="cancelDeleteUsername">—</strong>?
         </p>
-        <p style="font-size:13px; color:#888; margin-top:12px;">
-          User sẽ trở về trạng thái bình thường.
-        </p>
       </div>
       <div class="modal-footer">
         <button class="btn-modal cancel" onclick="closeModal('cancelDeleteModal')">❌ Hủy</button>
@@ -767,9 +776,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL DELETE (PENDING DELETE)
-       ============================================ -->
+  <!-- MODAL DELETE -->
   <div class="modal-overlay" id="deleteModal">
     <div class="modal" style="max-width: 500px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #8e44ad, #6c3483);">
@@ -799,9 +806,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL REFRESH STATUS
-       ============================================ -->
+  <!-- MODAL REFRESH -->
   <div class="modal-overlay" id="refreshModal">
     <div class="modal" style="max-width: 520px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #16a085, #1abc9c);">
@@ -821,7 +826,6 @@
             <li>Hủy <strong>đánh dấu xóa</strong> (nếu có)</li>
           </ul>
         </div>
-
         <div class="form-group">
           <label>⚙️ Tùy chọn thêm:</label>
           <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
@@ -835,7 +839,6 @@
             </label>
           </div>
         </div>
-
         <div id="refreshCurrentStatus" style="margin-top:16px; padding:14px 18px; background:#fff8e1; border-left:4px solid #f39c12; border-radius:10px; font-size:13px; color:#856404;">
           <strong>📊 Trạng thái hiện tại:</strong>
           <span id="refreshStatusText">Đang tải...</span>
@@ -851,9 +854,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL REFRESH MULTIPLE
-       ============================================ -->
+  <!-- MODAL REFRESH ALL -->
   <div class="modal-overlay" id="refreshAllModal">
     <div class="modal" style="max-width: 500px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #16a085, #1abc9c);">
@@ -873,7 +874,6 @@
             <li>Hủy <strong>đánh dấu xóa</strong> (nếu có)</li>
           </ul>
         </div>
-
         <div style="max-height:180px; overflow-y:auto; padding:14px 18px; background:#f8f9fa; border-radius:10px; border:1px solid #e5e5f0;">
           <div style="font-size:12px; color:#888; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
             📋 Danh sách user:
@@ -891,9 +891,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL LOGOUT ADMIN
-       ============================================ -->
+  <!-- MODAL LOGOUT ADMIN -->
   <div class="modal-overlay" id="logoutAdminModal">
     <div class="modal" style="max-width: 440px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
@@ -904,7 +902,7 @@
         <button class="modal-close" onclick="closeModal('logoutAdminModal')">✕</button>
       </div>
       <div class="modal-body" style="text-align:center; padding:26px;">
-        <div style="font-size:56px; margin-bottom:14px; animation: pulse 1.5s infinite;">🚪</div>
+        <div style="font-size:56px; margin-bottom:14px;">🚪</div>
         <p style="font-size:15px; color:#333; line-height:1.6;">
           Bạn có chắc muốn đăng xuất khỏi<br>
           Admin Panel?
@@ -924,7 +922,7 @@
 
   <script>
     // ==========================================
-    // SPLASH SCREEN
+    // SPLASH + DATA LOADING STATE
     // ==========================================
     const splashMessages = [
       'Đang xác thực quyền Admin...',
@@ -937,36 +935,33 @@
     const splashProgress = document.getElementById('splashProgress');
     const splashStatus = document.getElementById('splashStatus');
 
-    function runSplash() {
-      splashProgress.style.width = '30%';
-      splashStatus.textContent = splashMessages[0];
-      markSplashStep(1, 'active');
+    // ===== BIẾN THEO DÕI =====
+    let splashMinTimeDone = false;   // Splash đã hiện đủ lâu chưa
+    let dataLoaded = false;          // Data đã load xong chưa
+    let splashFinished = false;      // Splash đã đóng chưa
 
-      setTimeout(() => {
-        splashProgress.style.width = '60%';
-        splashStatus.textContent = splashMessages[1];
-        markSplashStep(1, 'done');
-        markSplashStep(2, 'active');
-      }, 500);
+    // ===== HÀM KIỂM TRA VÀ ĐÓNG SPLASH =====
+    function tryFinishSplash() {
+      if (splashFinished) return;
 
-      setTimeout(() => {
-        splashProgress.style.width = '90%';
-        splashStatus.textContent = splashMessages[3];
-        markSplashStep(2, 'done');
-        markSplashStep(3, 'active');
-      }, 1100);
+      if (splashMinTimeDone && dataLoaded) {
+        splashFinished = true;
 
-      setTimeout(() => {
         splashProgress.style.width = '100%';
-        splashStatus.textContent = splashMessages[4];
+        splashStatus.textContent = 'Sẵn sàng!';
         markSplashStep(3, 'done');
-      }, 1600);
 
-      setTimeout(() => {
-        document.getElementById('adminSplash').classList.add('hide');
-        document.body.style.overflow = '';
-        document.getElementById('adminContainer').classList.add('show');
-      }, 2100);
+        setTimeout(() => {
+          document.getElementById('adminSplash').classList.add('hide');
+          document.body.style.overflow = '';
+          document.getElementById('adminContainer').classList.add('show');
+
+          // ===== RENDER DATA VÀO DOM =====
+          renderAllData();
+
+          console.log('✅ Splash finished — Admin Panel ready');
+        }, 400);
+      }
     }
 
     function markSplashStep(n, state) {
@@ -977,10 +972,121 @@
       }
     }
 
-    window.addEventListener('load', () => {
-      document.body.style.overflow = 'hidden';
-      setTimeout(runSplash, 200);
-    });
+    function runSplash() {
+      // Giai đoạn 1: Xác thực
+      splashProgress.style.width = '25%';
+      splashStatus.textContent = splashMessages[0];
+      markSplashStep(1, 'active');
+
+      // Giai đoạn 2: Bắt đầu load data song song
+      setTimeout(() => {
+        splashProgress.style.width = '50%';
+        splashStatus.textContent = splashMessages[1];
+        markSplashStep(1, 'done');
+        markSplashStep(2, 'active');
+
+        // BẮT ĐẦU LOAD DATA SONG SONG
+        loadAllDataForSplash();
+      }, 400);
+
+      // Giai đoạn 3: Sau 1.2s nếu chưa xong
+      setTimeout(() => {
+        if (!dataLoaded) {
+          splashProgress.style.width = '75%';
+          splashStatus.textContent = splashMessages[2];
+        }
+      }, 1200);
+
+      // Đánh dấu splash đã đủ lâu
+      setTimeout(() => {
+        splashMinTimeDone = true;
+        console.log('⏱️ Splash min time done');
+        tryFinishSplash();
+      }, 1800);
+    }
+
+    // ==========================================
+    // LOAD TOÀN BỘ DATA CHO SPLASH
+    // ==========================================
+    async function loadAllDataForSplash() {
+      console.log('📦 Đang tải data cho splash...');
+
+      try {
+        await Promise.all([
+          loadStatsForSplash(),
+          loadUsersForSplash()
+        ]);
+
+        dataLoaded = true;
+        console.log('✅ Data loaded for splash');
+
+        markSplashStep(2, 'done');
+        markSplashStep(3, 'active');
+        splashProgress.style.width = '90%';
+        splashStatus.textContent = splashMessages[3];
+
+        tryFinishSplash();
+
+      } catch (e) {
+        console.error('❌ Lỗi load data:', e);
+
+        // Dù lỗi vẫn đóng splash để vào admin
+        dataLoaded = true;
+        splashStatus.textContent = '⚠️ Có lỗi tải data — vẫn vào được';
+
+        setTimeout(() => {
+          tryFinishSplash();
+        }, 500);
+      }
+    }
+
+    async function loadStatsForSplash() {
+      try {
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+        if (data.success) {
+          window._statsCache = data.stats;
+          console.log('✅ Stats loaded:', data.stats);
+        }
+        return data;
+      } catch (e) {
+        console.error('❌ Lỗi load stats:', e);
+        throw e;
+      }
+    }
+
+    async function loadUsersForSplash() {
+      try {
+        const res = await fetch('/api/admin/users');
+        const data = await res.json();
+        if (data.success) {
+          allUsers = data.users;
+          console.log(`✅ Users loaded: ${data.users.length} users`);
+        }
+        return data;
+      } catch (e) {
+        console.error('❌ Lỗi load users:', e);
+        throw e;
+      }
+    }
+
+    // ==========================================
+    // RENDER DATA SAU KHI SPLASH ĐÓNG
+    // ==========================================
+    function renderAllData() {
+      // Render stats
+      if (window._statsCache) {
+        const s = window._statsCache;
+        document.getElementById('statTotal').textContent = s.total;
+        document.getElementById('statActive').textContent = s.active;
+        document.getElementById('statWarned').textContent = s.warned;
+        document.getElementById('statBanned').textContent = s.banned;
+        document.getElementById('statAdmins').textContent = s.admins;
+        document.getElementById('statSuspicious').textContent = s.suspicious;
+      }
+      // Render users
+      renderUsers();
+    }
 
     // ==========================================
     // ADMIN LOGIC
@@ -995,6 +1101,9 @@
     let refreshTarget = null;
     let refreshAllTargets = [];
 
+    // ==========================================
+    // LOAD STATS (dùng cho reload)
+    // ==========================================
     async function loadStats() {
       try {
         const res = await fetch('/api/admin/stats');
@@ -1010,6 +1119,9 @@
       } catch (e) { console.error(e); }
     }
 
+    // ==========================================
+    // LOAD USERS (dùng cho reload)
+    // ==========================================
     async function loadUsers() {
       try {
         const res = await fetch('/api/admin/users');
@@ -1017,6 +1129,7 @@
         if (data.success) {
           allUsers = data.users;
           renderUsers();
+          console.log(`🔄 Reloaded ${data.users.length} users`);
         }
       } catch (e) {
         document.getElementById('usersTableBody').innerHTML =
@@ -1024,6 +1137,9 @@
       }
     }
 
+    // ==========================================
+    // RENDER USERS TABLE
+    // ==========================================
     function renderUsers() {
       const search = document.getElementById('searchUser').value.toLowerCase().trim();
       const tbody = document.getElementById('usersTableBody');
@@ -1164,21 +1280,14 @@
         const res = await fetch('/api/admin/warn', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: pendingTarget,
-            reason: reason,
-            ban_1_day: ban1Day
-          })
+          body: JSON.stringify({ username: pendingTarget, reason, ban_1_day: ban1Day })
         });
         const data = await res.json();
         if (data.success) {
           showToast(data.banned ? '🚫 ' + data.message : '⚠️ ' + data.message);
           closeModal('warnModal');
-          loadUsers();
-          loadStats();
-        } else {
-          showToast('❌ ' + data.error, true);
-        }
+          loadUsers(); loadStats();
+        } else showToast('❌ ' + data.error, true);
       } catch (e) { showToast('❌ Lỗi!', true); }
     }
 
@@ -1196,7 +1305,6 @@
     async function confirmBan() {
       const reason = document.getElementById('banReason').value.trim() || 'Vi phạm điều khoản';
       const duration = document.querySelector('input[name="banDuration"]:checked').value;
-
       try {
         const res = await fetch('/api/admin/ban', {
           method: 'POST',
@@ -1218,7 +1326,6 @@
     function openUnbanModal(username) {
       unbanTarget = username;
       document.getElementById('unbanTargetName').textContent = username;
-
       const user = allUsers.find(u => u.username === username);
       const infoEl = document.getElementById('unbanInfoText');
       if (user && user.ban_info) {
@@ -1235,7 +1342,6 @@
       } else {
         infoEl.innerHTML = '<p style="text-align:center;color:#333;">Gỡ ban cho user này?</p>';
       }
-
       document.getElementById('unbanModal').classList.add('show');
     }
 
@@ -1296,7 +1402,6 @@
     async function confirmDelete() {
       if (!deleteTarget) return;
       const reason = document.getElementById('deleteReasonInput').value.trim() || 'Vi phạm điều khoản nghiêm trọng';
-
       try {
         const res = await fetch('/api/admin/delete', {
           method: 'POST',
@@ -1318,10 +1423,8 @@
     function openResetModal(username) {
       resetTarget = username;
       document.getElementById('resetTargetName').textContent = username;
-
       const user = allUsers.find(u => u.username === username);
       const statusText = document.getElementById('resetStatusText');
-
       if (user) {
         const parts = [];
         parts.push(`Trạng thái: <strong>${user.status}</strong>`);
@@ -1332,7 +1435,6 @@
       } else {
         statusText.textContent = 'Không tải được';
       }
-
       document.getElementById('resetModal').classList.add('show');
     }
 
@@ -1354,17 +1456,15 @@
     }
 
     // ==========================================
-    // REFRESH STATUS (1 USER)
+    // REFRESH STATUS
     // ==========================================
     function openRefreshModal(username) {
       refreshTarget = username;
       document.getElementById('refreshTargetName').textContent = username;
       document.getElementById('keepHistoryCheck').checked = true;
       document.getElementById('keepLogCheck').checked = true;
-
       const user = allUsers.find(u => u.username === username);
       const statusText = document.getElementById('refreshStatusText');
-
       if (user) {
         const parts = [];
         parts.push(`Trạng thái: <strong>${user.status}</strong>`);
@@ -1376,7 +1476,6 @@
       } else {
         statusText.textContent = 'Không tải được';
       }
-
       document.getElementById('refreshModal').classList.add('show');
     }
 
@@ -1384,16 +1483,11 @@
       if (!refreshTarget) return;
       const keepHistory = document.getElementById('keepHistoryCheck').checked;
       const keepLog = document.getElementById('keepLogCheck').checked;
-
       try {
         const res = await fetch('/api/admin/refresh-status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: refreshTarget,
-            keep_history: keepHistory,
-            keep_log: keepLog
-          })
+          body: JSON.stringify({ username: refreshTarget, keep_history: keepHistory, keep_log: keepLog })
         });
         const data = await res.json();
         if (data.success) {
@@ -1409,19 +1503,16 @@
     // ==========================================
     async function refreshAllFiltered() {
       const search = document.getElementById('searchUser').value.toLowerCase().trim();
-
       let targets = allUsers.filter(u => {
         if (u.is_super_admin) return false;
         if (currentFilter !== 'all' && u.status !== currentFilter) return false;
         if (search && !u.username.toLowerCase().includes(search)) return false;
         return true;
       });
-
       if (targets.length === 0) {
         showToast('⚠️ Không có user nào để làm mới!', true);
         return;
       }
-
       refreshAllTargets = targets;
       document.getElementById('refreshAllCount').textContent = targets.length;
       document.getElementById('refreshAllList').innerHTML =
@@ -1429,20 +1520,16 @@
           `<div style="padding:6px 0; font-family:'JetBrains Mono', monospace; font-size:13px;">• ${escapeHtml(u.username)}</div>`
         ).join('') +
         (targets.length > 10 ? `<div style="padding:6px 0; color:#888;">... và ${targets.length - 10} user khác</div>` : '');
-
       document.getElementById('refreshAllModal').classList.add('show');
     }
 
     async function confirmRefreshAll() {
       if (refreshAllTargets.length === 0) return;
-
       try {
         const res = await fetch('/api/admin/refresh-multiple', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            usernames: refreshAllTargets.map(u => u.username)
-          })
+          body: JSON.stringify({ usernames: refreshAllTargets.map(u => u.username) })
         });
         const data = await res.json();
         if (data.success) {
@@ -1468,7 +1555,6 @@
           document.getElementById('detailBody').innerHTML = '❌ ' + data.error;
           return;
         }
-
         const u = data.user;
         const warningsHtml = u.warnings.length > 0
           ? u.warnings.map(w => `
@@ -1557,7 +1643,6 @@
       });
     });
 
-    // ESC đóng modal
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay.show').forEach(modal => {
@@ -1587,13 +1672,20 @@
       setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    // Auto load sau splash
-    setTimeout(() => {
-      loadStats();
-      loadUsers();
-    }, 2100);
+    // ==========================================
+    // INIT
+    // ==========================================
+    window.addEventListener('load', () => {
+      document.body.style.overflow = 'hidden';
+      setTimeout(runSplash, 200);
+    });
 
-    setInterval(loadStats, 30000);
+    // Auto refresh stats mỗi 30s (chỉ khi đã vào admin)
+    setInterval(() => {
+      if (splashFinished) {
+        loadStats();
+      }
+    }, 30000);
   </script>
 </body>
 </html>
