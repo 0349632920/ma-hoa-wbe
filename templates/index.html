@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🔐 Mã Hóa Tool</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- SPLASH SCREEN -->
+
+  <!-- ============================================
+       SPLASH SCREEN (khi vào trang)
+       ============================================ -->
   <div class="splash-screen" id="splashScreen">
     <div class="splash-bg">
       <span class="floating-emoji" style="--delay:0s;--x:10%;--y:20%">🔐</span>
@@ -44,7 +47,9 @@
     </div>
   </div>
 
-  <!-- MAIN CONTAINER -->
+  <!-- ============================================
+       NỘI DUNG CHÍNH
+       ============================================ -->
   <div class="container" id="mainContainer">
     <header>
       <div class="logo">
@@ -113,15 +118,16 @@
       </button>
     </div>
 
+    <!-- KEY -->
     <div id="keySection" class="key-section hidden">
       <label id="keyLabel">🔑 Khóa:</label>
       <input type="text" id="keyInput" placeholder="Nhập khóa...">
     </div>
 
+    <!-- WARNINGS -->
     <div id="hashWarning" class="hash-warning hidden">
       ⚠️ Phương pháp này là <strong>mã hóa 1 chiều</strong> — không thể giải mã!
     </div>
-
     <div id="decryptNotice" class="decrypt-notice hidden">
       💡 Đang ở <strong>chế độ Giải mã</strong> — dán văn bản đã mã hóa vào ô bên trái.
     </div>
@@ -144,6 +150,7 @@
       </div>
     </div>
 
+    <!-- BUTTONS -->
     <div class="buttons">
       <button class="btn primary" id="actionBtn" onclick="runAction()">🔒 Mã Hóa Ngay</button>
       <button class="btn swap" onclick="swapText()">🔄 Đảo Chiều</button>
@@ -152,7 +159,9 @@
     </div>
   </div>
 
-  <!-- LOADING OVERLAY -->
+  <!-- ============================================
+       LOADING OVERLAY khi chuyển tab
+       ============================================ -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-content">
       <div class="loading-animation">
@@ -183,7 +192,9 @@
     </div>
   </div>
 
-  <!-- MODAL CHỌN PHƯƠNG PHÁP -->
+  <!-- ============================================
+       MODAL CHỌN PHƯƠNG PHÁP
+       ============================================ -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <div class="modal-header">
@@ -191,7 +202,7 @@
         <button class="modal-close" id="closeModalBtn">✕</button>
       </div>
       <div class="modal-search">
-        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm...">
+        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm... (VD: base64, aes, morse)">
       </div>
       <div class="modal-body">
         <div class="methods-grid" id="methodsGrid">
@@ -210,7 +221,9 @@
     </div>
   </div>
 
-  <!-- MODAL LỊCH SỬ -->
+  <!-- ============================================
+       MODAL LỊCH SỬ
+       ============================================ -->
   <div class="modal-overlay" id="historyModalOverlay">
     <div class="modal modal-history">
       <div class="modal-header history-header">
@@ -227,11 +240,97 @@
     </div>
   </div>
 
+  <!-- ============================================
+       MODAL CHẶN BAN - TOÀN MÀN HÌNH
+       ============================================ -->
+  <div class="blocked-overlay" id="banBlockOverlay">
+    <div class="blocked-content">
+      <div class="blocked-animation">
+        <div class="ban-icon-big"></div>
+        <div class="ban-pulse"></div>
+        <div class="ban-pulse delay-1"></div>
+        <div class="ban-pulse delay-2"></div>
+      </div>
+
+      <h1 class="blocked-title">🚫 BẠN ĐÃ BỊ BAN</h1>
+      <p class="blocked-subtitle">Không thể mã hóa / giải mã khi tài khoản bị khóa</p>
+
+      <div class="blocked-info">
+        <div class="blocked-info-row">
+          <span class="blocked-label">👤 Tài khoản:</span>
+          <span class="blocked-value" id="blockUsername">—</span>
+        </div>
+        <div class="blocked-info-row">
+          <span class="blocked-label">🚫 Lý do:</span>
+          <span class="blocked-value reason" id="blockReason">—</span>
+        </div>
+        <div class="blocked-info-row">
+          <span class="blocked-label">📅 Thời gian:</span>
+          <span class="blocked-value" id="blockTime">—</span>
+        </div>
+        <div class="blocked-info-row">
+          <span class="blocked-label">👑 Admin ban:</span>
+          <span class="blocked-value" id="blockBy">—</span>
+        </div>
+      </div>
+
+      <div class="blocked-actions">
+        <button class="blocked-btn danger" onclick="goToBanPage()">📄 Xem chi tiết</button>
+        <button class="blocked-btn secondary" onclick="closeBanBlock()">✕ Đóng</button>
+      </div>
+
+      <p class="blocked-footer">🔒 Nếu cho rằng đây là nhầm lẫn, hãy liên hệ admin</p>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL CHẶN WARN - TOÀN MÀN HÌNH
+       ============================================ -->
+  <div class="blocked-overlay warn-overlay" id="warnBlockOverlay">
+    <div class="blocked-content warn-content">
+      <div class="blocked-animation">
+        <div class="warn-icon-big">⚠️</div>
+        <div class="warn-pulse"></div>
+        <div class="warn-pulse delay-1"></div>
+        <div class="warn-pulse delay-2"></div>
+      </div>
+
+      <h1 class="blocked-title warn-title">⚠️ BẠN ĐANG BỊ CẢNH BÁO</h1>
+      <p class="blocked-subtitle">Không thể mã hóa / giải mã khi còn cảnh báo từ admin</p>
+
+      <div class="warn-count-box">
+        <span class="warn-count-icon">⚠️</span>
+        <div>
+          <strong id="warnCount">0</strong> cảnh báo
+          <small>Vui lòng liên hệ admin để được gỡ cảnh báo</small>
+        </div>
+      </div>
+
+      <div class="blocked-info warn-info-list" id="warnListContainer"></div>
+
+      <div class="blocked-actions">
+        <button class="blocked-btn warn-btn" onclick="goToWarnPage()">📄 Xem chi tiết</button>
+        <button class="blocked-btn secondary" onclick="closeWarnBlock()">✕ Đóng</button>
+      </div>
+
+      <p class="blocked-footer">💡 Cảnh báo sẽ biến mất khi admin xóa cho bạn</p>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script>
-    // SPLASH
-    const splashMessages = ['Đang khởi tạo...', 'Đang tải phương pháp...', 'Đang chuẩn bị...', 'Sắp xong...', 'Sẵn sàng!'];
+    // ==========================================
+    // SPLASH SCREEN
+    // ==========================================
+    const splashMessages = [
+      'Đang khởi tạo...',
+      'Đang tải các phương pháp mã hóa...',
+      'Đang chuẩn bị công cụ...',
+      'Sắp xong rồi...',
+      'Sẵn sàng!'
+    ];
+
     const splashProgress = document.getElementById('splashProgress');
     const splashStatus = document.getElementById('splashStatus');
 
@@ -280,25 +379,47 @@
       setTimeout(runSplash, 200);
     });
 
+    // ==========================================
     // STATE
+    // ==========================================
     let currentMethod = 'base64';
     let currentAction = 'encrypt';
     let isTransitioning = false;
 
-    const oneWayMethods = new Set(['md5','sha1','sha224','sha256','sha384','sha512','sha3_256','sha3_512','blake2b','blake2s','crc32','uuid','random_hex']);
-    const keyMethods = new Set(['caesar','affine','vigenere','beaufort','autokey','playfair','hill','railfence','columnar','xor','aes']);
+    const oneWayMethods = new Set([
+      'md5','sha1','sha224','sha256','sha384','sha512',
+      'sha3_256','sha3_512','blake2b','blake2s','crc32',
+      'uuid','random_hex'
+    ]);
+    const keyMethods = new Set([
+      'caesar','affine','vigenere','beaufort','autokey',
+      'playfair','hill','railfence','columnar','xor','aes'
+    ]);
     const keyLabels = {
-      'caesar': '🔢 Khóa dịch chuyển (1-25):', 'affine': '🔢 Khóa affine (a,b):',
-      'vigenere': '🔑 Từ khóa Vigenère:', 'beaufort': '🔑 Từ khóa Beaufort:',
-      'autokey': '🔑 Từ khóa Autokey:', 'playfair': '🔑 Từ khóa Playfair:',
-      'hill': '🔢 Ma trận Hill:', 'railfence': '🔢 Số ray (>=2):',
-      'columnar': '🔑 Từ khóa Columnar:', 'xor': '🔑 Khóa XOR:', 'aes': '🔐 Mật khẩu AES:'
+      'caesar': '🔢 Khóa dịch chuyển (1-25):',
+      'affine': '🔢 Khóa affine (a,b):',
+      'vigenere': '🔑 Từ khóa Vigenère:',
+      'beaufort': '🔑 Từ khóa Beaufort:',
+      'autokey': '🔑 Từ khóa Autokey:',
+      'playfair': '🔑 Từ khóa Playfair:',
+      'hill': '🔢 Ma trận Hill:',
+      'railfence': '🔢 Số ray (>=2):',
+      'columnar': '🔑 Từ khóa Columnar:',
+      'xor': '🔑 Khóa XOR:',
+      'aes': '🔐 Mật khẩu AES:'
     };
     const keyPlaceholders = {
-      'caesar': 'Mặc định: 3', 'affine': 'Mặc định: 5,8', 'vigenere': 'Mặc định: KEY',
-      'beaufort': 'Mặc định: KEY', 'autokey': 'Mặc định: KEY', 'playfair': 'Mặc định: KEY',
-      'hill': 'Mặc định: 3,3,2,5', 'railfence': 'Mặc định: 3', 'columnar': 'Mặc định: KEY',
-      'xor': 'Mặc định: KEY', 'aes': 'Nhập mật khẩu...'
+      'caesar': 'Mặc định: 3',
+      'affine': 'Mặc định: 5,8',
+      'vigenere': 'Mặc định: KEY',
+      'beaufort': 'Mặc định: KEY',
+      'autokey': 'Mặc định: KEY',
+      'playfair': 'Mặc định: KEY',
+      'hill': 'Mặc định: 3,3,2,5',
+      'railfence': 'Mặc định: 3',
+      'columnar': 'Mặc định: KEY',
+      'xor': 'Mặc định: KEY',
+      'aes': 'Nhập mật khẩu...'
     };
 
     const modalOverlay = document.getElementById('modalOverlay');
@@ -317,7 +438,9 @@
     const processingIcon = document.getElementById('processingIcon');
     const processingText = document.getElementById('processingText');
 
+    // ==========================================
     // USER MENU
+    // ==========================================
     const userMenu = document.getElementById('userMenu');
     const userBtn = document.getElementById('userBtn');
 
@@ -337,8 +460,7 @@
         const data = await res.json();
 
         if (data.banned) {
-          alert('🚫 Tài khoản đã bị BAN!');
-          window.location.href = '/login';
+          window.location.href = data.redirect || '/login';
           return;
         }
 
@@ -379,6 +501,9 @@
       } catch (e) { showToast('❌ Lỗi!', true); }
     }
 
+    // ==========================================
+    // HISTORY
+    // ==========================================
     async function showHistory() {
       userMenu.classList.remove('open');
       historyModalOverlay.classList.add('show');
@@ -440,7 +565,9 @@
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
     }
 
+    // ==========================================
     // LOADING SCREEN
+    // ==========================================
     function showLoadingScreen(action, callback) {
       if (isTransitioning) return;
       isTransitioning = true;
@@ -521,7 +648,9 @@
     tabEncrypt.addEventListener('click', () => setAction('encrypt'));
     tabDecrypt.addEventListener('click', () => setAction('decrypt'));
 
-    // MODAL
+    // ==========================================
+    // MODAL PHƯƠNG PHÁP
+    // ==========================================
     function openModal() {
       modalOverlay.classList.add('show');
       document.body.style.overflow = 'hidden';
@@ -542,6 +671,14 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (document.getElementById('banBlockOverlay').classList.contains('show')) {
+          closeBanBlock();
+          return;
+        }
+        if (document.getElementById('warnBlockOverlay').classList.contains('show')) {
+          closeWarnBlock();
+          return;
+        }
         if (historyModalOverlay.classList.contains('show')) closeHistoryModal();
         else if (modalOverlay.classList.contains('show')) closeModal();
       }
@@ -614,6 +751,9 @@
       }
     }
 
+    // ==========================================
+    // RUN ACTION
+    // ==========================================
     async function runAction() {
       const text = document.getElementById('input').value;
       const key = document.getElementById('keyInput').value;
@@ -641,9 +781,17 @@
           return;
         }
 
+        // ===== BỊ BAN =====
         if (data.banned) {
-          alert('🚫 Tài khoản đã bị BAN!');
-          window.location.href = data.redirect || '/banned';
+          showBanBlock(data.ban_info || {}, data.username || '');
+          playBanSound();
+          return;
+        }
+
+        // ===== BỊ CẢNH BÁO =====
+        if (data.warned) {
+          showWarnBlock(data.warnings || [], data.username || '');
+          playWarnSound();
           return;
         }
 
@@ -660,6 +808,115 @@
       }
     }
 
+    // ==========================================
+    // BAN BLOCK
+    // ==========================================
+    function showBanBlock(banInfo, username) {
+      document.getElementById('blockUsername').textContent = username || '—';
+      document.getElementById('blockReason').textContent = banInfo.reason || 'Vi phạm điều khoản';
+
+      let timeStr = '—';
+      if (banInfo.time) {
+        try { timeStr = new Date(banInfo.time).toLocaleString('vi-VN'); }
+        catch { timeStr = banInfo.time; }
+      }
+      document.getElementById('blockTime').textContent = timeStr;
+      document.getElementById('blockBy').textContent = banInfo.by || 'System';
+
+      document.getElementById('banBlockOverlay').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeBanBlock() {
+      document.getElementById('banBlockOverlay').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function goToBanPage() {
+      window.location.href = '/banned?user=' + encodeURIComponent(
+        document.getElementById('blockUsername').textContent
+      );
+    }
+
+    // ==========================================
+    // WARN BLOCK
+    // ==========================================
+    function showWarnBlock(warnings, username) {
+      document.getElementById('warnCount').textContent = warnings.length;
+
+      const listContainer = document.getElementById('warnListContainer');
+      if (warnings.length === 0) {
+        listContainer.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">Không có chi tiết</p>';
+      } else {
+        listContainer.innerHTML = warnings.slice().reverse().map((w, i) => {
+          let timeStr = w.time || '';
+          try { timeStr = new Date(w.time).toLocaleString('vi-VN'); } catch {}
+          return `
+            <div class="warn-item-block">
+              <strong>⚠️ Cảnh báo #${warnings.length - i}</strong>
+              <div style="margin-bottom:4px;">${escapeHtml(w.reason)}</div>
+              <div class="warn-item-meta">${timeStr} — bởi ${escapeHtml(w.by || 'admin')}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('warnBlockOverlay').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeWarnBlock() {
+      document.getElementById('warnBlockOverlay').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function goToWarnPage() {
+      window.location.href = '/warned';
+    }
+
+    // ==========================================
+    // ÂM THANH
+    // ==========================================
+    function playBanSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [400, 300, 400, 300, 400];
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+          gain.gain.setValueAtTime(0.08, ctx.currentTime + i * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.12);
+          osc.start(ctx.currentTime + i * 0.15);
+          osc.stop(ctx.currentTime + i * 0.15 + 0.15);
+        });
+      } catch (e) {}
+    }
+
+    function playWarnSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.setValueAtTime(800, ctx.currentTime + 0.2);
+        osc.frequency.setValueAtTime(600, ctx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.6);
+      } catch (e) {}
+    }
+
+    // ==========================================
+    // UTILS
+    // ==========================================
     function swapText() {
       const out = document.getElementById('output').value;
       if (!out) return showToast('⚠️ Chưa có kết quả!', true);
@@ -715,7 +972,9 @@
       setTimeout(() => t.classList.remove('show'), 2200);
     }
 
+    // ==========================================
     // INIT
+    // ==========================================
     document.getElementById('input').addEventListener('input', updateCounts);
     const defaultBtn = document.querySelector('.method-btn[data-method="base64"]');
     if (defaultBtn) defaultBtn.classList.add('active');
