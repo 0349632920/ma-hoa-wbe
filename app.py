@@ -9,6 +9,7 @@ import os
 import json
 import hashlib
 import secrets
+import random
 import psycopg2
 from psycopg2.extras import Json, RealDictCursor
 
@@ -36,7 +37,7 @@ PENDING_DELETE_DAYS = 7
 
 
 # ============================================================
-# DATABASE LAYER — SUPABASE (PostgreSQL)
+# DATABASE LAYER — SUPABASE
 # ============================================================
 def has_database():
     return bool(DATABASE_URL)
@@ -59,7 +60,6 @@ def init_db():
     if not has_database():
         print("⚠️ Không có DATABASE_URL — dùng JSON local")
         return
-
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -93,7 +93,6 @@ def load_users():
                     return {row['username']: row['data'] for row in rows}
         except Exception as e:
             print(f"⚠️ Lỗi load từ DB: {e}")
-            print("   → Fallback về JSON local")
 
     if not os.path.exists(USERS_FILE):
         return {}
@@ -220,19 +219,47 @@ def verify_password(password, stored):
 
 
 # ============================================================
-# SEED ACCOUNTS — TỰ ĐỘNG TẠO TÀI KHOẢN TỪ JSON
+# TẠO ID NGƯỜI DÙNG — 10 CHỮ SỐ (CHO TẤT CẢ, KỂ CẢ SUPER ADMIN)
+# ============================================================
+def generate_user_id(users=None):
+    """Tạo ID 10 chữ số duy nhất"""
+    if users is None:
+        users = load_users()
+
+    existing_ids = set()
+    for u_data in users.values():
+        if u_data.get('user_id'):
+            existing_ids.add(str(u_data['user_id']))
+
+    for _ in range(100):
+        new_id = str(random.randint(1000000000, 9999999999))
+        if new_id not in existing_ids:
+            return new_id
+
+    # Fallback
+    base_id = 1000000000
+    while str(base_id) in existing_ids:
+        base_id += 1
+    return str(base_id)
+
+
+def find_user_by_id(user_id):
+    """Tìm user theo ID"""
+    users = load_users()
+    user_id = str(user_id).strip()
+    for username, data in users.items():
+        if str(data.get('user_id', '')) == user_id:
+            return username, data
+    return None, None
+
+
+# ============================================================
+# SEED ACCOUNTS
 # ============================================================
 def seed_accounts():
-    """
-    Đọc seed_accounts.json (hoặc env SEED_ACCOUNTS_JSON) và tạo tài khoản.
-    - KHÔNG xóa user cũ
-    - CHỈ tạo user CHƯA tồn tại
-    - KHÔNG ghi đè password/role nếu user đã có
-    """
     seed_data = None
     source = None
 
-    # Ưu tiên 1: Đọc từ file
     if os.path.exists(SEED_FILE):
         try:
             with open(SEED_FILE, 'r', encoding='utf-8') as f:
@@ -241,7 +268,6 @@ def seed_accounts():
         except Exception as e:
             print(f"❌ Lỗi đọc {SEED_FILE}: {e}")
 
-    # Ưu tiên 2: Đọc từ env SEED_ACCOUNTS_JSON
     if seed_data is None:
         env_seed = os.getenv('SEED_ACCOUNTS_JSON', '').strip()
         if env_seed:
@@ -252,12 +278,12 @@ def seed_accounts():
                 print(f"❌ Lỗi parse SEED_ACCOUNTS_JSON: {e}")
 
     if seed_data is None:
-        print("ℹ️ Không có seed data (không có file hoặc env)")
+        print("ℹ️ Không có seed data")
         return
 
     accounts = seed_data.get('accounts', [])
     if not accounts:
-        print(f"ℹ️ File/env seed không có tài khoản nào")
+        print(f"ℹ️ Seed không có tài khoản")
         return
 
     print(f"📁 Đọc seed từ: {source}")
@@ -277,10 +303,8 @@ def seed_accounts():
             status = acc.get('status', 'active')
 
             if not username or not password:
-                print(f"  ⚠️ Bỏ qua: thiếu username/password")
                 failed += 1
                 continue
-
             if len(password) < 6:
                 print(f"  ⚠️ Bỏ qua {username}: password < 6 ký tự")
                 failed += 1
@@ -289,7 +313,6 @@ def seed_accounts():
             if role not in ('super_admin', 'admin', 'user'):
                 role = 'user'
 
-            # Kiểm tra đã tồn tại (không phân biệt dấu/hoa thường)
             exists = False
             for u in users.keys():
                 if usernames_match(u, username):
@@ -300,9 +323,11 @@ def seed_accounts():
                 skipped += 1
                 continue
 
-            # Tạo user mới
             now = datetime.now().isoformat()
+            user_id = generate_user_id(users)      # ← ID 10 số
+
             users[username] = {
+                'user_id': user_id,
                 'password': hash_password(password),
                 'role': role,
                 'display_name': display_name,
@@ -316,7 +341,7 @@ def seed_accounts():
                 'delete_info': None,
                 'activity_log': [{
                     'action': 'seed',
-                    'detail': f'Tạo tự động từ {source}',
+                    'detail': f'Tạo tự động — ID: {user_id}',
                     'time': now
                 }],
                 'suspicious_score': 0,
@@ -324,20 +349,20 @@ def seed_accounts():
                 'protected': (role == 'super_admin')
             }
             created += 1
-            print(f"  ✅ Đã tạo: {username} ({role})")
+            print(f"  ✅ Đã tạo: {username} ({role}) — ID: {user_id}")
 
         except Exception as e:
-            print(f"  ❌ Lỗi tạo {acc.get('username', '?')}: {e}")
+            print(f"  ❌ Lỗi: {acc.get('username', '?')}: {e}")
             failed += 1
 
     if created > 0:
         save_users(users)
 
-    print(f"📊 Seed hoàn tất: {created} tạo mới, {skipped} bỏ qua, {failed} lỗi")
+    print(f"📊 Seed: {created} tạo mới, {skipped} bỏ qua, {failed} lỗi")
 
 
 # ============================================================
-# KHỞI TẠO SUPER ADMIN
+# KHỞI TẠO SUPER ADMIN — CŨNG CÓ ID 10 SỐ
 # ============================================================
 def init_super_admin():
     users = load_users()
@@ -351,7 +376,11 @@ def init_super_admin():
             break
 
     if existing_admin is None:
+        # Tạo admin mới với ID 10 số
+        user_id = generate_user_id(users)
+
         users[admin_name] = {
+            'user_id': user_id,                # ← ID 10 số giống mọi người
             'password': hash_password(SUPER_ADMIN_PASSWORD),
             'role': 'super_admin',
             'display_name': SUPER_ADMIN_DISPLAY,
@@ -363,15 +392,16 @@ def init_super_admin():
             'warnings': [],
             'ban_info': None,
             'delete_info': None,
-            'activity_log': [{'action': 'system', 'detail': 'Super Admin tạo tự động', 'time': now}],
+            'activity_log': [{'action': 'system', 'detail': f'Super Admin tạo tự động — ID: {user_id}', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
             'protected': True
         }
         save_user(admin_name, users[admin_name])
-        print(f"👑 Đã tạo SUPER ADMIN: {admin_name}")
+        print(f"👑 Đã tạo SUPER ADMIN: {admin_name} — ID: {user_id}")
         return
 
+    # Đã có → nâng cấp
     changed = False
     user = users[existing_admin]
 
@@ -389,6 +419,12 @@ def init_super_admin():
     if user.get('display_name') != SUPER_ADMIN_DISPLAY:
         user['display_name'] = SUPER_ADMIN_DISPLAY
         changed = True
+
+    # Nếu chưa có user_id → tạo mới
+    if not user.get('user_id'):
+        user['user_id'] = generate_user_id(users)
+        changed = True
+        print(f"🆔 Đã cấp ID cho Super Admin: {user['user_id']}")
 
     if user.get('status') != 'active':
         user['status'] = 'active'
@@ -422,9 +458,9 @@ def init_super_admin():
 
     if changed:
         save_user(admin_name, user)
-        print(f"👑 Đã cập nhật SUPER ADMIN: {admin_name}")
+        print(f"👑 Đã cập nhật SUPER ADMIN: {admin_name} — ID: {user.get('user_id')}")
     else:
-        print(f"✓ Super Admin {admin_name} đã sẵn sàng")
+        print(f"✓ Super Admin {admin_name} đã sẵn sàng — ID: {user.get('user_id')}")
 
 
 # ============================================================
@@ -432,18 +468,13 @@ def init_super_admin():
 # ============================================================
 def auto_unban_expired():
     users = load_users()
-    changed = False
     now = datetime.now()
-
     for username, user in users.items():
-        if user.get('status') != 'banned':
-            continue
+        if user.get('status') != 'banned': continue
         ban_info = user.get('ban_info', {}) or {}
-        if not ban_info.get('is_temp_ban'):
-            continue
+        if not ban_info.get('is_temp_ban'): continue
         ban_until = ban_info.get('ban_until')
-        if not ban_until:
-            continue
+        if not ban_until: continue
         try:
             ban_until_dt = datetime.fromisoformat(ban_until)
             if now >= ban_until_dt:
@@ -451,7 +482,6 @@ def auto_unban_expired():
                 user['ban_info'] = None
                 user['warnings_shown'] = False
                 save_user(username, user)
-                changed = True
                 print(f"🔓 Auto-unban: {username}")
         except Exception as e:
             print(f"⚠️ Lỗi auto-unban {username}: {e}")
@@ -460,14 +490,11 @@ def auto_unban_expired():
 def auto_delete_expired():
     users = load_users()
     now = datetime.now()
-
     for username, user in users.items():
-        if user.get('status') != 'pending_delete':
-            continue
+        if user.get('status') != 'pending_delete': continue
         delete_info = user.get('delete_info', {}) or {}
         expires_at = delete_info.get('expires_at')
-        if not expires_at:
-            continue
+        if not expires_at: continue
         try:
             expires_at_dt = datetime.fromisoformat(expires_at)
             if now >= expires_at_dt:
@@ -479,17 +506,13 @@ def auto_delete_expired():
 
 def check_and_auto_unban(username):
     users = load_users()
-    if username not in users:
-        return {}
+    if username not in users: return {}
     user = users[username]
-    if user.get('status') != 'banned':
-        return user
+    if user.get('status') != 'banned': return user
     ban_info = user.get('ban_info', {}) or {}
-    if not ban_info.get('is_temp_ban'):
-        return user
+    if not ban_info.get('is_temp_ban'): return user
     ban_until = ban_info.get('ban_until')
-    if not ban_until:
-        return user
+    if not ban_until: return user
     try:
         ban_until_dt = datetime.fromisoformat(ban_until)
         if datetime.now() >= ban_until_dt:
@@ -497,7 +520,6 @@ def check_and_auto_unban(username):
             user['ban_info'] = None
             user['warnings_shown'] = False
             save_user(username, user)
-            print(f"🔓 Auto-unban khi check: {username}")
     except Exception as e:
         print(f"⚠️ Lỗi auto-unban {username}: {e}")
     return user
@@ -505,8 +527,7 @@ def check_and_auto_unban(username):
 
 def log_activity(username, action, detail=''):
     users = load_users()
-    if username not in users:
-        return
+    if username not in users: return
     user = users[username]
     log = user.get('activity_log', [])
     log.insert(0, {'action': action, 'detail': detail, 'time': datetime.now().isoformat()})
@@ -516,12 +537,12 @@ def log_activity(username, action, detail=''):
         five_min_ago = datetime.now() - timedelta(minutes=5)
         recent = [l for l in log if datetime.fromisoformat(l['time']) > five_min_ago]
         user['suspicious_score'] = len(recent)
-
         if (len(recent) >= SUSPICIOUS_THRESHOLD
             and user.get('status') == 'active'
             and user.get('role') != 'super_admin'):
             warnings = user.get('warnings', [])
             warnings.append({
+                'user_id': user.get('user_id', '—'),
                 'reason': f'Hoạt động bất thường: {len(recent)} thao tác/5 phút',
                 'time': datetime.now().isoformat(),
                 'by': 'system'
@@ -622,7 +643,10 @@ def register():
                 return jsonify({'success': False, 'error': 'Tên đăng nhập đã tồn tại!'}), 400
 
         now = datetime.now().isoformat()
+        user_id = generate_user_id(users)
+
         users[username] = {
+            'user_id': user_id,
             'password': hash_password(password),
             'role': 'user',
             'display_name': username,
@@ -634,7 +658,7 @@ def register():
             'warnings': [],
             'ban_info': None,
             'delete_info': None,
-            'activity_log': [{'action': 'register', 'detail': 'Đăng ký mới', 'time': now}],
+            'activity_log': [{'action': 'register', 'detail': f'Đăng ký — ID: {user_id}', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
             'protected': False
@@ -649,6 +673,7 @@ def register():
             'success': True,
             'message': f'Chào mừng {username}!',
             'username': username,
+            'user_id': user_id,
             'role': 'user'
         })
     except Exception as e:
@@ -711,6 +736,7 @@ def login():
                 'banned': True,
                 'ban_info': ban_info,
                 'ban_until': ban_info.get('ban_until'),
+                'user_id': user.get('user_id', '—'),
                 'redirect': f'/banned?user={found_user}'
             }), 403
 
@@ -721,6 +747,7 @@ def login():
                 'error': 'Tài khoản đã bị đánh dấu xóa!',
                 'pending_delete': True,
                 'delete_info': delete_info,
+                'user_id': user.get('user_id', '—'),
                 'redirect': '/deleted'
             }), 403
 
@@ -748,6 +775,7 @@ def login():
             'success': True,
             'message': f'Chào mừng trở lại, {users[found_user].get("display_name", found_user)}!',
             'username': found_user,
+            'user_id': users[found_user].get('user_id', '—'),
             'role': users[found_user].get('role', 'user'),
             'is_super_admin': is_super_admin(found_user),
             'has_warnings': len(warnings) > 0,
@@ -777,6 +805,7 @@ def me():
             'success': False, 'banned': True,
             'error': 'Tài khoản đã bị ban!',
             'ban_info': ban_info,
+            'user_id': user.get('user_id', '—'),
             'ban_until': ban_info.get('ban_until'),
             'redirect': f'/banned?user={uname}'
         }), 403
@@ -788,12 +817,14 @@ def me():
             'pending_delete': True,
             'error': 'Tài khoản đã bị đánh dấu xóa!',
             'delete_info': delete_info,
+            'user_id': user.get('user_id', '—'),
             'redirect': '/deleted'
         }), 403
 
     return jsonify({
         'success': True, 'logged_in': True,
         'username': session['username'],
+        'user_id': user.get('user_id', '—'),
         'display_name': user.get('display_name', session['username']),
         'role': user.get('role', 'user'),
         'is_super_admin': is_super_admin(session['username']),
@@ -852,6 +883,7 @@ def banned_page():
     return render_template(
         'banned.html',
         username=user.get('display_name', found_user),
+        user_id=user.get('user_id', '—'),
         reason=ban_info.get('reason', 'Vi phạm điều khoản'),
         banned_at=banned_at or '—',
         banned_by=ban_info.get('by', 'System'),
@@ -901,6 +933,7 @@ def deleted_page():
     return render_template(
         'deleted.html',
         username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'),
         reason=delete_info.get('reason', 'Vi phạm điều khoản'),
         deleted_at=deleted_at or '—',
         deleted_by=delete_info.get('by', 'System'),
@@ -922,7 +955,7 @@ def confirm_delete():
     if user.get('status') != 'pending_delete':
         return jsonify({'success': False, 'error': 'Không ở trạng thái chờ xóa!'}), 400
 
-    print(f"🗑️ XÓA VĨNH VIỄN: {username}")
+    print(f"🗑️ XÓA VĨNH VIỄN: {username} (ID: {user.get('user_id', '—')})")
     delete_user_db(username)
     session.clear()
 
@@ -953,6 +986,7 @@ def warned_page():
     return render_template(
         'warned.html',
         username=user.get('display_name', session['username']),
+        user_id=user.get('user_id', '—'),
         warnings=warnings
     )
 
@@ -989,6 +1023,7 @@ def index():
         methods=METHODS,
         username=user.get('display_name', session.get('username')),
         real_username=session.get('username'),
+        user_id=user.get('user_id', '—'),
         role=user.get('role', 'user'),
         is_super_admin=is_super_admin(session['username'])
     )
@@ -1005,13 +1040,16 @@ def api_process():
             return jsonify({
                 'success': False, 'error': 'Tài khoản đã bị BAN!',
                 'banned': True, 'blocked': True,
-                'ban_info': ban_info, 'username': session['username']
+                'ban_info': ban_info,
+                'user_id': user.get('user_id', '—'),
+                'username': session['username']
             }), 403
 
         if user.get('status') == 'pending_delete':
             return jsonify({
                 'success': False, 'error': 'Tài khoản đã bị đánh dấu xóa!',
                 'pending_delete': True, 'blocked': True,
+                'user_id': user.get('user_id', '—'),
                 'redirect': '/deleted'
             }), 403
 
@@ -1071,6 +1109,7 @@ def admin_panel():
         'admin.html',
         username=user.get('display_name', session['username']),
         real_username=session['username'],
+        user_id=user.get('user_id', '—'),
         is_super_admin=is_super_admin(session['username']),
         role=user.get('role', 'user')
     )
@@ -1084,6 +1123,7 @@ def admin_users():
     for username, data in users.items():
         result.append({
             'username': username,
+            'user_id': data.get('user_id', '—'),
             'display_name': data.get('display_name', username),
             'role': data.get('role', 'user'),
             'status': data.get('status', 'active'),
@@ -1135,7 +1175,10 @@ def admin_ban():
         if is_super_admin(target):
             return jsonify({'success': False, 'error': '🚫 Không thể ban Super Admin!'}), 403
 
+        target_id = users[target].get('user_id', '—')
+
         ban_info = {
+            'user_id': target_id,
             'reason': reason,
             'time': datetime.now().isoformat(),
             'by': session['username']
@@ -1150,7 +1193,7 @@ def admin_ban():
         users[target]['ban_info'] = ban_info
         save_user(target, users[target])
 
-        msg = f'🚫 Đã ban {target}' + (' (1 ngày)' if duration == '1day' else ' (vĩnh viễn)')
+        msg = f'🚫 Đã ban user ID {target_id}' + (' (1 ngày)' if duration == '1day' else ' (vĩnh viễn)')
         return jsonify({'success': True, 'message': msg, 'ban_info': ban_info})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
@@ -1165,11 +1208,13 @@ def admin_unban():
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
+
+        target_id = users[target].get('user_id', '—')
         users[target]['status'] = 'warned' if users[target].get('warnings') else 'active'
         users[target]['ban_info'] = None
         users[target]['warnings_shown'] = False
         save_user(target, users[target])
-        return jsonify({'success': True, 'message': f'✅ Đã gỡ ban {target}'})
+        return jsonify({'success': True, 'message': f'✅ Đã gỡ ban user ID {target_id}'})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -1194,8 +1239,11 @@ def admin_warn():
         if is_super_admin(target):
             return jsonify({'success': False, 'error': '🚫 Không thể cảnh báo Super Admin!'}), 403
 
+        target_id = users[target].get('user_id', '—')
+
         warnings = users[target].get('warnings', [])
         warnings.append({
+            'user_id': target_id,
             'reason': reason,
             'time': datetime.now().isoformat(),
             'by': session['username']
@@ -1209,6 +1257,7 @@ def admin_warn():
         if ban_1_day:
             users[target]['status'] = 'banned'
             users[target]['ban_info'] = {
+                'user_id': target_id,
                 'reason': f'{reason} (Ban 1 ngày vì có {len(warnings)} cảnh báo)',
                 'time': datetime.now().isoformat(),
                 'by': session['username'],
@@ -1221,14 +1270,14 @@ def admin_warn():
         if ban_1_day:
             return jsonify({
                 'success': True,
-                'message': f'⚠️🚫 Đã warn + ban 1 ngày {target}',
+                'message': f'⚠️🚫 Đã warn + ban 1 ngày user ID {target_id}',
                 'total_warnings': len(warnings),
                 'banned': True
             })
         else:
             return jsonify({
                 'success': True,
-                'message': f'⚠️ Đã cảnh báo {target}',
+                'message': f'⚠️ Đã cảnh báo user ID {target_id}',
                 'total_warnings': len(warnings),
                 'banned': False
             })
@@ -1245,12 +1294,13 @@ def admin_reset_warnings():
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
+        target_id = users[target].get('user_id', '—')
         users[target]['warnings'] = []
         users[target]['warnings_shown'] = True
         if users[target].get('status') == 'warned':
             users[target]['status'] = 'active'
         save_user(target, users[target])
-        return jsonify({'success': True, 'message': f'🔄 Đã xóa cảnh báo của {target}'})
+        return jsonify({'success': True, 'message': f'🔄 Đã xóa cảnh báo của user ID {target_id}'})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -1266,6 +1316,7 @@ def admin_user_detail(username):
         'success': True,
         'user': {
             'username': username,
+            'user_id': user.get('user_id', '—'),
             'display_name': user.get('display_name', username),
             'role': user.get('role', 'user'),
             'status': user.get('status', 'active'),
@@ -1324,8 +1375,10 @@ def admin_delete():
         if is_super_admin(target):
             return jsonify({'success': False, 'error': '🚫 Không thể xóa Super Admin!'}), 403
 
+        target_id = users[target].get('user_id', '—')
         users[target]['status'] = 'pending_delete'
         users[target]['delete_info'] = {
+            'user_id': target_id,
             'reason': reason,
             'time': datetime.now().isoformat(),
             'by': session['username'],
@@ -1335,7 +1388,7 @@ def admin_delete():
 
         return jsonify({
             'success': True,
-            'message': f'⚠️ Đã đánh dấu xóa {target}',
+            'message': f'⚠️ Đã đánh dấu xóa user ID {target_id}',
             'delete_info': users[target]['delete_info']
         })
     except Exception as e:
@@ -1351,11 +1404,12 @@ def admin_cancel_delete():
         users = load_users()
         if target not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
+        target_id = users[target].get('user_id', '—')
         users[target]['status'] = 'warned' if users[target].get('warnings') else 'active'
         users[target]['delete_info'] = None
         users[target]['warnings_shown'] = False
         save_user(target, users[target])
-        return jsonify({'success': True, 'message': f'✅ Đã hủy xóa {target}'})
+        return jsonify({'success': True, 'message': f'✅ Đã hủy xóa user ID {target_id}'})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
@@ -1381,8 +1435,8 @@ def admin_refresh_status():
             return jsonify({'success': False, 'error': '🚫 Không thể làm mới Super Admin!'}), 403
 
         user = users[target]
+        target_id = user.get('user_id', '—')
         old_status = user.get('status', 'active')
-        old_warns = len(user.get('warnings', []))
 
         user['status'] = 'active'
         user['warnings'] = []
@@ -1391,10 +1445,8 @@ def admin_refresh_status():
         user['suspicious_score'] = 0
         user['warnings_shown'] = True
 
-        if not keep_history:
-            user['history'] = []
-        if not keep_log:
-            user['activity_log'] = []
+        if not keep_history: user['history'] = []
+        if not keep_log: user['activity_log'] = []
 
         log = user.get('activity_log', [])
         log.insert(0, {
@@ -1408,7 +1460,7 @@ def admin_refresh_status():
 
         return jsonify({
             'success': True,
-            'message': f'♻️ Đã làm mới {target} (cũ: {old_status})',
+            'message': f'♻️ Đã làm mới user ID {target_id} (cũ: {old_status})',
             'old_status': old_status
         })
     except Exception as e:
@@ -1461,7 +1513,6 @@ def admin_refresh_multiple():
 @app.route('/api/admin/seed', methods=['POST'])
 @super_admin_required
 def admin_seed():
-    """Chạy lại seed từ file/env"""
     try:
         seed_accounts()
         users = load_users()
