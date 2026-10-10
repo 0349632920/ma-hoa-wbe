@@ -20,7 +20,7 @@ SUPER_ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 
 SUSPICIOUS_THRESHOLD = 50
 WARN_THRESHOLD = 30
-MAX_WARN_BEFORE_BAN_OPTION = 3  # >= 3 warn → admin có tùy chọn ban
+MAX_WARN_BEFORE_BAN_OPTION = 3
 
 
 # ============================================================
@@ -476,7 +476,7 @@ def me():
 
 
 # ============================================================
-# BAN PAGE
+# BAN PAGE — ĐÃ SỬA: TRUYỀN ISO CHO JS
 # ============================================================
 @app.route('/banned')
 def banned_page():
@@ -509,10 +509,16 @@ def banned_page():
         except:
             banned_at = banned_at[:19].replace('T', ' ')
 
-    # Thời gian hết ban (nếu ban tạm)
+    # ===== THỜI GIAN HẾT BAN =====
     ban_until_display = None
+    ban_until_iso = None  # ← QUAN TRỌNG: Giữ ISO gốc cho JavaScript
     ban_until = ban_info.get('ban_until')
+
     if ban_until:
+        # Luôn giữ ISO gốc cho JS parse
+        ban_until_iso = ban_until
+
+        # Format đẹp để hiển thị
         try:
             ban_until_dt = datetime.fromisoformat(ban_until)
             ban_until_display = ban_until_dt.strftime('%d/%m/%Y %H:%M:%S')
@@ -529,6 +535,7 @@ def banned_page():
         banned_by=ban_info.get('by', 'System'),
         ban_id=ban_id,
         ban_until_display=ban_until_display,
+        ban_until_iso=ban_until_iso,     # ← ISO cho JS
         is_temp_ban=is_temp_ban
     )
 
@@ -724,7 +731,7 @@ def admin_ban():
         data = request.get_json()
         target = data.get('username', '').strip()
         reason = data.get('reason', 'Vi phạm điều khoản').strip() or 'Vi phạm điều khoản'
-        duration = data.get('duration', 'permanent')  # 'permanent' | '1day'
+        duration = data.get('duration', 'permanent')
 
         if not target:
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
