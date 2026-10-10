@@ -7,10 +7,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: 'Inter', sans-serif; min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 25px; overflow-x: hidden;
+      padding: 25px;
+      overflow-x: hidden;
     }
 
     /* SPLASH SCREEN ADMIN */
@@ -219,7 +222,7 @@
       flex-wrap: wrap; gap: 15px;
     }
     .panel-header h2 { font-size: 20px; color: #333; font-weight: 800; }
-    .panel-tools { display: flex; gap: 10px; }
+    .panel-tools { display: flex; gap: 10px; flex-wrap: wrap; }
     .search-user {
       padding: 10px 16px; border: 2px solid #e0e0e0;
       border-radius: 10px; font-size: 14px;
@@ -229,14 +232,17 @@
       outline: none; border-color: #667eea;
       box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
     }
-    .btn-refresh {
-      padding: 10px 18px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white; border: none; border-radius: 10px;
+    .btn-refresh, .btn-refresh-all {
+      padding: 10px 18px; border: none; border-radius: 10px;
       font-size: 14px; font-weight: 600; cursor: pointer;
-      font-family: inherit; transition: 0.2s;
+      font-family: inherit; transition: 0.2s; color: white;
     }
-    .btn-refresh:hover { transform: translateY(-2px); }
+    .btn-refresh { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .btn-refresh-all {
+      background: linear-gradient(135deg, #16a085, #1abc9c);
+      box-shadow: 0 4px 12px rgba(26,188,156,0.3);
+    }
+    .btn-refresh:hover, .btn-refresh-all:hover { transform: translateY(-2px); }
 
     .users-table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 12px; }
     .users-table thead { background: #f7f7fb; }
@@ -275,6 +281,7 @@
     .badge.warned { background: #fff3cd; color: #856404; }
     .badge.banned { background: #ffebee; color: #c0392b; }
     .badge.temp-ban { background: #ffedd5; color: #c2410c; }
+    .badge.pending-delete { background: #f3e5f5; color: #8e44ad; }
 
     .super-admin-badge {
       display: inline-flex; align-items: center; gap: 4px;
@@ -308,8 +315,9 @@
     .action-btn.reset { background: #3498db; }
     .action-btn.delete { background: #95a5a6; }
     .action-btn.detail { background: #667eea; }
+    .action-btn.refresh { background: linear-gradient(135deg, #16a085, #1abc9c); }
 
-    /* Modal */
+    /* Modal chung */
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(20,20,40,0.65);
@@ -401,7 +409,7 @@
     }
     .warning-item small { color: #999; display: block; margin-top: 4px; }
 
-    /* BAN OPTION BOX */
+    /* Warn option boxes */
     .warn-warning-box {
       display: none;
       padding: 14px 18px;
@@ -423,7 +431,6 @@
       margin-top: 14px;
     }
     .ban-1day-box.show { display: block; animation: slideDown 0.3s ease; }
-
     .ban-1day-label {
       display: flex; align-items: center; gap: 12px;
       cursor: pointer; font-size: 15px;
@@ -443,6 +450,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Toast */
     .toast {
       position: fixed; bottom: 30px; left: 50%;
       transform: translateX(-50%) translateY(100px);
@@ -452,6 +460,8 @@
       transition: 0.4s; pointer-events: none;
       z-index: 10000;
       box-shadow: 0 12px 35px rgba(0,0,0,0.35);
+      max-width: 90vw;
+      text-align: center;
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
@@ -518,7 +528,7 @@
       </div>
       <div class="header-right">
         <button class="btn-back" onclick="window.location.href='/'">🔐 Về trang chính</button>
-        <button class="btn-logout" onclick="logout()">🚪 Đăng xuất</button>
+        <button class="btn-logout" onclick="openLogoutAdminModal()">🚪 Đăng xuất</button>
       </div>
     </div>
 
@@ -554,6 +564,9 @@
         <h2 id="panelTitle">📋 Danh sách người dùng</h2>
         <div class="panel-tools">
           <input type="text" class="search-user" id="searchUser" placeholder="🔍 Tìm username...">
+          <button class="btn-refresh-all" onclick="refreshAllFiltered()" title="Làm mới tất cả user đang hiển thị">
+            ♻️ Làm mới tất cả
+          </button>
           <button class="btn-refresh" onclick="loadUsers(); loadStats();">🔄 Làm mới</button>
         </div>
       </div>
@@ -575,7 +588,9 @@
     </div>
   </div>
 
-  <!-- MODAL WARN -->
+  <!-- ============================================
+       MODAL WARN
+       ============================================ -->
   <div class="modal-overlay" id="warnModal">
     <div class="modal">
       <div class="modal-header warn-header">
@@ -587,14 +602,10 @@
           <label>📝 Lý do cảnh báo:</label>
           <textarea id="warnReason" placeholder="VD: Spam yêu cầu..."></textarea>
         </div>
-
-        <!-- Cảnh báo sắp đạt 3 lần -->
         <div class="warn-warning-box" id="warnCountWarning">
           <strong>🚨 Chú ý!</strong> User này đã có <strong id="currentWarnCount">0</strong> cảnh báo.
           Nếu tiếp tục warn sẽ đạt <strong>3+ lần</strong>!
         </div>
-
-        <!-- Tùy chọn ban 1 ngày -->
         <div class="ban-1day-box" id="ban1DayBox">
           <label class="ban-1day-label">
             <input type="checkbox" id="ban1DayCheck">
@@ -612,500 +623,7 @@
     </div>
   </div>
 
-  <!-- MODAL BAN -->
-  <div class="modal-overlay" id="banModal">
-    <div class="modal">
-      <div class="modal-header ban-header">
-        <div><h3>🚫 Ban người dùng</h3><p id="banTargetName">—</p></div>
-        <button class="modal-close" onclick="closeModal('banModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>📝 Lý do ban:</label>
-          <textarea id="banReason" placeholder="VD: Vi phạm nghiêm trọng..."></textarea>
-        </div>
-
-        <div class="form-group" style="margin-top:16px;">
-          <label>⏱️ Thời hạn ban:</label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <label style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:#f0f0f5; border-radius:10px; cursor:pointer; font-weight:600;">
-              <input type="radio" name="banDuration" value="permanent" checked style="accent-color:#e74c3c;">
-              <span>♾️ Vĩnh viễn</span>
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:#fff3cd; border-radius:10px; cursor:pointer; font-weight:600;">
-              <input type="radio" name="banDuration" value="1day" style="accent-color:#f39c12;">
-              <span>⏰ 1 ngày (24h)</span>
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-modal cancel" onclick="closeModal('banModal')">Hủy</button>
-        <button class="btn-modal confirm-ban" onclick="confirmBan()">🚫 Ban</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL DETAIL -->
-  <div class="modal-overlay" id="detailModal">
-    <div class="modal">
-      <div class="modal-header detail-header">
-        <div><h3>👤 Chi tiết người dùng</h3><p id="detailTargetName">—</p></div>
-        <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
-      </div>
-      <div class="modal-body" id="detailBody">Đang tải...</div>
-      <div class="modal-footer">
-        <button class="btn-modal cancel" onclick="closeModal('detailModal')">Đóng</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
-  <script>
-    // SPLASH
-    const splashMessages = [
-      'Đang xác thực quyền Admin...',
-      'Đang tải danh sách người dùng...',
-      'Đang chuẩn bị bảng điều khiển...',
-      'Sắp xong...',
-      'Sẵn sàng!'
-    ];
-
-    const splashProgress = document.getElementById('splashProgress');
-    const splashStatus = document.getElementById('splashStatus');
-
-    function runSplash() {
-      splashProgress.style.width = '30%';
-      splashStatus.textContent = splashMessages[0];
-      markSplashStep(1, 'active');
-
-      setTimeout(() => {
-        splashProgress.style.width = '60%';
-        splashStatus.textContent = splashMessages[1];
-        markSplashStep(1, 'done');
-        markSplashStep(2, 'active');
-      }, 500);
-
-      setTimeout(() => {
-        splashProgress.style.width = '90%';
-        splashStatus.textContent = splashMessages[3];
-        markSplashStep(2, 'done');
-        markSplashStep(3, 'active');
-      }, 1100);
-
-      setTimeout(() => {
-        splashProgress.style.width = '100%';
-        splashStatus.textContent = splashMessages[4];
-        markSplashStep(3, 'done');
-      }, 1600);
-
-      setTimeout(() => {
-        document.getElementById('adminSplash').classList.add('hide');
-        document.body.style.overflow = '';
-        document.getElementById('adminContainer').classList.add('show');
-      }, 2100);
-    }
-
-    function markSplashStep(n, state) {
-      const el = document.querySelector(`.splash-step[data-step="${n}"]`);
-      if (el) {
-        el.classList.remove('active', 'done');
-        el.classList.add(state);
-      }
-    }
-
-    window.addEventListener('load', () => {
-      document.body.style.overflow = 'hidden';
-      setTimeout(runSplash, 200);
-    });
-
-    // ============ ADMIN LOGIC ============
-    let allUsers = [];
-    let currentFilter = 'all';
-    let pendingTarget = null;
-
-    async function loadStats() {
-      try {
-        const res = await fetch('/api/admin/stats');
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('statTotal').textContent = data.stats.total;
-          document.getElementById('statActive').textContent = data.stats.active;
-          document.getElementById('statWarned').textContent = data.stats.warned;
-          document.getElementById('statBanned').textContent = data.stats.banned;
-          document.getElementById('statAdmins').textContent = data.stats.admins;
-          document.getElementById('statSuspicious').textContent = data.stats.suspicious;
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    async function loadUsers() {
-      try {
-        const res = await fetch('/api/admin/users');
-        const data = await res.json();
-        if (data.success) {
-          allUsers = data.users;
-          renderUsers();
-        }
-      } catch (e) {
-        document.getElementById('usersTableBody').innerHTML =
-          '<tr><td colspan="6" style="text-align:center;padding:40px;color:#e74c3c">❌ Lỗi tải dữ liệu</td></tr>';
-      }
-    }
-
-    function renderUsers() {
-      const search = document.getElementById('searchUser').value.toLowerCase().trim();
-      const tbody = document.getElementById('usersTableBody');
-
-      let filtered = allUsers.filter(u => {
-        if (currentFilter !== 'all' && u.status !== currentFilter) return false;
-        if (search && !u.username.toLowerCase().includes(search)) return false;
-        return true;
-      });
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#999">😕 Không có người dùng</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(u => {
-        const rowClass = u.status === 'banned' ? 'banned-row' :
-                        u.status === 'warned' ? 'warned-row' : '';
-
-        let roleBadge;
-        if (u.is_super_admin) {
-          roleBadge = '<span class="super-admin-badge">👑 SUPER ADMIN</span>';
-        } else if (u.role === 'admin') {
-          roleBadge = '<span class="badge admin">👑 Admin</span>';
-        } else {
-          roleBadge = '<span class="badge user">👤 User</span>';
-        }
-
-        let statusBadge;
-        if (u.status === 'banned') {
-          const isTemp = u.ban_info && u.ban_info.is_temp_ban;
-          statusBadge = isTemp
-            ? '<span class="badge temp-ban">⏰ Ban tạm</span>'
-            : '<span class="badge banned">🚫 Bị ban</span>';
-        } else if (u.status === 'warned') {
-          statusBadge = '<span class="badge warned">⚠️ Cảnh báo</span>';
-        } else {
-          statusBadge = '<span class="badge active">✅ Hoạt động</span>';
-        }
-
-        let actions = '';
-        if (u.is_super_admin) {
-          actions = `
-            <button class="action-btn detail" onclick="showDetail('${u.username}')">👁️ Chi tiết</button>
-            <span class="protected-note">🛡️ Tự bảo vệ</span>
-          `;
-        } else {
-          if (u.status === 'banned') {
-            actions += `<button class="action-btn unban" onclick="unbanUser('${u.username}')">✅ Gỡ ban</button>`;
-          } else {
-            actions += `<button class="action-btn warn" onclick="openWarnModal('${u.username}')">⚠️ Cảnh báo</button>`;
-            actions += `<button class="action-btn ban" onclick="openBanModal('${u.username}')">🚫 Ban</button>`;
-          }
-          if (u.warnings_count > 0) {
-            actions += `<button class="action-btn reset" onclick="resetWarnings('${u.username}')">🔄 Reset</button>`;
-          }
-          actions += `<button class="action-btn delete" onclick="deleteUser('${u.username}')">🗑️</button>`;
-          actions += `<button class="action-btn detail" onclick="showDetail('${u.username}')">👁️</button>`;
-        }
-
-        // Cảnh báo nếu có >= 2 warn
-        const warnHighlight = u.warnings_count >= 2
-          ? `<span class="badge warned" style="animation: superBadgePulse 1.5s infinite;">${u.warnings_count} cảnh báo ⚡</span>`
-          : (u.warnings_count > 0
-            ? `<span class="badge warned">${u.warnings_count} cảnh báo</span>`
-            : '<span style="color:#999">—</span>');
-
-        return `
-          <tr class="${rowClass}">
-            <td>
-              <div class="user-cell">
-                <div class="user-avatar-sm">${u.username[0].toUpperCase()}</div>
-                <div class="user-cell-info">
-                  <strong>${escapeHtml(u.username)}</strong>
-                  <small>${u.last_login ? 'Lần cuối: ' + formatTime(u.last_login) : 'Chưa đăng nhập'}</small>
-                </div>
-              </div>
-            </td>
-            <td>${roleBadge}</td>
-            <td>${statusBadge}</td>
-            <td><strong>${u.login_count}</strong></td>
-            <td>${warnHighlight}</td>
-            <td><div class="actions-cell">${actions}</div></td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function filterByStatus(status) {
-      currentFilter = status;
-      const titles = {
-        'all': '📋 Danh sách người dùng',
-        'active': '✅ Người dùng đang hoạt động',
-        'warned': '⚠️ Người dùng bị cảnh báo',
-        'banned': '🚫 Người dùng bị ban'
-      };
-      document.getElementById('panelTitle').textContent = titles[status] || titles['all'];
-      renderUsers();
-    }
-
-    document.getElementById('searchUser').addEventListener('input', renderUsers);
-
-    // ============ WARN MODAL ============
-    function openWarnModal(username) {
-      pendingTarget = username;
-      document.getElementById('warnTargetName').textContent = username;
-      document.getElementById('warnReason').value = '';
-      document.getElementById('ban1DayCheck').checked = false;
-
-      const user = allUsers.find(u => u.username === username);
-      const warnCount = user ? user.warnings_count : 0;
-
-      const warnCountWarning = document.getElementById('warnCountWarning');
-      const ban1DayBox = document.getElementById('ban1DayBox');
-      document.getElementById('currentWarnCount').textContent = warnCount;
-
-      // Nếu đã có >= 2 warn → lần warn này sẽ là 3+
-      if (warnCount >= 2) {
-        warnCountWarning.classList.add('show');
-        ban1DayBox.classList.add('show');
-      } else {
-        warnCountWarning.classList.remove('show');
-        ban1DayBox.classList.remove('show');
-      }
-
-      document.getElementById('warnModal').classList.add('show');
-    }
-
-    async function confirmWarn() {
-      const reason = document.getElementById('warnReason').value.trim();
-      if (!reason) { showToast('⚠️ Nhập lý do!', true); return; }
-
-      const ban1Day = document.getElementById('ban1DayCheck').checked;
-
-      try {
-        const res = await fetch('/api/admin/warn', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: pendingTarget,
-            reason: reason,
-            ban_1_day: ban1Day
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast(data.banned ? '🚫 ' + data.message : '⚠️ ' + data.message);
-          closeModal('warnModal');
-          loadUsers();
-          loadStats();
-        } else {
-          showToast('❌ ' + data.error, true);
-        }
-      } catch (e) { showToast('❌ Lỗi!', true); }
-    }
-
-    // ============ BAN MODAL ============
-    function openBanModal(username) {
-      pendingTarget = username;
-      document.getElementById('banTargetName').textContent = username;
-      document.getElementById('banReason').value = '';
-      document.querySelector('input[name="banDuration"][value="permanent"]').checked = true;
-      document.getElementById('banModal').classList.add('show');
-    }
-
-    async function confirmBan() {
-      const reason = document.getElementById('banReason').value.trim() || 'Vi phạm điều khoản';
-      const duration = document.querySelector('input[name="banDuration"]:checked').value;
-
-      try {
-        const res = await fetch('/api/admin/ban', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: pendingTarget,
-            reason: reason,
-            duration: duration
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('🚫 ' + data.message);
-          closeModal('banModal');
-          loadUsers();
-          loadStats();
-        } else {
-          showToast('❌ ' + data.error, true);
-        }
-      } catch (e) { showToast('❌ Lỗi!', true); }
-    }
-
-    async function unbanUser(username) {
-      if (!confirm(`Gỡ ban cho "${username}"?`)) return;
-      try {
-        const res = await fetch('/api/admin/unban', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('✅ ' + data.message);
-          loadUsers(); loadStats();
-        } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
-    }
-
-    async function resetWarnings(username) {
-      if (!confirm(`Xóa hết cảnh báo của "${username}"?`)) return;
-      try {
-        const res = await fetch('/api/admin/reset-warnings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('🔄 ' + data.message);
-          loadUsers(); loadStats();
-        } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
-    }
-
-    async function deleteUser(username) {
-      if (!confirm(`⚠️ XÓA tài khoản "${username}"?\n\nKhông thể hoàn tác!`)) return;
-      try {
-        const res = await fetch('/api/admin/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('🗑️ ' + data.message);
-          loadUsers(); loadStats();
-        } else showToast('❌ ' + data.error, true);
-      } catch (e) { showToast('❌ Lỗi!', true); }
-    }
-
-    async function showDetail(username) {
-      document.getElementById('detailTargetName').textContent = username;
-      document.getElementById('detailBody').innerHTML = 'Đang tải...';
-      document.getElementById('detailModal').classList.add('show');
-
-      try {
-        const res = await fetch(`/api/admin/user/${username}`);
-        const data = await res.json();
-        if (!data.success) {
-          document.getElementById('detailBody').innerHTML = '❌ ' + data.error;
-          return;
-        }
-
-        const u = data.user;
-        const warningsHtml = u.warnings.length > 0
-          ? u.warnings.map(w => `
-              <div class="warning-item">
-                ⚠️ ${escapeHtml(w.reason)}
-                <small>${formatTime(w.time)} — bởi ${w.by}</small>
-              </div>`).join('')
-          : '<p style="color:#999;font-size:13px">Không có cảnh báo</p>';
-
-        const logsHtml = u.activity_log.length > 0
-          ? u.activity_log.slice(0, 10).map(l => `
-              <div class="detail-row"><span>${escapeHtml(l.action)}</span><span>${formatTime(l.time)}</span></div>
-            `).join('')
-          : '<p style="color:#999;font-size:13px">Không có log</p>';
-
-        let banHtml = '';
-        if (u.ban_info) {
-          const isTemp = u.ban_info.is_temp_ban;
-          let banUntilStr = '';
-          if (isTemp && u.ban_info.ban_until) {
-            try {
-              banUntilStr = `<div class="detail-row"><span>Hết hạn ban:</span><span style="color:#e67e22;">${formatTime(u.ban_info.ban_until)}</span></div>`;
-            } catch {}
-          }
-          banHtml = `
-            <div class="detail-section">
-              <h4>${isTemp ? '⏰ Ban tạm thời (1 ngày)' : '🚫 Ban vĩnh viễn'}</h4>
-              <div class="detail-row"><span>Lý do:</span><span>${escapeHtml(u.ban_info.reason)}</span></div>
-              <div class="detail-row"><span>Thời gian ban:</span><span>${formatTime(u.ban_info.time)}</span></div>
-              <div class="detail-row"><span>Bởi:</span><span>${escapeHtml(u.ban_info.by)}</span></div>
-              ${banUntilStr}
-            </div>
-          `;
-        }
-
-        document.getElementById('detailBody').innerHTML = `
-          <div class="detail-section">
-            <h4>📌 Thông tin cơ bản</h4>
-            <div class="detail-row"><span>Username:</span><span>${escapeHtml(u.username)}</span></div>
-            <div class="detail-row"><span>Vai trò:</span><span>${u.role}</span></div>
-            <div class="detail-row"><span>Trạng thái:</span><span>${u.status}</span></div>
-            <div class="detail-row"><span>Ngày tạo:</span><span>${formatTime(u.created_at)}</span></div>
-            <div class="detail-row"><span>Lần cuối:</span><span>${formatTime(u.last_login)}</span></div>
-            <div class="detail-row"><span>Số lần đăng nhập:</span><span>${u.login_count}</span></div>
-          </div>
-          ${banHtml}
-          <div class="detail-section">
-            <h4>⚠️ Cảnh báo (${u.warnings.length})</h4>
-            ${warningsHtml}
-          </div>
-          <div class="detail-section">
-            <h4>📊 Hoạt động gần đây</h4>
-            ${logsHtml}
-          </div>
-        `;
-      } catch (e) {
-        document.getElementById('detailBody').innerHTML = '❌ Lỗi!';
-      }
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('show');
-    }
-
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.classList.remove('show');
-      });
-    });
-
-    async function logout() {
-      if (!confirm('Đăng xuất?')) return;
-      await fetch('/api/logout', { method: 'POST' });
-      window.location.href = '/login';
-    }
-
-    function formatTime(iso) {
-      if (!iso) return '—';
-      try { return new Date(iso).toLocaleString('vi-VN'); }
-      catch { return iso; }
-    }
-
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
-    }
-
-    function showToast(msg, isError = false) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.style.background = isError ? '#e74c3c' : '#27ae60';
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
-    }
-
-    setTimeout(() => {
-      loadStats();
-      loadUsers();
-    }, 2100);
-
-    setInterval(loadStats, 30000);
-  </script>
-</body>
-</html>
+  <!-- ============================================
+       MODAL BAN
+       ============================================ -->
+  <div class="modal-overlay" id="ban
