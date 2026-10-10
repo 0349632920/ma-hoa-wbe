@@ -233,4 +233,56 @@ document.addEventListener('click', async (e) => {
         await loadWarningHistory();
     }
     if (e.target.id === 'warning-history-close') {
-        $('
+        $('warning-history-overlay').style.display = 'none';
+    }
+    if (e.target.id === 'warning-history-overlay') {
+        e.target.style.display = 'none';
+    }
+});
+
+async function loadWarningHistory() {
+    try {
+        const res = await fetch('/api/warnings/me');
+        const warnings = await res.json();
+        const list = $('warning-history-list');
+
+        if (!warnings.length) {
+            list.innerHTML = '<p class="muted" style="padding:20px;text-align:center">Chưa có cảnh báo</p>';
+        } else {
+            list.innerHTML = warnings.map(w => `
+                <div class="warning-item severity-${w.severity}">
+                    <div class="warning-item-title">
+                        <span>${escapeHtml(w.title)}</span>
+                        <span class="warning-item-status ${w.acknowledged ? 'read' : 'unread'}">
+                            ${w.acknowledged ? '✓ Đã đọc' : '● Chưa đọc'}
+                        </span>
+                    </div>
+                    <div class="warning-item-reason">${escapeHtml(w.reason)}</div>
+                    <div class="warning-item-meta">
+                        <span>👤 ${escapeHtml(w.moderator)}</span>
+                        <span>${new Date(w.created_at).toLocaleString('vi-VN')}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        $('warning-history-overlay').style.display = 'flex';
+    } catch (e) { /* ignore */ }
+}
+
+// ==================== INIT ====================
+loadHistory();
+checkPendingWarnings();
+setInterval(checkPendingWarnings, 15000);
+
+// Kiểm tra ban mỗi 30s
+setInterval(async () => {
+    try {
+        const res = await fetch('/api/ban/status');
+        const data = await res.json();
+        if (data.banned) {
+            location.href = '/banned?reason=' + encodeURIComponent(data.reason || '') +
+                            '&exp=' + encodeURIComponent(data.expires_at || '0') +
+                            '&u=' + encodeURIComponent(document.body.dataset.user || '');
+        }
+    } catch (e) { /* ignore */ }
+}, 30000);
