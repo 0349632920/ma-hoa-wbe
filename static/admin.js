@@ -7,19 +7,85 @@ let adminState = {
     currentTab: "users",
     confirmCallback: null,
     banTarget: null,
+    loaded: false,
 };
 
 // ============================================================
-// KHỞI TẠO
+// KHỞI TẠO — có loading screen
 // ============================================================
 document.addEventListener("DOMContentLoaded", async () => {
-    await loadStats();
-    await loadUsers();
-    await loadHistory();
+    startLoadingAnimation();
+
+    try {
+        // Tải song song stats, users, history
+        await Promise.all([
+            loadStats(),
+            loadUsers(),
+            loadHistory(),
+        ]);
+
+        // Đợi thêm 1.2s để loading mượt
+        setTimeout(() => {
+            hideLoadingScreen();
+        }, 1200);
+
+    } catch (e) {
+        console.error("Lỗi khởi tạo admin:", e);
+        setTimeout(() => {
+            hideLoadingScreen();
+        }, 500);
+    }
+
     bindEvents();
     initAvatar();
 });
 
+// ============================================================
+// LOADING SCREEN
+// ============================================================
+function startLoadingAnimation() {
+    const bar = document.getElementById("loading-bar");
+    if (!bar) return;
+
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15 + 5;
+        if (progress > 95) progress = 95;
+        bar.style.width = progress + "%";
+    }, 200);
+
+    adminState._loadingInterval = interval;
+}
+
+function hideLoadingScreen() {
+    const loading = document.getElementById("admin-loading");
+    const content = document.getElementById("admin-content");
+    const bar = document.getElementById("loading-bar");
+
+    if (bar) bar.style.width = "100%";
+
+    if (loading) {
+        loading.classList.add("fade-out");
+        setTimeout(() => {
+            loading.style.display = "none";
+        }, 500);
+    }
+
+    if (content) {
+        content.style.display = "block";
+        content.classList.add("fade-in");
+    }
+
+    if (adminState._loadingInterval) {
+        clearInterval(adminState._loadingInterval);
+    }
+
+    adminState.loaded = true;
+}
+
+// ============================================================
+// INIT AVATAR
+// ============================================================
 function initAvatar() {
     const nameEl = document.querySelector(".user-name");
     const avatarEl = document.getElementById("user-avatar");
@@ -84,7 +150,7 @@ function bindEvents() {
         );
     });
 
-    // ===== CONFIRM MODAL =====
+    // Confirm Modal
     document.getElementById("confirm-cancel").addEventListener("click", closeConfirm);
     document.getElementById("confirm-ok").addEventListener("click", () => {
         const cb = adminState.confirmCallback;
@@ -95,7 +161,7 @@ function bindEvents() {
         if (e.target.id === "confirm-modal") closeConfirm();
     });
 
-    // ===== BAN MODAL =====
+    // Ban Modal
     document.getElementById("ban-cancel").addEventListener("click", closeBanModal);
     document.getElementById("ban-confirm").addEventListener("click", confirmBan);
     document.getElementById("ban-modal").addEventListener("click", (e) => {
@@ -247,7 +313,7 @@ function renderUsers(users) {
 }
 
 // ============================================================
-// BAN USER — Chỉ vĩnh viễn
+// BAN USER
 // ============================================================
 function openBanModal(userId, username) {
     adminState.banTarget = { userId, username };
@@ -293,7 +359,7 @@ async function confirmBan() {
         showToast("❌ Lỗi kết nối: " + e.message, true);
     } finally {
         confirmBtn.disabled = false;
-        confirmBtn.textContent = "🚫 Cấm";
+        confirmBtn.textContent = "🚫 Cấm vĩnh viễn";
     }
 }
 
