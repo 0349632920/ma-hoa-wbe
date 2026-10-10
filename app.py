@@ -1,9 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from crypto_utils import (
-    process, METHODS, ONE_WAY_ONLY,
-    translate, to_english, to_vietnamese, auto_translate, detect_language,
-    LANGUAGES,
-)
+from crypto_utils import process, METHODS, ONE_WAY_ONLY
 from dotenv import load_dotenv
 from functools import wraps
 from datetime import datetime, timedelta
@@ -596,6 +592,7 @@ def login_page():
     if 'username' in session:
         users = load_users()
         user = users.get(session['username'], {})
+        # User bị xóa
         if session['username'] not in users:
             session.clear()
             return redirect(url_for('login_page'))
@@ -788,6 +785,7 @@ def me():
     users = load_users()
     username = session['username']
 
+    # ===== USER BỊ XÓA — KICK =====
     if username not in users:
         session.clear()
         return jsonify({
@@ -971,7 +969,7 @@ def confirm_delete():
     if username not in users:
         session.clear()
         return jsonify({'success': False, 'error': 'Tài khoản không tồn tại!'}), 404    
-    user = users[username]
+        user = users[username]
     if user.get('status') != 'pending_delete':
         return jsonify({'success': False, 'error': 'Không ở trạng thái chờ xóa!'}), 400
 
@@ -1031,6 +1029,7 @@ def index():
     users = load_users()
     username = session.get('username', '')
 
+    # User bị xóa
     if username not in users:
         session.clear()
         return redirect(url_for('deleted_force_page', user=username))
@@ -1055,85 +1054,6 @@ def index():
     )
 
 
-# ============================================================
-# TRANG DỊCH THUẬT
-# ============================================================
-@app.route('/translate')
-@login_required
-def translate_page():
-    users = load_users()
-    username = session.get('username', '')
-    if username not in users:
-        session.clear()
-        return redirect(url_for('login_page'))
-    user = check_and_auto_unban(username)
-    if user.get('status') == 'banned' and not is_super_admin(username):
-        return redirect(url_for('banned_page', user=username))
-    if user.get('status') == 'pending_delete':
-        return redirect(url_for('deleted_page'))
-    return render_template('translate.html')
-
-
-# ============================================================
-# API DỊCH THUẬT
-# ============================================================
-@app.route('/api/translate', methods=['GET', 'POST'])
-@login_required
-def api_translate():
-    # GET: trả về danh sách ngôn ngữ
-    if request.method == 'GET':
-        return jsonify({
-            'languages': LANGUAGES,
-            'modes': ['manual', 'auto']
-        })
-
-    data = request.get_json(silent=True) or request.form
-    text   = (data.get('text')   or '').strip()
-    source = (data.get('source') or 'auto').strip()
-    target = (data.get('target') or 'en').strip()
-    mode   = (data.get('mode')   or 'manual').strip().lower()
-
-    if not text:
-        return jsonify({'error': 'Văn bản trống!'}), 400
-
-    try:
-        if mode == 'auto':
-            info = auto_translate(text)
-            return jsonify({
-                'result':   info['result'],
-                'source':   info['detected'],
-                'target':   info['target'],
-                'detected': info['detected'],
-            })
-
-        if target not in LANGUAGES:
-            return jsonify({'error': f'Ngôn ngữ đích không hỗ trợ: {target}'}), 400
-
-        result = translate(text, source=source, target=target)
-        return jsonify({
-            'result': result,
-            'source': source,
-            'target': target,
-        })
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 400
-    except Exception as e:
-        return jsonify({'error': f'Lỗi server: {e}'}), 500
-
-
-@app.route('/api/detect', methods=['POST'])
-@login_required
-def api_detect():
-    data = request.get_json(silent=True) or request.form
-    text = (data.get('text') or '').strip()
-    if not text:
-        return jsonify({'error': 'Văn bản trống!'}), 400
-    try:
-        return jsonify({'detected': detect_language(text)})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
 @app.route('/api/process', methods=['POST'])
 @login_required
 def api_process():
@@ -1141,6 +1061,7 @@ def api_process():
         users = load_users()
         username = session['username']
 
+        # User bị xóa
         if username not in users:
             session.clear()
             return jsonify({
@@ -1473,6 +1394,7 @@ def admin_stats():
 @app.route('/api/admin/delete', methods=['POST'])
 @super_admin_required
 def admin_delete():
+    """Đánh dấu xóa — user phải xác nhận"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -1512,6 +1434,7 @@ def admin_delete():
 @app.route('/api/admin/force-delete', methods=['POST'])
 @super_admin_required
 def admin_force_delete():
+    """ÉP BUỘC XÓA — Xóa vĩnh viễn ngay lập tức + KICK user"""
     try:
         data = request.get_json()
         target = data.get('username', '').strip()
@@ -1538,9 +1461,11 @@ def admin_force_delete():
                 'error': f'⚠️ Bạn phải gõ chính xác ID "{target_id}" để xác nhận!'
             }), 400
 
+        # Log trước khi xóa
         log_activity(session['username'], 'force_delete',
                      f"Ép buộc xóa user ID {target_id} — Lý do: {reason}")
 
+        # XÓA VĨNH VIỄN
         print(f"⚡ ÉP BUỘC XÓA: {target} (ID: {target_id}) — Bởi: {session['username']} — Lý do: {reason}")
         delete_user_db(target)
 
