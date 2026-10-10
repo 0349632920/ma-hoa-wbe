@@ -3,195 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡 Admin Panel - Mã Hóa Chữ</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <title>Admin - Mã Hóa WBE</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="admin-page">
-    <!-- Loading Screen -->
-    <div class="admin-loading" id="admin-loading">
-        <div class="admin-loading-card">
-            <div class="admin-loading-icon">🛡</div>
-            <div class="admin-loading-spinner"></div>
-            <div class="admin-loading-text">Đang tải trang quản trị...</div>
-            <div class="admin-loading-subtext">Vui lòng chờ trong giây lát</div>
-            <div class="admin-loading-progress">
-                <div class="admin-loading-bar" id="loading-bar"></div>
-            </div>
+<body>
+    <header class="topbar">
+        <div class="logo">⚙️ Admin Panel</div>
+        <div class="user-info">
+            <a href="{{ url_for('index') }}" class="btn btn-sm">🏠 Trang chính</a>
+            <span class="username">👤 {{ username }}</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-sm">Đăng xuất</a>
         </div>
-    </div>
+    </header>
 
-    <!-- Nội dung admin (ẩn ban đầu) -->
-    <div class="admin-content" id="admin-content" style="display: none;">
-        <div class="user-bar">
-            <div class="user-avatar" id="user-avatar">A</div>
-            <div class="user-name">{{ username }}</div>
-            <a href="/" class="btn-logout" style="text-decoration: none;">🏠 Về trang chủ</a>
-        </div>
+    <main class="container">
+        <div class="stats-grid" id="stats"></div>
 
-        <header class="header">
-            <div class="logo">
-                <span class="icon">🛡</span>
-                <h1>ADMIN PANEL</h1>
-            </div>
-            <p class="subtitle">Quản lý người dùng và lịch sử</p>
-        </header>
-
-        <!-- Stats -->
-        <div class="admin-stats">
-            <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="stat-total-users">0</div>
-                    <div class="stat-label">Tổng users</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🚫</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="stat-banned">0</div>
-                    <div class="stat-label">Đã cấm</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">👑</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="stat-admins">0</div>
-                    <div class="stat-label">Admins</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">👤</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="stat-guests">0</div>
-                    <div class="stat-label">Guests</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔒</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="stat-encodes">0</div>
-                    <div class="stat-label">Lần mã hóa</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔓</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="stat-decodes">0</div>
-                    <div class="stat-label">Lần giải mã</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabs -->
         <div class="admin-tabs">
-            <button class="admin-tab active" data-tab="users">👥 Người dùng</button>
+            <button class="admin-tab active" data-tab="users">👥 Users</button>
+            <button class="admin-tab" data-tab="warnings">⚠️ Cảnh báo</button>
+            <button class="admin-tab" data-tab="bans">🚫 Ban</button>
             <button class="admin-tab" data-tab="history">📜 Lịch sử</button>
         </div>
 
-        <!-- Tab Users -->
-        <div class="admin-panel" id="tab-users">
-            <div class="admin-toolbar">
-                <div class="search-box">
-                    <span>🔍</span>
-                    <input type="text" id="user-search" placeholder="Tìm username...">
-                </div>
-                <button class="action-btn primary" id="btn-refresh-users">🔄 Làm mới</button>
-            </div>
-
-            <div class="admin-table-wrap">
-                <table class="admin-table">
+        <div class="admin-panel active" data-panel="users">
+            <div class="panel">
+                <h2>👥 Danh sách người dùng</h2>
+                <table class="table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Username</th>
-                            <th>Vai trò</th>
-                            <th>Trạng thái</th>
-                            <th>Số lần dùng</th>
-                            <th>Ngày tạo</th>
+                            <th>ID</th><th>Username</th><th>Vai trò</th>
+                            <th>Trạng thái</th><th>Cảnh báo</th><th>Đăng nhập cuối</th>
                             <th>Hành động</th>
                         </tr>
                     </thead>
-                    <tbody id="users-tbody">
-                        <tr><td colspan="7" class="empty-row">Đang tải...</td></tr>
-                    </tbody>
+                    <tbody id="users-body"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Tab History -->
-        <div class="admin-panel hidden" id="tab-history">
-            <div class="admin-toolbar">
-                <div class="search-box">
-                    <span>🔍</span>
-                    <input type="text" id="history-search" placeholder="Tìm username...">
-                </div>
-                <select id="history-mode" class="admin-select">
-                    <option value="">Tất cả</option>
-                    <option value="encode">🔒 Mã hóa</option>
-                    <option value="decode">🔓 Giải mã</option>
-                </select>
-                <button class="action-btn primary" id="btn-refresh-history">🔄 Làm mới</button>
-                <button class="action-btn danger" id="btn-clear-history">🗑 Xóa hết</button>
-            </div>
-
-            <div class="admin-table-wrap">
-                <table class="admin-table">
+        <div class="admin-panel" data-panel="warnings">
+            <div class="panel">
+                <h2>⚠️ Cảnh báo đã gửi</h2>
+                <table class="table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>User</th>
-                            <th>Mode</th>
-                            <th>Thuật toán</th>
-                            <th>Input</th>
-                            <th>Output</th>
-                            <th>Thời gian</th>
+                            <th>ID</th><th>User</th><th>Tiêu đề</th><th>Lý do</th>
+                            <th>Mức độ</th><th>Đã đọc</th><th>Mod</th><th>Thời gian</th>
+                            <th>Xóa</th>
                         </tr>
                     </thead>
-                    <tbody id="history-tbody">
-                        <tr><td colspan="7" class="empty-row">Đang tải...</td></tr>
-                    </tbody>
+                    <tbody id="warnings-body"></tbody>
                 </table>
             </div>
         </div>
-    </div>
 
-    <!-- Ban Modal -->
-    <div class="confirm-modal" id="ban-modal">
-        <div class="confirm-box" style="max-width: 460px;">
-            <div class="confirm-icon">🚫</div>
-            <h3 class="confirm-title">Cấm user vĩnh viễn</h3>
-            <p class="confirm-text" style="margin-bottom: 16px;">
-                Cấm tài khoản: <b id="ban-username" style="color: var(--red);"></b>
-            </p>
-
-            <div class="ban-reason-wrap">
-                <div class="ban-label">Lý do (tùy chọn):</div>
-                <textarea id="ban-reason" class="ban-reason-input" placeholder="VD: Spam, vi phạm quy định..." maxlength="500"></textarea>
+        <div class="admin-panel" data-panel="bans">
+            <div class="panel">
+                <h2>🚫 Danh sách ban</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>User</th><th>Lý do</th><th>Mod</th>
+                            <th>Bắt đầu</th><th>Hết hạn</th><th>Loại</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bans-body"></tbody>
+                </table>
             </div>
+        </div>
 
-            <div class="confirm-actions">
-                <button class="confirm-btn cancel" id="ban-cancel">Hủy</button>
-                <button class="confirm-btn danger" id="ban-confirm">🚫 Cấm vĩnh viễn</button>
+        <div class="admin-panel" data-panel="history">
+            <div class="panel">
+                <h2>📜 Lịch sử hoạt động</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>User</th><th>Thuật toán</th><th>HĐ</th>
+                            <th>Input</th><th>Output</th><th>Thời gian</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL GỬI CẢNH BÁO -->
+    <div class="warn-modal-overlay" id="warn-modal-overlay" style="display:none">
+        <div class="warn-modal">
+            <div class="warn-modal-header">
+                <h3>⚠️ Gửi cảnh báo</h3>
+                <button id="warn-modal-close">✖</button>
+            </div>
+            <div class="warn-modal-body">
+                <input type="hidden" id="warn-user-id">
+                <div class="warn-user-info">
+                    Đang gửi đến: <strong id="warn-username">...</strong>
+                </div>
+                <label>Tiêu đề:</label>
+                <input type="text" id="warn-title" maxlength="200"
+                       placeholder="VD: Vi phạm quy định sử dụng">
+                <label>Lý do chi tiết:</label>
+                <textarea id="warn-reason" rows="4"
+                          placeholder="Mô tả chi tiết vi phạm..."></textarea>
+                <label>Mức độ:</label>
+                <select id="warn-severity">
+                    <option value="notice">📘 Nhắc nhở</option>
+                    <option value="warning" selected>⚠️ Cảnh báo</option>
+                    <option value="danger">🚨 Nguy hiểm (tăng đếm vi phạm)</option>
+                </select>
+                <div class="warn-modal-footer">
+                    <button class="btn" id="warn-modal-cancel">Hủy</button>
+                    <button class="btn btn-primary" id="warn-modal-submit">📤 Gửi cảnh báo</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Confirm Modal -->
-    <div class="confirm-modal" id="confirm-modal">
-        <div class="confirm-box">
-            <div class="confirm-icon" id="confirm-icon">⚠️</div>
-            <h3 class="confirm-title" id="confirm-title">Xác nhận?</h3>
-            <p class="confirm-text" id="confirm-text">Bạn có chắc?</p>
-            <div class="confirm-actions">
-                <button class="confirm-btn cancel" id="confirm-cancel">Hủy</button>
-                <button class="confirm-btn danger" id="confirm-ok">Đồng ý</button>
+    <!-- MODAL BAN -->
+    <div class="warn-modal-overlay" id="ban-modal-overlay" style="display:none">
+        <div class="warn-modal">
+            <div class="warn-modal-header">
+                <h3>🚫 Khóa tài khoản</h3>
+                <button id="ban-modal-close">✖</button>
+            </div>
+            <div class="warn-modal-body">
+                <input type="hidden" id="ban-user-id">
+                <div class="warn-user-info">
+                    Đang khóa: <strong id="ban-username">...</strong>
+                </div>
+                <label>Lý do:</label>
+                <textarea id="ban-reason" rows="3" placeholder="Lý do khóa..."></textarea>
+                <label>Thời hạn:</label>
+                <select id="ban-duration">
+                    <option value="1">1 giờ</option>
+                    <option value="24">1 ngày</option>
+                    <option value="168">7 ngày</option>
+                    <option value="720">30 ngày</option>
+                    <option value="0" selected>Vĩnh viễn</option>
+                </select>
+                <div class="warn-modal-footer">
+                    <button class="btn" id="ban-modal-cancel">Hủy</button>
+                    <button class="btn btn-primary" id="ban-modal-submit">🚫 Khóa</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="toast" id="toast"></div>
-
-    <script src="/static/admin.js"></script>
+    <script src="{{ url_for('static', filename='admin.js') }}"></script>
 </body>
 </html>
