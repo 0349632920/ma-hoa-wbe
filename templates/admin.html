@@ -680,4 +680,23 @@
       if (!iso) return '—';
       try { return new Date(iso).toLocaleString('vi-VN'); }
       catch { return iso; }
-   
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+    }
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = isError ? '#e74c3c' : '#27ae60';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    loadStats();
+    loadUsers();
+    setInterval(loadStats, 30000);
+  </script>
+</body>
+</html>
