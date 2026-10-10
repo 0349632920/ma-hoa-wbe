@@ -727,4 +727,164 @@ def zalgo_encode(t):
     return ''.join(c + ''.join(random.choices(marks, k=3)) if c.isalpha() else c for c in t)
 zalgo_decode = lambda t: ''.join(c for c in t if ord(c) < 0x0300)
 
-UPS
+UPSIDE = {'a':'ɐ','b':'q','c':'ɔ','d':'p','e':'ǝ','f':'ɟ','g':'ƃ','h':'ɥ','i':'ᴉ',
+          'j':'ɾ','k':'ʞ','l':'l','m':'ɯ','n':'u','o':'o','p':'d','q':'b','r':'ɹ',
+          's':'s','t':'ʇ','u':'n','v':'ʌ','w':'ʍ','x':'x','y':'ʎ','z':'z'}
+UPSIDE_REV = {v:k for k,v in UPSIDE.items()}
+def upside_down_encode(t):
+    return ''.join(UPSIDE.get(c.lower(), c) for c in t)[::-1]
+def upside_down_decode(t):
+    return ''.join(UPSIDE_REV.get(c, c) for c in t[::-1])
+
+def mirror_encode(t): return t[::-1]
+
+SMALL_CAPS = {'a':'ᴀ','b':'ʙ','c':'ᴄ','d':'ᴅ','e':'ᴇ','f':'ꜰ','g':'ɢ','h':'ʜ','i':'ɪ',
+              'j':'ᴊ','k':'ᴋ','l':'ʟ','m':'ᴍ','n':'ɴ','o':'ᴏ','p':'ᴘ','q':'ǫ','r':'ʀ',
+              's':'ꜱ','t':'ᴛ','u':'ᴜ','v':'ᴠ','w':'ᴡ','x':'x','y':'ʏ','z':'ᴢ'}
+SMALL_CAPS_REV = {v:k for k,v in SMALL_CAPS.items()}
+def small_caps_encode(t):
+    return ''.join(SMALL_CAPS.get(c.lower(), c) for c in t)
+def small_caps_decode(t):
+    return ''.join(SMALL_CAPS_REV.get(c, c) for c in t)
+
+BUBBLE = {chr(65+i): chr(0x24B6+i) for i in range(26)}
+BUBBLE.update({chr(97+i): chr(0x24D0+i) for i in range(26)})
+BUBBLE_REV = {v:k for k,v in BUBBLE.items()}
+def bubble_encode(t): return ''.join(BUBBLE.get(c, c) for c in t)
+def bubble_decode(t): return ''.join(BUBBLE_REV.get(c, c) for c in t)
+
+def strikethrough_encode(t): return ''.join(c + '\u0336' for c in t)
+def strikethrough_decode(t): return t.replace('\u0336', '')
+
+SUP = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹',
+       'a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ','f':'ᶠ','g':'ᵍ','h':'ʰ','i':'ⁱ','j':'ʲ',
+       'k':'ᵏ','l':'ˡ','m':'ᵐ','n':'ⁿ','o':'ᵒ','p':'ᵖ','r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ',
+       'v':'ᵛ','w':'ʷ','x':'ˣ','y':'ʸ','z':'ᶻ'}
+SUP_REV = {v:k for k,v in SUP.items()}
+def superscript_encode(t): return ''.join(SUP.get(c, c) for c in t)
+def superscript_decode(t): return ''.join(SUP_REV.get(c, c) for c in t)
+
+SUB = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉',
+       'a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ','o':'ₒ',
+       'p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ'}
+SUB_REV = {v:k for k,v in SUB.items()}
+def subscript_encode(t): return ''.join(SUB.get(c, c) for c in t)
+def subscript_decode(t): return ''.join(SUB_REV.get(c, c) for c in t)
+
+def invisible_encode(t):
+    return ''.join('\u200b' if c == ' ' else c for c in t) + ' '
+def invisible_decode(t): return t.replace('\u200b', ' ')
+
+
+# ============================================================
+# HÀM XỬ LÝ CHÍNH
+# ============================================================
+def process(text: str, method: str, action: str, key: str = '') -> str:
+    if not text:
+        raise ValueError('Văn bản trống!')
+
+    if method in ONE_WAY_ONLY:
+        action = 'encrypt'
+
+    enc_map = {
+        'base64': base64_encode, 'base64url': base64url_encode,
+        'base32': base32_encode, 'base85': base85_encode,
+        'base16': base16_encode, 'base58': base58_encode,
+        'hex': hex_encode, 'binary': binary_encode,
+        'octal': octal_encode, 'decimal': decimal_encode,
+        'ascii_codes': ascii_codes_encode,
+        'rot13': rot13, 'rot5': rot5, 'rot18': rot18, 'rot47': rot47,
+        'atbash': atbash, 'morse': morse_encode, 'tap_code': tap_encode,
+        'nato': nato_encode, 'pigpen': pigpen_encode,
+        'bacon': bacon_encode, 'polybius': polybius_encode,
+        'reverse': reverse_str, 'reverse_words': reverse_words,
+        'swap_case': swap_case, 'leet': leet_encode,
+        'md5': hash_md5, 'sha1': hash_sha1, 'sha224': hash_sha224,
+        'sha256': hash_sha256, 'sha384': hash_sha384, 'sha512': hash_sha512,
+        'sha3_256': hash_sha3_256, 'sha3_512': hash_sha3_512,
+        'blake2b': hash_blake2b, 'blake2s': hash_blake2s, 'crc32': hash_crc32,
+        'url': url_encode, 'url_plus': url_plus_encode,
+        'html_entities': html_entities_encode,
+        'html_decimal': html_decimal_encode, 'html_hex': html_hex_encode,
+        'js_escape': js_escape_encode, 'unicode_escape': unicode_escape_encode,
+        'punycode': punycode_encode,
+        'quoted_printable': quoted_printable_encode,
+        'uuencode': uuencode_encode, 'xxencode': xxencode_encode,
+        'zlib': zlib_encode, 'gzip': gzip_encode,
+        'bz2': bz2_encode, 'lzma': lzma_encode,
+        'uuid': uuid_gen, 'random_hex': random_hex,
+        'json_escape': json_escape_encode,
+        'backslash_escape': backslash_escape_encode,
+        'unicode_full': unicode_full_encode,
+        'zalgo': zalgo_encode, 'upside_down': upside_down_encode,
+        'mirror': reverse_str, 'small_caps': small_caps_encode,
+        'bubble': bubble_encode, 'strikethrough': strikethrough_encode,
+        'superscript': superscript_encode, 'subscript': subscript_encode,
+        'invisible': invisible_encode,
+    }
+
+    dec_map = {
+        'base64': base64_decode, 'base64url': base64url_decode,
+        'base32': base32_decode, 'base85': base85_decode,
+        'base16': base16_decode, 'base58': base58_decode,
+        'hex': hex_decode, 'binary': binary_decode,
+        'octal': octal_decode, 'decimal': decimal_decode,
+        'ascii_codes': ascii_codes_decode,
+        'rot13': rot13, 'rot5': rot5, 'rot18': rot18, 'rot47': rot47,
+        'atbash': atbash, 'morse': morse_decode, 'tap_code': tap_decode,
+        'nato': nato_decode, 'pigpen': pigpen_decode,
+        'bacon': bacon_decode, 'polybius': polybius_decode,
+        'reverse': reverse_str, 'reverse_words': reverse_words,
+        'swap_case': swap_case, 'leet': leet_decode,
+        'url': url_decode, 'url_plus': url_plus_decode,
+        'html_entities': html_entities_decode,
+        'html_decimal': html_decimal_decode, 'html_hex': html_hex_decode,
+        'js_escape': js_escape_decode, 'unicode_escape': unicode_escape_decode,
+        'punycode': punycode_decode,
+        'quoted_printable': quoted_printable_decode,
+        'uuencode': uuencode_decode, 'xxencode': xxencode_decode,
+        'zlib': zlib_decode, 'gzip': gzip_decode,
+        'bz2': bz2_decode, 'lzma': lzma_decode,
+        'json_escape': json_escape_decode,
+        'backslash_escape': backslash_escape_decode,
+        'unicode_full': unicode_full_decode,
+        'zalgo': zalgo_decode, 'upside_down': upside_down_decode,
+        'mirror': reverse_str, 'small_caps': small_caps_decode,
+        'bubble': bubble_decode, 'strikethrough': strikethrough_decode,
+        'superscript': superscript_decode, 'subscript': subscript_decode,
+        'invisible': invisible_decode,
+    }
+
+    if method == 'caesar':
+        try: s = int(key) if key else 3
+        except: s = 3
+        return caesar_cipher(text, s if action == 'encrypt' else -s)
+    if method == 'affine':
+        return affine_encrypt(text) if action == 'encrypt' else affine_decrypt(text)
+    if method == 'vigenere':
+        return vigenere_encrypt(text, key) if action == 'encrypt' else vigenere_decrypt(text, key)
+    if method == 'beaufort':
+        return beaufort_encrypt(text, key)
+    if method == 'autokey':
+        return autokey_encrypt(text, key) if action == 'encrypt' else autokey_decrypt(text, key)
+    if method == 'playfair':
+        return playfair_encrypt(text, key) if action == 'encrypt' else playfair_decrypt(text, key)
+    if method == 'hill':
+        return hill_encrypt(text, key) if action == 'encrypt' else hill_decrypt(text, key)
+    if method == 'railfence':
+        try: r = int(key) if key else 3
+        except: r = 3
+        return railfence_encrypt(text, r) if action == 'encrypt' else railfence_decrypt(text, r)
+    if method == 'columnar':
+        return columnar_encrypt(text, key) if action == 'encrypt' else columnar_decrypt(text, key)
+    if method == 'xor':
+        return xor_cipher(text, key)
+    if method == 'aes':
+        return aes_encrypt(text, key) if action == 'encrypt' else aes_decrypt(text, key)
+
+    if action == 'encrypt':
+        if method in enc_map: return enc_map[method](text)
+    else:
+        if method in dec_map: return dec_map[method](text)
+
+    raise ValueError(f'Phương pháp không hỗ trợ: {method}')
