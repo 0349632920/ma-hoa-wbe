@@ -3,6 +3,8 @@ Game utilities — Leaderboard, Daily, Rewards, Random, PvP, Meme
 """
 import random
 import hashlib
+import string
+import time
 from datetime import datetime, timedelta
 from crypto_utils import METHODS, ONE_WAY_ONLY
 
@@ -11,16 +13,16 @@ from crypto_utils import METHODS, ONE_WAY_ONLY
 #  LEVEL SYSTEM
 # ═══════════════════════════════════════════════════════════
 LEVEL_THRESHOLDS = [
-    (0, 1),       # 0-99 điểm → Level 1
-    (100, 2),     # 100-249 → Level 2
-    (250, 3),     # 250-499 → Level 3
-    (500, 4),     # 500-999 → Level 4
-    (1000, 5),    # 1000-1999 → Level 5
-    (2000, 6),    # 2000-3499 → Level 6
-    (3500, 7),    # 3500-5499 → Level 7
-    (5500, 8),    # 5500-7999 → Level 8
-    (8000, 9),    # 8000-11999 → Level 9
-    (12000, 10),  # 12000+ → Level 10
+    (0, 1),
+    (100, 2),
+    (250, 3),
+    (500, 4),
+    (1000, 5),
+    (2000, 6),
+    (3500, 7),
+    (5500, 8),
+    (8000, 9),
+    (12000, 10),
 ]
 
 
@@ -37,7 +39,6 @@ def level_to_next(points: int) -> dict:
     """Trả về thông tin level hiện tại và level tiếp theo."""
     current_level = points_to_level(points)
 
-    # Tìm ngưỡng tiếp theo
     next_threshold = None
     current_threshold = 0
     for threshold, lvl in LEVEL_THRESHOLDS:
@@ -48,7 +49,6 @@ def level_to_next(points: int) -> dict:
             break
 
     if next_threshold is None:
-        # Max level
         return {
             "current_level": current_level,
             "current_points": points,
@@ -78,7 +78,6 @@ def level_to_next(points: int) -> dict:
 #  DAILY CHALLENGES
 # ═══════════════════════════════════════════════════════════
 DAILY_CHALLENGES = [
-    # (id, method, action, text, expected_pattern, points, description)
     {
         "id": "daily_base64_1",
         "method": "base64",
@@ -176,7 +175,6 @@ DAILY_CHALLENGES = [
 def get_daily_challenge() -> dict:
     """Lấy challenge của ngày hôm nay (deterministic theo ngày)."""
     today = datetime.now().strftime("%Y-%m-%d")
-    # Hash ngày → index ổn định
     hash_val = int(hashlib.md5(today.encode()).hexdigest(), 16)
     idx = hash_val % len(DAILY_CHALLENGES)
     challenge = DAILY_CHALLENGES[idx].copy()
@@ -272,7 +270,6 @@ def check_rewards(game_data: dict) -> list:
     for reward in REWARDS:
         if reward["id"] in claimed:
             continue
-        # Eval condition đơn giản
         try:
             condition = reward["condition"]
             if eval(condition, {}, context):
@@ -306,77 +303,336 @@ def pick_random_method(exclude_one_way: bool = False, exclude_key: bool = False)
 
 
 # ═══════════════════════════════════════════════════════════
-#  PVP
+#  ⚔️ PVP — NHẬP CHỮ NHANH (3 VÁN × 10 CÂU)
 # ═══════════════════════════════════════════════════════════
-# PvP: Mỗi trận đấu gồm 3 challenge
-# - Challenge 1: Mã hóa (encrypt)
-# - Challenge 2: Giải mã (decrypt)
-# - Challenge 3: Đoán phương pháp
+PVP_ROOMS = {}
+ROOM_TTL = 30 * 60  # 30 phút
 
-def generate_pvp_match() -> dict:
-    """Tạo 1 trận PvP với 3 challenge."""
-    challenges = []
+QUESTIONS_PER_ROUND = 10   # 10 câu / ván
+TOTAL_ROUNDS = 3           # 3 ván / trận
+POINTS_PER_CORRECT = 100   # Điểm cơ bản mỗi câu đúng
+MAX_SPEED_BONUS = 50       # Bonus tối đa cho tốc độ
 
-    # Challenge 1: Mã hóa
-    m1 = pick_random_method(exclude_key=False)
-    challenges.append({
-        "type": "encrypt",
-        "method": m1["method"],
-        "method_name": m1["name"],
-        "text": random.choice(["Hello", "Test", "Secret", "Code", "Game"]),
-        "key": "KEY" if m1["method"] in ('vigenere', 'xor') else ""
-    })
+# Nguồn từ để tạo câu hỏi
+PVP_WORDS = [
+    "hello", "world", "python", "code", "game", "fast", "type", "quick",
+    "speed", "race", "win", "lose", "draw", "match", "player", "arena",
+    "champion", "legend", "master", "pro", "elite", "skill", "power",
+    "crypto", "cipher", "secret", "encode", "decode", "hack", "secure",
+    "keyboard", "mouse", "screen", "monitor", "system", "network",
+    "program", "binary", "matrix", "robot", "future", "cyber",
+    "tech", "data", "cloud", "server", "client", "kernel", "byte",
+    "bit", "logic", "memory", "buffer", "cache", "thread", "process",
+    "signal", "packet", "router", "socket", "protocol", "address",
+    "port", "firewall", "virus", "encrypt", "decrypt",
+    "hash", "salt", "token", "session", "cookie", "login", "logout",
+]
 
-    # Challenge 2: Giải mã
-    m2 = pick_random_method(exclude_one_way=True, exclude_key=False)
-    challenges.append({
-        "type": "decrypt",
-        "method": m2["method"],
-        "method_name": m2["name"],
-        "text": "",  # Sẽ tạo khi bắt đầu
-        "key": ""
-    })
 
-    # Challenge 3: Đoán phương pháp
-    m3 = pick_random_method(exclude_one_way=True)
-    challenges.append({
-        "type": "guess",
-        "method": m3["method"],
-        "method_name": m3["name"],
-        "text": random.choice(["Chào bạn", "Xin chào", "Test 123"]),
-        "key": ""
-    })
+def _gen_room_code(length: int = 6) -> str:
+    """Tạo mã phòng 6 ký tự không trùng."""
+    chars = string.ascii_uppercase + string.digits
+    while True:
+        code = ''.join(random.choices(chars, k=length))
+        if code not in PVP_ROOMS:
+            return code
+
+
+def _gen_questions(count: int) -> list:
+    """Tạo `count` câu hỏi random, không lặp từ trong cùng 1 ván."""
+    from crypto_utils import (
+        base64_encode, rot13, atbash, reverse_str, leet_encode, morse_encode,
+        hex_encode, binary_encode, url_encode
+    )
+
+    encoder_map = {
+        'base64':  base64_encode,
+        'rot13':   rot13,
+        'atbash':  atbash,
+        'reverse': reverse_str,
+        'leet':    leet_encode,
+        'morse':   morse_encode,
+        'hex':     hex_encode,
+        'binary':  binary_encode,
+        'url':     url_encode,
+    }
+
+    # Chọn `count` từ KHÁC NHAU
+    words = random.sample(PVP_WORDS, count)
+
+    questions = []
+    for word in words:
+        method = random.choice(list(encoder_map.keys()))
+        encoded = encoder_map[method](word)
+        questions.append({
+            "word":    word,
+            "encoded": encoded,
+            "method":  method,
+            "display": encoded,
+        })
+    return questions
+
+
+def create_pvp_room(host_username: str, host_display: str) -> dict:
+    """Tạo phòng PvP mới với 3 ván, mỗi ván 10 câu."""
+    cleanup_old_rooms()
+    code = _gen_room_code()
+    now = time.time()
+
+    # Tạo 3 ván, mỗi ván 10 câu random riêng
+    rounds = []
+    for r in range(TOTAL_ROUNDS):
+        rounds.append({
+            "index": r,
+            "questions": _gen_questions(QUESTIONS_PER_ROUND),
+            "current_index": -1,
+            "answers": {},          # { username: { q_index: {...} } }
+            "scores": {},           # { username: score }
+            "winner": None,         # username thắng ván này
+            "question_started_at": None,
+            "started_at": None,
+        })
+
+    room = {
+        "code": code,
+        "host": host_username,
+        "host_display": host_display,
+        "guest": None,
+        "guest_display": None,
+        "status": "waiting",       # waiting | ready | playing | finished
+        "rounds": rounds,
+        "current_round": -1,
+        "round_wins": {
+            host_username: 0,
+        },
+        "created_at": now,
+        "last_activity": now,
+        "finished_at": None,
+    }
+    PVP_ROOMS[code] = room
+    return room
+
+
+def join_pvp_room(code: str, guest_username: str, guest_display: str) -> dict:
+    """Guest join phòng."""
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": False, "error": "Không tìm thấy phòng!"}
+
+    room = PVP_ROOMS[code]
+
+    if room["host"] == guest_username:
+        return {"success": False, "error": "Bạn là chủ phòng này!"}
+
+    if room["guest"] is not None and room["guest"] != guest_username:
+        return {"success": False, "error": "Phòng đã đầy!"}
+
+    if room["status"] not in ("waiting", "ready"):
+        return {"success": False, "error": "Phòng đang chơi!"}
+
+    room["guest"] = guest_username
+    room["guest_display"] = guest_display
+    room["status"] = "ready"
+    room["round_wins"][guest_username] = 0
+    room["last_activity"] = time.time()
+
+    return {"success": True, "room": room}
+
+
+def start_pvp_room(code: str, host_username: str) -> dict:
+    """Host bắt đầu trận đấu → bắt đầu ván 1."""
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": False, "error": "Không tìm thấy phòng!"}
+
+    room = PVP_ROOMS[code]
+
+    if room["host"] != host_username:
+        return {"success": False, "error": "Chỉ chủ phòng mới bắt đầu!"}
+
+    if not room["guest"]:
+        return {"success": False, "error": "Chưa có đối thủ!"}
+
+    if room["status"] != "ready":
+        return {"success": False, "error": "Không thể bắt đầu!"}
+
+    # Bắt đầu ván 1
+    room["status"] = "playing"
+    room["current_round"] = 0
+
+    r = room["rounds"][0]
+    r["current_index"] = 0
+    r["question_started_at"] = time.time()
+    r["started_at"] = time.time()
+    r["answers"] = {
+        room["host"]: {},
+        room["guest"]: {},
+    }
+    r["scores"] = {
+        room["host"]: 0,
+        room["guest"]: 0,
+    }
+
+    room["last_activity"] = time.time()
+    return {"success": True, "room": room}
+
+
+def submit_pvp_answer(code: str, username: str, answer: str) -> dict:
+    """Nộp đáp án cho câu hỏi hiện tại."""
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": False, "error": "Không tìm thấy phòng!"}
+
+    room = PVP_ROOMS[code]
+
+    if room["status"] != "playing":
+        return {"success": False, "error": "Chưa bắt đầu!"}
+
+    if username not in (room["host"], room["guest"]):
+        return {"success": False, "error": "Bạn không ở trong phòng!"}
+
+    round_idx = room["current_round"]
+    if round_idx < 0 or round_idx >= TOTAL_ROUNDS:
+        return {"success": False, "error": "Ván không hợp lệ!"}
+
+    r = room["rounds"][round_idx]
+    q_idx = r["current_index"]
+
+    if q_idx < 0 or q_idx >= QUESTIONS_PER_ROUND:
+        return {"success": False, "error": "Câu hỏi không hợp lệ!"}
+
+    # Đã trả lời câu này chưa?
+    if q_idx in r["answers"].get(username, {}):
+        return {"success": False, "error": "Đã trả lời câu này!"}
+
+    # Tính thời gian
+    time_taken = round(time.time() - r["question_started_at"], 2)
+
+    # So sánh đáp án
+    correct_answer = r["questions"][q_idx]["word"].lower().strip()
+    user_answer = answer.lower().strip()
+    correct = (user_answer == correct_answer)
+
+    # Điểm
+    points = 0
+    if correct:
+        speed_bonus = max(0, int(MAX_SPEED_BONUS - time_taken * 2))
+        points = POINTS_PER_CORRECT + speed_bonus
+
+    # Lưu đáp án
+    r["answers"][username][q_idx] = {
+        "answer": answer,
+        "correct": correct,
+        "time_taken": time_taken,
+        "points": points,
+    }
+    r["scores"][username] = r["scores"].get(username, 0) + points
+    room["last_activity"] = time.time()
+
+    # Cả 2 đã trả lời câu này chưa?
+    host_answered = q_idx in r["answers"].get(room["host"], {})
+    guest_answered = q_idx in r["answers"].get(room["guest"], {})
+
+    if host_answered and guest_answered:
+        # Chuyển câu tiếp
+        r["current_index"] += 1
+
+        if r["current_index"] >= QUESTIONS_PER_ROUND:
+            # Hết ván → xác định người thắng ván
+            host_score = r["scores"].get(room["host"], 0)
+            guest_score = r["scores"].get(room["guest"], 0)
+
+            if host_score > guest_score:
+                r["winner"] = room["host"]
+                room["round_wins"][room["host"]] += 1
+            elif host_score < guest_score:
+                r["winner"] = room["guest"]
+                room["round_wins"][room["guest"]] += 1
+            else:
+                r["winner"] = None  # Hòa ván
+
+            # Kiểm tra đã đủ 3 ván chưa
+            if round_idx + 1 >= TOTAL_ROUNDS:
+                # Kết thúc trận
+                room["status"] = "finished"
+                room["finished_at"] = time.time()
+            else:
+                # Chuẩn bị ván tiếp theo
+                room["current_round"] = round_idx + 1
+                next_round = room["rounds"][round_idx + 1]
+                next_round["current_index"] = 0
+                next_round["question_started_at"] = time.time() + 3  # +3s delay
+                next_round["started_at"] = time.time() + 3
+                next_round["answers"] = {
+                    room["host"]: {},
+                    room["guest"]: {},
+                }
+                next_round["scores"] = {
+                    room["host"]: 0,
+                    room["guest"]: 0,
+                }
+        else:
+            # Câu tiếp theo trong cùng ván
+            r["question_started_at"] = time.time()
 
     return {
-        "id": hashlib.md5(str(datetime.now().timestamp()).encode()).hexdigest()[:12],
-        "created_at": datetime.now().isoformat(),
-        "challenges": challenges
+        "success": True,
+        "correct": correct,
+        "points": points,
+        "time_taken": time_taken,
+        "room": room,
     }
 
 
-def calculate_pvp_result(player_score: int, opponent_score: int) -> dict:
-    """Tính kết quả trận PvP."""
-    if player_score > opponent_score:
-        return {
-            "result": "win",
-            "icon": "🏆",
-            "message": "Bạn thắng!",
-            "points": 100
-        }
-    elif player_score < opponent_score:
-        return {
-            "result": "loss",
-            "icon": "😢",
-            "message": "Bạn thua!",
-            "points": 20
-        }
-    else:
-        return {
-            "result": "draw",
-            "icon": "🤝",
-            "message": "Hòa!",
-            "points": 50
-        }
+def get_pvp_room(code: str) -> dict:
+    """Lấy trạng thái phòng."""
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": False, "error": "Không tìm thấy phòng!"}
+    return {"success": True, "room": PVP_ROOMS[code]}
+
+
+def leave_pvp_room(code: str, username: str) -> dict:
+    """Rời phòng."""
+    code = code.upper().strip()
+    if code not in PVP_ROOMS:
+        return {"success": True}
+
+    room = PVP_ROOMS[code]
+
+    if room["host"] == username:
+        # Host rời → xóa phòng
+        del PVP_ROOMS[code]
+        return {"success": True, "destroyed": True}
+
+    if room["guest"] == username:
+        # Guest rời → reset phòng
+        room["guest"] = None
+        room["guest_display"] = None
+        room["status"] = "waiting"
+        room["current_round"] = -1
+        room["round_wins"] = {room["host"]: 0}
+        for r in room["rounds"]:
+            r["current_index"] = -1
+            r["answers"] = {}
+            r["scores"] = {}
+            r["winner"] = None
+            r["question_started_at"] = None
+        return {"success": True}
+
+    return {"success": True}
+
+
+def cleanup_old_rooms():
+    """Xóa phòng quá cũ (không hoạt động > 30 phút)."""
+    now = time.time()
+    to_delete = []
+    for code, room in PVP_ROOMS.items():
+        if now - room.get("last_activity", 0) > ROOM_TTL:
+            to_delete.append(code)
+    for code in to_delete:
+        del PVP_ROOMS[code]
+    return len(to_delete)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -423,7 +679,6 @@ def generate_meme_template(input_text: str, output_text: str, template_id: str =
     else:
         template = next((t for t in MEME_TEMPLATES if t["id"] == template_id), MEME_TEMPLATES[0])
 
-    # Rút gọn text
     def shorten(s, max_len=30):
         s = str(s)
         return s[:max_len] + "..." if len(s) > max_len else s
@@ -485,14 +740,11 @@ def update_streak(user: dict) -> int:
 
     last = game.get("last_daily")
     if last == today:
-        # Đã làm hôm nay rồi
         return game.get("streak", 0)
 
     if last == yesterday:
-        # Liên tiếp
         game["streak"] = game.get("streak", 0) + 1
     else:
-        # Đứt chuỗi
         game["streak"] = 1
 
     game["last_daily"] = today
