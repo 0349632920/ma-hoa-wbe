@@ -81,6 +81,39 @@
             {% endif %}
             <button class="dropdown-item" onclick="showHistory()">🕐 Lịch sử gần đây</button>
             <button class="dropdown-item danger" onclick="logout()">🚪 Đăng xuất</button>
+
+            <!-- DROPDOWN CREDIT — 2 NGƯỜI TẠO WEB -->
+            <div class="dropdown-credit">
+              <div class="dropdown-credit-line"></div>
+              <div class="dropdown-credit-label">💻 Made by</div>
+              <div class="dropdown-creators">
+                <!-- HÙNG — NGƯỜI TẠO WEB -->
+                <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="dropdown-creator" title="TikTok: @tienhung0707">
+                  <div class="dropdown-creator-avatar">
+                    <div class="avatar-fallback">H</div>
+                    <img src="https://unavatar.io/tiktok/tienhung0707" alt="Hùng" class="dropdown-creator-avatar-img" onerror="this.style.display='none'">
+                  </div>
+                  <div class="dropdown-creator-info">
+                    <div class="dropdown-creator-name">Hùng</div>
+                    <div class="dropdown-creator-role">Developer</div>
+                  </div>
+                  <div class="dropdown-creator-tiktok">🎵</div>
+                </a>
+
+                <!-- SÁT NHÂN -->
+                <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="dropdown-creator dropdown-killer" title="TikTok: @fan.yu.juhoon">
+                  <div class="dropdown-creator-avatar dropdown-killer-avatar">
+                    <div class="avatar-fallback">🔪</div>
+                    <img src="https://unavatar.io/tiktok/fan.yu.juhoon" alt="Sát Nhân" class="dropdown-killer-avatar-img" onerror="this.style.display='none'">
+                  </div>
+                  <div class="dropdown-creator-info">
+                    <div class="dropdown-creator-name dropdown-killer-name">Sát Nhân</div>
+                    <div class="dropdown-creator-role dropdown-killer-role">Co-Founder</div>
+                  </div>
+                  <div class="dropdown-creator-tiktok dropdown-killer-badge">🎵</div>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -151,6 +184,51 @@
       <button class="btn copy" onclick="copyResult()">📋 Sao Chép</button>
       <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
     </div>
+
+    <!-- ============================================
+         FOOTER CREDIT — 2 NGƯỜI TẠO WEB
+         ============================================ -->
+    <footer class="page-footer">
+      <div class="footer-divider">
+        <span class="footer-line"></span>
+        <span class="footer-star">✨</span>
+        <span class="footer-line"></span>
+      </div>
+
+      <div class="footer-label">💻 Được phát triển bởi</div>
+
+      <div class="footer-creators">
+        <!-- HÙNG — NGƯỜI TẠO WEB -->
+        <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="footer-creator" title="TikTok: @tienhung0707">
+          <div class="footer-avatar">
+            <div class="avatar-fallback">H</div>
+            <img src="https://unavatar.io/tiktok/tienhung0707" alt="Hùng" class="footer-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="footer-info">
+            <div class="footer-name">Hùng</div>
+            <div class="footer-role">Developer</div>
+          </div>
+          <div class="footer-tiktok">🎵</div>
+        </a>
+
+        <!-- SÁT NHÂN -->
+        <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="footer-creator footer-killer" title="TikTok: @fan.yu.juhoon">
+          <div class="footer-avatar footer-killer-avatar">
+            <div class="avatar-fallback">🔪</div>
+            <img src="https://unavatar.io/tiktok/fan.yu.juhoon" alt="Sát Nhân" class="footer-avatar-img" onerror="this.style.display='none'">
+          </div>
+          <div class="footer-info">
+            <div class="footer-name footer-killer-name">Sát Nhân</div>
+            <div class="footer-role footer-killer-role">Co-Founder</div>
+          </div>
+          <div class="footer-tiktok footer-killer-badge">🎵</div>
+        </a>
+      </div>
+
+      <div class="footer-copy">
+        © 2026 <strong>Mã Hóa Tool</strong> — Made with ❤️
+      </div>
+    </footer>
   </div>
 
   <!-- LOADING OVERLAY -->
@@ -228,7 +306,7 @@
     </div>
   </div>
 
-  <!-- MODAL BAN TOÀN MÀN HÌNH -->
+  <!-- MODAL BAN -->
   <div class="blocked-overlay" id="banBlockOverlay">
     <div class="blocked-content">
       <div class="blocked-animation">
@@ -264,7 +342,7 @@
     </div>
   </div>
 
-  <!-- MODAL WARN TOÀN MÀN HÌNH -->
+  <!-- MODAL WARN -->
   <div class="blocked-overlay warn-overlay" id="warnBlockOverlay">
     <div class="blocked-content warn-content">
       <div class="blocked-animation">
@@ -291,9 +369,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       MODAL XÁC NHẬN ĐĂNG XUẤT
-       ============================================ -->
+  <!-- MODAL ĐĂNG XUẤT -->
   <div class="logout-overlay" id="logoutOverlay">
     <div class="logout-modal">
       <div class="logout-header">
@@ -323,7 +399,7 @@
 
   <script>
     // ==========================================
-    // SPLASH SCREEN
+    // SPLASH
     // ==========================================
     const splashMessages = [
       'Đang khởi tạo...',
@@ -389,13 +465,13 @@
     let isTransitioning = false;
     let warnAcknowledged = false;
 
-    // POLLING STATE
+    // POLLING
     let pollInterval = null;
     let isPolling = false;
     let lastStatus = null;
     let lastWarningsCount = 0;
     let isHandlingBlock = false;
-    const POLL_INTERVAL = 3000;  // 3 giây
+    const POLL_INTERVAL = 3000;
 
     const oneWayMethods = new Set([
       'md5','sha1','sha224','sha256','sha384','sha512',
@@ -512,7 +588,7 @@
     }
 
     // ==========================================
-    // POLLING 3s
+    // POLLING
     // ==========================================
     async function pollStatus() {
       if (isHandlingBlock) return;
@@ -535,7 +611,6 @@
 
         const data = await res.json();
 
-        // BAN
         if (data.banned) {
           isHandlingBlock = true;
           stopPolling();
@@ -548,7 +623,6 @@
           return;
         }
 
-        // PENDING DELETE
         if (data.pending_delete) {
           isHandlingBlock = true;
           stopPolling();
@@ -559,7 +633,6 @@
           return;
         }
 
-        // WARN
         if (data.success) {
           const newWarnCount = (data.warnings || []).length;
 
@@ -608,9 +681,7 @@
     // MODAL ĐĂNG XUẤT
     // ==========================================
     function logout() {
-      // Đóng user menu
       userMenu.classList.remove('open');
-      // Mở modal đăng xuất
       document.getElementById('logoutOverlay').classList.add('show');
       document.body.style.overflow = 'hidden';
     }
@@ -800,12 +871,8 @@
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
 
-    // ==========================================
-    // KEYBOARD
-    // ==========================================
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        // Đóng modal đăng xuất trước
         if (document.getElementById('logoutOverlay').classList.contains('show')) {
           closeLogoutModal();
           return;
@@ -820,7 +887,6 @@
       }
     });
 
-    // Click ngoài để đóng logout modal
     document.getElementById('logoutOverlay').addEventListener('click', (e) => {
       if (e.target.id === 'logoutOverlay') closeLogoutModal();
     });
