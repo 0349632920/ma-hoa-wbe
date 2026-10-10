@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🔐 70+ Kiểu Mã Hóa & Giải Mã</title>
+  <title>🔐 75+ Kiểu Mã Hóa & Giải Mã</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
@@ -20,28 +20,17 @@
       <div class="stats-badge">📊 {{ methods|length }} phương pháp</div>
     </header>
 
-    <!-- Search box -->
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm phương pháp...">
-    </div>
-
-    <!-- Danh sách phương pháp -->
-    <div class="methods-wrapper">
-      <div class="methods-grid" id="methodsGrid">
-        {% for key, name in methods.items() %}
-        <button class="method-btn" data-method="{{ key }}" title="{{ name }}">
-          <span class="method-name">{{ name }}</span>
-          <span class="method-code">{{ key }}</span>
-        </button>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Method đang chọn -->
-    <div class="current-method">
-      <span>🎯 Đang chọn:</span>
-      <strong id="currentMethodName">Base64</strong>
-      <span class="current-method-code" id="currentMethodCode">base64</span>
+    <!-- Nút chọn kiểu mã hóa -->
+    <div class="method-picker-section">
+      <label>🎯 Kiểu mã hóa:</label>
+      <button class="method-picker-btn" id="openPickerBtn">
+        <span class="picker-icon">🔤</span>
+        <span class="picker-text">
+          <strong id="selectedMethodName">Base64</strong>
+          <small id="selectedMethodCode">base64</small>
+        </span>
+        <span class="picker-arrow">▼</span>
+      </button>
     </div>
 
     <!-- Ô nhập khóa -->
@@ -75,21 +64,51 @@
 
     <!-- Buttons -->
     <div class="buttons">
-      <button class="btn encrypt" onclick="process('encrypt')">
-        🔒 Mã Hóa
-      </button>
-      <button class="btn decrypt" onclick="process('decrypt')">
-        🔓 Giải Mã
-      </button>
+      <button class="btn encrypt" onclick="process('encrypt')">🔒 Mã Hóa</button>
+      <button class="btn decrypt" onclick="process('decrypt')">🔓 Giải Mã</button>
       <button class="btn swap" onclick="swapText()">🔄 Đảo Chiều</button>
       <button class="btn copy" onclick="copyResult()">📋 Sao Chép</button>
       <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
     </div>
-
-    <div id="toast" class="toast"></div>
   </div>
 
+  <!-- ===== MODAL CHỌN KIỂU MÃ HÓA ===== -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2>🔐 Chọn kiểu mã hóa</h2>
+          <p>{{ methods|length }} phương pháp có sẵn</p>
+        </div>
+        <button class="modal-close" id="closeModalBtn">✕</button>
+      </div>
+
+      <div class="modal-search">
+        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm phương pháp... (VD: base64, aes, morse)">
+      </div>
+
+      <div class="modal-body">
+        <div class="methods-grid" id="methodsGrid">
+          {% for key, name in methods.items() %}
+          <button class="method-btn" data-method="{{ key }}" title="{{ name }}">
+            <span class="method-name">{{ name }}</span>
+            <span class="method-code">{{ key }}</span>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <span>💡 Mẹo: Gõ tên để tìm nhanh</span>
+        <button class="btn-cancel" id="cancelModalBtn">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
   <script>
+    // ====== STATE ======
     let currentMethod = 'base64';
     let oneWayMethods = new Set([
       'md5','sha1','sha224','sha256','sha384','sha512',
@@ -102,7 +121,7 @@
     ]);
     let keyLabels = {
       'caesar': '🔢 Khóa dịch chuyển (1-25):',
-      'affine': '🔢 Khóa affine (a,b) — mặc định 5,8',
+      'affine': '🔢 Khóa affine (a,b):',
       'vigenere': '🔑 Từ khóa Vigenère:',
       'beaufort': '🔑 Từ khóa Beaufort:',
       'autokey': '🔑 Từ khóa Autokey:',
@@ -127,28 +146,91 @@
       'aes': 'Nhập mật khẩu...'
     };
 
-    // Chọn phương pháp
+    // ====== DOM ======
+    const modalOverlay = document.getElementById('modalOverlay');
+    const openPickerBtn = document.getElementById('openPickerBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const searchInput = document.getElementById('searchInput');
+
+    // ====== MỞ / ĐÓNG MODAL ======
+    function openModal() {
+      modalOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => searchInput.focus(), 100);
+    }
+
+    function closeModal() {
+      modalOverlay.classList.remove('show');
+      document.body.style.overflow = '';
+      searchInput.value = '';
+      filterMethods('');
+    }
+
+    openPickerBtn.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelModalBtn.addEventListener('click', closeModal);
+
+    // Click ra ngoài để đóng
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+    // ESC để đóng
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modalOverlay.classList.contains('show')) closeModal();
+    });
+
+    // ====== TÌM KIẾM ======
+    searchInput.addEventListener('input', (e) => {
+      filterMethods(e.target.value.toLowerCase().trim());
+    });
+
+    function filterMethods(q) {
+      let visible = 0;
+      document.querySelectorAll('.method-btn').forEach(btn => {
+        const match = !q ||
+          btn.dataset.method.toLowerCase().includes(q) ||
+          btn.title.toLowerCase().includes(q);
+        btn.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+
+      // Thông báo nếu không có kết quả
+      let emptyMsg = document.getElementById('emptyMsg');
+      if (visible === 0) {
+        if (!emptyMsg) {
+          emptyMsg = document.createElement('div');
+          emptyMsg.id = 'emptyMsg';
+          emptyMsg.className = 'empty-msg';
+          emptyMsg.textContent = '😕 Không tìm thấy phương pháp nào!';
+          document.getElementById('methodsGrid').appendChild(emptyMsg);
+        }
+      } else if (emptyMsg) {
+        emptyMsg.remove();
+      }
+    }
+
+    // ====== CHỌN PHƯƠNG PHÁP ======
     document.querySelectorAll('.method-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        currentMethod = btn.dataset.method;
+
+        // Cập nhật nút picker
+        document.getElementById('selectedMethodName').textContent = btn.title;
+        document.getElementById('selectedMethodCode').textContent = currentMethod;
+
+        // Đánh dấu active
         document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        currentMethod = btn.dataset.method;
-        document.getElementById('currentMethodName').textContent = btn.title;
-        document.getElementById('currentMethodCode').textContent = currentMethod;
+
         updateUI();
+        closeModal();
+        showToast(`✅ Đã chọn: ${btn.title}`);
       });
     });
 
-    // Tìm kiếm
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase().trim();
-      document.querySelectorAll('.method-btn').forEach(btn => {
-        const match = btn.dataset.method.toLowerCase().includes(q) ||
-                      btn.title.toLowerCase().includes(q);
-        btn.style.display = match ? '' : 'none';
-      });
-    });
-
+    // ====== CẬP NHẬT UI ======
     function updateUI() {
       const keySection = document.getElementById('keySection');
       const hashWarning = document.getElementById('hashWarning');
@@ -177,7 +259,7 @@
       }
     }
 
-    // Gọi API
+    // ====== XỬ LÝ ======
     async function process(action) {
       const text = document.getElementById('input').value;
       const key = document.getElementById('keyInput').value;
@@ -209,8 +291,7 @@
     }
 
     function swapText() {
-      const out = document.getElementById('output').value;
-      document.getElementById('input').value = out;
+      document.getElementById('input').value = document.getElementById('output').value;
       document.getElementById('output').value = '';
       updateCounts();
       showToast('🔄 Đã đảo chiều!');
@@ -245,9 +326,13 @@
       setTimeout(() => t.classList.remove('show'), 2200);
     }
 
-    // Khởi tạo
+    // ====== KHỞI TẠO ======
     document.getElementById('input').addEventListener('input', updateCounts);
-    document.querySelector('.method-btn[data-method="base64"]').classList.add('active');
+
+    // Đánh dấu Base64 là mặc định
+    const defaultBtn = document.querySelector('.method-btn[data-method="base64"]');
+    if (defaultBtn) defaultBtn.classList.add('active');
+
     updateUI();
   </script>
 </body>
