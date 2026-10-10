@@ -8,7 +8,66 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
+  <!-- =============================================
+       MÀN HÌNH LOADING BAN ĐẦU (khi vào web)
+       ============================================= -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-bg">
+      <span class="floating-emoji" style="--delay:0s;--x:10%;--y:20%">🔐</span>
+      <span class="floating-emoji" style="--delay:0.5s;--x:80%;--y:15%">🔒</span>
+      <span class="floating-emoji" style="--delay:1s;--x:20%;--y:75%">🔑</span>
+      <span class="floating-emoji" style="--delay:1.5s;--x:75%;--y:80%">🛡️</span>
+      <span class="floating-emoji" style="--delay:0.8s;--x:50%;--y:10%">💻</span>
+      <span class="floating-emoji" style="--delay:1.2s;--x:15%;--y:50%">⚡</span>
+      <span class="floating-emoji" style="--delay:0.3s;--x:85%;--y:45%">🎯</span>
+      <span class="floating-emoji" style="--delay:1.7s;--x:55%;--y:85%">✨</span>
+    </div>
+
+    <div class="splash-content">
+      <div class="splash-logo">
+        <div class="logo-shield">
+          <div class="logo-inner">🔐</div>
+          <div class="logo-ring"></div>
+          <div class="logo-ring ring-2"></div>
+        </div>
+      </div>
+
+      <h1 class="splash-title">
+        <span>Mã Hóa</span> <span class="gradient-text">Tool</span>
+      </h1>
+
+      <p class="splash-subtitle">Công cụ mã hóa & giải mã đa phương pháp</p>
+
+      <!-- Thanh tiến trình -->
+      <div class="splash-progress">
+        <div class="splash-progress-fill" id="splashProgress"></div>
+      </div>
+
+      <!-- Text trạng thái thay đổi -->
+      <p class="splash-status" id="splashStatus">Đang khởi tạo...</p>
+
+      <!-- Các bước -->
+      <div class="splash-steps">
+        <div class="splash-step" data-step="1">
+          <div class="step-dot"></div>
+          <span>Khởi động</span>
+        </div>
+        <div class="splash-step" data-step="2">
+          <div class="step-dot"></div>
+          <span>Tải phương pháp</span>
+        </div>
+        <div class="splash-step" data-step="3">
+          <div class="step-dot"></div>
+          <span>Sẵn sàng</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       NỘI DUNG CHÍNH
+       ============================================= -->
+  <div class="container" id="mainContainer">
     <header>
       <div class="logo">
         <div class="logo-icon">🔐</div>
@@ -97,7 +156,7 @@
   </div>
 
   <!-- =============================================
-       MÀN HÌNH LOADING (khi chuyển tab)
+       LOADING SCREEN khi chuyển tab
        ============================================= -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-content">
@@ -133,7 +192,7 @@
   </div>
 
   <!-- =============================================
-       MÀN HÌNH LOADING KHI XỬ LÝ (nhỏ, inline)
+       PROCESSING OVERLAY
        ============================================= -->
   <div class="processing-overlay" id="processingOverlay">
     <div class="processing-box">
@@ -181,7 +240,73 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    // ===== STATE =====
+    // ==========================================
+    // SPLASH SCREEN (loading ban đầu)
+    // ==========================================
+    const splashMessages = [
+      'Đang khởi tạo...',
+      'Đang tải các phương pháp mã hóa...',
+      'Đang chuẩn bị công cụ...',
+      'Sắp xong rồi...',
+      'Sẵn sàng!'
+    ];
+
+    let splashStep = 0;
+    const splashProgress = document.getElementById('splashProgress');
+    const splashStatus = document.getElementById('splashStatus');
+
+    function runSplash() {
+      // Bước 1
+      splashProgress.style.width = '30%';
+      splashStatus.textContent = splashMessages[0];
+      markSplashStep(1, 'active');
+
+      setTimeout(() => {
+        splashProgress.style.width = '60%';
+        splashStatus.textContent = splashMessages[1];
+        markSplashStep(1, 'done');
+        markSplashStep(2, 'active');
+      }, 500);
+
+      setTimeout(() => {
+        splashProgress.style.width = '90%';
+        splashStatus.textContent = splashMessages[3];
+        markSplashStep(2, 'done');
+        markSplashStep(3, 'active');
+      }, 1100);
+
+      setTimeout(() => {
+        splashProgress.style.width = '100%';
+        splashStatus.textContent = splashMessages[4];
+        markSplashStep(3, 'done');
+      }, 1600);
+
+      // Ẩn splash
+      setTimeout(() => {
+        document.getElementById('splashScreen').classList.add('hide');
+        document.body.style.overflow = '';
+        // Hiện container chính với animation
+        document.getElementById('mainContainer').classList.add('show');
+      }, 2000);
+    }
+
+    function markSplashStep(n, state) {
+      const el = document.querySelector(`.splash-step[data-step="${n}"]`);
+      if (el) {
+        el.classList.remove('active', 'done');
+        el.classList.add(state);
+      }
+    }
+
+    // Chạy splash khi trang load
+    window.addEventListener('load', () => {
+      document.body.style.overflow = 'hidden';
+      setTimeout(runSplash, 200);
+    });
+
+    // ==========================================
+    // STATE
+    // ==========================================
     let currentMethod = 'base64';
     let currentAction = 'encrypt';
     let isTransitioning = false;
@@ -249,7 +374,6 @@
 
       const isEncrypt = action === 'encrypt';
 
-      // Cấu hình
       loadingIcon.textContent = isEncrypt ? '🔒' : '🔓';
       loadingTitle.textContent = isEncrypt
         ? 'Đang chuyển sang chế độ Mã hóa...'
@@ -258,20 +382,16 @@
         ? 'Chuẩn bị công cụ mã hóa'
         : 'Chuẩn bị công cụ giải mã';
 
-      // Đổi màu overlay
       loadingOverlay.className = 'loading-overlay show ' + (isEncrypt ? 'encrypt-mode' : 'decrypt-mode');
 
-      // Reset progress
       progressFill.style.transition = 'none';
       progressFill.style.width = '0%';
       document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active', 'done'));
 
-      // Bắt đầu animation
       setTimeout(() => {
         progressFill.style.transition = 'width 1.5s ease-out';
         progressFill.style.width = '100%';
 
-        // Steps
         setTimeout(() => markStep(1, 'active'), 100);
         setTimeout(() => markStep(1, 'done'), 500);
         setTimeout(() => markStep(2, 'active'), 500);
@@ -280,7 +400,6 @@
         setTimeout(() => markStep(3, 'done'), 1400);
       }, 50);
 
-      // Kết thúc sau 1.6s
       setTimeout(() => {
         loadingOverlay.classList.remove('show');
         callback && callback();
@@ -297,7 +416,7 @@
     }
 
     // ==========================================
-    // PROCESSING OVERLAY (khi bấm nút mã hóa/giải mã)
+    // PROCESSING OVERLAY
     // ==========================================
     function showProcessing(action) {
       processingIcon.textContent = action === 'encrypt' ? '🔒' : '🔓';
@@ -310,7 +429,7 @@
     }
 
     // ==========================================
-    // ĐỔI CHẾ ĐỘ (TASKBAR)
+    // ĐỔI CHẾ ĐỘ
     // ==========================================
     function setAction(action, skipLoading = false) {
       if (currentAction === action && !skipLoading) return;
@@ -320,8 +439,7 @@
         tabEncrypt.classList.toggle('active', action === 'encrypt');
         tabDecrypt.classList.toggle('active', action === 'decrypt');
         taskIndicator.style.transform = action === 'encrypt'
-          ? 'translateX(0)'
-          : 'translateX(100%)';
+          ? 'translateX(0)' : 'translateX(100%)';
 
         document.getElementById('inputLabel').textContent =
           action === 'encrypt' ? '📝 Văn bản gốc' : '📥 Văn bản đã mã hóa';
@@ -345,11 +463,8 @@
         updateUI();
       };
 
-      if (skipLoading) {
-        doChange();
-      } else {
-        showLoadingScreen(action, doChange);
-      }
+      if (skipLoading) doChange();
+      else showLoadingScreen(action, doChange);
     }
 
     tabEncrypt.addEventListener('click', () => setAction('encrypt'));
@@ -407,7 +522,6 @@
       } else if (emptyMsg) emptyMsg.remove();
     }
 
-    // Chọn phương pháp
     document.querySelectorAll('.method-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         currentMethod = btn.dataset.method;
@@ -458,7 +572,7 @@
     }
 
     // ==========================================
-    // RUN ACTION (có loading overlay nhỏ)
+    // RUN ACTION
     // ==========================================
     async function runAction() {
       const text = document.getElementById('input').value;
@@ -474,10 +588,7 @@
         return;
       }
 
-      // Hiện loading overlay nhỏ
       showProcessing(currentAction);
-
-      // Delay ngắn để loading hiện ra (giả lập xử lý)
       await new Promise(r => setTimeout(r, 600));
 
       try {
