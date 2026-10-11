@@ -349,7 +349,6 @@
         <button class="modal-close" id="closeModalBtn">✕</button>
       </div>
 
-      <!-- TABS NHÓM -->
       <div class="method-groups-tabs" id="methodGroupTabs">
         <button class="method-group-tab active" data-group="all">
           🌐 Tất cả ({{ methods|length }})
@@ -509,48 +508,84 @@
   <div id="toast" class="toast"></div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       NYAN CAT 🐱🌈
+       NYAN CAT FLYING 🐱🌈 — Bay ngang toàn trang
        ═══════════════════════════════════════════════════════════ -->
-  <div class="nyan-cat-container" id="nyanCatContainer" aria-hidden="true">
-    <div class="nyan-rainbow" id="nyanRainbow">
-      <div class="nyan-rainbow-stripe stripe-1"></div>
-      <div class="nyan-rainbow-stripe stripe-2"></div>
-      <div class="nyan-rainbow-stripe stripe-3"></div>
-      <div class="nyan-rainbow-stripe stripe-4"></div>
-      <div class="nyan-rainbow-stripe stripe-5"></div>
-      <div class="nyan-rainbow-stripe stripe-6"></div>
-    </div>
-    <div class="nyan-cat-body">
-      <div class="nyan-cat-sprite">
-        <svg viewBox="0 0 34 21" class="nyan-cat-svg" xmlns="http://www.w3.org/2000/svg">
-          <rect x="6" y="4" width="18" height="14" fill="#f4a460" stroke="#8b4513" stroke-width="1" rx="2"/>
-          <rect x="8" y="6" width="14" height="10" fill="#ffb6c1" rx="1"/>
-          <circle cx="10" cy="8" r="0.8" fill="#ff69b4"/>
-          <circle cx="14" cy="9" r="0.8" fill="#00ff00"/>
-          <circle cx="18" cy="8" r="0.8" fill="#00bfff"/>
-          <circle cx="11" cy="12" r="0.8" fill="#ff0"/>
-          <circle cx="16" cy="12" r="0.8" fill="#ff4500"/>
-          <circle cx="19" cy="11" r="0.8" fill="#9400d3"/>
-          <ellipse cx="22" cy="9" rx="5" ry="4.5" fill="#c0c0c0" stroke="#666" stroke-width="0.6"/>
-          <polygon points="19,5.5 20,3 21.5,5.5" fill="#c0c0c0" stroke="#666" stroke-width="0.4"/>
-          <polygon points="23.5,5.5 25,3 26.5,5.5" fill="#c0c0c0" stroke="#666" stroke-width="0.4"/>
-          <circle cx="20.5" cy="8.5" r="1.1" fill="#fff"/>
-          <circle cx="24.5" cy="8.5" r="1.1" fill="#fff"/>
-          <circle cx="20.7" cy="8.7" r="0.6" fill="#000"/>
-          <circle cx="24.3" cy="8.7" r="0.6" fill="#000"/>
-          <path d="M 21.5 10.5 Q 22.5 11.5 23.5 10.5" stroke="#333" stroke-width="0.4" fill="none"/>
-          <circle cx="19.5" cy="10" r="0.8" fill="#ff69b4" opacity="0.6"/>
-          <circle cx="25.5" cy="10" r="0.8" fill="#ff69b4" opacity="0.6"/>
-          <path d="M 5 11 Q 1 11 2 6" stroke="#c0c0c0" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-          <rect x="9" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
-          <rect x="14" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
-          <rect x="19" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
-          <rect x="23" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
-        </svg>
+  <div class="nyan-sky" id="nyanSky" aria-hidden="true">
+    <!-- Nyan Cat #1 -->
+    <div class="nyan-row nyan-row-1">
+      <div class="nyan-cat">
+        <div class="nyan-rainbow">
+          <span class="rainbow-stripe r1"></span>
+          <span class="rainbow-stripe r2"></span>
+          <span class="rainbow-stripe r3"></span>
+          <span class="rainbow-stripe r4"></span>
+          <span class="rainbow-stripe r5"></span>
+          <span class="rainbow-stripe r6"></span>
+        </div>
+        <div class="nyan-sprite">
+          <svg viewBox="0 0 34 21" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="4" width="18" height="14" fill="#f4a460" stroke="#8b4513" stroke-width="1" rx="2"/>
+            <rect x="8" y="6" width="14" height="10" fill="#ffb6c1" rx="1"/>
+            <circle cx="10" cy="8" r="0.8" fill="#ff69b4"/>
+            <circle cx="14" cy="9" r="0.8" fill="#00ff00"/>
+            <circle cx="18" cy="8" r="0.8" fill="#00bfff"/>
+            <circle cx="11" cy="12" r="0.8" fill="#ff0"/>
+            <circle cx="16" cy="12" r="0.8" fill="#ff4500"/>
+            <circle cx="19" cy="11" r="0.8" fill="#9400d3"/>
+            <ellipse cx="22" cy="9" rx="5" ry="4.5" fill="#c0c0c0" stroke="#666" stroke-width="0.6"/>
+            <polygon points="19,5.5 20,3 21.5,5.5" fill="#c0c0c0" stroke="#666" stroke-width="0.4"/>
+            <polygon points="23.5,5.5 25,3 26.5,5.5" fill="#c0c0c0" stroke="#666" stroke-width="0.4"/>
+            <circle cx="20.5" cy="8.5" r="1.1" fill="#fff"/>
+            <circle cx="24.5" cy="8.5" r="1.1" fill="#fff"/>
+            <circle cx="20.7" cy="8.7" r="0.6" fill="#000"/>
+            <circle cx="24.3" cy="8.7" r="0.6" fill="#000"/>
+            <path d="M 21.5 10.5 Q 22.5 11.5 23.5 10.5" stroke="#333" stroke-width="0.4" fill="none"/>
+            <circle cx="19.5" cy="10" r="0.8" fill="#ff69b4" opacity="0.6"/>
+            <circle cx="25.5" cy="10" r="0.8" fill="#ff69b4" opacity="0.6"/>
+            <path d="M 5 11 Q 1 11 2 6" stroke="#c0c0c0" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <rect x="9" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
+            <rect x="14" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
+            <rect x="19" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
+            <rect x="23" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
+          </svg>
+        </div>
       </div>
-      <div class="nyan-star star-1">⭐</div>
-      <div class="nyan-star star-2">✨</div>
-      <div class="nyan-star star-3">⭐</div>
+    </div>
+
+    <!-- Nyan Cat #2 (bay chậm hơn, delay) -->
+    <div class="nyan-row nyan-row-2">
+      <div class="nyan-cat">
+        <div class="nyan-rainbow">
+          <span class="rainbow-stripe r1"></span>
+          <span class="rainbow-stripe r2"></span>
+          <span class="rainbow-stripe r3"></span>
+          <span class="rainbow-stripe r4"></span>
+          <span class="rainbow-stripe r5"></span>
+          <span class="rainbow-stripe r6"></span>
+        </div>
+        <div class="nyan-sprite">
+          <svg viewBox="0 0 34 21" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="4" width="18" height="14" fill="#f4a460" stroke="#8b4513" stroke-width="1" rx="2"/>
+            <rect x="8" y="6" width="14" height="10" fill="#ffb6c1" rx="1"/>
+            <circle cx="10" cy="8" r="0.8" fill="#ff69b4"/>
+            <circle cx="14" cy="9" r="0.8" fill="#00ff00"/>
+            <circle cx="18" cy="8" r="0.8" fill="#00bfff"/>
+            <ellipse cx="22" cy="9" rx="5" ry="4.5" fill="#c0c0c0" stroke="#666" stroke-width="0.6"/>
+            <polygon points="19,5.5 20,3 21.5,5.5" fill="#c0c0c0" stroke="#666" stroke-width="0.4"/>
+            <polygon points="23.5,5.5 25,3 26.5,5.5" fill="#c0c0c0" stroke="#666" stroke-width="0.4"/>
+            <circle cx="20.5" cy="8.5" r="1.1" fill="#fff"/>
+            <circle cx="24.5" cy="8.5" r="1.1" fill="#fff"/>
+            <circle cx="20.7" cy="8.7" r="0.6" fill="#000"/>
+            <circle cx="24.3" cy="8.7" r="0.6" fill="#000"/>
+            <path d="M 21.5 10.5 Q 22.5 11.5 23.5 10.5" stroke="#333" stroke-width="0.4" fill="none"/>
+            <path d="M 5 11 Q 1 11 2 6" stroke="#c0c0c0" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <rect x="9" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
+            <rect x="14" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
+            <rect x="19" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
+            <rect x="23" y="16" width="2.5" height="3.5" fill="#c0c0c0" stroke="#666" stroke-width="0.3" rx="1"/>
+          </svg>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -710,26 +745,49 @@
     .method-btn.hidden { display: none !important; }
 
     /* ═══════════════════════════════════════════════════════════
-       NYAN CAT 🐱🌈
+       NYAN CAT FLYING 🐱🌈 — Bay ngang toàn trang
        ═══════════════════════════════════════════════════════════ */
-    .nyan-cat-container {
+    .nyan-sky {
       position: fixed;
-      bottom: 0;
-      left: -250px;
-      width: 250px;
-      height: 60px;
-      z-index: 9998;
+      inset: 0;
       pointer-events: none;
-      animation: nyanFly 12s linear infinite;
+      z-index: 9998;
+      overflow: hidden;
+    }
+
+    .nyan-row {
+      position: absolute;
+      left: -400px;
+      width: 400px;
+      height: 60px;
       will-change: transform;
     }
 
-    @keyframes nyanFly {
+    .nyan-row-1 {
+      top: 15vh;
+      animation: nyanFly1 8s linear infinite;
+    }
+
+    .nyan-row-2 {
+      top: 45vh;
+      animation: nyanFly2 12s linear infinite;
+      animation-delay: -4s;
+    }
+
+    @keyframes nyanFly1 {
       0%   { transform: translateX(0) translateY(0); }
-      25%  { transform: translateX(30vw) translateY(-15px); }
-      50%  { transform: translateX(60vw) translateY(5px); }
-      75%  { transform: translateX(90vw) translateY(-10px); }
-      100% { transform: translateX(calc(100vw + 250px)) translateY(0); }
+      25%  { transform: translateX(35vw) translateY(-20px); }
+      50%  { transform: translateX(70vw) translateY(8px); }
+      75%  { transform: translateX(105vw) translateY(-15px); }
+      100% { transform: translateX(calc(100vw + 400px)) translateY(0); }
+    }
+
+    @keyframes nyanFly2 {
+      0%   { transform: translateX(0) translateY(0) scale(0.8); }
+      25%  { transform: translateX(35vw) translateY(15px) scale(0.8); }
+      50%  { transform: translateX(70vw) translateY(-10px) scale(0.8); }
+      75%  { transform: translateX(105vw) translateY(20px) scale(0.8); }
+      100% { transform: translateX(calc(100vw + 400px)) translateY(0) scale(0.8); }
     }
 
     .nyan-rainbow {
@@ -737,91 +795,74 @@
       top: 50%;
       left: 0;
       transform: translateY(-50%);
-      width: 100%;
-      height: 32px;
+      width: 220px;
+      height: 36px;
       display: flex;
       flex-direction: column;
-      opacity: 0.85;
-      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+      border-radius: 4px 0 0 4px;
+      overflow: hidden;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
     }
-    .nyan-rainbow-stripe {
+
+    .rainbow-stripe {
       flex: 1;
       width: 100%;
-      animation: rainbowShimmer 0.3s linear infinite;
-    }
-    .stripe-1 { background: #ff0000; }
-    .stripe-2 { background: #ff9900; }
-    .stripe-3 { background: #ffff00; }
-    .stripe-4 { background: #33ff00; }
-    .stripe-5 { background: #0099ff; }
-    .stripe-6 { background: #6633ff; }
-
-    @keyframes rainbowShimmer {
-      0%, 100% { opacity: 1; }
-      50%      { opacity: 0.7; }
+      background-size: 40px 100%;
+      animation: rainbowFlow 0.6s linear infinite;
     }
 
-    .nyan-cat-body {
+    .r1 { background: linear-gradient(90deg, #ff0000, #ff5555, #ff0000); background-size: 40px 100%; }
+    .r2 { background: linear-gradient(90deg, #ff9900, #ffbb55, #ff9900); background-size: 40px 100%; }
+    .r3 { background: linear-gradient(90deg, #ffff00, #ffff88, #ffff00); background-size: 40px 100%; }
+    .r4 { background: linear-gradient(90deg, #33ff00, #88ff55, #33ff00); background-size: 40px 100%; }
+    .r5 { background: linear-gradient(90deg, #0099ff, #55bbff, #0099ff); background-size: 40px 100%; }
+    .r6 { background: linear-gradient(90deg, #6633ff, #9966ff, #6633ff); background-size: 40px 100%; }
+
+    @keyframes rainbowFlow {
+      0%   { background-position: 0 0; }
+      100% { background-position: -40px 0; }
+    }
+
+    .nyan-sprite {
       position: absolute;
       top: 50%;
-      right: 0;
+      right: -10px;
       transform: translateY(-50%);
-      animation: catBob 0.4s ease-in-out infinite;
-    }
-
-    @keyframes catBob {
-      0%, 100% { transform: translateY(-50%) translateY(0); }
-      50%      { transform: translateY(-50%) translateY(-4px); }
-    }
-
-    .nyan-cat-sprite {
-      width: 90px;
-      height: 55px;
+      width: 100px;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: center;
-      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+      animation: catBob 0.35s ease-in-out infinite;
+      filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.4));
     }
 
-    .nyan-cat-svg {
+    .nyan-sprite svg {
       width: 100%;
       height: 100%;
       image-rendering: pixelated;
     }
 
-    .nyan-star {
-      position: absolute;
-      font-size: 14px;
-      animation: starTwinkle 0.6s ease-in-out infinite;
-      pointer-events: none;
-    }
-    .star-1 { top: 10px; right: 100px; animation-delay: 0s; }
-    .star-2 { top: 35px; right: 130px; animation-delay: 0.2s; }
-    .star-3 { top: 20px; right: 160px; animation-delay: 0.4s; }
-
-    @keyframes starTwinkle {
-      0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
-      50%      { opacity: 0.4; transform: scale(0.7) rotate(180deg); }
+    @keyframes catBob {
+      0%, 100% { transform: translateY(-50%) translateY(0); }
+      50%      { transform: translateY(-50%) translateY(-5px); }
     }
 
     @media (max-width: 600px) {
-      .nyan-cat-container { width: 180px; height: 45px; animation-duration: 10s; }
-      .nyan-cat-sprite { width: 65px; height: 40px; }
-      .nyan-rainbow { height: 24px; }
-      .nyan-star { font-size: 10px; }
-      .star-1 { right: 70px; }
-      .star-2 { right: 95px; }
-      .star-3 { right: 115px; }
+      .nyan-row { height: 40px; }
+      .nyan-rainbow { width: 140px; height: 24px; }
+      .nyan-sprite { width: 65px; height: 40px; }
+      .nyan-row-1 { animation-duration: 10s; }
+      .nyan-row-2 { animation-duration: 15s; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .nyan-cat-container,
-      .nyan-cat-body,
-      .nyan-star,
-      .nyan-rainbow-stripe {
+      .nyan-row,
+      .nyan-sprite,
+      .rainbow-stripe {
         animation: none !important;
-        opacity: 0.5;
       }
+      .nyan-sky { display: none; }
     }
   </style>
 
@@ -1442,9 +1483,6 @@
 
     searchInput.addEventListener('input', (e) => filterMethods(e.target.value.toLowerCase().trim()));
 
-    // ══════════════════════════════════════════════════════════
-    //  FILTER METHOD THEO NHÓM + SEARCH
-    // ══════════════════════════════════════════════════════════
     function filterMethods(q) {
       const activeGroup = document.querySelector('.method-group-tab.active')?.dataset.group || 'all';
       let visible = 0;
@@ -1777,33 +1815,18 @@
     // ══════════════════════════════════════════════════════════
     //  NYAN CAT CONTROLS 🐱🌈
     // ══════════════════════════════════════════════════════════
-    const nyanCat = document.getElementById('nyanCatContainer');
+    const nyanSky = document.getElementById('nyanSky');
 
-    if (nyanCat) {
-      // Cho phép click vào Nyan Cat
-      nyanCat.style.pointerEvents = 'auto';
-      nyanCat.style.cursor = 'pointer';
-
-      // Click → tăng tốc tạm thời
-      nyanCat.addEventListener('click', () => {
-        nyanCat.style.animationDuration = '3s';
-        showToast('🐱🌈 Nyan Nyan Nyan!');
-        setTimeout(() => {
-          nyanCat.style.animationDuration = '12s';
-        }, 3000);
-      });
-
-      // Phím N → bật/tắt
-      document.addEventListener('keydown', (e) => {
-        if ((e.key === 'n' || e.key === 'N') &&
-            e.target.tagName !== 'INPUT' &&
-            e.target.tagName !== 'TEXTAREA') {
-          const isHidden = nyanCat.style.display === 'none';
-          nyanCat.style.display = isHidden ? 'block' : 'none';
-          showToast(isHidden ? '🐱 Nyan Cat đã bật!' : '😴 Nyan Cat đã tắt!');
-        }
-      });
-    }
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'n' || e.key === 'N') &&
+          e.target.tagName !== 'INPUT' &&
+          e.target.tagName !== 'TEXTAREA') {
+        if (!nyanSky) return;
+        const isHidden = nyanSky.style.display === 'none';
+        nyanSky.style.display = isHidden ? 'block' : 'none';
+        showToast(isHidden ? '🐱 Nyan Cat đã bật!' : '😴 Nyan Cat đã tắt!');
+      }
+    });
 
     // ══════════════════════════════════════════════════════════
     //  INIT
