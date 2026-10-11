@@ -679,4 +679,487 @@ async function loadRoom() {
 
 function updatePvPUI(room) {
   pvpCurrentRoom = room;
-  const
+  const you = room.you;
+  const opp = room.opponent;
+
+  const youScore = room.round_info?.scores?.you || 0;
+  const oppScore = room.round_info?.scores?.opponent || 0;
+  const youWins = room.round_wins.you || 0;
+  const oppWins = room.round_wins.opponent || 0;
+
+  $('pvpMyScore').textContent = youScore;
+  $('pvpOppScore').textContent = oppScore;
+  $('pvpMyWins').textContent = youWins;
+  $('pvpOppWins').textContent = oppWins;
+  $('pvpOppName').textContent = room.opponent_display || 'Đối thủ';
+
+  const totalRounds = room.rules?.rounds || 3;
+  $('pvpRoundLabel').textContent = `Ván ${room.current_round + 1}/${totalRounds}`;
+
+  const total = room.round_info?.total_questions || 10;
+  const current = (room.round_info?.current_index || 0) + 1;
+  $('pvpCurrentQ').textContent = Math.min(current, total);
+  $('pvpTotalQ').textContent = total;
+  const pct = Math.round((current / total) * 100);
+  $('pvpProgressFill').style.width = pct + '%';
+  $('pvpProgressPct').textContent = pct + '%';
+
+  if (room.current_question) {
+    const q = room.current_question;
+    const qKey = `${room.current_round}-${q.index}-${q.word}`;
+    const isNewQuestion = (qKey !== lastQuestionKey);
+
+    if (isNewQuestion) {
+      $('pvpQuestionText').textContent = q.word || q.display;
+      lastQuestionKey = qKey;
+    }
+
+    if (q.your_answer) {
+      pvpHasAnswered = true;
+      $('pvpAnswerInput').disabled = true;
+      $('pvpSubmitBtn').disabled = true;
+      showPvPFeedback(q.your_answer);
+    } else {
+      pvpHasAnswered = false;
+      $('pvpAnswerInput').disabled = false;
+      $('pvpSubmitBtn').disabled = false;
+      if (isNewQuestion) {
+        $('pvpAnswerInput').value = '';
+        $('pvpAnswerInput').placeholder = 'Gõ từ trên...';
+        $('pvpFeedback').style.display = 'none';
+        setTimeout(() => $('pvpAnswerInput')?.focus(), 100);
+      }
+    }
+
+    if (room.opponent_answered) {
+      $('pvpOpponentStatus').style.display = 'none';
+      $('pvpOpponentAnswered').style.display = 'flex';
+      const oa = room.opponent_answer || {};
+      $('pvpOppAnswerText').textContent =
+        `Đối thủ đã gõ ${oa.correct ? '✅ đúng' : '❌ sai'} (${oa.time_taken}s)`;
+    } else {
+      $('pvpOpponentStatus').style.display = 'flex';
+      $('pvpOpponentAnswered').style.display = 'none';
+    }
+  } else {
+    lastQuestionKey = null;
+  }
+}
+
+function updateScoreOnly(room) {
+  pvpCurrentRoom = room;
+
+  const youScore = room.round_info?.scores?.you || 0;
+  const oppScore = room.round_info?.scores?.opponent || 0;
+  const youWins = room.round_wins.you || 0;
+  const oppWins = room.round_wins.opponent || 0;
+
+  $('pvpMyScore').textContent = youScore;
+  $('pvpOppScore').textContent = oppScore;
+  $('pvpMyWins').textContent = youWins;
+  $('pvpOppWins').textContent = oppWins;
+  $('pvpOppName').textContent = room.opponent_display || 'Đối thủ';
+
+  const totalRounds = room.rules?.rounds || 3;
+  $('pvpRoundLabel').textContent = `Ván ${room.current_round + 1}/${totalRounds}`;
+
+  const total = room.round_info?.total_questions || 10;
+  const current = (room.round_info?.current_index || 0) + 1;
+  $('pvpCurrentQ').textContent = Math.min(current, total);
+  $('pvpTotalQ').textContent = total;
+  const pct = Math.round((current / total) * 100);
+  $('pvpProgressFill').style.width = pct + '%';
+  $('pvpProgressPct').textContent = pct + '%';
+
+  if (room.current_question) {
+    const q = room.current_question;
+    const qKey = `${room.current_round}-${q.index}-${q.word}`;
+    if (qKey !== lastQuestionKey) {
+      updatePvPUI(room);
+      return;
+    }
+    if (room.opponent_answered) {
+      $('pvpOpponentStatus').style.display = 'none';
+      $('pvpOpponentAnswered').style.display = 'flex';
+      const oa = room.opponent_answer || {};
+      $('pvpOppAnswerText').textContent =
+        `Đối thủ đã gõ ${oa.correct ? '✅ đúng' : '❌ sai'} (${oa.time_taken}s)`;
+    } else {
+      $('pvpOpponentStatus').style.display = 'flex';
+      $('pvpOpponentAnswered').style.display = 'none';
+    }
+  }
+}
+
+function showPvPFeedback(yourAnswer) {
+  const fb = $('pvpFeedback');
+  fb.style.display = 'block';
+  if (yourAnswer.correct) {
+    fb.className = 'pvp-feedback correct';
+    fb.innerHTML = `✅ Đúng! +${yourAnswer.points} điểm (${yourAnswer.time_taken}s)`;
+  } else {
+    fb.className = 'pvp-feedback wrong';
+    fb.innerHTML = `❌ Sai! Từ đúng: <strong>${pvpCurrentRoom.current_question.correct_answer || '?'}</strong>`;
+  }
+}
+
+async function submitPvPAnswer() {
+  if (pvpHasAnswered) return;
+  const input = $('pvpAnswerInput');
+  const answer = input.value.trim();
+  if (!answer) { showToast('⚠️ Nhập đáp án!', 'error'); return; }
+
+  pvpLastActivity = Date.now();
+  $('pvpSubmitBtn').disabled = true;
+  input.disabled = true;
+
+  try {
+    const data = await api('/api/pvp/submit', {
+      method: 'POST',
+      body: JSON.stringify({ code: ROOM_CODE, answer })
+    });
+    if (!data.success) {
+      showToast('❌ ' + data.error, 'error');
+      $('pvpSubmitBtn').disabled = false;
+      input.disabled = false;
+      return;
+    }
+    pvpHasAnswered = true;
+    updatePvPUI(data.room);
+    if (data.room.status === 'finished') showFinished(data.room);
+  } catch (e) {
+    showToast('❌ Lỗi gửi!', 'error');
+    $('pvpSubmitBtn').disabled = false;
+    input.disabled = false;
+  }
+}
+
+$('pvpAnswerInput')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitPvPAnswer();
+});
+
+$('pvpAnswerInput')?.addEventListener('focus', () => { pvpIsTyping = true; });
+$('pvpAnswerInput')?.addEventListener('blur', () => { pvpIsTyping = false; });
+
+function showFinished(room) {
+  $('pvpPlaying').style.display = 'none';
+  $('pvpFinished').style.display = 'block';
+  $('pvpLeaveBtn').classList.remove('show');
+  stopHeartbeat();
+  stopAfkKickChecker();
+
+  pvpLeaveBeaconSent = false;
+  pvpTabHiddenAt = null;
+
+  const fr = room.final_result;
+  if (!fr) return;
+
+  const afkInfo = room.afk_kick_info;
+  const leaveInfo = room.left_user ? {
+    left_display: room.left_display,
+    left_reason: room.left_reason || 'manual'
+  } : null;
+
+  let resultIcon = fr.result === 'win' ? '🏆' : (fr.result === 'loss' ? '😢' : '🤝');
+  let resultTitle = fr.message;
+  let subtitleHtml = '';
+
+  if (afkInfo) {
+    const isYouWinner = afkInfo.winner === room.you;
+    if (isYouWinner) {
+      resultIcon = '⚡';
+      resultTitle = '🏆 Bạn thắng do đối thủ AFK!';
+      subtitleHtml = `<div style="color:#f39c12;font-size:15px;margin-bottom:16px;">
+        ⚡ ${escapeHtml(afkInfo.kicked_display)} đã bị kick vì AFK ${afkInfo.afk_seconds}s
+      </div>`;
+    } else {
+      resultIcon = '🚫';
+      resultTitle = '😢 Bạn bị xử thua do AFK!';
+      subtitleHtml = `<div style="color:#e74c3c;font-size:15px;margin-bottom:16px;">
+        🚫 Bạn đã bị kick khỏi trận vì AFK ${afkInfo.afk_seconds}s
+      </div>`;
+    }
+  } else if (leaveInfo) {
+    const isYouLeft = room.left_user === room.you;
+    if (isYouLeft) {
+      resultIcon = '🚪';
+      if (leaveInfo.left_reason === 'leave_web') {
+        resultTitle = '😢 Bạn bị xử thua do thoát game!';
+        subtitleHtml = `<div style="color:#e74c3c;font-size:15px;margin-bottom:16px;">
+          🚪 Bạn đã rời khỏi tab game khi đang thi đấu
+        </div>`;
+      } else {
+        resultTitle = '😢 Bạn bị xử thua do rời trận!';
+        subtitleHtml = `<div style="color:#e74c3c;font-size:15px;margin-bottom:16px;">
+          🚪 Bạn đã bấm rời trận
+        </div>`;
+      }
+    } else {
+      resultIcon = '🏆';
+      if (leaveInfo.left_reason === 'leave_web') {
+        resultTitle = '🏆 Bạn thắng do đối thủ thoát game!';
+        subtitleHtml = `<div style="color:#f39c12;font-size:15px;margin-bottom:16px;">
+          ⚡ ${escapeHtml(leaveInfo.left_display)} đã thoát game
+        </div>`;
+      } else {
+        resultTitle = '🏆 Bạn thắng do đối thủ rời trận!';
+        subtitleHtml = `<div style="color:#f39c12;font-size:15px;margin-bottom:16px;">
+          ⚡ ${escapeHtml(leaveInfo.left_display)} đã rời trận
+        </div>`;
+      }
+    }
+  }
+
+  $('pvpResultIcon').textContent = resultIcon;
+  $('pvpResultTitle').textContent = resultTitle;
+
+  const oldSub = document.querySelector('.afk-result-subtitle');
+  if (oldSub) oldSub.remove();
+
+  if (subtitleHtml) {
+    const subEl = document.createElement('div');
+    subEl.className = 'afk-result-subtitle';
+    subEl.innerHTML = subtitleHtml;
+    const titleEl = $('pvpResultTitle');
+    titleEl.parentNode.insertBefore(subEl, titleEl.nextSibling);
+  }
+
+  $('pvpResultYourScore').textContent = fr.total_score_you;
+  $('pvpResultOppScore').textContent = fr.total_score_opponent;
+
+  $('pvpResultRounds').innerHTML = fr.rounds.map(r => `
+    <div class="pvp-result-round-row ${r.winner}">
+      <span>Ván ${r.index + 1}</span>
+      <span style="font-family:monospace;">${r.your_score} - ${r.opponent_score}</span>
+      <span>${r.winner === 'you' ? '🏆' : (r.winner === 'opponent' ? '😢' : '🤝')}</span>
+    </div>
+  `).join('');
+}
+
+function goBackToHub() {
+  window.location.href = '/game';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  POLLING
+// ═══════════════════════════════════════════════════════════
+function startPolling() {
+  stopPolling();
+  pvpPollInterval = setInterval(async () => {
+    if (pvpIsTyping) return;
+    if (document.activeElement === $('pvpAnswerInput')) return;
+
+    try {
+      const data = await api(`/api/pvp/room/${ROOM_CODE}`);
+      if (!data.success) return;
+      const room = data.room;
+
+      if (room.status === 'playing') {
+        if (pvpCurrentRoom?.status !== 'playing') {
+          // Vừa vào trận
+          $('pvpPlaying').style.display = 'block';
+          $('pvpFinished').style.display = 'none';
+          $('pvpLeaveBtn').classList.add('show');
+          lastQuestionKey = null;
+        }
+        updateScoreOnly(room);
+      } else if (room.status === 'finished' && pvpCurrentRoom?.status !== 'finished') {
+        showFinished(room);
+      } else if (room.status === 'waiting') {
+        // Phòng quay lại waiting → chuyển về game
+        window.location.href = '/game';
+      }
+      pvpCurrentRoom = room;
+    } catch (e) { console.debug('Poll:', e); }
+  }, 1500);
+}
+
+function stopPolling() {
+  if (pvpPollInterval) { clearInterval(pvpPollInterval); pvpPollInterval = null; }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HEARTBEAT
+// ═══════════════════════════════════════════════════════════
+function startHeartbeat() {
+  stopHeartbeat();
+  pvpHeartbeatInterval = setInterval(async () => {
+    if (pvpCurrentRoom?.status === 'finished') return;
+    try {
+      await api('/api/pvp/heartbeat', {
+        method: 'POST',
+        body: JSON.stringify({ code: ROOM_CODE })
+      });
+    } catch (e) {}
+  }, 5000);
+}
+
+function stopHeartbeat() {
+  if (pvpHeartbeatInterval) {
+    clearInterval(pvpHeartbeatInterval);
+    pvpHeartbeatInterval = null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AUTO KICK AFK
+// ═══════════════════════════════════════════════════════════
+function startAfkKickChecker() {
+  stopAfkKickChecker();
+  pvpKickCheckInterval = setInterval(async () => {
+    if (pvpCurrentRoom?.status !== 'playing') return;
+
+    try {
+      const data = await api('/api/pvp/check-kick-afk', {
+        method: 'POST',
+        body: JSON.stringify({ code: ROOM_CODE })
+      });
+
+      if (!data.success) return;
+
+      if (data.kicked) {
+        stopAfkKickChecker();
+        stopHeartbeat();
+        showToast(`⚡ ${data.kicked_display} đã bị kick vì AFK ${data.afk_seconds}s!`, 'warning');
+        playAfkKickSound();
+        if (data.room) showFinished(data.room);
+      }
+    } catch (e) {}
+  }, 2000);
+}
+
+function stopAfkKickChecker() {
+  if (pvpKickCheckInterval) {
+    clearInterval(pvpKickCheckInterval);
+    pvpKickCheckInterval = null;
+  }
+}
+
+function playAfkKickSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.15);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.2);
+    });
+  } catch (e) {}
+}
+
+// AFK status banner
+setInterval(async () => {
+  if (pvpCurrentRoom?.status !== 'playing') {
+    $('oppAfkNotice').style.display = 'none';
+    return;
+  }
+  try {
+    const data = await api(`/api/pvp/afk-status/${ROOM_CODE}`);
+    if (!data.success) return;
+
+    if (data.opponent_is_afk) {
+      const oppName = pvpCurrentRoom?.opponent_display || 'Đối thủ';
+      const secs = Math.round(data.opponent_afk_seconds);
+      $('oppAfkNotice').style.display = 'flex';
+      $('oppAfkText').textContent = `⚠️ ${oppName} đang AFK ${secs}s!`;
+
+      const now = Date.now();
+      if (now - pvpLastOppAfkWarning > 15000) {
+        pvpLastOppAfkWarning = now;
+        showToast(`⚠️ ${oppName} đang AFK!`, 'warning');
+      }
+    } else {
+      $('oppAfkNotice').style.display = 'none';
+    }
+
+    if (data.your_afk_seconds >= 20 && pvpCurrentRoom?.status === 'playing') {
+      const secs = Math.round(data.your_afk_seconds);
+      const banner = $('afkWarningBanner');
+      banner.classList.add('show');
+      if (secs >= 30) {
+        banner.classList.add('danger');
+        $('afkWarningText').textContent = `🚨 Bạn đã AFK ${secs}s! Trả lời ngay!`;
+      } else {
+        banner.classList.remove('danger');
+        $('afkWarningText').textContent = `⏰ Bạn AFK ${secs}s! Vui lòng tương tác.`;
+      }
+      if (!pvpAfkWarningShown) {
+        pvpAfkWarningShown = true;
+        try {
+          await api('/api/pvp/afk-warning', {
+            method: 'POST',
+            body: JSON.stringify({ code: ROOM_CODE })
+          });
+        } catch (e) {}
+      }
+    } else {
+      $('afkWarningBanner').classList.remove('show', 'danger');
+      pvpAfkWarningShown = false;
+    }
+  } catch (e) {}
+}, 3000);
+
+// ═══════════════════════════════════════════════════════════
+//  LEAVE MATCH
+// ═══════════════════════════════════════════════════════════
+function confirmLeaveMatch() {
+  $('leaveConfirmOverlay').classList.add('show');
+}
+
+function closeLeaveConfirm() {
+  $('leaveConfirmOverlay').classList.remove('show');
+}
+
+async function doLeaveMatch() {
+  closeLeaveConfirm();
+
+  try {
+    const data = await api('/api/pvp/leave-match', {
+      method: 'POST',
+      body: JSON.stringify({ code: ROOM_CODE, reason: 'manual' })
+    });
+    if (data.success) {
+      showToast('🚪 Đã rời trận! Bạn bị xử thua.', 'warning');
+      stopHeartbeat();
+      stopAfkKickChecker();
+      setTimeout(() => window.location.href = '/game', 1500);
+    } else {
+      showToast('❌ ' + (data.error || 'Lỗi!'), 'error');
+    }
+  } catch (e) {
+    showToast('❌ Lỗi kết nối!', 'error');
+  }
+}
+
+$('leaveConfirmOverlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'leaveConfirmOverlay') closeLeaveConfirm();
+});
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+loadRoom();
+startPolling();
+startHeartbeat();
+startAfkKickChecker();
+
+// Kiểm tra phòng mỗi 10s (nếu user vào nhầm URL)
+setInterval(async () => {
+  try {
+    const data = await api(`/api/pvp/room/${ROOM_CODE}`);
+    if (!data.success) {
+      window.location.href = '/game';
+    }
+  } catch (e) {}
+}, 10000);
+</script>
+
+</body>
+</html>
