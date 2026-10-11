@@ -682,7 +682,7 @@ def register():
             'message': f'Chào mừng {username}!',
             'username': username,
             'user_id': user_id,
-            'role': 'user'
+            'role': 'user's
         })
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
@@ -759,9 +759,20 @@ def login():
         log.insert(0, {'action': 'login', 'detail': f'Đăng nhập lần {users[found_user]["login_count"]}', 'time': now})
         users[found_user]['activity_log'] = log[:50]
         save_user(found_user, users[found_user])
-
         session.permanent = remember
         session['username'] = found_user
+                # ═══════════════════════════════════════════════════════
+        #  KIỂM TRA 2FA
+        # ═══════════════════════════════════════════════════════
+        totp_enabled = users[found_user].get('totp_enabled', False)
+        if totp_enabled:
+            return jsonify({
+                'success': False,
+                'need_2fa': True,
+                'username': found_user,
+                'message': 'Nhập mã 2FA từ Google Authenticator',
+            }), 202
+        # ═══════════════════════════════════════════════════════
         session['login_time'] = now
 
         warnings = users[found_user].get('warnings', [])
