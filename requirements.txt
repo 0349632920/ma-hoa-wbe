@@ -1,6 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════════
-#  MÃ HÓA TOOL — Requirements (Fixed)
-#  Đã lược bỏ highwayhash vì không tồn tại trên PyPI
+#  MÃ HÓA TOOL — Requirements (Full)
 # ═══════════════════════════════════════════════════════════════════════════
 
 # ─── Web Framework ───
@@ -17,10 +16,10 @@ requests==2.34.2
 # ─── Cryptography (cơ bản) ───
 cryptography==42.0.8
 
-# ─── Crypto chính (PyCryptodome) ───
+# ─── PyCryptodome (AES, DES, 3DES, Blowfish, ChaCha20, Salsa20, ARC2, ARC4, CAST) ───
 pycryptodome==3.20.0
 
-# ─── Bổ sung Crypto (nâng cao) ───
+# ─── PyCryptodomex (Twofish, Serpent, IDEA, Camellia, ARIA, SEED, SM4, RSA, ECC...) ───
 pycryptodomex==3.20.0
 
 # ─── Hash mở rộng ───
@@ -29,6 +28,10 @@ mmh3==4.1.0
 xxhash==3.4.1
 cityhash==0.4.7
 pyfarmhash==0.3.2
+
+# ─── Password Hashing (Argon2, bcrypt) ───
+argon2-cffi==23.1.0
+bcrypt==4.2.0
 
 # ─── JWT ───
 PyJWT==2.9.0
