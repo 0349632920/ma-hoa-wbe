@@ -40,4 +40,3 @@ PyJWT==2.9.0
 deep-translator==1.11.4
 pyotp==2.9.0
 qrcode[pil]==7.4.2
-google-recaptcha==1.1.5
