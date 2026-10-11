@@ -12,204 +12,7 @@
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       min-height: 100vh; color: #fff; padding: 20px;
     }
-    .container { max-width: 1200px; margin: 0 auto; opacity: 0; transition: opacity 0.5s ease; }
-    .container.show { opacity: 1; }
-
-    /* ═══════════════════════════════════════════
-       🎮 GAME LOADING SCREEN
-       ═══════════════════════════════════════════ */
-    .game-loading-screen {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      overflow: hidden;
-      transition: opacity 0.6s ease, visibility 0.6s ease;
-    }
-    .game-loading-screen.hide {
-      opacity: 0;
-      visibility: hidden;
-    }
-
-    .game-loading-bg {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      pointer-events: none;
-    }
-    .loading-star {
-      position: absolute;
-      color: rgba(255,255,255,0.4);
-      font-size: 20px;
-      animation: starFloat 4s ease-in-out infinite;
-      animation-delay: var(--delay);
-    }
-    @keyframes starFloat {
-      0%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
-      50%      { transform: translateY(-30px) scale(1.3); opacity: 0.9; }
-    }
-
-    .loading-content {
-      text-align: center;
-      color: #fff;
-      max-width: 500px;
-      width: 100%;
-      position: relative;
-      z-index: 2;
-    }
-
-    .loading-logo {
-      position: relative;
-      width: 150px;
-      height: 150px;
-      margin: 0 auto 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .loading-logo-icon {
-      font-size: 80px;
-      position: relative;
-      z-index: 2;
-      animation: logoPulse 1.8s ease-in-out infinite;
-      filter: drop-shadow(0 10px 30px rgba(255,255,255,0.6));
-    }
-    @keyframes logoPulse {
-      0%, 100% { transform: scale(1) rotate(0); }
-      50%      { transform: scale(1.15) rotate(-8deg); }
-    }
-    .loading-logo-ring {
-      position: absolute;
-      inset: 0;
-      border: 3px solid rgba(255,255,255,0.6);
-      border-radius: 50%;
-      animation: ringExpand 2.2s ease-out infinite;
-    }
-    .loading-logo-ring.ring-2 { animation-delay: 0.7s; }
-    .loading-logo-ring.ring-3 { animation-delay: 1.4s; }
-    @keyframes ringExpand {
-      0%   { transform: scale(0.5); opacity: 1; }
-      100% { transform: scale(1.7); opacity: 0; }
-    }
-
-    .loading-title {
-      font-size: 42px;
-      font-weight: 900;
-      margin-bottom: 12px;
-      letter-spacing: -1px;
-      animation: slideUp 0.6s ease 0.2s both;
-      text-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-    .loading-title .gradient {
-      background: linear-gradient(135deg, #fff, #ffe0b2, #ffcc80);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .loading-subtitle {
-      font-size: 15px;
-      opacity: 0.95;
-      margin-bottom: 40px;
-      animation: slideUp 0.6s ease 0.35s both;
-      font-weight: 500;
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .loading-progress {
-      width: 100%;
-      height: 6px;
-      background: rgba(255,255,255,0.25);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 15px;
-      animation: slideUp 0.6s ease 0.5s both;
-    }
-    .loading-progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #fff, #ffe0b2);
-      border-radius: 10px;
-      transition: width 0.5s ease-out;
-      box-shadow: 0 0 15px rgba(255,255,255,0.9);
-      position: relative;
-    }
-    .loading-progress-fill::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
-      animation: shine 1.2s linear infinite;
-    }
-    @keyframes shine {
-      0%   { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-
-    .loading-status {
-      font-size: 14px;
-      opacity: 0.95;
-      margin-bottom: 30px;
-      min-height: 20px;
-      animation: slideUp 0.6s ease 0.6s both;
-      font-weight: 500;
-    }
-
-    .loading-steps {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      animation: slideUp 0.6s ease 0.75s both;
-    }
-    .loading-step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      opacity: 0.45;
-      transition: all 0.3s ease;
-    }
-    .loading-step .step-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.4);
-      border: 2px solid rgba(255,255,255,0.6);
-      transition: all 0.3s ease;
-    }
-    .loading-step span {
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .loading-step.active { opacity: 1; }
-    .loading-step.active .step-dot {
-      background: white;
-      transform: scale(1.3);
-      box-shadow: 0 0 15px rgba(255,255,255,0.9);
-    }
-    .loading-step.done { opacity: 1; }
-    .loading-step.done .step-dot {
-      background: #4ade80;
-      border-color: #4ade80;
-      box-shadow: 0 0 12px rgba(74,222,128,0.8);
-    }
-    .loading-step.done .step-dot::after {
-      content: '✓';
-      color: white;
-      font-size: 9px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      margin-top: -1px;
-    }
+    .container { max-width: 1200px; margin: 0 auto; }
 
     /* HEADER */
     .game-header {
@@ -238,21 +41,6 @@
     }
     .btn-back:hover { background: rgba(255,255,255,0.3); }
 
-    /* KHÓA NÚT VỀ TRANG CHÍNH */
-    .btn-back.locked {
-      opacity: 0.3;
-      pointer-events: none;
-      cursor: not-allowed;
-      filter: grayscale(1);
-      position: relative;
-    }
-    .btn-back.locked::after {
-      content: '🔒';
-      position: absolute;
-      top: 6px; right: 8px;
-      font-size: 12px; opacity: 0.8;
-    }
-
     /* TABS */
     .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
     .tab {
@@ -267,6 +55,7 @@
       box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
     }
 
+    /* 🔒 KHÓA TABS KHI PVP */
     .tabs.pvp-locked .tab:not([data-tab="pvp"]) {
       opacity: 0.3;
       pointer-events: none;
@@ -277,8 +66,10 @@
     .tabs.pvp-locked .tab:not([data-tab="pvp"])::after {
       content: '🔒';
       position: absolute;
-      top: 6px; right: 8px;
-      font-size: 12px; opacity: 0.8;
+      top: 6px;
+      right: 8px;
+      font-size: 12px;
+      opacity: 0.8;
     }
     .tabs.pvp-locked .tab[data-tab="pvp"] {
       animation: pvpTabPulse 1.5s ease-in-out infinite;
@@ -551,7 +342,6 @@
       padding: 4px 10px; background: rgba(0,0,0,0.3); border-radius: 6px;
     }
 
-    /* WAITING */
     .pvp-waiting-box {
       background: rgba(255,255,255,0.03);
       border: 2px solid rgba(102,126,234,0.3);
@@ -598,7 +388,6 @@
     }
     .pvp-btn-cancel:hover { background: rgba(231,76,60,0.15); color: #e74c3c; }
 
-    /* CHAT */
     .pvp-chat-box {
       background: rgba(0,0,0,0.3);
       border-radius: 12px; padding: 16px; margin-top: 24px;
@@ -621,7 +410,6 @@
     }
     .pvp-chat-input:focus { border-color: #667eea; }
 
-    /* PLAYING */
     .pvp-scoreboard {
       display: flex; justify-content: space-between;
       align-items: center; padding: 20px 30px;
@@ -674,7 +462,7 @@
     }
     @keyframes wordPulse {
       0%, 100% { transform: scale(1); }
-      50%      { transform: scale(1.02); }
+      50% { transform: scale(1.02); }
     }
 
     .pvp-opponent-status {
@@ -753,12 +541,12 @@
     }
     @keyframes afkShake {
       0%, 100% { transform: rotate(0); }
-      25%      { transform: rotate(-15deg); }
-      75%      { transform: rotate(15deg); }
+      25% { transform: rotate(-15deg); }
+      75% { transform: rotate(15deg); }
     }
     @keyframes afkPulse {
       0%, 100% { transform: translateX(-50%) scale(1); }
-      50%      { transform: translateX(-50%) scale(1.03); }
+      50% { transform: translateX(-50%) scale(1.03); }
     }
 
     .opp-afk-notice {
@@ -817,7 +605,10 @@
       visibility: hidden;
       transition: 0.3s;
     }
-    .leave-confirm-overlay.show { opacity: 1; visibility: visible; }
+    .leave-confirm-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
     .leave-confirm-box {
       background: linear-gradient(145deg, #2a2a3e, #1f1f2e);
       border: 2px solid #e74c3c;
@@ -828,26 +619,51 @@
       text-align: center;
       box-shadow: 0 25px 80px rgba(0,0,0,0.6);
     }
-    .leave-confirm-icon { font-size: 64px; margin-bottom: 16px; }
-    .leave-confirm-box h3 { font-size: 22px; margin-bottom: 12px; color: #fff; }
-    .leave-confirm-box p { color: #999; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+    .leave-confirm-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    .leave-confirm-box h3 {
+      font-size: 22px;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .leave-confirm-box p {
+      color: #999;
+      font-size: 14px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
     .leave-confirm-actions {
-      display: flex; gap: 12px;
-      justify-content: center; flex-wrap: wrap;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
     .leave-confirm-btn {
-      padding: 14px 28px; border: none; border-radius: 12px;
-      font-family: inherit; font-size: 15px; font-weight: 700;
-      cursor: pointer; transition: 0.2s; min-width: 120px;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+      min-width: 120px;
     }
-    .leave-confirm-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
+    .leave-confirm-btn.cancel {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
     .leave-confirm-btn.confirm {
       background: linear-gradient(135deg, #e74c3c, #c0392b);
-      color: #fff; box-shadow: 0 6px 20px rgba(231,76,60,0.4);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(231,76,60,0.4);
     }
-    .leave-confirm-btn:hover { transform: translateY(-2px); }
+    .leave-confirm-btn:hover {
+      transform: translateY(-2px);
+    }
 
-    /* FINISHED */
     .pvp-result-box {
       text-align: center; padding: 40px;
       background: rgba(255,255,255,0.03); border-radius: 20px;
@@ -951,7 +767,6 @@
     .meme-preview.show { display: block; }
     .meme-preview img { max-width: 100%; border-radius: 12px; }
 
-    /* LOADING + TOAST */
     .loading-spinner {
       display: inline-block; width: 20px; height: 20px;
       border: 3px solid rgba(255,255,255,0.3);
@@ -982,55 +797,7 @@
 </head>
 <body>
 
-<!-- ═══ GAME LOADING SCREEN ═══ -->
-<div class="game-loading-screen" id="gameLoadingScreen">
-  <div class="game-loading-bg">
-    <span class="loading-star" style="--delay:0s;  top:15%; left:10%;">⭐</span>
-    <span class="loading-star" style="--delay:0.5s; top:20%; left:80%;">✨</span>
-    <span class="loading-star" style="--delay:1s;   top:70%; left:20%;">💫</span>
-    <span class="loading-star" style="--delay:1.5s; top:80%; left:75%;">🌟</span>
-    <span class="loading-star" style="--delay:0.8s; top:45%; left:50%;">⭐</span>
-    <span class="loading-star" style="--delay:1.2s; top:10%; left:45%;">✨</span>
-    <span class="loading-star" style="--delay:0.3s; top:85%; left:45%;">💫</span>
-    <span class="loading-star" style="--delay:1.7s; top:55%; left:15%;">🌟</span>
-  </div>
-
-  <div class="loading-content">
-    <div class="loading-logo">
-      <div class="loading-logo-icon">🎮</div>
-      <div class="loading-logo-ring"></div>
-      <div class="loading-logo-ring ring-2"></div>
-      <div class="loading-logo-ring ring-3"></div>
-    </div>
-
-    <h1 class="loading-title">
-      <span>Game</span> <span class="gradient">Hub</span>
-    </h1>
-    <p class="loading-subtitle">Chơi game — Kiếm điểm — Lên top</p>
-
-    <div class="loading-progress">
-      <div class="loading-progress-fill" id="gameLoadingProgress"></div>
-    </div>
-    <p class="loading-status" id="gameLoadingStatus">Đang khởi tạo...</p>
-
-    <div class="loading-steps">
-      <div class="loading-step" data-step="1">
-        <div class="step-dot"></div>
-        <span>Khởi động</span>
-      </div>
-      <div class="loading-step" data-step="2">
-        <div class="step-dot"></div>
-        <span>Tải dữ liệu</span>
-      </div>
-      <div class="loading-step" data-step="3">
-        <div class="step-dot"></div>
-        <span>Sẵn sàng</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="container" id="gameContainer">
+<div class="container">
 
   <div class="game-header">
     <div class="game-title">
@@ -1053,7 +820,7 @@
         <div class="value" id="myRank">—</div>
         <div class="label">Xếp hạng</div>
       </div>
-      <a href="/" class="btn-back" id="btnBackHome">🔐 Về trang chính</a>
+      <a href="/" class="btn-back">🔐 Về trang chính</a>
     </div>
   </div>
 
@@ -1113,7 +880,7 @@
       ⌨️ Gõ từ tiếng Anh nhanh nhất — Ai gõ nhanh hơn thắng!
     </p>
 
-    <div class="pvp-subtabs" id="pvpSubtabs">
+    <div class="pvp-subtabs">
       <button class="pvp-subtab active" data-subtab="lobby">🎮 Phòng</button>
       <button class="pvp-subtab" data-subtab="create">➕ Tạo phòng</button>
       <button class="pvp-subtab" data-subtab="friends">👥 Bạn bè</button>
@@ -1314,9 +1081,12 @@
             <div class="pvp-result-value" id="pvpResultOppScore">0</div>
           </div>
         </div>
-        <button class="big-btn" onclick="backToLobby()" style="margin:0 auto;">
-          🎮 Quay về sảnh
-        </button>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          <button class="big-btn" id="pvpRematchBtn" onclick="voteRematch()" style="margin:0;">
+            🔄 Chơi lại
+          </button>
+          <button class="pvp-btn-cancel" onclick="backToLobby()">🚪 Về sảnh</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1396,77 +1166,11 @@ function formatTime(iso) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  🎮 GAME LOADING SCREEN
-// ═══════════════════════════════════════════════════════════
-function runGameLoading() {
-  const messages = [
-    'Đang khởi tạo...',
-    'Đang tải dữ liệu người dùng...',
-    'Đang chuẩn bị bảng xếp hạng...',
-    'Đang kết nối máy chủ...',
-    'Sắp xong rồi...',
-    'Sẵn sàng! 🎉'
-  ];
-
-  const progress = $('gameLoadingProgress');
-  const status = $('gameLoadingStatus');
-
-  progress.style.width = '25%';
-  status.textContent = messages[0];
-  markLoadingStep(1, 'active');
-
-  setTimeout(() => {
-    progress.style.width = '50%';
-    status.textContent = messages[1];
-    markLoadingStep(1, 'done');
-    markLoadingStep(2, 'active');
-  }, 450);
-
-  setTimeout(() => {
-    progress.style.width = '80%';
-    status.textContent = messages[3];
-    markLoadingStep(2, 'done');
-    markLoadingStep(3, 'active');
-  }, 1000);
-
-  setTimeout(() => {
-    progress.style.width = '100%';
-    status.textContent = messages[5];
-    markLoadingStep(3, 'done');
-  }, 1500);
-
-  setTimeout(() => {
-    $('gameLoadingScreen').classList.add('hide');
-    $('gameContainer').classList.add('show');
-    document.body.style.overflow = '';
-
-    setTimeout(() => {
-      const el = $('gameLoadingScreen');
-      if (el) el.remove();
-    }, 700);
-  }, 1800);
-}
-
-function markLoadingStep(n, state) {
-  const el = document.querySelector(`.loading-step[data-step="${n}"]`);
-  if (el) {
-    el.classList.remove('active', 'done');
-    el.classList.add(state);
-  }
-}
-
-// Khóa scroll khi loading
-document.body.style.overflow = 'hidden';
-
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(runGameLoading, 100);
-});
-
-// ═══════════════════════════════════════════════════════════
 //  TABS
 // ═══════════════════════════════════════════════════════════
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
+    // Chặn nếu tabs đang bị khóa và click tab khác PvP
     const tabsEl = $('mainTabs');
     if (tabsEl && tabsEl.classList.contains('pvp-locked')) {
       if (tab.dataset.tab !== 'pvp') {
@@ -1498,41 +1202,6 @@ document.querySelectorAll('.pvp-subtab').forEach(st => {
     if (st.dataset.subtab === 'friends') loadFriends();
     if (st.dataset.subtab === 'history') loadPvPHistory();
   });
-});
-
-// ═══════════════════════════════════════════════════════════
-//  🔒 KHÓA / MỞ KHÓA TABS + NÚT BACK
-// ═══════════════════════════════════════════════════════════
-function lockTabs() {
-  const tabs = $('mainTabs');
-  if (tabs) tabs.classList.add('pvp-locked');
-  const banner = $('pvpLockBanner');
-  if (banner) banner.classList.add('show');
-  const btnBack = $('btnBackHome');
-  if (btnBack) btnBack.classList.add('locked');
-}
-
-function unlockTabs() {
-  const tabs = $('mainTabs');
-  if (tabs) tabs.classList.remove('pvp-locked');
-  const banner = $('pvpLockBanner');
-  if (banner) banner.classList.remove('show');
-  const btnBack = $('btnBackHome');
-  if (btnBack) btnBack.classList.remove('locked');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const btnBack = $('btnBackHome');
-  if (btnBack) {
-    btnBack.addEventListener('click', (e) => {
-      if (btnBack.classList.contains('locked')) {
-        e.preventDefault();
-        e.stopPropagation();
-        showToast('🔒 Bạn đang trong trận đấu! Hãy hoàn thành hoặc rời trận trước khi thoát.', 'error');
-        return false;
-      }
-    });
-  }
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -1745,12 +1414,29 @@ const PVP_HIDDEN_TIMEOUT = 30000;
   document.addEventListener(evt, () => {
     pvpLastActivity = Date.now();
     const banner = $('afkWarningBanner');
-    if (banner && banner.classList.contains('show')) {
+    if (banner.classList.contains('show')) {
       banner.classList.remove('show');
       pvpAfkWarningShown = false;
     }
   }, { passive: true });
 });
+
+// ═══════════════════════════════════════════════════════════
+//  🔒 KHÓA / MỞ KHÓA TABS KHI ĐANG PVP
+// ═══════════════════════════════════════════════════════════
+function lockTabs() {
+  const tabs = $('mainTabs');
+  if (tabs) tabs.classList.add('pvp-locked');
+  const banner = $('pvpLockBanner');
+  if (banner) banner.classList.add('show');
+}
+
+function unlockTabs() {
+  const tabs = $('mainTabs');
+  if (tabs) tabs.classList.remove('pvp-locked');
+  const banner = $('pvpLockBanner');
+  if (banner) banner.classList.remove('show');
+}
 
 // ═══════════════════════════════════════════════════════════
 //  🚪 RỜI WEB = XỬ THUA
@@ -1779,15 +1465,15 @@ function handleLeaveWeb() {
   }
 }
 
+// Đóng tab / trình duyệt
 window.addEventListener('beforeunload', (e) => {
   if (!pvpRoomCode) return;
   if (pvpCurrentRoom?.status !== 'playing') return;
+
   handleLeaveWeb();
-  e.preventDefault();
-  e.returnValue = 'Bạn đang trong trận đấu! Rời đi sẽ bị xử thua.';
-  return 'Bạn đang trong trận đấu! Rời đi sẽ bị xử thua.';
 });
 
+// Chuyển tab / ẩn trang
 document.addEventListener('visibilitychange', () => {
   if (!pvpRoomCode) return;
   if (pvpCurrentRoom?.status !== 'playing') return;
@@ -1804,10 +1490,12 @@ document.addEventListener('visibilitychange', () => {
         }
       }
     }, PVP_HIDDEN_TIMEOUT);
+
   } else {
     if (pvpTabHiddenAt) {
       const hiddenDuration = Date.now() - pvpTabHiddenAt;
       pvpTabHiddenAt = null;
+
       if (hiddenDuration < PVP_HIDDEN_TIMEOUT) {
         showToast('✅ Đã quay lại! Tiếp tục chơi.', 'success');
       }
@@ -1958,12 +1646,15 @@ function showPvPPlaying(room) {
   startAfkKickChecker();
   lockTabs();
 
+  // Reset biến rời web
   pvpLeaveBeaconSent = false;
   pvpTabHiddenAt = null;
 }
 
 function updatePvPUI(room) {
   pvpCurrentRoom = room;
+  const you = room.you;
+  const opp = room.opponent;
 
   const youScore = room.round_info?.scores?.you || 0;
   const oppScore = room.round_info?.scores?.opponent || 0;
@@ -2031,6 +1722,8 @@ function updatePvPUI(room) {
 
 function updateScoreOnly(room) {
   pvpCurrentRoom = room;
+  const you = room.you;
+  const opp = room.opponent;
 
   const youScore = room.round_info?.scores?.you || 0;
   const oppScore = room.round_info?.scores?.opponent || 0;
@@ -2134,6 +1827,7 @@ function showPvPFinished(room) {
   stopAfkKickChecker();
   unlockTabs();
 
+  // Reset biến rời web
   pvpLeaveBeaconSent = false;
   pvpTabHiddenAt = null;
 
@@ -2324,6 +2018,24 @@ async function kickGuest() {
   } catch (e) { showToast('❌ Lỗi kick!', 'error'); }
 }
 
+async function voteRematch() {
+  try {
+    const data = await api('/api/pvp/rematch', {
+      method: 'POST',
+      body: JSON.stringify({ code: pvpRoomCode })
+    });
+    if (data.success) {
+      showToast('🔄 ' + data.message);
+      if (data.restarted) {
+        setTimeout(async () => {
+          const r = await api(`/api/pvp/room/${pvpRoomCode}`);
+          if (r.success) showPvPWaiting(r.room);
+        }, 500);
+      }
+    }
+  } catch (e) {}
+}
+
 async function leavePvP() {
   if (!confirm('Rời phòng?')) return;
   try {
@@ -2422,11 +2134,17 @@ function startAfkKickChecker() {
       if (data.kicked) {
         stopAfkKickChecker();
         stopHeartbeat();
+
         showToast(`⚡ ${data.kicked_display} đã bị kick vì AFK ${data.afk_seconds}s!`, 'warning');
         playAfkKickSound();
-        if (data.room) showPvPFinished(data.room);
+
+        if (data.room) {
+          showPvPFinished(data.room);
+        }
       }
-    } catch (e) { console.debug('Kick check error:', e); }
+    } catch (e) {
+      console.debug('Kick check error:', e);
+    }
   }, 2000);
 }
 
@@ -2456,12 +2174,11 @@ function playAfkKickSound() {
   } catch (e) {}
 }
 
-// AFK status check
+// Kiểm tra AFK status để hiện banner
 setInterval(async () => {
   if (!pvpRoomCode) return;
   if (pvpCurrentRoom?.status !== 'playing') {
-    const notice = $('oppAfkNotice');
-    if (notice) notice.style.display = 'none';
+    $('oppAfkNotice').style.display = 'none';
     return;
   }
   try {
@@ -2810,16 +2527,13 @@ function checkUrlJoin() {
 // ═══════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════
-// Chờ loading xong mới load dữ liệu
-setTimeout(() => {
-  loadMyStats();
-  loadLeaderboard();
-  checkUrlJoin();
+loadMyStats();
+loadLeaderboard();
+checkUrlJoin();
 
-  setInterval(() => {
-    if (!pvpRoomCode) loadMyStats();
-  }, 30000);
-}, 1900);
+setInterval(() => {
+  if (!pvpRoomCode) loadMyStats();
+}, 30000);
 </script>
 
 </body>
