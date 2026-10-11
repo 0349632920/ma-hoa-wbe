@@ -4,1241 +4,670 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🔐 Đăng nhập — Mã Hóa Tool</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
+      color: #fff;
       overflow-x: hidden;
-      position: relative;
-      transition: background 0.6s ease;
     }
 
+    /* Background emoji floating */
     .bg-emoji {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .bg-emoji span {
       position: absolute;
       font-size: 40px;
       opacity: 0.15;
       animation: floatEmoji 8s ease-in-out infinite;
-      pointer-events: none;
-      user-select: none;
     }
-
     @keyframes floatEmoji {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-40px) rotate(20deg); }
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
+      50%      { transform: translateY(-30px) rotate(15deg); opacity: 0.25; }
     }
 
-    /* CONTAINER TO HƠN */
-    .login-container {
-      background: #fff;
-      border-radius: 26px;
-      padding: 50px 55px;
-      max-width: 720px;
-      width: 100%;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+    /* Card login */
+    .login-card {
       position: relative;
       z-index: 2;
-      animation: slideUp 0.6s ease;
-    }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Logo to hơn */
-    .login-logo {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .login-logo-icon {
-      font-size: 56px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      width: 95px;
-      height: 95px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(102, 126, 234, 0.3);
       border-radius: 24px;
-      margin: 0 auto 20px;
-      box-shadow: 0 12px 30px rgba(102,126,234,0.45);
-      animation: logoPulse 2s ease-in-out infinite;
+      padding: 40px 32px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+      animation: cardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes cardIn {
+      0%   { opacity: 0; transform: translateY(30px) scale(0.95); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    @keyframes logoPulse {
+    .logo-wrap {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .logo-icon {
+      font-size: 64px;
+      display: inline-block;
+      animation: logoPop 2s ease-in-out infinite;
+    }
+    @keyframes logoPop {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+      50%      { transform: scale(1.08); }
+    }
+    .logo-title {
+      font-size: 26px;
+      font-weight: 800;
+      margin-top: 8px;
+      background: linear-gradient(135deg, #667eea, #764ba2, #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo-sub {
+      font-size: 13px;
+      color: #999;
+      margin-top: 6px;
     }
 
-    .login-logo h1 {
-      font-size: 30px;
-      color: #333;
-      font-weight: 800;
+    /* Tabs đăng nhập / đăng ký */
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      color: #999;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: 0.25s;
+    }
+    .auth-tab.active {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #b8b8c8;
       margin-bottom: 8px;
     }
-
-    .login-logo h1 span { color: #667eea; }
-
-    .login-logo p {
-      color: #888;
-      font-size: 15px;
-    }
-
-    /* Tabs to hơn */
-    .auth-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      background: #f0f2fa;
-      padding: 7px;
-      border-radius: 15px;
-      margin-bottom: 30px;
-      position: relative;
-    }
-
-    .auth-tab-indicator {
-      position: absolute;
-      top: 7px;
-      left: 7px;
-      width: calc(50% - 7px);
-      height: calc(100% - 14px);
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      border-radius: 11px;
-      box-shadow: 0 6px 18px rgba(102,126,234,0.4);
-      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 1;
-    }
-
-    .auth-tabs.register-mode .auth-tab-indicator {
-      transform: translateX(100%);
-    }
-
-    .auth-tab {
-      position: relative;
-      z-index: 2;
-      padding: 14px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 16px;
-      font-weight: 600;
-      color: #777;
-      border-radius: 11px;
-      transition: color 0.3s;
-    }
-
-    .auth-tab.active { color: white; }
-
-    /* Form to hơn */
-    .form-group {
-      margin-bottom: 20px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 15px;
-      font-weight: 600;
-      color: #555;
-      margin-bottom: 10px;
-    }
-
-    .input-wrapper { position: relative; }
-
-    .input-icon {
-      position: absolute;
-      left: 18px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 20px;
-      pointer-events: none;
-    }
-
     .form-input {
       width: 100%;
-      padding: 16px 18px 16px 54px;
-      border: 2px solid #e0e0e0;
-      border-radius: 13px;
-      font-size: 16px;
-      font-family: inherit;
-      transition: 0.3s;
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 4px rgba(102,126,234,0.12);
-    }
-
-    .form-input.error {
-      border-color: #e74c3c;
-      animation: shake 0.4s;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-6px); }
-      75% { transform: translateX(6px); }
-    }
-
-    .toggle-password {
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 20px;
-      padding: 6px;
-      border-radius: 8px;
-      transition: 0.2s;
-    }
-
-    .toggle-password:hover { background: #f0f0f5; }
-
-    /* Password strength */
-    .password-strength {
-      display: flex;
-      gap: 5px;
-      margin-top: 10px;
-    }
-
-    .strength-bar {
-      flex: 1;
-      height: 5px;
-      background: #e0e0e0;
-      border-radius: 4px;
-      transition: 0.3s;
-    }
-
-    .strength-bar.weak { background: #e74c3c; }
-    .strength-bar.medium { background: #f39c12; }
-    .strength-bar.strong { background: #27ae60; }
-
-    .strength-text {
-      font-size: 13px;
-      margin-top: 8px;
-      color: #888;
-      font-weight: 500;
-    }
-
-    /* Options */
-    .form-options {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      font-size: 15px;
-    }
-
-    .checkbox-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      color: #555;
-    }
-
-    .checkbox-wrapper input {
-      width: 20px;
-      height: 20px;
-      accent-color: #667eea;
-      cursor: pointer;
-    }
-
-    .forgot-link {
-      color: #667eea;
-      text-decoration: none;
-      font-weight: 600;
-      transition: 0.2s;
-    }
-
-    .forgot-link:hover { text-decoration: underline; }
-
-    /* Error box */
-    .error-box {
-      padding: 14px 18px;
-      background: #ffebee;
-      border-left: 4px solid #e74c3c;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.12);
       border-radius: 12px;
-      color: #c0392b;
-      font-size: 15px;
-      margin-bottom: 20px;
-      animation: slideDown 0.3s ease;
-      display: none;
-      white-space: pre-line;
-    }
-
-    .error-box.show { display: block; }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Submit button to hơn */
-    .btn-submit {
-      width: 100%;
-      padding: 18px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      border-radius: 13px;
-      font-size: 17px;
-      font-weight: 700;
-      cursor: pointer;
+      color: #fff;
       font-family: inherit;
-      transition: 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .btn-submit:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px rgba(102,126,234,0.45);
-    }
-
-    .btn-submit:disabled {
-      opacity: 0.7;
-      cursor: wait;
-    }
-
-    .btn-submit .spinner {
-      width: 22px;
-      height: 22px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      display: none;
-    }
-
-    .btn-submit.loading .spinner { display: block; }
-    .btn-submit.loading .btn-text { display: none; }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* ============================================
-       CREATOR CREDIT — 5 NGƯỜI
-       ============================================ */
-    .creator-credit {
-      margin-top: 32px;
-      padding-top: 26px;
-      border-top: 1px solid #f0f0f5;
-      text-align: center;
-      animation: fadeIn 0.6s ease 0.8s both;
-    }
-
-    .creator-divider {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .creator-divider > span:first-child,
-    .creator-divider > span:last-child {
       font-size: 15px;
-      opacity: 0.5;
+      outline: none;
+      transition: 0.2s;
     }
-
-    .creator-divider-line {
-      width: 90px;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #667eea, transparent);
-      border-radius: 2px;
-    }
-
-    .creator-label {
-      font-size: 13px;
-      color: #999;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 20px;
-    }
-
-    /* 5 người ngang */
-    .creators-row {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-
-    .creator-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 14px 10px;
-      background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
-      border: 2px solid #e0e5ff;
-      border-radius: 16px;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-      flex: 1;
-      min-width: 105px;
-      max-width: 130px;
-    }
-
-    .creator-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(102,126,234,0.15), transparent);
-      transition: 0.6s;
-    }
-
-    .creator-card:hover::before { left: 100%; }
-
-    .creator-card:hover {
+    .form-input:focus {
       border-color: #667eea;
-      transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.25);
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
     }
+    .form-input::placeholder { color: #666; }
 
-    .creator-avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 20px;
-      margin-bottom: 10px;
-      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-      transition: 0.3s;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .creator-card:hover .creator-avatar {
-      transform: scale(1.1) rotate(-5deg);
-    }
-
-    .creator-avatar-img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-      display: block;
-      position: relative;
-      z-index: 2;
-    }
-
-    .avatar-fallback {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      color: white;
-      z-index: 1;
-    }
-
-    .creator-name {
-      font-size: 11px;
-      font-weight: 800;
-      color: #333;
-      margin-bottom: 3px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    /* Nhập OTP */
+    .otp-input {
       text-align: center;
-      line-height: 1.2;
-    }
-
-    .creator-role {
-      font-size: 9px;
-      color: #999;
-      font-weight: 600;
-      margin-bottom: 8px;
-      text-align: center;
-      line-height: 1.2;
-    }
-
-    .creator-tiktok-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      font-size: 9px;
+      font-size: 26px;
+      letter-spacing: 12px;
+      font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 20px;
-      background: #000;
-      color: white;
-      transition: 0.3s;
+      padding: 18px 16px;
     }
 
-    .creator-card:hover .creator-tiktok-badge {
-      background: linear-gradient(135deg, #25F4EE, #FE2C55);
-      transform: scale(1.05);
-    }
-
-    /* ===== HÙNG — XANH LÁ Ở GIỮA ===== */
-    .creator-card.hung-card {
-      position: relative;
-      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-      border: 2.5px solid #22c55e;
-      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.25);
-      transform: scale(1.05);
-      z-index: 2;
-    }
-
-    .creator-card.hung-card:hover {
-      transform: scale(1.1) translateY(-4px);
-      box-shadow: 0 12px 35px rgba(34, 197, 94, 0.45);
-      border-color: #16a34a;
-    }
-
-    .creator-card.hung-card::after {
-      content: '⭐';
-      position: absolute;
-      top: -8px;
-      right: -8px;
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
       font-size: 15px;
-      background: linear-gradient(135deg, #f6d365, #fda085);
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.25s;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 3px 10px rgba(253,160,133,0.6);
-      animation: starGlow 2s ease-in-out infinite;
-      z-index: 3;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.15);
     }
 
-    @keyframes starGlow {
-      0%, 100% {
-        box-shadow: 0 3px 10px rgba(253,160,133,0.6);
-        transform: scale(1);
-      }
-      50% {
-        box-shadow: 0 4px 20px rgba(253,160,133,1);
-        transform: scale(1.15);
-      }
-    }
-
-    .hung-avatar {
-      background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-      box-shadow: 0 6px 16px rgba(34, 197, 94, 0.6) !important;
-      animation: hungPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes hungPulse {
-      0%, 100% { box-shadow: 0 6px 16px rgba(34, 197, 94, 0.6); }
-      50% { box-shadow: 0 6px 24px rgba(34, 197, 94, 1); }
-    }
-
-    .hung-name {
-      background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-      -webkit-background-clip: text !important;
-      -webkit-text-fill-color: transparent !important;
-      background-clip: text !important;
-    }
-
-    .hung-role {
-      color: #16a34a !important;
-      font-weight: 700 !important;
-    }
-
-    .hung-badge {
-      background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    }
-
-    .creator-card.hung-card:hover .hung-badge {
-      background: linear-gradient(135deg, #25F4EE, #FE2C55) !important;
-    }
-
-    /* ===== SÁT NHÂN — ĐỎ ===== */
-    .killer-card {
-      background: linear-gradient(135deg, #fff5f5, #ffe8e8);
-      border-color: #ffd0d0;
-    }
-
-    .killer-card:hover {
-      border-color: #e74c3c;
-      box-shadow: 0 12px 30px rgba(231, 76, 60, 0.3);
-    }
-
-    .killer-avatar {
-      background: linear-gradient(135deg, #e74c3c, #c0392b);
-      box-shadow: 0 6px 16px rgba(231, 76, 60, 0.5);
-    }
-
-    .killer-name {
-      background: linear-gradient(135deg, #e74c3c, #c0392b);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .killer-role { color: #c0392b; font-weight: 700; }
-
-    .killer-badge { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-
-    .killer-card:hover .killer-badge {
-      background: linear-gradient(135deg, #25F4EE, #FE2C55);
-    }
-
-    /* ===== DŨNG — TÍM ===== */
-    .dung-card {
-      background: linear-gradient(135deg, #faf5ff, #f3e8ff);
-      border-color: #e9d5ff;
-    }
-
-    .dung-card:hover {
-      border-color: #9333ea;
-      box-shadow: 0 12px 30px rgba(147, 51, 234, 0.25);
-    }
-
-    .dung-avatar {
-      background: linear-gradient(135deg, #9333ea, #7e22ce);
-      box-shadow: 0 6px 16px rgba(147, 51, 234, 0.5);
-    }
-
-    .dung-name {
-      background: linear-gradient(135deg, #9333ea, #7e22ce);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .dung-role { color: #7e22ce; font-weight: 700; }
-
-    .dung-badge { background: linear-gradient(135deg, #9333ea, #7e22ce); }
-
-    .dung-card:hover .dung-badge {
-      background: linear-gradient(135deg, #25F4EE, #FE2C55);
-    }
-
-    /* ===== MINH CHÂU — VỆ SĨ 🛡️ ===== */
-    .chau-card {
-      position: relative;
-      background: linear-gradient(135deg, #fdf2f8, #fce7f3);
-      border: 2.5px solid #ec4899;
-      box-shadow:
-        0 6px 20px rgba(236, 72, 153, 0.3),
-        inset 0 0 20px rgba(236, 72, 153, 0.05);
-    }
-
-    .chau-card:hover {
-      border-color: #db2777;
-      box-shadow:
-        0 12px 30px rgba(219, 39, 119, 0.5),
-        inset 0 0 30px rgba(219, 39, 119, 0.1);
-      transform: translateY(-4px) scale(1.03);
-    }
-
-    .chau-card::after {
-      content: '🛡️';
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      font-size: 14px;
-      background: linear-gradient(135deg, #ec4899, #db2777);
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 3px 10px rgba(236, 72, 153, 0.7);
-      animation: shieldGlow 2s ease-in-out infinite;
-      z-index: 3;
-    }
-
-    @keyframes shieldGlow {
-      0%, 100% {
-        box-shadow: 0 3px 10px rgba(236, 72, 153, 0.7);
-        transform: scale(1) rotate(0deg);
-      }
-      50% {
-        box-shadow: 0 4px 22px rgba(236, 72, 153, 1);
-        transform: scale(1.15) rotate(-10deg);
-      }
-    }
-
-    .chau-avatar {
-      background: linear-gradient(135deg, #ec4899, #db2777);
-      box-shadow: 0 6px 16px rgba(236, 72, 153, 0.5);
-      position: relative;
-      overflow: visible !important;
-    }
-
-    .chau-avatar::before {
-      content: '🛡️';
-      position: absolute;
-      bottom: -5px;
-      right: -5px;
-      font-size: 12px;
+    /* Spinner */
+    .spinner {
       width: 18px;
       height: 18px;
-      background: linear-gradient(135deg, #ec4899, #be185d);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
       border-radius: 50%;
-      display: flex;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Alert */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
       align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(236, 72, 153, 0.8);
-      z-index: 4;
-      animation: shieldMiniPulse 2s ease-in-out infinite;
+      gap: 8px;
+      animation: shake 0.4s;
     }
-
-    @keyframes shieldMiniPulse {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 2px 8px rgba(236, 72, 153, 0.8);
-      }
-      50% {
-        transform: scale(1.2);
-        box-shadow: 0 2px 14px rgba(236, 72, 153, 1);
-      }
+    .alert.show { display: flex; }
+    .alert-error {
+      background: rgba(231, 76, 60, 0.15);
+      border: 1px solid #e74c3c;
+      color: #f87171;
     }
-
-    .chau-name {
-      background: linear-gradient(135deg, #ec4899, #db2777);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .alert-success {
+      background: rgba(39, 174, 96, 0.15);
+      border: 1px solid #27ae60;
+      color: #4ade80;
     }
-
-    .chau-role {
-      color: #be185d !important;
-      font-weight: 800 !important;
-      font-size: 9px !important;
-      letter-spacing: 0.2px;
-    }
-
-    .chau-badge {
-      background: linear-gradient(135deg, #ec4899, #db2777);
-    }
-
-    .chau-card:hover .chau-badge {
-      background: linear-gradient(135deg, #25F4EE, #FE2C55);
-    }
-
-    /* ===== MINH NGỌC — VÀNG ===== */
-    .ngoc-card {
-      background: linear-gradient(135deg, #fffbeb, #fef3c7);
-      border-color: #fde68a;
-    }
-
-    .ngoc-card:hover {
-      border-color: #f59e0b;
-      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.25);
-    }
-
-    .ngoc-avatar {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
-    }
-
-    .ngoc-name {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .ngoc-role { color: #d97706; font-weight: 700; }
-
-    .ngoc-badge { background: linear-gradient(135deg, #f59e0b, #d97706); }
-
-    .ngoc-card:hover .ngoc-badge {
-      background: linear-gradient(135deg, #25F4EE, #FE2C55);
-    }
-
-    .creator-footer {
-      font-size: 12px;
-      color: #bbb;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    /* Responsive */
-    @media (max-width: 800px) {
-      .login-container {
-        max-width: 100%;
-        padding: 40px 30px;
-      }
-    }
-
-    @media (max-width: 700px) {
-      .creators-row {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        max-width: 450px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      .creator-card {
-        max-width: none;
-        min-width: auto;
-      }
-      .creator-card.hung-card {
-        transform: scale(1);
-      }
-      .creator-card.hung-card:hover {
-        transform: translateY(-4px) scale(1.02);
-      }
-    }
-
-    @media (max-width: 500px) {
-      .login-container {
-        padding: 30px 22px;
-        border-radius: 20px;
-      }
-      .login-logo h1 { font-size: 24px; }
-      .login-logo-icon { width: 80px; height: 80px; font-size: 48px; }
-      .form-input { padding: 14px 16px 14px 48px; font-size: 15px; }
-      .btn-submit { padding: 16px; font-size: 16px; }
-      .creators-row {
-        grid-template-columns: 1fr 1fr;
-        max-width: 320px;
-      }
-      .creator-avatar {
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
-      }
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: #333;
-      color: white;
-      padding: 14px 28px;
-      border-radius: 30px;
-      font-size: 15px;
-      opacity: 0;
-      transition: 0.4s;
-      pointer-events: none;
-      z-index: 9999;
-      box-shadow: 0 12px 35px rgba(0,0,0,0.35);
-      max-width: 90vw;
-      text-align: center;
-    }
-
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-
-    /* Ban/Delete effects */
-    @keyframes bannedShake {
+    @keyframes shake {
       0%, 100% { transform: translateX(0); }
-      10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-      20%, 40%, 60%, 80% { transform: translateX(10px); }
+      25%      { transform: translateX(-6px); }
+      75%      { transform: translateX(6px); }
     }
 
-    body.banned-mode {
-      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-      animation: bannedShake 0.6s ease;
+    /* 2FA Step */
+    .twofa-box {
+      display: none;
+      animation: fadeIn 0.4s;
+    }
+    .twofa-box.show { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    .login-container.banned-shake {
-      animation: bannedShake 0.6s ease;
-      border: 4px solid #e74c3c !important;
-      box-shadow: 0 0 40px rgba(231,76,60,0.8), 0 30px 80px rgba(0,0,0,0.35) !important;
+    .twofa-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(102, 126, 234, 0.15);
+      border: 1px solid rgba(102, 126, 234, 0.4);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #a0c4ff;
+      margin-bottom: 12px;
     }
 
-    body.deleted-mode {
-      background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%) !important;
-      animation: bannedShake 0.6s ease;
+    .twofa-info {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      margin-bottom: 16px;
+      line-height: 1.6;
     }
 
-    .login-container.deleted-shake {
-      animation: bannedShake 0.6s ease;
-      border: 4px solid #8e44ad !important;
-      box-shadow: 0 0 40px rgba(142,68,173,0.8), 0 30px 80px rgba(0,0,0,0.35) !important;
+    .twofa-info strong {
+      color: #ffd700;
+    }
+
+    /* Footer */
+    .login-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    /* Mobile */
+    @media (max-width: 480px) {
+      .login-card { padding: 30px 20px; }
+      .logo-icon { font-size: 52px; }
+      .logo-title { font-size: 22px; }
+      .otp-input { font-size: 22px; letter-spacing: 8px; }
     }
   </style>
 </head>
 <body>
-  <div class="bg-emoji" style="top:10%;left:8%;animation-delay:0s">🔐</div>
-  <div class="bg-emoji" style="top:20%;right:12%;animation-delay:0.5s">🔒</div>
-  <div class="bg-emoji" style="bottom:15%;left:15%;animation-delay:1s">🔑</div>
-  <div class="bg-emoji" style="bottom:20%;right:10%;animation-delay:1.5s">🛡️</div>
-  <div class="bg-emoji" style="top:50%;left:5%;animation-delay:2s">💻</div>
-  <div class="bg-emoji" style="top:60%;right:6%;animation-delay:2.5s">⚡</div>
 
-  <div class="login-container" id="loginContainer">
-    <div class="login-logo">
-      <div class="login-logo-icon">🔐</div>
-      <h1>Mã Hóa <span>Tool</span></h1>
-      <p>Đăng nhập để sử dụng công cụ</p>
+  <!-- BG Emoji -->
+  <div class="bg-emoji">
+    <span style="top:10%;left:8%;animation-delay:0s">🔐</span>
+    <span style="top:20%;right:12%;animation-delay:1s">🔒</span>
+    <span style="bottom:15%;left:15%;animation-delay:2s">🔑</span>
+    <span style="top:60%;right:8%;animation-delay:0.5s">🛡️</span>
+    <span style="bottom:25%;right:25%;animation-delay:1.5s">💻</span>
+    <span style="top:40%;left:5%;animation-delay:2.5s">⚡</span>
+    <span style="top:75%;right:40%;animation-delay:0.8s">🎯</span>
+    <span style="bottom:8%;left:45%;animation-delay:1.8s">✨</span>
+  </div>
+
+  <!-- Login Card -->
+  <div class="login-card">
+    <div class="logo-wrap">
+      <div class="logo-icon">🔐</div>
+      <div class="logo-title">Mã Hóa Tool</div>
+      <div class="logo-sub">Công cụ mã hóa & giải mã đa phương pháp</div>
     </div>
 
-    <div class="auth-tabs" id="authTabs">
-      <div class="auth-tab-indicator"></div>
-      <button class="auth-tab active" id="tabLogin">🔓 Đăng nhập</button>
-      <button class="auth-tab" id="tabRegister">✨ Đăng ký</button>
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">🔓 Đăng nhập</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">✍️ Đăng ký</button>
     </div>
 
-    <div class="error-box" id="errorBox"></div>
+    <!-- Alert -->
+    <div class="alert" id="alertBox">
+      <span id="alertIcon">⚠️</span>
+      <span id="alertText"></span>
+    </div>
 
-    <form id="authForm" onsubmit="return false;">
+    <!-- LOGIN FORM -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
       <div class="form-group">
-        <label>👤 Tên đăng nhập</label>
-        <div class="input-wrapper">
-          <span class="input-icon">👤</span>
-          <input type="text" class="form-input" id="usernameInput"
-                 placeholder="Nhập tên đăng nhập..." autocomplete="username" required>
-        </div>
+        <label class="form-label">👤 Tên đăng nhập</label>
+        <input type="text" id="loginUsername" class="form-input" 
+               placeholder="Nhập username..." autocomplete="username" required>
       </div>
 
       <div class="form-group">
-        <label>🔑 Mật khẩu</label>
-        <div class="input-wrapper">
-          <span class="input-icon">🔑</span>
-          <input type="password" class="form-input" id="passwordInput"
-                 placeholder="Nhập mật khẩu..." autocomplete="current-password" required>
-          <button type="button" class="toggle-password" id="togglePassword">👁️</button>
-        </div>
-
-        <div id="strengthSection" style="display:none">
-          <div class="password-strength">
-            <div class="strength-bar" id="bar1"></div>
-            <div class="strength-bar" id="bar2"></div>
-            <div class="strength-bar" id="bar3"></div>
-            <div class="strength-bar" id="bar4"></div>
-          </div>
-          <div class="strength-text" id="strengthText">Độ mạnh mật khẩu</div>
-        </div>
+        <label class="form-label">🔑 Mật khẩu</label>
+        <input type="password" id="loginPassword" class="form-input" 
+               placeholder="Nhập mật khẩu..." autocomplete="current-password" required>
       </div>
 
-      <div class="form-group" id="confirmGroup" style="display:none">
-        <label>🔒 Nhập lại mật khẩu</label>
-        <div class="input-wrapper">
-          <span class="input-icon">🔒</span>
-          <input type="password" class="form-input" id="confirmInput"
-                 placeholder="Nhập lại mật khẩu..." autocomplete="new-password">
-        </div>
-      </div>
-
-      <div class="form-options" id="optionsRow">
-        <label class="checkbox-wrapper">
-          <input type="checkbox" id="rememberCheck">
-          <span>Ghi nhớ đăng nhập</span>
-        </label>
-        <a href="#" class="forgot-link" onclick="showToast('💡 Liên hệ admin để lấy lại mật khẩu!'); return false;">Quên mật khẩu?</a>
-      </div>
-
-      <button type="submit" class="btn-submit" id="submitBtn">
-        <span class="spinner"></span>
-        <span class="btn-text">🔓 Đăng nhập</span>
+      <button type="submit" class="btn btn-primary" id="loginBtn">
+        <span>🔓</span> Đăng nhập
       </button>
     </form>
 
-    <!-- CREATOR CREDIT — 5 NGƯỜI -->
-    <div class="creator-credit">
-      <div class="creator-divider">
-        <span>✨</span>
-        <span class="creator-divider-line"></span>
-        <span>✨</span>
+    <!-- 2FA FORM (ẩn mặc định) -->
+    <div class="twofa-box" id="twofaBox">
+      <div class="twofa-badge">
+        <span>🔒</span> XÁC THỰC 2 LỚP
+      </div>
+      <p class="twofa-info">
+        Nhập mã 6 số từ <strong>Google Authenticator</strong><br>
+        hoặc backup code của bạn
+      </p>
+
+      <div class="form-group">
+        <input type="text" id="twofaCode" class="form-input otp-input" 
+               placeholder="000000" maxlength="9" 
+               inputmode="numeric" autocomplete="one-time-code">
       </div>
 
-      <div class="creator-label">💻 Được phát triển bởi</div>
+      <button class="btn btn-primary" id="twofaBtn" onclick="verify2FA()">
+        <span>✅</span> Xác nhận
+      </button>
 
-      <div class="creators-row">
-        <!-- 1. SÁT NHÂN -->
-        <a href="https://www.tiktok.com/@fan.yu.juhoon" target="_blank" class="creator-card killer-card" title="TikTok: @fan.yu.juhoon">
-          <div class="creator-avatar killer-avatar">
-            <div class="avatar-fallback">🔪</div>
-            <img src="https://unavatar.io/tiktok/fan.yu.juhoon" alt="Sát Nhân" class="creator-avatar-img" onerror="this.style.display='none'">
-          </div>
-          <div class="creator-name killer-name">Sát Nhân</div>
-          <div class="creator-role killer-role">Co-Founder</div>
-          <div class="creator-tiktok-badge killer-badge">🎵</div>
-        </a>
+      <button class="btn btn-ghost" onclick="backToLogin()" style="margin-top:10px;">
+        ← Quay lại đăng nhập
+      </button>
+    </div>
 
-        <!-- 2. DŨNG -->
-        <a href="https://www.tiktok.com/@dungg_haha" target="_blank" class="creator-card dung-card" title="TikTok: @dungg_haha">
-          <div class="creator-avatar dung-avatar">
-            <div class="avatar-fallback">D</div>
-            <img src="https://unavatar.io/tiktok/dungg_haha" alt="Dũng" class="creator-avatar-img" onerror="this.style.display='none'">
-          </div>
-          <div class="creator-name dung-name">Dũng</div>
-          <div class="creator-role dung-role">Designer</div>
-          <div class="creator-tiktok-badge dung-badge">🎵</div>
-        </a>
-
-        <!-- 3. HÙNG — XANH LÁ Ở GIỮA ⭐ -->
-        <a href="https://www.tiktok.com/@tienhung0707" target="_blank" class="creator-card hung-card" title="TikTok: @tienhung0707">
-          <div class="creator-avatar hung-avatar">
-            <div class="avatar-fallback">H</div>
-            <img src="https://unavatar.io/tiktok/tienhung0707" alt="Hùng" class="creator-avatar-img" onerror="this.style.display='none'">
-          </div>
-          <div class="creator-name hung-name">Hùng ⭐</div>
-          <div class="creator-role hung-role">Founder</div>
-          <div class="creator-tiktok-badge hung-badge">🎵</div>
-        </a>
-
-        <!-- 4. MINH CHÂU — VỆ SĨ 🛡️ -->
-        <a href="https://www.tiktok.com/@minhchaudepzai246" target="_blank" class="creator-card chau-card" title="TikTok: @minhchaudepzai246">
-          <div class="creator-avatar chau-avatar">
-            <div class="avatar-fallback">C</div>
-            <img src="https://unavatar.io/tiktok/minhchaudepzai246" alt="Minh Châu" class="creator-avatar-img" onerror="this.style.display='none'">
-          </div>
-          <div class="creator-name chau-name">Minh Châu</div>
-          <div class="creator-role chau-role">🛡️ Vệ sĩ của Hùng</div>
-          <div class="creator-tiktok-badge chau-badge">🎵</div>
-        </a>
-
-        <!-- 5. MINH NGỌC -->
-        <a href="https://www.tiktok.com/@ngoc021215" target="_blank" class="creator-card ngoc-card" title="TikTok: @ngoc021215">
-          <div class="creator-avatar ngoc-avatar">
-            <div class="avatar-fallback">N</div>
-            <img src="https://unavatar.io/tiktok/ngoc021215" alt="Minh Ngọc" class="creator-avatar-img" onerror="this.style.display='none'">
-          </div>
-          <div class="creator-name ngoc-name">Minh Ngọc</div>
-          <div class="creator-role ngoc-role">Supporter</div>
-          <div class="creator-tiktok-badge ngoc-badge">🎵</div>
-        </a>
+    <!-- REGISTER FORM (ẩn mặc định) -->
+    <form id="registerForm" onsubmit="handleRegister(event)" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">👤 Tên đăng nhập</label>
+        <input type="text" id="regUsername" class="form-input" 
+               placeholder="3-30 ký tự..." autocomplete="username" required>
       </div>
 
-      <div class="creator-footer">
-        © 2026 Mã Hóa Tool — All rights reserved
+      <div class="form-group">
+        <label class="form-label">🔑 Mật khẩu</label>
+        <input type="password" id="regPassword" class="form-input" 
+               placeholder="Ít nhất 6 ký tự..." autocomplete="new-password" required>
       </div>
+
+      <div class="form-group">
+        <label class="form-label">🔑 Nhập lại mật khẩu</label>
+        <input type="password" id="regPassword2" class="form-input" 
+               placeholder="Nhập lại mật khẩu..." autocomplete="new-password" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="regBtn">
+        <span>✍️</span> Đăng ký
+      </button>
+    </form>
+
+    <div class="login-footer">
+      © 2026 <strong>Mã Hóa Tool</strong> — Made with ❤️
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
-
   <script>
-    let mode = 'login';
+    // ══════════════════════════════════════════════════════════
+    //  STATE
+    // ══════════════════════════════════════════════════════════
+    let pending2FAUsername = '';
+    let pending2FAPassword = '';
 
-    const tabs = document.getElementById('authTabs');
-    const tabLogin = document.getElementById('tabLogin');
-    const tabRegister = document.getElementById('tabRegister');
-    const submitBtn = document.getElementById('submitBtn');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const errorBox = document.getElementById('errorBox');
-    const usernameInput = document.getElementById('usernameInput');
-    const passwordInput = document.getElementById('passwordInput');
-    const confirmInput = document.getElementById('confirmInput');
-    const confirmGroup = document.getElementById('confirmGroup');
-    const strengthSection = document.getElementById('strengthSection');
-    const optionsRow = document.getElementById('optionsRow');
-    const rememberCheck = document.getElementById('rememberCheck');
+    // ══════════════════════════════════════════════════════════
+    //  ALERT
+    // ══════════════════════════════════════════════════════════
+    function showAlert(message, type = 'error') {
+      const box = document.getElementById('alertBox');
+      const icon = document.getElementById('alertIcon');
+      const text = document.getElementById('alertText');
 
-    function setMode(newMode) {
-      mode = newMode;
-      hideError();
+      box.className = 'alert alert-' + type + ' show';
+      icon.textContent = type === 'error' ? '⚠️' : '✅';
+      text.textContent = message;
 
-      if (mode === 'login') {
-        tabs.classList.remove('register-mode');
+      setTimeout(() => {
+        box.classList.remove('show');
+      }, 5000);
+    }
+
+    function hideAlert() {
+      document.getElementById('alertBox').classList.remove('show');
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  TABS
+    // ══════════════════════════════════════════════════════════
+    function switchTab(tab) {
+      hideAlert();
+      const tabLogin = document.getElementById('tabLogin');
+      const tabRegister = document.getElementById('tabRegister');
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const twofaBox = document.getElementById('twofaBox');
+
+      if (tab === 'login') {
         tabLogin.classList.add('active');
         tabRegister.classList.remove('active');
-        confirmGroup.style.display = 'none';
-        strengthSection.style.display = 'none';
-        optionsRow.style.display = 'flex';
-        btnText.textContent = '🔓 Đăng nhập';
-        passwordInput.autocomplete = 'current-password';
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+        twofaBox.classList.remove('show');
       } else {
-        tabs.classList.add('register-mode');
-        tabRegister.classList.add('active');
         tabLogin.classList.remove('active');
-        confirmGroup.style.display = 'block';
-        strengthSection.style.display = 'block';
-        optionsRow.style.display = 'none';
-        btnText.textContent = '✨ Đăng ký';
-        passwordInput.autocomplete = 'new-password';
+        tabRegister.classList.add('active');
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+        twofaBox.classList.remove('show');
       }
     }
 
-    tabLogin.addEventListener('click', () => setMode('login'));
-    tabRegister.addEventListener('click', () => setMode('register'));
-
-    document.getElementById('togglePassword').addEventListener('click', function() {
-      const type = passwordInput.type === 'password' ? 'text' : 'password';
-      passwordInput.type = type;
-      this.textContent = type === 'password' ? '👁️' : '🙈';
-    });
-
-    passwordInput.addEventListener('input', () => {
-      if (mode !== 'register') return;
-      const pwd = passwordInput.value;
-      const strength = calcStrength(pwd);
-      const bars = ['bar1','bar2','bar3','bar4'].map(id => document.getElementById(id));
-      const text = document.getElementById('strengthText');
-
-      bars.forEach(b => { b.className = 'strength-bar'; });
-
-      if (pwd.length === 0) {
-        text.textContent = 'Độ mạnh mật khẩu';
-        return;
-      }
-
-      const cls = strength <= 1 ? 'weak' : strength === 2 ? 'medium' : 'strong';
-      for (let i = 0; i < strength; i++) bars[i].classList.add(cls);
-
-      const labels = ['', 'Yếu 😟', 'Trung bình 😐', 'Khá tốt 🙂', 'Rất mạnh 💪'];
-      text.textContent = 'Độ mạnh: ' + labels[strength];
-    });
-
-    function calcStrength(pwd) {
-      let s = 0;
-      if (pwd.length >= 6) s++;
-      if (pwd.length >= 10) s++;
-      if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) s++;
-      if (/\d/.test(pwd)) s++;
-      if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) s++;
-      return Math.min(s, 4);
-    }
-
-    document.getElementById('authForm').addEventListener('submit', async (e) => {
+    // ══════════════════════════════════════════════════════════
+    //  LOGIN
+    // ══════════════════════════════════════════════════════════
+    async function handleLogin(e) {
       e.preventDefault();
-      await submit();
-    });
+      hideAlert();
 
-    submitBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      await submit();
-    });
-
-    async function submit() {
-      hideError();
-
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value;
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginBtn');
 
       if (!username || !password) {
-        showError('Vui lòng nhập đầy đủ thông tin!');
+        showAlert('Vui lòng nhập đầy đủ!', 'error');
         return;
       }
-      if (mode === 'register') {
-        if (username.length < 3) {
-          showError('Tên đăng nhập phải có ít nhất 3 ký tự!');
-          return;
-        }
-        if (password.length < 6) {
-          showError('Mật khẩu phải có ít nhất 6 ký tự!');
-          return;
-        }
-        if (password !== confirmInput.value) {
-          showError('Mật khẩu nhập lại không khớp!');
-          return;
-        }
-      }
 
-      submitBtn.disabled = true;
-      submitBtn.classList.add('loading');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Đang xử lý...';
 
       try {
-        const endpoint = mode === 'login' ? '/api/login' : '/api/register';
-        const body = mode === 'login'
-          ? { username, password, remember: rememberCheck.checked }
-          : { username, password };
-
-        const res = await fetch(endpoint, {
+        const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          credentials: 'same-origin',
+          body: JSON.stringify({ username, password })
         });
+
+        const data = await res.json();
+
+        // ⚡ Bị ban
+        if (data.banned) {
+          showAlert('🚫 Tài khoản đã bị BAN!', 'error');
+          setTimeout(() => {
+            window.location.href = data.redirect || ('/banned?user=' + username);
+          }, 2000);
+          return;
+        }
+
+        // 🗑️ Bị xóa
+        if (data.pending_delete) {
+          showAlert('🗑️ Tài khoản đã bị đánh dấu XÓA!', 'error');
+          setTimeout(() => {
+            window.location.href = data.redirect || '/deleted';
+          }, 2000);
+          return;
+        }
+
+        // 🔒 Cần 2FA
+        if (data.need_2fa) {
+          pending2FAUsername = data.username || username;
+          pending2FAPassword = password;
+
+          document.getElementById('loginForm').style.display = 'none';
+          document.getElementById('twofaBox').classList.add('show');
+          document.getElementById('twofaCode').value = '';
+          setTimeout(() => document.getElementById('twofaCode').focus(), 200);
+
+          showAlert('🔒 Nhập mã 2FA từ Google Authenticator', 'success');
+          return;
+        }
+
+        // ✅ Đăng nhập thành công
+        if (data.success) {
+          showAlert('✅ Đăng nhập thành công!', 'success');
+          setTimeout(() => {
+            window.location.href = data.redirect || '/';
+          }, 500);
+          return;
+        }
+
+        showAlert(data.error || 'Đăng nhập thất bại!', 'error');
+
+      } catch (err) {
+        showAlert('❌ Lỗi kết nối: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔓</span> Đăng nhập';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  VERIFY 2FA
+    // ══════════════════════════════════════════════════════════
+    async function verify2FA() {
+      hideAlert();
+
+      const code = document.getElementById('twofaCode').value.trim();
+      const btn = document.getElementById('twofaBtn');
+
+      if (!code) {
+        showAlert('Nhập mã 2FA!', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Đang xác thực...';
+
+      try {
+        const res = await fetch('/api/login/2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            username: pending2FAUsername,
+            code: code
+          })
+        });
+
         const data = await res.json();
 
         if (data.success) {
-          showToast(data.message || '✅ Thành công!');
-          setTimeout(() => { window.location.href = '/'; }, 700);
-          return;
-        }
-
-        if (data.banned) {
-          document.body.classList.add('banned-mode');
-          document.getElementById('loginContainer').classList.add('banned-shake');
-          showError('🚫 Tài khoản đã bị BAN!\nĐang chuyển đến trang thông báo...');
+          showAlert('✅ Xác thực thành công!', 'success');
           setTimeout(() => {
-            window.location.href = data.redirect || '/banned';
-          }, 1800);
+            window.location.href = data.redirect || '/';
+          }, 500);
           return;
         }
 
-        if (data.pending_delete) {
-          document.body.classList.add('deleted-mode');
-          document.getElementById('loginContainer').classList.add('deleted-shake');
-          showError('🗑️ Tài khoản đã bị đánh dấu XÓA!\nĐang chuyển đến trang xác nhận...');
-          setTimeout(() => {
-            window.location.href = data.redirect || '/deleted';
-          }, 1800);
-          return;
-        }
-
-        showError(data.error || 'Có lỗi xảy ra!');
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('loading');
+        showAlert(data.error || 'Mã 2FA không đúng!', 'error');
+        document.getElementById('twofaCode').value = '';
+        document.getElementById('twofaCode').focus();
 
       } catch (err) {
-        showError('❌ Lỗi kết nối server!');
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('loading');
+        showAlert('❌ Lỗi: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>✅</span> Xác nhận';
       }
     }
 
-    function showError(msg) {
-      errorBox.textContent = '❌ ' + msg;
-      errorBox.classList.add('show');
-      if (msg.includes('Tên') || msg.includes('đăng nhập')) {
-        usernameInput.classList.add('error');
-        setTimeout(() => usernameInput.classList.remove('error'), 500);
-      } else if (msg.includes('Mật khẩu')) {
-        passwordInput.classList.add('error');
-        setTimeout(() => passwordInput.classList.remove('error'), 500);
+    function backToLogin() {
+      hideAlert();
+      pending2FAUsername = '';
+      pending2FAPassword = '';
+      document.getElementById('twofaBox').classList.remove('show');
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('loginPassword').value = '';
+      setTimeout(() => document.getElementById('loginPassword').focus(), 200);
+    }
+
+    // Nhập OTP tự động submit khi đủ 6 số
+    document.getElementById('twofaCode').addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/[^0-9A-Za-z-]/g, '').toUpperCase();
+      if (e.target.value.length === 6 && /^\d{6}$/.test(e.target.value)) {
+        setTimeout(verify2FA, 200);
+      }
+    });
+
+    document.getElementById('twofaCode').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        verify2FA();
+      }
+    });
+
+    // ══════════════════════════════════════════════════════════
+    //  REGISTER
+    // ══════════════════════════════════════════════════════════
+    async function handleRegister(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const username = document.getElementById('regUsername').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const password2 = document.getElementById('regPassword2').value;
+      const btn = document.getElementById('regBtn');
+
+      if (!username || !password || !password2) {
+        showAlert('Vui lòng nhập đầy đủ!', 'error');
+        return;
+      }
+      if (password !== password2) {
+        showAlert('Mật khẩu nhập lại không khớp!', 'error');
+        return;
+      }
+      if (password.length < 6) {
+        showAlert('Mật khẩu phải có ít nhất 6 ký tự!', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Đang đăng ký...';
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert('✅ Đăng ký thành công! Đang vào...', 'success');
+          setTimeout(() => {
+            window.location.href = data.redirect || '/';
+          }, 800);
+          return;
+        }
+
+        showAlert(data.error || 'Đăng ký thất bại!', 'error');
+
+      } catch (err) {
+        showAlert('❌ Lỗi: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>✍️</span> Đăng ký';
       }
     }
 
-    function hideError() { errorBox.classList.remove('show'); }
+    // ══════════════════════════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════════════════════════
+    window.addEventListener('load', () => {
+      document.getElementById('loginUsername').focus();
+    });
 
-    function showToast(msg, isError = false) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.style.background = isError ? '#e74c3c' : '#27ae60';
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2200);
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (
-        e.target === usernameInput ||
-        e.target === passwordInput ||
-        e.target === confirmInput
-      )) {
-        submit();
+    // Enter để submit
+    document.getElementById('loginUsername').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('loginPassword').focus();
       }
     });
   </script>
