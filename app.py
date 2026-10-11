@@ -682,7 +682,7 @@ def register():
             'message': f'Chào mừng {username}!',
             'username': username,
             'user_id': user_id,
-            'role': 'user's
+            'role': 'user'
         })
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
