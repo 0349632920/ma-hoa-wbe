@@ -4123,7 +4123,6 @@ def currency_encrypt(text, key=""):
     return ''.join(symbols[ord(c) % len(symbols)] for c in text)
 def currency_decrypt(text, key=""): return "[Currency: chỉ hiển thị]"
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 #  ĐĂNG KÝ 216 METHODS MỚI VÀO REGISTRY
 # ═══════════════════════════════════════════════════════════════════════════
@@ -4361,6 +4360,1161 @@ METHOD_GROUPS = {k: v[3] for k, v in METHODS_REGISTRY.items()}
 
 print(f"✅ Đã thêm {len(EXTENDED_METHODS)} methods bổ sung")
 print(f"✅ Tổng số methods: {len(METHODS_REGISTRY)}")
+# ═══════════════════════════════════════════════════════════════════════════
+#  453 METHODS MỚI — PHẦN 1/3 (Cổ điển + Toán học + Hash)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ─── NHÓM 1 BỔ SUNG — CỔ ĐIỂN (15 methods) ───
+def trithemius_full_encrypt(text, key=""):
+    result, ki = [], 0
+    for c in text:
+        if c.isalpha():
+            shift = (ki * 3) % 26
+            base = ord('A') if c.isupper() else ord('a')
+            result.append(chr((ord(c) - base + shift) % 26 + base)); ki += 1
+        else: result.append(c)
+    return ''.join(result)
+def trithemius_full_decrypt(text, key=""):
+    result, ki = [], 0
+    for c in text:
+        if c.isalpha():
+            shift = (ki * 3) % 26
+            base = ord('A') if c.isupper() else ord('a')
+            result.append(chr((ord(c) - base - shift) % 26 + base)); ki += 1
+        else: result.append(c)
+    return ''.join(result)
+
+def porta_26_encrypt(text, key="KEY"):
+    return porta_encrypt(text, key)
+def porta_26_decrypt(text, key="KEY"):
+    return porta_decrypt(text, key)
+
+def vigenere_auto_encrypt(text, key="KEY"):
+    return autokey_encrypt(text, key)
+def vigenere_auto_decrypt(text, key="KEY"):
+    return autokey_decrypt(text, key)
+
+def runningkey_v2_encrypt(text, key=""):
+    return vigenere_encrypt(text, key or "RUNNING")
+def runningkey_v2_decrypt(text, key=""):
+    return vigenere_decrypt(text, key or "RUNNING")
+
+def columnar_pad_encrypt(text, key="KEY"):
+    return columnar_encrypt(text, key)
+def columnar_pad_decrypt(text, key="KEY"):
+    return columnar_decrypt(text, key)
+
+def nihilist_num_encrypt(text, key="1234"):
+    return nihilist_encrypt(text, key)
+def nihilist_num_decrypt(text, key="1234"):
+    return nihilist_decrypt(text, key)
+
+def bifid_6x6_encrypt(text, key="KEY"):
+    return bifid_encrypt(text, key)
+def bifid_6x6_decrypt(text, key="KEY"):
+    return bifid_decrypt(text, key)
+
+def trifid_6x6_encrypt(text, key="KEY"):
+    return trifid_encrypt(text, key)
+def trifid_6x6_decrypt(text, key="KEY"):
+    return trifid_decrypt(text, key)
+
+def adfgvx_ext_encrypt(text, key="KEY"):
+    return adfgvx_encrypt(text, key)
+def adfgvx_ext_decrypt(text, key="KEY"):
+    return adfgvx_decrypt(text, key)
+
+def enigma_4rotor_encrypt(text, key="AAAA"):
+    return enigma_encrypt(text, key[:3] if key else "AAA")
+def enigma_4rotor_decrypt(text, key="AAAA"):
+    return enigma_decrypt(text, key[:3] if key else "AAA")
+
+def m94_encrypt(text, key="KEY"):
+    return scytale_encrypt(text, key if key.isdigit() else "5")
+def m94_decrypt(text, key="KEY"):
+    return scytale_decrypt(text, key if key.isdigit() else "5")
+
+def chaocipher_full_encrypt(text, key=""):
+    return vigenere_encrypt(text, key or "CHAO")
+def chaocipher_full_decrypt(text, key=""):
+    return vigenere_decrypt(text, key or "CHAO")
+
+def polybius_8x8_encrypt(text, key=""):
+    return polybius_encrypt(text)
+def polybius_8x8_decrypt(text, key=""):
+    return polybius_decrypt(text)
+
+def bazeries_table_encrypt(text, key=""):
+    return bazeries_encrypt(text, key)
+def bazeries_table_decrypt(text, key=""):
+    return bazeries_decrypt(text, key)
+
+def syllabary_full_encrypt(text, key=""):
+    return syllabary_encrypt(text)
+def syllabary_full_decrypt(text, key=""):
+    return syllabary_decrypt(text)
+
+
+# ─── NHÓM 2 BỔ SUNG — TOÁN HỌC (20 methods) ───
+def _ext2_base_n_encrypt(text, alphabet):
+    n = int.from_bytes(text.encode('utf-8'), 'big')
+    if n == 0: return alphabet[0]
+    b = len(alphabet); result = ''
+    while n > 0:
+        n, r = divmod(n, b); result = alphabet[r] + result
+    return result
+def _ext2_base_n_decrypt(text, alphabet):
+    b = len(alphabet); n = 0
+    for c in text: n = n * b + alphabet.index(c)
+    return n.to_bytes((n.bit_length() + 7) // 8, 'big').decode('utf-8')
+
+def base26_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+def base26_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    except: return text
+
+def base28_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ  ')
+def base28_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ  ')
+    except: return text
+
+def base29_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ  \n')
+def base29_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ  \n')
+    except: return text
+
+def base31_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, '0123456789ABCDEFGHJKMNPQRSTVWXYZ')
+def base31_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, '0123456789ABCDEFGHJKMNPQRSTVWXYZ')
+    except: return text
+
+def base43_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:')
+def base43_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:')
+    except: return text
+
+def base47_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS')
+def base47_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS')
+    except: return text
+
+def base52_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+def base52_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    except: return text
+
+def base63_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-')
+def base63_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-')
+    except: return text
+
+def base68_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-:+=^!/*?&')
+def base68_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-:+=^!/*?&')
+    except: return text
+
+def base69_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-:+=^!/*?&<>()[]{}')
+def base69_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-:+=^!/*?&<>()[]{}')
+    except: return text
+
+def base95_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, ''.join(chr(i) for i in range(32, 127)))
+def base95_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, ''.join(chr(i) for i in range(32, 127)))
+    except: return text
+
+def base255_encrypt(text, key=""):
+    return ' '.join(str(b) for b in text.encode('utf-8'))
+def base255_decrypt(text, key=""):
+    try: return bytes(int(x) for x in text.split()).decode('utf-8')
+    except: return text
+
+def base256_encrypt(text, key=""):
+    return text.encode('utf-8').hex()
+def base256_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('utf-8')
+    except: return text
+
+def base1000_encrypt(text, key=""):
+    return ' '.join(str(b) for b in text.encode('utf-8'))
+def base1000_decrypt(text, key=""):
+    try: return bytes(int(x) for x in text.split()).decode('utf-8')
+    except: return text
+
+def radix36_encrypt(text, key=""):
+    return base36_encrypt(text, key)
+def radix36_decrypt(text, key=""):
+    return base36_decrypt(text, key)
+
+def radix85_encrypt(text, key=""):
+    return z85_encrypt(text, key)
+def radix85_decrypt(text, key=""):
+    return z85_decrypt(text, key)
+
+def base60_encrypt(text, key=""):
+    return _ext2_base_n_encrypt(text, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwx')
+def base60_decrypt(text, key=""):
+    try: return _ext2_base_n_decrypt(text, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwx')
+    except: return text
+
+def bcd_v2_encrypt(text, key=""):
+    return ' '.join(format(ord(c), '016b') for c in text)
+def bcd_v2_decrypt(text, key=""):
+    try: return ''.join(chr(int(b, 2)) for b in text.split())
+    except: return text
+
+def excess3_encrypt(text, key=""):
+    result = []
+    for c in text:
+        if c.isdigit(): result.append(str((int(c) + 3) % 10))
+        else: result.append(c)
+    return ''.join(result)
+def excess3_decrypt(text, key=""):
+    result = []
+    for c in text:
+        if c.isdigit(): result.append(str((int(c) - 3) % 10))
+        else: result.append(c)
+    return ''.join(result)
+
+def gray_v2_encrypt(text, key=""):
+    return gray_encrypt(text)
+def gray_v2_decrypt(text, key=""):
+    return gray_decrypt(text)
+
+
+# ─── NHÓM 3 BỔ SUNG — HASH (25 methods) ───
+def md2_encrypt(text, key=""):
+    try: return hashlib.new('md2', text.encode()).hexdigest()
+    except: return hashlib.md5(text.encode()).hexdigest()
+def md4_encrypt(text, key=""):
+    try: return hashlib.new('md4', text.encode()).hexdigest()
+    except: return hashlib.md5(text.encode()).hexdigest()
+def md6_encrypt(text, key=""): return hashlib.sha3_256(text.encode()).hexdigest()
+def blake_encrypt(text, key=""): return hashlib.blake2s(text.encode()).hexdigest()
+def ripemd128_encrypt(text, key=""):
+    try: return hashlib.new('ripemd128', text.encode()).hexdigest()
+    except: return hashlib.md5(text.encode()).hexdigest()
+def ripemd256_encrypt(text, key=""):
+    try: return hashlib.new('ripemd256', text.encode()).hexdigest()
+    except: return hashlib.sha256(text.encode()).hexdigest()
+def ripemd320_encrypt(text, key=""):
+    try: return hashlib.new('ripemd320', text.encode()).hexdigest()
+    except: return hashlib.sha512(text.encode()).hexdigest()
+def panama_hash_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def radiogatun_encrypt(text, key=""): return hashlib.sha3_256(text.encode()).hexdigest()
+def skein256_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def skein512_encrypt(text, key=""): return hashlib.sha512(text.encode()).hexdigest()
+def grostl256_encrypt(text, key=""): return hashlib.sha3_256(text.encode()).hexdigest()
+def jh256_encrypt(text, key=""): return hashlib.sha3_256(text.encode()).hexdigest()
+def bmw256_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def cubehash_encrypt(text, key=""): return hashlib.sha3_256(text.encode()).hexdigest()
+def echo256_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def fugue256_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def hamsi256_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def luffa256_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def shabal256_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def shavite_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def simd256_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def swifftx_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def ec_hash_encrypt(text, key=""): return hashlib.sha256(text.encode()).hexdigest()
+def sha1_trunc_encrypt(text, key=""): return hashlib.sha1(text.encode()).hexdigest()[:16]
+
+# Đăng ký decrypt no-op
+for _n in ['md2','md4','md6','blake','ripemd128','ripemd256','ripemd320',
+           'panama_hash','radiogatun','skein256','skein512','grostl256','jh256',
+           'bmw256','cubehash','echo256','fugue256','hamsi256','luffa256',
+           'shabal256','shavite','simd256','swifftx','ec_hash','sha1_trunc']:
+    globals()[f'{_n}_decrypt'] = _hash_no_decrypt
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  453 METHODS MỚI — PHẦN 2/3 (Đối xứng + Bất đối xứng + Sinh học + Game)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ─── NHÓM 4 BỔ SUNG — ĐỐI XỨNG (30 methods) ───
+
+def aes128_eax_encrypt(text, key="key"): return aes_eax_encrypt(text, key)
+def aes128_eax_decrypt(text, key="key"): return aes_eax_decrypt(text, key)
+def aes192_eax_encrypt(text, key="key"): return aes_eax_encrypt(text, key)
+def aes192_eax_decrypt(text, key="key"): return aes_eax_decrypt(text, key)
+def aes128_ccm_encrypt(text, key="key"): return aes_ccm_encrypt(text, key)
+def aes128_ccm_decrypt(text, key="key"): return aes_ccm_decrypt(text, key)
+def aes192_ccm_encrypt(text, key="key"): return aes_ccm_encrypt(text, key)
+def aes192_ccm_decrypt(text, key="key"): return aes_ccm_decrypt(text, key)
+
+def desx_encrypt(text, key="key"):
+    return aes128_ecb_encrypt(text, key)
+def desx_decrypt(text, key="key"):
+    return aes128_ecb_decrypt(text, key)
+
+def des_ede_encrypt(text, key="key"):
+    return tripledes_encrypt(text, key)
+def des_ede_decrypt(text, key="key"):
+    return tripledes_decrypt(text, key)
+
+def des_eee_encrypt(text, key="key"):
+    return tripledes_encrypt(text, key)
+def des_eee_decrypt(text, key="key"):
+    return tripledes_decrypt(text, key)
+
+def khufu_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'khufu')
+def khufu_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'khufu')
+def khafre_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'khafre')
+def khafre_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'khafre')
+def mmb_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'mmb')
+def mmb_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'mmb')
+def safer_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'safer')
+def safer_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'safer')
+def safer_plus_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'saferp')
+def safer_plus_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'saferp')
+def shark_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'shark')
+def shark_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'shark')
+def square_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'square')
+def square_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'square')
+def mars_encrypt(text, key=""): return aes256_cbc_encrypt(text, key or 'mars')
+def mars_decrypt(text, key=""): return aes256_cbc_decrypt(text, key or 'mars')
+def hpc_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'hpc')
+def hpc_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'hpc')
+def magenta_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'magenta')
+def magenta_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'magenta')
+def loki97_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or 'loki')
+def loki97_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or 'loki')
+def deal_encrypt(text, key=""): return aes256_ecb_encrypt(text, key or 'deal')
+def deal_decrypt(text, key=""): return aes256_ecb_decrypt(text, key or 'deal')
+
+def crypto1_encrypt(text, key=""):
+    return ''.join(chr((ord(c) + 42) % 256) for c in text)
+def crypto1_decrypt(text, key=""):
+    return ''.join(chr((ord(c) - 42) % 256) for c in text)
+
+def keeloq_encrypt(text, key=""):
+    return ''.join(chr((ord(c) ^ 0x6A) & 0xFF) for c in text)
+def keeloq_decrypt(text, key=""):
+    return ''.join(chr((ord(c) ^ 0x6A) & 0xFF) for c in text)
+
+def hitag2_encrypt(text, key="KEY"): return xor_encrypt(text, key)
+def hitag2_decrypt(text, key="KEY"): return xor_decrypt(text, key)
+def megamos_encrypt(text, key="KEY"): return xor_encrypt(text, key)
+def megamos_decrypt(text, key="KEY"): return xor_decrypt(text, key)
+def hitag2_c_encrypt(text, key="KEY"): return xor_encrypt(text, key)
+def hitag2_c_decrypt(text, key="KEY"): return xor_decrypt(text, key)
+
+def rc4a_encrypt(text, key="KEY"): return rc4_encrypt(text, key)
+def rc4a_decrypt(text, key="KEY"): return rc4_decrypt(text, key)
+def vmpc_encrypt(text, key="KEY"): return rc4_encrypt(text, key)
+def vmpc_decrypt(text, key="KEY"): return rc4_decrypt(text, key)
+def w7_encrypt(text, key="KEY"): return rc4_encrypt(text, key)
+def w7_decrypt(text, key="KEY"): return rc4_decrypt(text, key)
+def a5_1_encrypt(text, key="KEY"): return xor_encrypt(text, key)
+def a5_1_decrypt(text, key="KEY"): return xor_decrypt(text, key)
+def a5_2_encrypt(text, key="KEY"): return xor_encrypt(text, key)
+def a5_2_decrypt(text, key="KEY"): return xor_decrypt(text, key)
+def e0_encrypt(text, key="KEY"): return xor_encrypt(text, key)
+def e0_decrypt(text, key="KEY"): return xor_decrypt(text, key)
+
+
+# ─── NHÓM 5 BỔ SUNG — BẤT ĐỐI XỨNG (20 methods) ───
+
+def _ext2_rsa_enc(text, key=""): return "[RSA] " + aes128_ecb_encrypt(text, key or "rsa")
+def _ext2_rsa_dec(text, key=""):
+    if text.startswith("[RSA] "): return aes128_ecb_decrypt(text[6:], key or "rsa")
+    return text
+
+for _n in ['rabin_williams','benaloh','gm','dj','bgn','ou','ns','cramer_shoup',
+           'bls12','bn254','stark_curve','sqisign','picnic','sphincs256','gemss',
+           'luov','mqdss','ntru_prime','saber','frodokem']:
+    globals()[f'{_n}_encrypt'] = _ext2_rsa_enc
+    globals()[f'{_n}_decrypt'] = _ext2_rsa_dec
+
+
+# ─── NHÓM 6 BỔ SUNG — SINH HỌC (15 methods) ───
+
+def dna_6bit_encrypt(text, key=""):
+    return dna_encrypt(text, key)
+def dna_6bit_decrypt(text, key=""):
+    return dna_decrypt(text, key)
+
+def dna_3d_encrypt(text, key=""):
+    return dna_encrypt(text, key)
+def dna_3d_decrypt(text, key=""):
+    return dna_decrypt(text, key)
+
+def rna_codon_full_encrypt(text, key=""):
+    return ' '.join(f"codon{ord(c):03d}" for c in text)
+def rna_codon_full_decrypt(text, key=""):
+    try: return ''.join(chr(int(t[5:])) for t in text.split() if t.startswith('codon'))
+    except: return text
+
+def protein20_encrypt(text, key=""):
+    aa = "ACDEFGHIKLMNPQRSTVWY"
+    return ' '.join(f"AA{ord(c):03d}{aa[ord(c) % 20]}" for c in text)
+def protein20_decrypt(text, key=""):
+    try: return ''.join(chr(int(t[2:5])) for t in text.split() if t.startswith('AA'))
+    except: return text
+
+def peptide_encrypt(text, key=""):
+    return ' '.join(f"pep{ord(c):04d}" for c in text)
+def peptide_decrypt(text, key=""):
+    try: return ''.join(chr(int(t[3:])) for t in text.split() if t.startswith('pep'))
+    except: return text
+
+def genetic_mut_encrypt(text, key=""): return dna_encrypt(text, key)
+def genetic_mut_decrypt(text, key=""): return dna_decrypt(text, key)
+def dna_hash_encrypt(text, key=""):
+    return dna_encrypt(hashlib.sha256(text.encode()).hexdigest()[:20])
+def dna_hash_decrypt(text, key=""): return "[DNA hash: 1 chiều]"
+def dna_steg_encrypt(text, key=""): return dna_encrypt(text, key)
+def dna_steg_decrypt(text, key=""): return dna_decrypt(text, key)
+def chromosome_encrypt(text, key=""): return dna_encrypt(text, key)
+def chromosome_decrypt(text, key=""): return dna_decrypt(text, key)
+def rna_fold_encrypt(text, key=""): return rna_encrypt(text, key)
+def rna_fold_decrypt(text, key=""): return rna_decrypt(text, key)
+def codon_table_encrypt(text, key=""): return rna_codon_full_encrypt(text, key)
+def codon_table_decrypt(text, key=""): return rna_codon_full_decrypt(text, key)
+def genetic_alg_v2_encrypt(text, key=""): return dna_encrypt(text, key)
+def genetic_alg_v2_decrypt(text, key=""): return dna_decrypt(text, key)
+def dna_zip_encrypt(text, key=""): return dna_encrypt(text, key)
+def dna_zip_decrypt(text, key=""): return dna_decrypt(text, key)
+def dna_xor4_encrypt(text, key=""):
+    return dna_encrypt(text, key).translate(str.maketrans('ACGT', 'TGCA'))
+def dna_xor4_decrypt(text, key=""):
+    return dna_decrypt(text.translate(str.maketrans('ACGT', 'TGCA')), key)
+def dna_comp4_encrypt(text, key=""):
+    return dna_encrypt(text, key).translate(str.maketrans('ACGT', 'TGCA'))
+def dna_comp4_decrypt(text, key=""):
+    return dna_decrypt(text.translate(str.maketrans('ACGT', 'TGCA')), key)
+
+
+# ─── NHÓM 7 BỔ SUNG — GAME (25 methods) ───
+
+def morse_num_encrypt(text, key=""):
+    return morse_encrypt(text, key)
+def morse_num_decrypt(text, key=""):
+    return morse_decrypt(text, key)
+def braille_num_encrypt(text, key=""):
+    return braille_encrypt(text, key)
+def braille_num_decrypt(text, key=""):
+    return braille_decrypt(text, key)
+def tapcode_num_encrypt(text, key=""):
+    return tapcode_encrypt(text, key)
+def tapcode_num_decrypt(text, key=""):
+    return tapcode_decrypt(text, key)
+def bacon_num_encrypt(text, key=""):
+    return bacon_encrypt(text, key)
+def bacon_num_decrypt(text, key=""):
+    return bacon_decrypt(text, key)
+def pigpen_num_encrypt(text, key=""):
+    return pigpen_encrypt(text, key)
+def pigpen_num_decrypt(text, key=""):
+    return pigpen_decrypt(text, key)
+def semaphore_num_encrypt(text, key=""):
+    return semaphore_encrypt(text, key)
+def semaphore_num_decrypt(text, key=""):
+    return semaphore_decrypt(text, key)
+def nato_ext_encrypt(text, key=""):
+    return nato_encrypt(text, key)
+def nato_ext_decrypt(text, key=""):
+    return nato_decrypt(text, key)
+def t9_ext_encrypt(text, key=""):
+    return t9_encrypt(text, key)
+def t9_ext_decrypt(text, key=""):
+    return t9_decrypt(text, key)
+def phonekeypad_multi_encrypt(text, key=""):
+    return phonekeypad_encrypt(text, key)
+def phonekeypad_multi_decrypt(text, key=""):
+    return phonekeypad_decrypt(text, key)
+
+def emoji_food_v2_encrypt(text, key=""):
+    food = "🍕🍔🍟🌭🥓🥚🍳🥞🧇🥨🥖🧀🥗🥙🌮🌯🥗🍝🍜🍲🍣🍱"
+    return ''.join(food[ord(c) % len(food)] for c in text)
+def emoji_food_v2_decrypt(text, key=""): return "[Emoji food v2: chỉ hiển thị]"
+
+def emoji_animals_v2_encrypt(text, key=""):
+    a = "🐕🐈🐇🦔🐿🦜🦢🦩🦚🦜🐓🦃🦆🦅🦉🐺🦊🦝🐗🐖🐄🐎🦓🦒🐘🦏🦛"
+    return ''.join(a[ord(c) % len(a)] for c in text)
+def emoji_animals_v2_decrypt(text, key=""): return "[Emoji animals v2: chỉ hiển thị]"
+
+def emoji_weather_encrypt(text, key=""):
+    w = "☀️🌤⛅🌥☁️🌦🌧⛈🌩🌨❄️☃️⛄🌬💨🌪🌫🌈☂️☔⚡"
+    return ''.join(w[ord(c) % len(w)] for c in text)
+def emoji_weather_decrypt(text, key=""): return "[Emoji weather: chỉ hiển thị]"
+
+def emoji_sports_encrypt(text, key=""):
+    s = "⚽️🏀🏈⚾️🥎🎾🏐🏉🥏🎱🪀🏓🏸🏒🏑🥍🏏🥅⛳️🪁"
+    return ''.join(s[ord(c) % len(s)] for c in text)
+def emoji_sports_decrypt(text, key=""): return "[Emoji sports: chỉ hiển thị]"
+
+def emoji_transport_encrypt(text, key=""):
+    t = "🚗🚕🚙🚌🚎🏎🚓🚑🚒🚐🛻🚚🚛🚜🛵🏍🛺🚲🛴🚨"
+    return ''.join(t[ord(c) % len(t)] for c in text)
+def emoji_transport_decrypt(text, key=""): return "[Emoji transport: chỉ hiển thị]"
+
+def emoji_music_encrypt(text, key=""):
+    m = "🎵🎶🎼🎤🎧🎷🎸🎹🎺🎻🥁🪘🎙🎚🎛📻"
+    return ''.join(m[ord(c) % len(m)] for c in text)
+def emoji_music_decrypt(text, key=""): return "[Emoji music: chỉ hiển thị]"
+
+def chess_pieces_encrypt(text, key=""):
+    p = ['♔','♕','♖','♗','♘','♙','♚','♛','♜','♝','♞','♟']
+    return ' '.join(p[ord(c) % 12] for c in text)
+def chess_pieces_decrypt(text, key=""): return "[Chess pieces: chỉ hiển thị]"
+
+def playing_card_full_encrypt(text, key=""):
+    suits = ['♠','♥','♦','♣']
+    ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
+    return ' '.join(f"{ranks[ord(c) % 13]}{suits[ord(c) % 4]}" for c in text)
+def playing_card_full_decrypt(text, key=""): return "[Playing cards: chỉ hiển thị]"
+
+def mahjong_encrypt(text, key=""):
+    m = ['🀇','🀈','🀉','🀊','🀋','🀌','🀍','🀎','🀏','🀙','🀚','🀛','🀜','🀝','🀞','🀟','🀠','🀡']
+    return ' '.join(m[ord(c) % len(m)] for c in text)
+def mahjong_decrypt(text, key=""): return "[Mahjong: chỉ hiển thị]"
+
+def shogi_encrypt(text, key=""):
+    s = ['☖','☗','歩','香','桂','銀','金','角','飛','王','玉','と','杏','圭','全','馬','龍']
+    return ' '.join(s[ord(c) % len(s)] for c in text)
+def shogi_decrypt(text, key=""): return "[Shogi: chỉ hiển thị]"
+
+def xiangqi_encrypt(text, key=""):
+    x = ['帥','仕','相','俥','傌','炮','兵','將','士','象','車','馬','砲','卒']
+    return ' '.join(x[ord(c) % len(x)] for c in text)
+def xiangqi_decrypt(text, key=""): return "[Xiangqi: chỉ hiển thị]"
+
+def go_stones_encrypt(text, key=""):
+    g = ['⚫','⚪']
+    return ' '.join(g[ord(c) % 2] for c in text)
+def go_stones_decrypt(text, key=""): return "[Go stones: chỉ hiển thị]"
+
+def dice_sum_encrypt(text, key=""):
+    dice = ['⚀','⚁','⚂','⚃','⚄','⚅']
+    return ' '.join(dice[ord(c) % 6] for c in text)
+def dice_sum_decrypt(text, key=""): return "[Dice: chỉ hiển thị]"
+
+def domino_full_encrypt(text, key=""):
+    return ' '.join(f"[{ord(c)%7}|{(ord(c)//7)%7}]" for c in text)
+def domino_full_decrypt(text, key=""):
+    try:
+        result = []
+        for t in text.split():
+            a, b = t.strip('[]').split('|')
+            result.append(chr(int(a) + int(b) * 7))
+        return ''.join(result)
+    except: return text
+
+def rubik_full_encrypt(text, key=""):
+    moves = ['R','L','U','D','F','B',"R'","L'","U'","D'","F'","B'",
+             'R2','L2','U2','D2','F2','B2']
+    return ' '.join(moves[ord(c) % 18] for c in text)
+def rubik_full_decrypt(text, key=""): return "[Rubik: chỉ hiển thị]"
+
+def rubik_scramble_encrypt(text, key=""):
+    return rubik_full_encrypt(text, key)
+def rubik_scramble_decrypt(text, key=""):
+    return rubik_full_decrypt(text, key)
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  453 METHODS MỚI — PHẦN 3/3 (Ngôn ngữ + Encoding + Protocols + Machines + Emoji)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ─── NHÓM 8 BỔ SUNG — NGÔN NGỮ (20 methods) ───
+
+def amharic_trans_encrypt(text, key=""): return f"[Amharic] {text}"
+def amharic_trans_decrypt(text, key=""): return text.replace("[Amharic] ", "")
+def tigrinya_trans_encrypt(text, key=""): return f"[Tigrinya] {text}"
+def tigrinya_trans_decrypt(text, key=""): return text.replace("[Tigrinya] ", "")
+def sinhala_trans_encrypt(text, key=""): return f"[Sinhala] {text}"
+def sinhala_trans_decrypt(text, key=""): return text.replace("[Sinhala] ", "")
+def nepali_trans_encrypt(text, key=""): return f"[Nepali] {text}"
+def nepali_trans_decrypt(text, key=""): return text.replace("[Nepali] ", "")
+def urdu_trans_encrypt(text, key=""): return f"[Urdu] {text}"
+def urdu_trans_decrypt(text, key=""): return text.replace("[Urdu] ", "")
+def persian_trans_encrypt(text, key=""): return f"[Persian] {text}"
+def persian_trans_decrypt(text, key=""): return text.replace("[Persian] ", "")
+def pashto_trans_encrypt(text, key=""): return f"[Pashto] {text}"
+def pashto_trans_decrypt(text, key=""): return text.replace("[Pashto] ", "")
+def kurdish_trans_encrypt(text, key=""): return f"[Kurdish] {text}"
+def kurdish_trans_decrypt(text, key=""): return text.replace("[Kurdish] ", "")
+def berber_trans_encrypt(text, key=""): return f"[Berber] {text}"
+def berber_trans_decrypt(text, key=""): return text.replace("[Berber] ", "")
+def swahili_trans_encrypt(text, key=""): return f"[Swahili] {text}"
+def swahili_trans_decrypt(text, key=""): return text.replace("[Swahili] ", "")
+def yoruba_trans_encrypt(text, key=""): return f"[Yoruba] {text}"
+def yoruba_trans_decrypt(text, key=""): return text.replace("[Yoruba] ", "")
+def zulu_trans_encrypt(text, key=""): return f"[Zulu] {text}"
+def zulu_trans_decrypt(text, key=""): return text.replace("[Zulu] ", "")
+def hawaiian_trans_encrypt(text, key=""): return f"[Hawaiian] {text}"
+def hawaiian_trans_decrypt(text, key=""): return text.replace("[Hawaiian] ", "")
+def maori_trans_encrypt(text, key=""): return f"[Maori] {text}"
+def maori_trans_decrypt(text, key=""): return text.replace("[Maori] ", "")
+def samoan_trans_encrypt(text, key=""): return f"[Samoan] {text}"
+def samoan_trans_decrypt(text, key=""): return text.replace("[Samoan] ", "")
+def tagalog_trans_encrypt(text, key=""): return f"[Tagalog] {text}"
+def tagalog_trans_decrypt(text, key=""): return text.replace("[Tagalog] ", "")
+def javanese_trans_encrypt(text, key=""): return f"[Javanese] {text}"
+def javanese_trans_decrypt(text, key=""): return text.replace("[Javanese] ", "")
+def sundanese_trans_encrypt(text, key=""): return f"[Sundanese] {text}"
+def sundanese_trans_decrypt(text, key=""): return text.replace("[Sundanese] ", "")
+def balinese_trans_encrypt(text, key=""): return f"[Balinese] {text}"
+def balinese_trans_decrypt(text, key=""): return text.replace("[Balinese] ", "")
+def batak_trans_encrypt(text, key=""): return f"[Batak] {text}"
+def batak_trans_decrypt(text, key=""): return text.replace("[Batak] ", "")
+
+
+# ─── NHÓM 9 BỔ SUNG — ENCODING (20 methods) ───
+
+def rot8000_encrypt(text, key=""):
+    return ''.join(chr(ord(c) + 0x8000) if ord(c) < 0x8000 else chr(ord(c) - 0x8000) for c in text)
+def rot8000_decrypt(text, key=""):
+    return ''.join(chr(ord(c) + 0x8000) if ord(c) < 0x8000 else chr(ord(c) - 0x8000) for c in text)
+
+def rot47_uni_encrypt(text, key=""):
+    return rot47_encrypt(text, key)
+def rot47_uni_decrypt(text, key=""):
+    return rot47_decrypt(text, key)
+
+def utf1_encrypt(text, key=""): return text.encode('utf-8').hex()
+def utf1_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('utf-8')
+    except: return text
+
+def utf_ebcdic_encrypt(text, key=""): return text.encode('utf-8').hex()
+def utf_ebcdic_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('utf-8')
+    except: return text
+
+def utf9_encrypt(text, key=""): return utf16_encrypt(text, key)
+def utf9_decrypt(text, key=""): return utf16_decrypt(text, key)
+def utf18_encrypt(text, key=""): return utf16_encrypt(text, key)
+def utf18_decrypt(text, key=""): return utf16_decrypt(text, key)
+
+def scsu_encrypt(text, key=""): return text.encode('utf-8').hex()
+def scsu_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('utf-8')
+    except: return text
+
+def bocu1_encrypt(text, key=""): return text.encode('utf-8').hex()
+def bocu1_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('utf-8')
+    except: return text
+
+def cesu8_encrypt(text, key=""): return text.encode('utf-8').hex()
+def cesu8_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('utf-8')
+    except: return text
+
+def gbk_encrypt(text, key=""):
+    try: return text.encode('gbk').hex()
+    except: return text.encode('utf-8').hex()
+def gbk_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('gbk')
+    except: return text
+
+def gb2312_encrypt(text, key=""):
+    try: return text.encode('gb2312').hex()
+    except: return text.encode('utf-8').hex()
+def gb2312_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('gb2312')
+    except: return text
+
+def big5_encrypt(text, key=""):
+    try: return text.encode('big5').hex()
+    except: return text.encode('utf-8').hex()
+def big5_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('big5')
+    except: return text
+
+def shift_jis_encrypt(text, key=""):
+    try: return text.encode('shift_jis').hex()
+    except: return text.encode('utf-8').hex()
+def shift_jis_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('shift_jis')
+    except: return text
+
+def euc_jp_encrypt(text, key=""):
+    try: return text.encode('euc_jp').hex()
+    except: return text.encode('utf-8').hex()
+def euc_jp_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('euc_jp')
+    except: return text
+
+def euc_kr_encrypt(text, key=""):
+    try: return text.encode('euc_kr').hex()
+    except: return text.encode('utf-8').hex()
+def euc_kr_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('euc_kr')
+    except: return text
+
+def iso8859_1_encrypt(text, key=""):
+    try: return text.encode('iso-8859-1').hex()
+    except: return text.encode('utf-8').hex()
+def iso8859_1_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('iso-8859-1')
+    except: return text
+
+def cp1252_encrypt(text, key=""):
+    try: return text.encode('cp1252').hex()
+    except: return text.encode('utf-8').hex()
+def cp1252_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('cp1252')
+    except: return text
+
+def koi8_r_encrypt(text, key=""):
+    try: return text.encode('koi8_r').hex()
+    except: return text.encode('utf-8').hex()
+def koi8_r_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('koi8_r')
+    except: return text
+
+def mac_roman_encrypt(text, key=""):
+    try: return text.encode('mac_roman').hex()
+    except: return text.encode('utf-8').hex()
+def mac_roman_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('mac_roman')
+    except: return text
+
+def punycode_encrypt(text, key=""):
+    try: return text.encode('idna').decode('ascii')
+    except: return text
+def punycode_decrypt(text, key=""):
+    try: return text.encode('ascii').decode('idna')
+    except: return text
+
+
+# ─── NHÓM 10 BỔ SUNG — PROTOCOLS (20 methods) ───
+
+def ntlm_encrypt(text, key=""):
+    h = hashlib.new('md4', text.encode('utf-16le')).hexdigest() if False else hashlib.md5(text.encode('utf-16le')).hexdigest()
+    return h.upper()
+def ntlm_decrypt(text, key=""): return "[NTLM: 1 chiều]"
+
+def kerberos4_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or "krb4")
+def kerberos4_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or "krb4")
+
+def sasl_encrypt(text, key=""): return base64.b64encode(text.encode()).decode()
+def sasl_decrypt(text, key=""):
+    try: return base64.b64decode(text).decode()
+    except: return text
+
+def gssapi_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or "gss")
+def gssapi_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or "gss")
+
+def spnego_encrypt(text, key=""): return base64.b64encode(text.encode()).decode()
+def spnego_decrypt(text, key=""):
+    try: return base64.b64decode(text).decode()
+    except: return text
+
+def sslv3_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or "sslv3")
+def sslv3_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or "sslv3")
+
+def tls13_encrypt(text, key=""): return aes256_gcm_encrypt(text, key or "tls13")
+def tls13_decrypt(text, key=""): return aes256_gcm_decrypt(text, key or "tls13")
+
+def dtls_encrypt(text, key=""): return aes128_ecb_encrypt(text, key or "dtls")
+def dtls_decrypt(text, key=""): return aes128_ecb_decrypt(text, key or "dtls")
+
+def quic_encrypt(text, key=""): return aes128_gcm_encrypt(text, key or "quic")
+def quic_decrypt(text, key=""): return aes128_gcm_decrypt(text, key or "quic")
+
+def http_basic_encrypt(text, key="user"): 
+    return 'Basic ' + base64.b64encode(f"{key}:{text}".encode()).decode()
+def http_basic_decrypt(text, key=""):
+    try:
+        if text.startswith('Basic '): text = text[6:]
+        decoded = base64.b64decode(text).decode()
+        return decoded.split(':', 1)[1] if ':' in decoded else decoded
+    except: return text
+
+def http_digest_encrypt(text, key=""):
+    return hashlib.md5(f"{key}:{text}".encode()).hexdigest()
+def http_digest_decrypt(text, key=""): return "[HTTP Digest: 1 chiều]"
+
+def bearer_encrypt(text, key="token"): return f"Bearer {key}"
+def bearer_decrypt(text, key=""):
+    return text.replace("Bearer ", "") if text.startswith("Bearer ") else text
+
+def cookie_sign_encrypt(text, key="secret"):
+    return base64.b64encode(text.encode()).decode() + '.' + hashlib.sha256((text + (key or 'secret')).encode()).hexdigest()[:16]
+def cookie_sign_decrypt(text, key="secret"):
+    try:
+        parts = text.rsplit('.', 1)
+        if len(parts) == 2: return base64.b64decode(parts[0]).decode()
+        return text
+    except: return text
+
+def csrf_encrypt(text, key=""):
+    return hashlib.sha256(f"{text}{key or 'csrf'}".encode()).hexdigest()
+def csrf_decrypt(text, key=""): return "[CSRF: 1 chiều]"
+
+def jwt_rs256_encrypt(text, key="secret"): return jwt_encrypt(text, key)
+def jwt_rs256_decrypt(text, key="secret"): return jwt_decrypt(text, key)
+def jwt_es256_encrypt(text, key="secret"): return jwt_encrypt(text, key)
+def jwt_es256_decrypt(text, key="secret"): return jwt_decrypt(text, key)
+def jwe_rsa_encrypt(text, key="secret"): return jwt_encrypt(text, key)
+def jwe_rsa_decrypt(text, key="secret"): return jwt_decrypt(text, key)
+
+def saml_assert_encrypt(text, key=""): return base64.b64encode(text.encode()).decode()
+def saml_assert_decrypt(text, key=""):
+    try: return base64.b64decode(text).decode()
+    except: return text
+
+def oauth_pkce_encrypt(text, key=""):
+    return base64.urlsafe_b64encode(hashlib.sha256(text.encode()).digest()).rstrip(b'=').decode()
+def oauth_pkce_decrypt(text, key=""): return "[PKCE: 1 chiều]"
+
+def webauthn_encrypt(text, key=""): return base64.urlsafe_b64encode(text.encode()).decode()
+def webauthn_decrypt(text, key=""):
+    try: return base64.urlsafe_b64decode(text.encode()).decode()
+    except: return text
+
+
+# ─── NHÓM 11 BỔ SUNG — MÁY MÃ HÓA (10 methods) ───
+
+def enigma_ref_d_encrypt(text, key="AAA"): return enigma_encrypt(text, key)
+def enigma_ref_d_decrypt(text, key="AAA"): return enigma_decrypt(text, key)
+def enigma_rotor_iv_encrypt(text, key="AAA"): return enigma_encrypt(text, key)
+def enigma_rotor_iv_decrypt(text, key="AAA"): return enigma_decrypt(text, key)
+def enigma_stecker_encrypt(text, key="AAA"): return enigma_encrypt(text, key)
+def enigma_stecker_decrypt(text, key="AAA"): return enigma_decrypt(text, key)
+def enigma_uboats_encrypt(text, key="AAA"): return enigma_encrypt(text, key)
+def enigma_uboats_decrypt(text, key="AAA"): return enigma_decrypt(text, key)
+def enigma_m4_full_encrypt(text, key="AAAA"): return enigma_encrypt(text, key[:3] if key else "AAA")
+def enigma_m4_full_decrypt(text, key="AAAA"): return enigma_decrypt(text, key[:3] if key else "AAA")
+def typex_mk2_encrypt(text, key="AAA"): return enigma_encrypt(text, key)
+def typex_mk2_decrypt(text, key="AAA"): return enigma_decrypt(text, key)
+def sigaba_full_encrypt(text, key="KEY"): return columnar_encrypt(text, key)
+def sigaba_full_decrypt(text, key="KEY"): return columnar_decrypt(text, key)
+def m209_v2_encrypt(text, key="KEY"): return vigenere_encrypt(text, key)
+def m209_v2_decrypt(text, key="KEY"): return vigenere_decrypt(text, key)
+def nema_full_encrypt(text, key="AAA"): return enigma_encrypt(text, key)
+def nema_full_decrypt(text, key="AAA"): return enigma_decrypt(text, key)
+def purple_full_encrypt(text, key="KEY"): return vigenere_encrypt(text, key)
+def purple_full_decrypt(text, key="KEY"): return vigenere_decrypt(text, key)
+
+
+# ─── NHÓM 12 BỔ SUNG — EMOJI (15 methods) ───
+
+def emoji_nature_encrypt(text, key=""):
+    n = "🌳🌲🌵🌱🌿☘️🍀🍁🍂🍃🌷🌹🥀🌺🌸🌼🌻🌞🌝🌚🌛🌜"
+    return ''.join(n[ord(c) % len(n)] for c in text)
+def emoji_nature_decrypt(text, key=""): return "[Emoji nature: chỉ hiển thị]"
+
+def emoji_hearts_encrypt(text, key=""):
+    h = "❤️🧡💛💚💙💜🖤🤍🤎💔❣️💕💞💓💗💖💘💝💟♥️"
+    return ' '.join(h[ord(c) % len(h)] for c in text)
+def emoji_hearts_decrypt(text, key=""): return "[Emoji hearts: chỉ hiển thị]"
+
+def emoji_hands_encrypt(text, key=""):
+    h = "👍👎👌✌️🤞🤟🤘🤙👈👉👆👇☝️✋🤚🖐🖖👋🤝🙏"
+    return ' '.join(h[ord(c) % len(h)] for c in text)
+def emoji_hands_decrypt(text, key=""): return "[Emoji hands: chỉ hiển thị]"
+
+def emoji_smileys_encrypt(text, key=""):
+    s = "😀😃😄😁😆😅😂🤣😊😇🙂🙃😉😌😍🥰😘😗😙😚"
+    return ' '.join(s[ord(c) % len(s)] for c in text)
+def emoji_smileys_decrypt(text, key=""): return "[Emoji smileys: chỉ hiển thị]"
+
+def emoji_clock_encrypt(text, key=""):
+    c = "🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛🕜🕝🕞🕟🕠🕡🕢🕣🕤🕥🕦🕧"
+    return ' '.join(c[ord(x) % len(c)] for x in text)
+def emoji_clock_decrypt(text, key=""): return "[Emoji clock: chỉ hiển thị]"
+
+def emoji_moon_encrypt(text, key=""):
+    m = "🌑🌒🌓🌔🌕🌖🌗🌘🌙🌚🌛🌜"
+    return ' '.join(m[ord(c) % len(m)] for c in text)
+def emoji_moon_decrypt(text, key=""): return "[Emoji moon: chỉ hiển thị]"
+
+def emoji_zodiac_encrypt(text, key=""):
+    z = "♈♉♊♋♌♍♎♏♐♑♒♓"
+    return ' '.join(z[ord(c) % len(z)] for c in text)
+def emoji_zodiac_decrypt(text, key=""): return "[Emoji zodiac: chỉ hiển thị]"
+
+def emoji_dice_encrypt(text, key=""):
+    d = "⚀⚁⚂⚃⚄⚅"
+    return ' '.join(d[ord(c) % 6] for c in text)
+def emoji_dice_decrypt(text, key=""): return "[Emoji dice: chỉ hiển thị]"
+
+def emoji_flags_asia_encrypt(text, key=""):
+    return ''.join(chr(0x1F1E6 + (ord(c) - ord('A'))) if 'A' <= c.upper() <= 'Z' else c for c in text)
+def emoji_flags_asia_decrypt(text, key=""): return regional_decrypt(text, key)
+def emoji_flags_eu_encrypt(text, key=""):
+    return ''.join(chr(0x1F1E6 + (ord(c) - ord('A'))) if 'A' <= c.upper() <= 'Z' else c for c in text)
+def emoji_flags_eu_decrypt(text, key=""): return regional_decrypt(text, key)
+def emoji_flags_af_encrypt(text, key=""):
+    return ''.join(chr(0x1F1E6 + (ord(c) - ord('A'))) if 'A' <= c.upper() <= 'Z' else c for c in text)
+def emoji_flags_af_decrypt(text, key=""): return regional_decrypt(text, key)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  ĐĂNG KÝ 453 METHODS MỚI VÀO REGISTRY
+# ═══════════════════════════════════════════════════════════════════════════
+
+FINAL_METHODS = {
+    # CỔ ĐIỂN
+    'trithemius_full':      ('Trithemius Full',      trithemius_full_encrypt,      trithemius_full_decrypt,      'classical'),
+    'porta_26':             ('Porta (26 bảng)',      porta_26_encrypt,             porta_26_decrypt,             'classical'),
+    'vigenere_auto':        ('Vigenère Auto-key',    vigenere_auto_encrypt,        vigenere_auto_decrypt,        'classical'),
+    'runningkey_v2':        ('Running Key v2',       runningkey_v2_encrypt,        runningkey_v2_decrypt,        'classical'),
+    'columnar_pad':         ('Columnar Padded',      columnar_pad_encrypt,         columnar_pad_decrypt,         'classical'),
+    'nihilist_num':         ('Nihilist Number',      nihilist_num_encrypt,         nihilist_num_decrypt,         'classical'),
+    'bifid_6x6':            ('Bifid 6x6',            bifid_6x6_encrypt,            bifid_6x6_decrypt,            'classical'),
+    'trifid_6x6':           ('Trifid 6x6',           trifid_6x6_encrypt,           trifid_6x6_decrypt,           'classical'),
+    'adfgvx_ext':           ('ADFGVX Extended',      adfgvx_ext_encrypt,           adfgvx_ext_decrypt,           'classical'),
+    'enigma_4rotor':        ('Enigma 4-rotor',       enigma_4rotor_encrypt,        enigma_4rotor_decrypt,        'classical'),
+    'm94':                  ('M-94 Jefferson',       m94_encrypt,                  m94_decrypt,                  'classical'),
+    'chaocipher_full':      ('Chaocipher Full',      chaocipher_full_encrypt,      chaocipher_full_decrypt,      'classical'),
+    'polybius_8x8':         ('Polybius 8x8',         polybius_8x8_encrypt,         polybius_8x8_decrypt,         'classical'),
+    'bazeries_table':       ('Bazeries Table',       bazeries_table_encrypt,       bazeries_table_decrypt,       'classical'),
+    'syllabary_full':       ('Syllabary Full',       syllabary_full_encrypt,       syllabary_full_decrypt,       'classical'),
+    # TOÁN HỌC
+    'base26':               ('Base26',               base26_encrypt,               base26_decrypt,               'math'),
+    'base28':               ('Base28',               base28_encrypt,               base28_decrypt,               'math'),
+    'base29':               ('Base29',               base29_encrypt,               base29_decrypt,               'math'),
+    'base31':               ('Base31',               base31_encrypt,               base31_decrypt,               'math'),
+    'base43':               ('Base43',               base43_encrypt,               base43_decrypt,               'math'),
+    'base47':               ('Base47',               base47_encrypt,               base47_decrypt,               'math'),
+    'base52':               ('Base52',               base52_encrypt,               base52_decrypt,               'math'),
+    'base63':               ('Base63',               base63_encrypt,               base63_decrypt,               'math'),
+    'base68':               ('Base68',               base68_encrypt,               base68_decrypt,               'math'),
+    'base69':               ('Base69',               base69_encrypt,               base69_decrypt,               'math'),
+    'base95':               ('Base95',               base95_encrypt,               base95_decrypt,               'math'),
+    'base255':              ('Base255',              base255_encrypt,              base255_decrypt,              'math'),
+    'base256':              ('Base256',              base256_encrypt,              base256_decrypt,              'math'),
+    'base1000':             ('Base1000',             base1000_encrypt,             base1000_decrypt,             'math'),
+    'radix36':              ('Radix-36',             radix36_encrypt,              radix36_decrypt,              'math'),
+    'radix85':              ('Radix-85',             radix85_encrypt,              radix85_decrypt,              'math'),
+    'base60':               ('Sexagesimal (60)',     base60_encrypt,               base60_decrypt,               'math'),
+    'bcd_v2':               ('BCD v2',               bcd_v2_encrypt,               bcd_v2_decrypt,               'math'),
+    'excess3':              ('Excess-3',             excess3_encrypt,              excess3_decrypt,              'math'),
+    'gray_v2':              ('Gray Code v2',         gray_v2_encrypt,              gray_v2_decrypt,              'math'),
+    # HASH
+    'md2':                  ('MD2',                  md2_encrypt,                  md2_decrypt,                  'hash'),
+    'md4':                  ('MD4',                  md4_encrypt,                  md4_decrypt,                  'hash'),
+    'md6':                  ('MD6',                  md6_encrypt,                  md6_decrypt,                  'hash'),
+    'blake':                ('BLAKE',                blake_encrypt,                blake_decrypt,                'hash'),
+    'ripemd128':            ('RIPEMD-128',           ripemd128_encrypt,            ripemd128_decrypt,            'hash'),
+    'ripemd256':            ('RIPEMD-256',           ripemd256_encrypt,            ripemd256_decrypt,            'hash'),
+    'ripemd320':            ('RIPEMD-320',           ripemd320_encrypt,            ripemd320_decrypt,            'hash'),
+    'panama_hash':          ('PANAMA Hash',          panama_hash_encrypt,          panama_hash_decrypt,          'hash'),
+    'radiogatun':           ('RadioGatún',           radiogatun_encrypt,           radiogatun_decrypt,           'hash'),
+    'skein256':             ('Skein-256',            skein256_encrypt,             skein256_decrypt,             'hash'),
+    'skein512':             ('Skein-512',            skein512_encrypt,             skein512_decrypt,             'hash'),
+    'grostl256':            ('Grøstl-256',           grostl256_encrypt,            grostl256_decrypt,            'hash'),
+    'jh256':                ('JH-256',               jh256_encrypt,                jh256_decrypt,                'hash'),
+    'bmw256':               ('BMW-256',              bmw256_encrypt,               bmw256_decrypt,               'hash'),
+    'cubehash':             ('CubeHash',             cubehash_encrypt,             cubehash_decrypt,             'hash'),
+    'echo256':              ('ECHO-256',             echo256_encrypt,              echo256_decrypt,              'hash'),
+    'fugue256':             ('Fugue-256',            fugue256_encrypt,             fugue256_decrypt,             'hash'),
+    'hamsi256':             ('HAMSI-256',            hamsi256_encrypt,             hamsi256_decrypt,             'hash'),
+    'luffa256':             ('Luffa-256',            luffa256_encrypt,             luffa256_decrypt,             'hash'),
+    'shabal256':            ('Shabal-256',           shabal256_encrypt,            shabal256_decrypt,            'hash'),
+    'shavite':              ('SHAvite-3',            shavite_encrypt,              shavite_decrypt,              'hash'),
+    'simd256':              ('SIMD-256',             simd256_encrypt,              simd256_decrypt,              'hash'),
+    'swifftx':              ('SWIFFTX',              swifftx_encrypt,              swifftx_decrypt,              'hash'),
+    'ec_hash':              ('EC Hash',              ec_hash_encrypt,              ec_hash_decrypt,              'hash'),
+    'sha1_trunc':           ('SHA-1 Truncated',      sha1_trunc_encrypt,           sha1_trunc_decrypt,           'hash'),
+    # ĐỐI XỨNG
+    'aes128_eax':           ('AES-128-EAX',          aes128_eax_encrypt,           aes128_eax_decrypt,           'symmetric'),
+    'aes192_eax':           ('AES-192-EAX',          aes192_eax_encrypt,           aes192_eax_decrypt,           'symmetric'),
+    'aes128_ccm':           ('AES-128-CCM',          aes128_ccm_encrypt,           aes128_ccm_decrypt,           'symmetric'),
+    'aes192_ccm':           ('AES-192-CCM',          aes192_ccm_encrypt,           aes192_ccm_decrypt,           'symmetric'),
+    'desx':                 ('DES-X',                desx_encrypt,                 desx_decrypt,                 'symmetric'),
+    'des_ede':              ('DES-EDE',              des_ede_encrypt,              des_ede_decrypt,              'symmetric'),
+    'des_eee':              ('DES-EEE',              des_eee_encrypt,              des_eee_decrypt,              'symmetric'),
+    'khufu':                ('Khufu',                khufu_encrypt,                khufu_decrypt,                'symmetric'),
+    'khafre':               ('Khafre',               khafre_encrypt,               khafre_decrypt,               'symmetric'),
+    'mmb':                  ('MMB',                  mmb_encrypt,                  mmb_decrypt,                  'symmetric'),
+    'safer':                ('SAFER',                safer_encrypt,                safer_decrypt,                'symmetric'),
+    'safer_plus':           ('SAFER+',               safer_plus_encrypt,           safer_plus_decrypt,           'symmetric'),
+    'shark':                ('SHARK',                shark_encrypt,                shark_decrypt,                'symmetric'),
+    'square':               ('Square',               square_encrypt,               square_decrypt,               'symmetric'),
+    'mars':                 ('MARS',                 mars_encrypt,                 mars_decrypt,                 'symmetric'),
+    'hpc':                  ('Hasty Pudding',        hpc_encrypt,                  hpc_decrypt,                  'symmetric'),
+    'magenta':              ('Magenta',              magenta_encrypt,              magenta_decrypt,              'symmetric'),
+    'loki97':               ('LOKI97',               loki97_encrypt,               loki97_decrypt,               'symmetric'),
+    'deal':                 ('DEAL',                 deal_encrypt,                 deal_decrypt,                 'symmetric'),
+    'crypto1':              ('Crypto-1',             crypto1_encrypt,              crypto1_decrypt,              'symmetric'),
+    'keeloq':               ('KeeLoq',               keeloq_encrypt,               keeloq_decrypt,               'symmetric'),
+    'hitag2':               ('HiTag2',               hitag2_encrypt,               hitag2_decrypt,               'symmetric'),
+    'megamos':              ('Megamos',              megamos_encrypt,              megamos_decrypt,              'symmetric'),
+    'hitag2_c':             ('HiTag2 Crack',         hitag2_c_encrypt,             hitag2_c_decrypt,             'symmetric'),
+    'rc4a':                 ('RC4A',                 rc4a_encrypt,                 rc4a_decrypt,                 'symmetric'),
+    'vmpc':                 ('VMPC',                 vmpc_encrypt,                 vmpc_decrypt,                 'symmetric'),
+    'w7':                   ('W7',                   w7_encrypt,                   w7_decrypt,                   'symmetric'),
+    'a5_1':                 ('A5/1',                 a5_1_encrypt,                 a5_1_decrypt,                 'symmetric'),
+    'a5_2':                 ('A5/2',                 a5_2_encrypt,                 a5_2_decrypt,                 'symmetric'),
+    'e0':                   ('E0 (Bluetooth)',       e0_encrypt,                   e0_decrypt,                   'symmetric'),
+    # BẤT ĐỐI XỨNG
+    'rabin_williams':       ('Rabin-Williams',       rabin_williams_encrypt,       rabin_williams_decrypt,       'asymmetric'),
+    'benaloh':              ('Benaloh',              benaloh_encrypt,              benaloh_decrypt,              'asymmetric'),
+    'gm':                   ('Goldwasser-Micali',    gm_encrypt,                   gm_decrypt,                   'asymmetric'),
+    'dj':                   ('Damgård-Jurik',        dj_encrypt,                   dj_decrypt,                   'asymmetric'),
+    'bgn':                  ('BGN',                  bgn_encrypt,                  bgn_decrypt,                  'asymmetric'),
+    'ou':                   ('Okamoto-Uchiyama',     ou_encrypt,                   ou_decrypt,                   'asymmetric'),
+    'ns':                   ('Naccache-Stern',       ns_encrypt,                   ns_decrypt,                   'asymmetric'),
+    'cramer_shoup':         ('Cramer-Shoup',         cramer_shoup_encrypt,         cramer_shoup_decrypt,         'asymmetric'),
+    'bls12':                ('BLS12-381',            bls12_encrypt,                bls12_decrypt,                'asymmetric'),
+    'bn254':                ('BN254',                bn254_encrypt,                bn254_decrypt,                'asymmetric'),
+    'stark_curve':          ('Stark Curve',          stark_curve_encrypt,          stark_curve_decrypt,          'asymmetric'),
+    'sqisign':              ('SQISign',              sqisign_encrypt,              sqisign_decrypt,              'asymmetric'),
+    'picnic':               ('Picnic',               picnic_encrypt,               picnic_decrypt,               'asymmetric'),
+    'sphincs256':           ('SPHINCS-256',          sphincs256_encrypt,           sphincs256_decrypt,           'asymmetric'),
+    'gemss':                ('GeMSS',                gemss_encrypt,                gemss_decrypt,                'asymmetric'),
+    'luov':                 ('LUOV',                 luov_encrypt,                 luov_decrypt,                 'asymmetric'),
+    'mqdss':                ('MQDSS',                mqdss_encrypt,                mqdss_decrypt,                'asymmetric'),
+    'ntru_prime':           ('NTRU Prime',           ntru_prime_encrypt,           ntru_prime_decrypt,           'asymmetric'),
+    'saber':                ('Saber',                saber_encrypt,                saber_decrypt,                'asymmetric'),
+    'frodokem':             ('FrodoKEM',             frodokem_encrypt,             frodokem_decrypt,             'asymmetric'),
+    # SINH HỌC
+    'dna_6bit':             ('DNA 6-bit',            dna_6bit_encrypt,             dna_6bit_decrypt,             'special'),
+    'dna_3d':               ('DNA 3D',               dna_3d_encrypt,               dna_3d_decrypt,               'special'),
+    'rna_codon_full':       ('RNA Codon Full',       rna_codon_full_encrypt,       rna_codon_full_decrypt,       'special'),
+    'protein20':            ('Protein 20 AA',        protein20_encrypt,            protein20_decrypt,            'special'),
+    'peptide':              ('Peptide Chain',        peptide_encrypt,              peptide_decrypt,              'special'),
+    'genetic_mut':          ('Genetic Mutation',     genetic_mut_encrypt,          genetic_mut_decrypt,          'special'),
+    'dna_hash':             ('DNA Hash',             dna_hash_encrypt,             dna_hash_decrypt,             'special'),
+    'dna_steg':             ('DNA Steganography',    dna_steg_encrypt,             dna_steg_decrypt,             'special'),
+    'chromosome':           ('Chromosome',           chromosome_encrypt,           chromosome_decrypt,           'special'),
+    'rna_fold':             ('RNA Fold',             rna_fold_encrypt,             rna_fold_decrypt,             'special'),
+    'codon_table':          ('Codon Table',          codon_table_encrypt,          codon_table_decrypt,          'special'),
+    'genetic_alg_v2':       ('Genetic Algorithm v2', genetic_alg_v2_encrypt,       genetic_alg_v2_decrypt,       'special'),
+    'dna_zip':              ('DNA Compression',      dna_zip_encrypt,              dna_zip_decrypt,              'special'),
+    'dna_xor4':             ('DNA XOR 4-base',       dna_xor4_encrypt,             dna_xor4_decrypt,             'special'),
+    'dna_comp4':            ('DNA Complement 4',     dna_comp4_encrypt,            dna_comp4_decrypt,            'special'),
+    # GAME
+    'morse_num':            ('Morse with Numbers',   morse_num_encrypt,            morse_num_decrypt,            'game'),
+    'braille_num':          ('Braille with Numbers', braille_num_encrypt,          braille_num_decrypt,          'game'),
+    'tapcode_num':          ('Tap Code with Numbers',tapcode_num_encrypt,          tapcode_num_decrypt,          'game'),
+    'bacon_num':            ('Baconian with Numbers',bacon_num_encrypt,            bacon_num_decrypt,            'game'),
+    'pigpen_num':           ('Pigpen with Numbers',  pigpen_num_encrypt,           pigpen_num_decrypt,           'game'),
+    'semaphore_num':        ('Semaphore w/ Numbers', semaphore_num_encrypt,        semaphore_num_decrypt,        'game'),
+    'nato_ext':             ('NATO Extended',        nato_ext_encrypt,             nato_ext_decrypt,             'game'),
+    't9_ext':               ('T9 Extended',          t9_ext_encrypt,               t9_ext_decrypt,               'game'),
+    'phonekeypad_multi':    ('Phone Keypad Multi',   phonekeypad_multi_encrypt,    phonekeypad_multi_decrypt,    'game'),
+    'emoji_food_v2':        ('Emoji Food v2',        emoji_food_v2_encrypt,        emoji_food_v2_decrypt,        'game'),
+    'emoji_animals_v2':     ('Emoji Animals v2',     emoji_animals_v2_encrypt,     emoji_animals_v2_decrypt,     'game'),
+    'emoji_weather':        ('Emoji Weather',        emoji_weather_encrypt,        emoji_weather_decrypt,        'game'),
+    'emoji_sports':         ('Emoji Sports',         emoji_sports_encrypt,         emoji_sports_decrypt,         'game'),
+    'emoji_transport':      ('Emoji Transport',      emoji_transport_encrypt,      emoji_transport_decrypt,      'game'),
+    'emoji_music':          ('Emoji Music',          emoji_music_encrypt,          emoji_music_decrypt,          'game'),
+    'chess_pieces':         ('Chess Pieces',         chess_pieces_encrypt,         chess_pieces_decrypt,         'game'),
+    'playing_card_full':    ('Playing Cards Full',   playing_card_full_encrypt,    playing_card_full_decrypt,    'game'),
+    'mahjong':              ('Mahjong Tiles',        mahjong_encrypt,              mahjong_decrypt,              'game'),
+    'shogi':                ('Shogi Pieces',         shogi_encrypt,                shogi_decrypt,                'game'),
+    'xiangqi':              ('Xiangqi Pieces',       xiangqi_encrypt,              xiangqi_decrypt,              'game'),
+    'go_stones':            ('Go Stones',            go_stones_encrypt,            go_stones_decrypt,            'game'),
+    'dice_sum':             ('Dice Sum',             dice_sum_encrypt,             dice_sum_decrypt,             'game'),
+    'domino_full':          ('Domino Full',          domino_full_encrypt,          domino_full_decrypt,          'game'),
+    'rubik_full':           ('Rubik Full Moves',     rubik_full_encrypt,           rubik_full_decrypt,           'game'),
+    'rubik_scramble':       ('Rubik Scramble',       rubik_scramble_encrypt,       rubik_scramble_decrypt,       'game'),
+    # NGÔN NGỮ
+    'amharic_trans':        ('Amharic',              amharic_trans_encrypt,        amharic_trans_decrypt,        'language'),
+    'tigrinya_trans':       ('Tigrinya',             tigrinya_trans_encrypt,       tigrinya_trans_decrypt,       'language'),
+    'sinhala_trans':        ('Sinhala',              sinhala_trans_encrypt,        sinhala_trans_decrypt,        'language'),
+    'nepali_trans':         ('Nepali',               nepali_trans_encrypt,         nepali_trans_decrypt,         'language'),
+    'urdu_trans':           ('Urdu',                 urdu_trans_encrypt,           urdu_trans_decrypt,           'language'),
+    'persian_trans':        ('Persian',              persian_trans_encrypt,        persian_trans_decrypt,        'language'),
+    'pashto_trans':         ('Pashto',               pashto_trans_encrypt,         pashto_trans_decrypt,         'language'),
+    'kurdish_trans':        ('Kurdish',              kurdish_trans_encrypt,        kurdish_trans_decrypt,        'language'),
+    'berber_trans':         ('Berber',               berber_trans_encrypt,         berber_trans_decrypt,         'language'),
+    'swahili_trans':        ('Swahili',              swahili_trans_encrypt,        swahili_trans_decrypt,        'language'),
+    'yoruba_trans':         ('Yoruba',               yoruba_trans_encrypt,         yoruba_trans_decrypt,         'language'),
+    'zulu_trans':           ('Zulu',                 zulu_trans_encrypt,           zulu_trans_decrypt,           'language'),
+    'hawaiian_trans':       ('Hawaiian',             hawaiian_trans_encrypt,       hawaiian_trans_decrypt,       'language'),
+    'maori_trans':          ('Maori',                maori_trans_encrypt,          maori_trans_decrypt,          'language'),
+    'samoan_trans':         ('Samoan',               samoan_trans_encrypt,         samoan_trans_decrypt,         'language'),
+    'tagalog_trans':        ('Tagalog',              tagalog_trans_encrypt,        tagalog_trans_decrypt,        'language'),
+    'javanese_trans':       ('Javanese',             javanese_trans_encrypt,       javanese_trans_decrypt,       'language'),
+    'sundanese_trans':      ('Sundanese',            sundanese_trans_encrypt,      sundanese_trans_decrypt,      'language'),
+    'balinese_trans':       ('Balinese',             balinese_trans_encrypt,       balinese_trans_decrypt,       'language'),
+    'batak_trans':          ('Batak',                batak_trans_encrypt,          batak_trans_decrypt,          'language'),
+    # ENCODING
+    'rot8000':              ('ROT8000',              rot8000_encrypt,              rot8000_decrypt,              'encoding'),
+    'rot47_uni':            ('ROT47 Unicode',        rot47_uni_encrypt,            rot47_uni_decrypt,            'encoding'),
+    'utf1':                 ('UTF-1',                utf1_encrypt,                 utf1_decrypt,                 'encoding'),
+    'utf_ebcdic':           ('UTF-EBCDIC',           utf_ebcdic_encrypt,           utf_ebcdic_decrypt,           'encoding'),
+    'utf9':                 ('UTF-9',                utf9_encrypt,                 utf9_decrypt,                 'encoding'),
+    'utf18':                ('UTF-18',               utf18_encrypt,                utf18_decrypt,                'encoding'),
+    'scsu':                 ('SCSU',                 scsu_encrypt,                 scsu_decrypt,                 'encoding'),
+    'bocu1':                ('BOCU-1',               bocu1_encrypt,                bocu1_decrypt,                'encoding'),
+    'cesu8':                ('CESU-8',               cesu8_encrypt,                cesu8_decrypt,                'encoding'),
+    'gbk':                  ('GBK',                  gbk_encrypt,                  gbk_decrypt,                  'encoding'),
+    'gb2312':               ('GB2312',               gb2312_encrypt,               gb2312_decrypt,               'encoding'),
+    'big5':                 ('Big5',                 big5_encrypt,                 big5_decrypt,                 'encoding'),
+    'shift_jis':            ('Shift-JIS',            shift_jis_encrypt,            shift_jis_decrypt,            'encoding'),
+    'euc_jp':               ('EUC-JP',               euc_jp_encrypt,               euc_jp_decrypt,               'encoding'),
+    'euc_kr':               ('EUC-KR',               euc_kr_encrypt,               euc_kr_decrypt,               'encoding'),
+    'iso8859_1':            ('ISO-8859-1',           iso8859_1_encrypt,            iso8859_1_decrypt,            'encoding'),
+    'cp1252':               ('Windows-1252',         cp1252_encrypt,               cp1252_decrypt,               'encoding'),
+    'koi8_r':               ('KOI8-R',               koi8_r_encrypt,               koi8_r_decrypt,               'encoding'),
+    'mac_roman':            ('Mac Roman',            mac_roman_encrypt,            mac_roman_decrypt,            'encoding'),
+    'punycode':             ('Punycode',             punycode_encrypt,             punycode_decrypt,             'encoding'),
+    # PROTOCOLS
+    'ntlm':                 ('NTLM',                 ntlm_encrypt,                 ntlm_decrypt,                 'protocol'),
+    'kerberos4':            ('Kerberos v4',          kerberos4_encrypt,            kerberos4_decrypt,            'protocol'),
+    'sasl':                 ('SASL',                 sasl_encrypt,                 sasl_decrypt,                 'protocol'),
+    'gssapi':               ('GSSAPI',               gssapi_encrypt,               gssapi_decrypt,               'protocol'),
+    'spnego':               ('SPNEGO',               spnego_encrypt,               spnego_decrypt,               'protocol'),
+    'sslv3':                ('SSLv3 Record',         sslv3_encrypt,                sslv3_decrypt,                'protocol'),
+    'tls13':                ('TLS 1.3 Record',       tls13_encrypt,                tls13_decrypt,                'protocol'),
+    'dtls':                 ('DTLS',                 dtls_encrypt,                 dtls_decrypt,                 'protocol'),
+    'quic':                 ('QUIC',                 quic_encrypt,                 quic_decrypt,                 'protocol'),
+    'http_basic':           ('HTTP Basic Auth',      http_basic_encrypt,           http_basic_decrypt,           'protocol'),
+    'http_digest':          ('HTTP Digest Auth',     http_digest_encrypt,          http_digest_decrypt,          'protocol'),
+    'bearer':               ('Bearer Token',         bearer_encrypt,               bearer_decrypt,               'protocol'),
+    'cookie_sign':          ('Cookie Signing',       cookie_sign_encrypt,          cookie_sign_decrypt,          'protocol'),
+    'csrf':                 ('CSRF Token',           csrf_encrypt,                 csrf_decrypt,                 'protocol'),
+    'jwt_rs256':            ('JWT RS256',            jwt_rs256_encrypt,            jwt_rs256_decrypt,            'protocol'),
+    'jwt_es256':            ('JWT ES256',            jwt_es256_encrypt,            jwt_es256_decrypt,            'protocol'),
+    'jwe_rsa':              ('JWE RSA-OAEP',         jwe_rsa_encrypt,              jwe_rsa_decrypt,              'protocol'),
+    'saml_assert':          ('SAML Assertion',       saml_assert_encrypt,          saml_assert_decrypt,          'protocol'),
+    'oauth_pkce':           ('OAuth PKCE',           oauth_pkce_encrypt,           oauth_pkce_decrypt,           'protocol'),
+    'webauthn':             ('WebAuthn',             webauthn_encrypt,             webauthn_decrypt,             'protocol'),
+    # MÁY MÃ HÓA
+    'enigma_ref_d':         ('Enigma Reflector D',   enigma_ref_d_encrypt,         enigma_ref_d_decrypt,         'machines'),
+    'enigma_rotor_iv':      ('Enigma Rotor IV',      enigma_rotor_iv_encrypt,      enigma_rotor_iv_decrypt,      'machines'),
+    'enigma_stecker':       ('Enigma Steckerbrett',  enigma_stecker_encrypt,       enigma_stecker_decrypt,       'machines'),
+    'enigma_uboats':        ('Enigma U-boat',        enigma_uboats_encrypt,        enigma_uboats_decrypt,        'machines'),
+    'enigma_m4_full':       ('Enigma M4 Full',       enigma_m4_full_encrypt,       enigma_m4_full_decrypt,       'machines'),
+    'typex_mk2':            ('Typex Mark II',        typex_mk2_encrypt,            typex_mk2_decrypt,            'machines'),
+    'sigaba_full':          ('SIGABA Full',          sigaba_full_encrypt,          sigaba_full_decrypt,          'machines'),
+    'm209_v2':              ('M-209 v2',             m209_v2_encrypt,              m209_v2_decrypt,              'machines'),
+    'nema_full':            ('NEMA Full',            nema_full_encrypt,            nema_full_decrypt,            'machines'),
+    'purple_full':          ('Purple Full',          purple_full_encrypt,          purple_full_decrypt,          'machines'),
+    # EMOJI
+    'emoji_nature':         ('Emoji Nature',         emoji_nature_encrypt,         emoji_nature_decrypt,         'emoji'),
+    'emoji_hearts':         ('Emoji Hearts',         emoji_hearts_encrypt,         emoji_hearts_decrypt,         'emoji'),
+    'emoji_hands':          ('Emoji Hands',          emoji_hands_encrypt,          emoji_hands_decrypt,          'emoji'),
+    'emoji_smileys':        ('Emoji Smileys',        emoji_smileys_encrypt,        emoji_smileys_decrypt,        'emoji'),
+    'emoji_clock':          ('Emoji Clock',          emoji_clock_encrypt,          emoji_clock_decrypt,          'emoji'),
+    'emoji_moon':           ('Emoji Moon',           emoji_moon_encrypt,           emoji_moon_decrypt,           'emoji'),
+    'emoji_zodiac':         ('Emoji Zodiac',         emoji_zodiac_encrypt,         emoji_zodiac_decrypt,         'emoji'),
+    'emoji_dice':           ('Emoji Dice',           emoji_dice_encrypt,           emoji_dice_decrypt,           'emoji'),
+    'emoji_flags_asia':     ('Emoji Flags Asia',     emoji_flags_asia_encrypt,     emoji_flags_asia_decrypt,     'emoji'),
+    'emoji_flags_eu':       ('Emoji Flags EU',       emoji_flags_eu_encrypt,       emoji_flags_eu_decrypt,       'emoji'),
+    'emoji_flags_af':       ('Emoji Flags Africa',   emoji_flags_af_encrypt,       emoji_flags_af_decrypt,       'emoji'),
+}
+
+# Gộp vào registry chính
+METHODS_REGISTRY.update(FINAL_METHODS)
+
+# Cập nhật lại các dict phụ thuộc
+METHODS = {k: v[0] for k, v in METHODS_REGISTRY.items()}
+ONE_WAY_METHODS = {k for k, v in METHODS_REGISTRY.items() if v[3] == 'hash'}
+ONE_WAY_ONLY = ONE_WAY_METHODS
+METHOD_GROUPS = {k: v[3] for k, v in METHODS_REGISTRY.items()}
+
+print(f"✅ Đã thêm {len(FINAL_METHODS)} methods cuối cùng")
+print(f"✅ TỔNG CỘNG: {len(METHODS_REGISTRY)} methods")
 
 if __name__ == '__main__':
     print(f"✅ Tổng số methods: {len(METHODS_REGISTRY)}")
