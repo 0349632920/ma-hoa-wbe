@@ -1,6 +1,6 @@
 # ═══════════════════════════════════════════════════════════════════════════
-#  MÃ HÓA TOOL — Requirements
-#  Chạy: pip install -r requirements.txt
+#  MÃ HÓA TOOL — Requirements (Fixed)
+#  Đã lược bỏ highwayhash vì không tồn tại trên PyPI
 # ═══════════════════════════════════════════════════════════════════════════
 
 # ─── Web Framework ───
@@ -18,54 +18,20 @@ requests==2.34.2
 cryptography==42.0.8
 
 # ─── Crypto chính (PyCryptodome) ───
-# Bao gồm: AES, DES, 3DES, Blowfish, ChaCha20, Salsa20, ARC2, ARC4, CAST, PKCS1
 pycryptodome==3.20.0
 
-# ─── Bổ sung Crypto (thay thế cho pycryptodome) ───
-# Cung cấp thêm: Twofish, Serpent, IDEA, Camellia, ARIA, SEED, SM4, CAST5/6,
-# TEA/XTEA/XXTEA, Speck/Simon, PRESENT, KASUMI, MISTY1, Skipjack, Rabbit,
-# HC-128, HC-256, Grain, Trivium, MICKEY, RSA, ECC, ECDSA, Ed25519, Ed448,
-# X25519, X448, DH, ElGamal, DSA, Kyber, Dilithium, Falcon, SPHINCS+
+# ─── Bổ sung Crypto (nâng cao) ───
 pycryptodomex==3.20.0
 
 # ─── Hash mở rộng ───
-# BLAKE3: nhanh hơn BLAKE2, hiện đại
 blake3==0.4.1
-
-# MurmurHash3: hash phi mã hóa, dùng cho hash table
 mmh3==4.1.0
-
-# xxHash: cực nhanh, dùng cho checksum
 xxhash==3.4.1
-
-# CityHash: hash nhanh của Google
 cityhash==0.4.7
-
-# FarmHash: hash nhanh của Google (thế hệ mới)
 pyfarmhash==0.3.2
 
-# HighwayHash: hash cực nhanh cho big data
-highwayhash==0.2.2
-
-# Tiger: hash 192-bit
-tigerhash==0.1.0
-
-# HAVAL: hash variable length
-pyhaval==0.1.4
-
-# GOST: hash chuẩn Nga
-pygost==5.11
-
 # ─── JWT ───
-# Xử lý JWT/JWS/JWE chuẩn RFC 7519
 PyJWT==2.9.0
 
 # ─── Dịch thuật ───
-# Dịch ngôn ngữ (ổn định hơn googletrans)
 deep-translator==1.11.4
-
-# ─── Optional — chỉ cần nếu muốn dùng ───
-# pycryptodome-x509==1.2.1  # X.509 certificate parsing
-# bip-utils==2.9.1           # BIP32/BIP39 cho crypto wallets
-# pyzbar==0.1.9              # QR code reader
-# qrcode==7.4.2              # QR code generator
