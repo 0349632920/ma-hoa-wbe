@@ -2601,8 +2601,6 @@ auto_delete_expired()
 
 @app.route('/admin/2fa')
 @admin_required
-def admin_2fa_page():
-    return render_template('admin_2fa.html')
 
 
 @app.route('/api/2fa/status')
