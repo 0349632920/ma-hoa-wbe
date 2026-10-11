@@ -14,6 +14,195 @@
     }
     .container { max-width: 1200px; margin: 0 auto; }
 
+    /* ═══════════════════════════════════════════════════════════
+       SPLASH SCREEN
+       ═══════════════════════════════════════════════════════════ */
+    .splash-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    .splash-screen.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .floating-emoji {
+      position: absolute;
+      font-size: 42px;
+      left: var(--x);
+      top: var(--y);
+      animation: floatEmoji 4s ease-in-out infinite;
+      animation-delay: var(--delay);
+      opacity: 0.35;
+      filter: blur(0.5px);
+    }
+    @keyframes floatEmoji {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.25; }
+      50%      { transform: translateY(-25px) rotate(12deg); opacity: 0.55; }
+    }
+
+    .splash-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 30px;
+      max-width: 520px;
+      width: 100%;
+    }
+
+    /* LOGO */
+    .splash-logo {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .logo-shield {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-inner {
+      font-size: 56px;
+      z-index: 3;
+      animation: logoPop 1.6s ease-in-out infinite;
+    }
+    @keyframes logoPop {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.12); }
+    }
+    .logo-ring {
+      position: absolute;
+      inset: 0;
+      border: 3px solid rgba(102, 126, 234, 0.6);
+      border-radius: 50%;
+      animation: ringPulse 2s ease-out infinite;
+    }
+    .logo-ring.ring-2 {
+      border-color: rgba(118, 75, 162, 0.5);
+      animation-delay: 0.6s;
+    }
+    @keyframes ringPulse {
+      0%   { transform: scale(0.7); opacity: 0.9; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    /* TITLE */
+    .splash-title {
+      font-size: 40px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .splash-title .gradient-text {
+      background: linear-gradient(135deg, #667eea, #764ba2, #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .splash-subtitle {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 30px;
+      letter-spacing: 0.5px;
+    }
+
+    /* PROGRESS */
+    .splash-progress {
+      width: 100%;
+      max-width: 340px;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 0 auto 14px;
+    }
+    .splash-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #667eea, #764ba2, #ffd700);
+      border-radius: 999px;
+      transition: width 0.5s ease;
+      box-shadow: 0 0 12px rgba(102,126,234,0.7);
+    }
+    .splash-status {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 28px;
+      min-height: 18px;
+    }
+
+    /* STEPS */
+    .splash-steps {
+      display: flex;
+      justify-content: center;
+      gap: 22px;
+      flex-wrap: wrap;
+    }
+    .splash-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #666;
+      transition: 0.3s;
+    }
+    .splash-step .step-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.2);
+      transition: 0.4s;
+    }
+    .splash-step.active {
+      color: #a0c4ff;
+    }
+    .splash-step.active .step-dot {
+      background: #667eea;
+      border-color: #667eea;
+      box-shadow: 0 0 14px rgba(102,126,234,0.9);
+      animation: dotPulse 1s ease-in-out infinite;
+    }
+    .splash-step.done {
+      color: #4ade80;
+    }
+    .splash-step.done .step-dot {
+      background: #27ae60;
+      border-color: #27ae60;
+      box-shadow: 0 0 10px rgba(39,174,96,0.7);
+    }
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.25); }
+    }
+
+    /* Container ẩn ban đầu */
+    #mainContainer {
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    #mainContainer.show {
+      opacity: 1;
+    }
+
     /* HEADER */
     .game-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -797,1744 +986,1800 @@
 </head>
 <body>
 
-<div class="container">
-
-  <div class="game-header">
-    <div class="game-title">
-      <div class="game-icon">🎮</div>
-      <div>
-        <h1>Game Hub</h1>
-        <p>Chơi game — Kiếm điểm — Lên top</p>
+  <!-- ═══════════════════════════════════════════════════════════
+       SPLASH SCREEN
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-bg">
+      <span class="floating-emoji" style="--delay:0s;--x:10%;--y:20%">🎮</span>
+      <span class="floating-emoji" style="--delay:0.5s;--x:80%;--y:15%">⚔️</span>
+      <span class="floating-emoji" style="--delay:1s;--x:20%;--y:75%">🏆</span>
+      <span class="floating-emoji" style="--delay:1.5s;--x:75%;--y:80%">🎯</span>
+      <span class="floating-emoji" style="--delay:0.8s;--x:50%;--y:10%">🎲</span>
+      <span class="floating-emoji" style="--delay:1.2s;--x:15%;--y:50%">🎁</span>
+      <span class="floating-emoji" style="--delay:0.3s;--x:85%;--y:45%">✨</span>
+      <span class="floating-emoji" style="--delay:1.7s;--x:55%;--y:85%">🔥</span>
+    </div>
+    <div class="splash-content">
+      <div class="splash-logo">
+        <div class="logo-shield">
+          <div class="logo-inner">🎮</div>
+          <div class="logo-ring"></div>
+          <div class="logo-ring ring-2"></div>
+        </div>
+      </div>
+      <h1 class="splash-title">
+        <span>Game</span> <span class="gradient-text">Hub</span>
+      </h1>
+      <p class="splash-subtitle">Chơi game — Kiếm điểm — Lên top</p>
+      <div class="splash-progress">
+        <div class="splash-progress-fill" id="splashProgress"></div>
+      </div>
+      <p class="splash-status" id="splashStatus">Đang khởi tạo...</p>
+      <div class="splash-steps">
+        <div class="splash-step" data-step="1"><div class="step-dot"></div><span>Khởi động</span></div>
+        <div class="splash-step" data-step="2"><div class="step-dot"></div><span>Tải dữ liệu</span></div>
+        <div class="splash-step" data-step="3"><div class="step-dot"></div><span>Sẵn sàng</span></div>
       </div>
     </div>
-    <div class="user-stats">
-      <div class="stat-item">
-        <div class="value" id="myPoints">0</div>
-        <div class="label">Điểm</div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="container" id="mainContainer">
+
+    <div class="game-header">
+      <div class="game-title">
+        <div class="game-icon">🎮</div>
+        <div>
+          <h1>Game Hub</h1>
+          <p>Chơi game — Kiếm điểm — Lên top</p>
+        </div>
       </div>
-      <div class="stat-item">
-        <div class="value" id="myLevel">1</div>
-        <div class="label">Level</div>
+      <div class="user-stats">
+        <div class="stat-item">
+          <div class="value" id="myPoints">0</div>
+          <div class="label">Điểm</div>
+        </div>
+        <div class="stat-item">
+          <div class="value" id="myLevel">1</div>
+          <div class="label">Level</div>
+        </div>
+        <div class="stat-item">
+          <div class="value" id="myRank">—</div>
+          <div class="label">Xếp hạng</div>
+        </div>
+        <a href="/" class="btn-back">🔐 Về trang chính</a>
       </div>
-      <div class="stat-item">
-        <div class="value" id="myRank">—</div>
-        <div class="label">Xếp hạng</div>
-      </div>
-      <a href="/" class="btn-back">🔐 Về trang chính</a>
-    </div>
-  </div>
-
-  <div class="tabs" id="mainTabs">
-    <button class="tab active" data-tab="leaderboard">🏆 Bảng xếp hạng</button>
-    <button class="tab" data-tab="daily">🎯 Thử thách ngày</button>
-    <button class="tab" data-tab="rewards">🎁 Phần thưởng</button>
-    <button class="tab" data-tab="random">🎲 Random</button>
-    <button class="tab" data-tab="pvp">⚔️ PvP</button>
-    <button class="tab" data-tab="meme">🎨 Meme</button>
-  </div>
-
-  <div class="pvp-lock-banner" id="pvpLockBanner">
-    <span class="lock-icon">🔒</span>
-    <span>Bạn đang trong trận đấu! Không thể chuyển tab. Hãy hoàn thành hoặc rời trận.</span>
-  </div>
-
-  <div class="panel active" id="panel-leaderboard">
-    <h2 class="panel-title">🏆 Bảng xếp hạng</h2>
-    <div id="leaderboardList">
-      <div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>
-    </div>
-  </div>
-
-  <div class="panel" id="panel-daily">
-    <h2 class="panel-title">🎯 Thử thách hàng ngày</h2>
-    <div id="dailyContent">Đang tải...</div>
-  </div>
-
-  <div class="panel" id="panel-rewards">
-    <h2 class="panel-title">🎁 Phần thưởng</h2>
-    <div class="rewards-grid" id="rewardsGrid"></div>
-  </div>
-
-  <div class="panel" id="panel-random">
-    <h2 class="panel-title">🎲 Phương pháp ngẫu nhiên</h2>
-    <div class="random-options">
-      <label class="random-option">
-        <input type="checkbox" id="optExcludeOneWay">
-        <span>Không chọn 1 chiều</span>
-      </label>
-      <label class="random-option">
-        <input type="checkbox" id="optExcludeKey">
-        <span>Không chọn cần key</span>
-      </label>
-    </div>
-    <div class="random-display" id="randomDisplay">
-      <div class="random-emoji">🎲</div>
-      <div style="color:#999;">Bấm nút để chọn phương pháp!</div>
-    </div>
-    <button class="big-btn" onclick="rollRandom()">🎲 Quay ngẫu nhiên</button>
-  </div>
-
-  <div class="panel" id="panel-pvp">
-    <h2 class="panel-title">⚔️ PvP — Đua gõ chữ</h2>
-    <p style="color:#999;margin-bottom:20px;font-size:14px;">
-      ⌨️ Gõ từ tiếng Anh nhanh nhất — Ai gõ nhanh hơn thắng!
-    </p>
-
-    <div class="pvp-subtabs">
-      <button class="pvp-subtab active" data-subtab="lobby">🎮 Phòng</button>
-      <button class="pvp-subtab" data-subtab="create">➕ Tạo phòng</button>
-      <button class="pvp-subtab" data-subtab="friends">👥 Bạn bè</button>
-      <button class="pvp-subtab" data-subtab="history">📊 Lịch sử</button>
     </div>
 
-    <div class="pvp-section active" id="pvp-lobby">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h3 style="font-size:16px;">📋 Phòng đang chờ</h3>
-        <button class="btn-sm ghost" onclick="loadPublicRooms()">🔄 Làm mới</button>
-      </div>
-      <div id="publicRoomsList">
+    <div class="tabs" id="mainTabs">
+      <button class="tab active" data-tab="leaderboard">🏆 Bảng xếp hạng</button>
+      <button class="tab" data-tab="daily">🎯 Thử thách ngày</button>
+      <button class="tab" data-tab="rewards">🎁 Phần thưởng</button>
+      <button class="tab" data-tab="random">🎲 Random</button>
+      <button class="tab" data-tab="pvp">⚔️ PvP</button>
+      <button class="tab" data-tab="meme">🎨 Meme</button>
+    </div>
+
+    <div class="pvp-lock-banner" id="pvpLockBanner">
+      <span class="lock-icon">🔒</span>
+      <span>Bạn đang trong trận đấu! Không thể chuyển tab. Hãy hoàn thành hoặc rời trận.</span>
+    </div>
+
+    <div class="panel active" id="panel-leaderboard">
+      <h2 class="panel-title">🏆 Bảng xếp hạng</h2>
+      <div id="leaderboardList">
         <div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>
       </div>
-
-      <h3 style="font-size:16px;margin-top:30px;margin-bottom:16px;">🚪 Vào bằng mã phòng</h3>
-      <div style="display:flex;gap:12px;">
-        <input type="text" id="pvpJoinCode" class="pvp-code-input"
-               placeholder="ABC123" maxlength="6" style="flex:1;margin-bottom:0;">
-        <button class="big-btn" style="margin:0;" onclick="joinPvPRoom()">🚪 Vào</button>
-      </div>
     </div>
 
-    <div class="pvp-section" id="pvp-create">
-      <h3 style="margin-bottom:16px;">⚙️ Cấu hình phòng</h3>
+    <div class="panel" id="panel-daily">
+      <h2 class="panel-title">🎯 Thử thách hàng ngày</h2>
+      <div id="dailyContent">Đang tải...</div>
+    </div>
 
-      <div class="rule-row">
-        <label>🌐 Phòng công khai (ai cũng vào được)</label>
-        <label class="toggle-switch">
-          <input type="checkbox" id="ruleIsPublic" checked>
-          <span class="toggle-slider"></span>
+    <div class="panel" id="panel-rewards">
+      <h2 class="panel-title">🎁 Phần thưởng</h2>
+      <div class="rewards-grid" id="rewardsGrid"></div>
+    </div>
+
+    <div class="panel" id="panel-random">
+      <h2 class="panel-title">🎲 Phương pháp ngẫu nhiên</h2>
+      <div class="random-options">
+        <label class="random-option">
+          <input type="checkbox" id="optExcludeOneWay">
+          <span>Không chọn 1 chiều</span>
+        </label>
+        <label class="random-option">
+          <input type="checkbox" id="optExcludeKey">
+          <span>Không chọn cần key</span>
         </label>
       </div>
-
-      <div class="rule-row">
-        <label>🏁 Số ván</label>
-        <input type="number" id="ruleRounds" value="3" min="1" max="7">
+      <div class="random-display" id="randomDisplay">
+        <div class="random-emoji">🎲</div>
+        <div style="color:#999;">Bấm nút để chọn phương pháp!</div>
       </div>
-
-      <div class="rule-row">
-        <label>❓ Số câu mỗi ván</label>
-        <input type="number" id="ruleQuestions" value="10" min="5" max="30">
-      </div>
-
-      <button class="big-btn" onclick="createPvPRoom()" style="margin-top:20px;">
-        ➕ Tạo phòng
-      </button>
+      <button class="big-btn" onclick="rollRandom()">🎲 Quay ngẫu nhiên</button>
     </div>
 
-    <div class="pvp-section" id="pvp-friends">
-      <h3 style="margin-bottom:16px;">🔍 Tìm bạn bè</h3>
-      <input type="text" id="friendSearch" class="friend-search-input"
-             placeholder="Nhập username..." oninput="searchFriends(this.value)">
-      <div id="friendSearchResults"></div>
+    <div class="panel" id="panel-pvp">
+      <h2 class="panel-title">⚔️ PvP — Đua gõ chữ</h2>
+      <p style="color:#999;margin-bottom:20px;font-size:14px;">
+        ⌨️ Gõ từ tiếng Anh nhanh nhất — Ai gõ nhanh hơn thắng!
+      </p>
 
-      <h3 style="margin-top:30px;margin-bottom:16px;">📨 Lời mời kết bạn</h3>
-      <div id="friendRequests">
-        <div class="empty-msg">Đang tải...</div>
+      <div class="pvp-subtabs">
+        <button class="pvp-subtab active" data-subtab="lobby">🎮 Phòng</button>
+        <button class="pvp-subtab" data-subtab="create">➕ Tạo phòng</button>
+        <button class="pvp-subtab" data-subtab="friends">👥 Bạn bè</button>
+        <button class="pvp-subtab" data-subtab="history">📊 Lịch sử</button>
       </div>
 
-      <h3 style="margin-top:30px;margin-bottom:16px;">👥 Danh sách bạn bè</h3>
-      <div id="friendsList">
-        <div class="empty-msg">Đang tải...</div>
-      </div>
-    </div>
-
-    <div class="pvp-section" id="pvp-history">
-      <h3 style="margin-bottom:16px;">📊 20 trận gần nhất</h3>
-      <div id="pvpHistoryList">
-        <div class="empty-msg">Đang tải...</div>
-      </div>
-    </div>
-
-    <div id="pvpWaiting" style="display:none;">
-      <div class="pvp-waiting-box">
-        <div class="pvp-room-code-display">
-          <div>Mã phòng</div>
-          <div class="pvp-room-code" id="pvpRoomCode" onclick="copyRoomCode()">------</div>
-          <div class="pvp-room-hint">
-            📋 Bấm để copy — hoặc <a href="#" onclick="shareLink(); return false;"
-              style="color:#667eea;font-weight:700;">copy link mời</a>
-          </div>
+      <div class="pvp-section active" id="pvp-lobby">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="font-size:16px;">📋 Phòng đang chờ</h3>
+          <button class="btn-sm ghost" onclick="loadPublicRooms()">🔄 Làm mới</button>
+        </div>
+        <div id="publicRoomsList">
+          <div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>
         </div>
 
-        <div class="pvp-players">
-          <div class="pvp-player-slot">
-            <div class="pvp-player-avatar">😎</div>
-            <div class="pvp-player-name" id="pvpHostName">Bạn</div>
-            <div class="pvp-player-level" id="pvpHostLevel">Level 1</div>
-          </div>
-          <div class="pvp-vs-small">VS</div>
-          <div class="pvp-player-slot waiting" id="pvpGuestSlot">
-            <div class="pvp-player-avatar">⏳</div>
-            <div class="pvp-player-name" id="pvpGuestName">Đang chờ...</div>
-            <div class="pvp-player-level" id="pvpGuestLevel"></div>
-          </div>
-        </div>
-
-        <div id="pvpWaitingStatus" style="text-align:center;color:#999;margin:20px 0;">
-          ⏳ Đang chờ đối thủ vào phòng...
-        </div>
-
-        <div style="text-align:center;font-size:13px;color:#999;margin-bottom:20px;">
-          ⚙️ <span id="pvpWaitingRules">3 ván × 10 câu</span>
-        </div>
-
-        <div class="pvp-chat-box" id="pvpChatBox"></div>
-        <div class="pvp-chat-input-row">
-          <input type="text" class="pvp-chat-input" id="pvpChatInput"
-                 placeholder="Nhắn tin..." onkeydown="if(event.key==='Enter') sendChat()">
-          <button class="btn-sm primary" onclick="sendChat()">📨</button>
-        </div>
-
-        <div class="pvp-waiting-actions" style="margin-top:20px;">
-          <button class="big-btn" id="pvpStartBtn" onclick="startPvP()" style="display:none;margin:0;">
-            ▶️ BẮT ĐẦU
-          </button>
-          <button class="pvp-btn-cancel" id="pvpKickBtn" onclick="kickGuest()" style="display:none;">
-            🚫 Kick
-          </button>
-          <button class="pvp-btn-cancel" onclick="leavePvP()">🚪 Rời phòng</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="pvpPlaying" style="display:none;">
-      <div class="pvp-scoreboard">
-        <div class="pvp-score-side you">
-          <div class="pvp-score-name">😎 Bạn</div>
-          <div class="pvp-score-value" id="pvpMyScore">0</div>
-          <div class="pvp-score-wins">Ván thắng: <span id="pvpMyWins">0</span></div>
-        </div>
-        <div class="pvp-score-middle">
-          <div class="pvp-round-label" id="pvpRoundLabel">Ván 1/3</div>
-          <div class="pvp-score-vs">VS</div>
-        </div>
-        <div class="pvp-score-side opponent">
-          <div class="pvp-score-name">🤖 <span id="pvpOppName">Đối thủ</span></div>
-          <div class="pvp-score-value" id="pvpOppScore">0</div>
-          <div class="pvp-score-wins">Ván thắng: <span id="pvpOppWins">0</span></div>
+        <h3 style="font-size:16px;margin-top:30px;margin-bottom:16px;">🚪 Vào bằng mã phòng</h3>
+        <div style="display:flex;gap:12px;">
+          <input type="text" id="pvpJoinCode" class="pvp-code-input"
+                 placeholder="ABC123" maxlength="6" style="flex:1;margin-bottom:0;">
+          <button class="big-btn" style="margin:0;" onclick="joinPvPRoom()">🚪 Vào</button>
         </div>
       </div>
 
-      <div class="opp-afk-notice" id="oppAfkNotice" style="display:none;">
-        <span>⚠️</span>
-        <span id="oppAfkText">Đối thủ đang AFK...</span>
-      </div>
+      <div class="pvp-section" id="pvp-create">
+        <h3 style="margin-bottom:16px;">⚙️ Cấu hình phòng</h3>
 
-      <div class="pvp-progress">
-        <div class="pvp-progress-info">
-          <span>Câu <strong id="pvpCurrentQ">1</strong>/<strong id="pvpTotalQ">10</strong></span>
-          <span id="pvpProgressPct">0%</span>
+        <div class="rule-row">
+          <label>🌐 Phòng công khai (ai cũng vào được)</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="ruleIsPublic" checked>
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-        <div class="pvp-progress-bar">
-          <div class="pvp-progress-fill" id="pvpProgressFill" style="width:0%"></div>
+
+        <div class="rule-row">
+          <label>🏁 Số ván</label>
+          <input type="number" id="ruleRounds" value="3" min="1" max="7">
         </div>
-      </div>
 
-      <div class="pvp-question-box">
-        <div class="pvp-question-label">⌨️ GÕ TỪ TIẾNG ANH SAU:</div>
-        <div class="pvp-question-text" id="pvpQuestionText">...</div>
-      </div>
+        <div class="rule-row">
+          <label>❓ Số câu mỗi ván</label>
+          <input type="number" id="ruleQuestions" value="10" min="5" max="30">
+        </div>
 
-      <div class="pvp-opponent-status" id="pvpOpponentStatus" style="display:none;">
-        <span>⏳</span>
-        <span>Đối thủ đang trả lời...</span>
-      </div>
-
-      <div class="pvp-opponent-status answered" id="pvpOpponentAnswered" style="display:none;">
-        <span>✅</span>
-        <span id="pvpOppAnswerText">Đối thủ đã trả lời!</span>
-      </div>
-
-      <div class="pvp-answer-row">
-        <input type="text" id="pvpAnswerInput" class="pvp-answer-input"
-               placeholder="Gõ từ trên..." autocomplete="off" autofocus>
-        <button class="big-btn" id="pvpSubmitBtn" onclick="submitPvPAnswer()" style="margin:0;">
-          ✅ Gửi
+        <button class="big-btn" onclick="createPvPRoom()" style="margin-top:20px;">
+          ➕ Tạo phòng
         </button>
       </div>
 
-      <div id="pvpFeedback" class="pvp-feedback" style="display:none;"></div>
-    </div>
+      <div class="pvp-section" id="pvp-friends">
+        <h3 style="margin-bottom:16px;">🔍 Tìm bạn bè</h3>
+        <input type="text" id="friendSearch" class="friend-search-input"
+               placeholder="Nhập username..." oninput="searchFriends(this.value)">
+        <div id="friendSearchResults"></div>
 
-    <div id="pvpFinished" style="display:none;">
-      <div class="pvp-result-box">
-        <div class="pvp-result-icon" id="pvpResultIcon">🏆</div>
-        <h2 class="pvp-result-title" id="pvpResultTitle">Kết thúc!</h2>
-        <div class="pvp-result-rounds" id="pvpResultRounds"></div>
-        <div class="pvp-result-totals">
-          <div class="pvp-result-score">
-            <div class="pvp-result-label">😎 Bạn</div>
-            <div class="pvp-result-value" id="pvpResultYourScore">0</div>
+        <h3 style="margin-top:30px;margin-bottom:16px;">📨 Lời mời kết bạn</h3>
+        <div id="friendRequests">
+          <div class="empty-msg">Đang tải...</div>
+        </div>
+
+        <h3 style="margin-top:30px;margin-bottom:16px;">👥 Danh sách bạn bè</h3>
+        <div id="friendsList">
+          <div class="empty-msg">Đang tải...</div>
+        </div>
+      </div>
+
+      <div class="pvp-section" id="pvp-history">
+        <h3 style="margin-bottom:16px;">📊 20 trận gần nhất</h3>
+        <div id="pvpHistoryList">
+          <div class="empty-msg">Đang tải...</div>
+        </div>
+      </div>
+
+      <div id="pvpWaiting" style="display:none;">
+        <div class="pvp-waiting-box">
+          <div class="pvp-room-code-display">
+            <div>Mã phòng</div>
+            <div class="pvp-room-code" id="pvpRoomCode" onclick="copyRoomCode()">------</div>
+            <div class="pvp-room-hint">
+              📋 Bấm để copy — hoặc <a href="#" onclick="shareLink(); return false;"
+                style="color:#667eea;font-weight:700;">copy link mời</a>
+            </div>
           </div>
-          <div class="pvp-result-vs">-</div>
-          <div class="pvp-result-score">
-            <div class="pvp-result-label">🤖 Đối thủ</div>
-            <div class="pvp-result-value" id="pvpResultOppScore">0</div>
+
+          <div class="pvp-players">
+            <div class="pvp-player-slot">
+              <div class="pvp-player-avatar">😎</div>
+              <div class="pvp-player-name" id="pvpHostName">Bạn</div>
+              <div class="pvp-player-level" id="pvpHostLevel">Level 1</div>
+            </div>
+            <div class="pvp-vs-small">VS</div>
+            <div class="pvp-player-slot waiting" id="pvpGuestSlot">
+              <div class="pvp-player-avatar">⏳</div>
+              <div class="pvp-player-name" id="pvpGuestName">Đang chờ...</div>
+              <div class="pvp-player-level" id="pvpGuestLevel"></div>
+            </div>
+          </div>
+
+          <div id="pvpWaitingStatus" style="text-align:center;color:#999;margin:20px 0;">
+            ⏳ Đang chờ đối thủ vào phòng...
+          </div>
+
+          <div style="text-align:center;font-size:13px;color:#999;margin-bottom:20px;">
+            ⚙️ <span id="pvpWaitingRules">3 ván × 10 câu</span>
+          </div>
+
+          <div class="pvp-chat-box" id="pvpChatBox"></div>
+          <div class="pvp-chat-input-row">
+            <input type="text" class="pvp-chat-input" id="pvpChatInput"
+                   placeholder="Nhắn tin..." onkeydown="if(event.key==='Enter') sendChat()">
+            <button class="btn-sm primary" onclick="sendChat()">📨</button>
+          </div>
+
+          <div class="pvp-waiting-actions" style="margin-top:20px;">
+            <button class="big-btn" id="pvpStartBtn" onclick="startPvP()" style="display:none;margin:0;">
+              ▶️ BẮT ĐẦU
+            </button>
+            <button class="pvp-btn-cancel" id="pvpKickBtn" onclick="kickGuest()" style="display:none;">
+              🚫 Kick
+            </button>
+            <button class="pvp-btn-cancel" onclick="leavePvP()">🚪 Rời phòng</button>
           </div>
         </div>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <button class="big-btn" id="pvpRematchBtn" onclick="voteRematch()" style="margin:0;">
-            🔄 Chơi lại
+      </div>
+
+      <div id="pvpPlaying" style="display:none;">
+        <div class="pvp-scoreboard">
+          <div class="pvp-score-side you">
+            <div class="pvp-score-name">😎 Bạn</div>
+            <div class="pvp-score-value" id="pvpMyScore">0</div>
+            <div class="pvp-score-wins">Ván thắng: <span id="pvpMyWins">0</span></div>
+          </div>
+          <div class="pvp-score-middle">
+            <div class="pvp-round-label" id="pvpRoundLabel">Ván 1/3</div>
+            <div class="pvp-score-vs">VS</div>
+          </div>
+          <div class="pvp-score-side opponent">
+            <div class="pvp-score-name">🤖 <span id="pvpOppName">Đối thủ</span></div>
+            <div class="pvp-score-value" id="pvpOppScore">0</div>
+            <div class="pvp-score-wins">Ván thắng: <span id="pvpOppWins">0</span></div>
+          </div>
+        </div>
+
+        <div class="opp-afk-notice" id="oppAfkNotice" style="display:none;">
+          <span>⚠️</span>
+          <span id="oppAfkText">Đối thủ đang AFK...</span>
+        </div>
+
+        <div class="pvp-progress">
+          <div class="pvp-progress-info">
+            <span>Câu <strong id="pvpCurrentQ">1</strong>/<strong id="pvpTotalQ">10</strong></span>
+            <span id="pvpProgressPct">0%</span>
+          </div>
+          <div class="pvp-progress-bar">
+            <div class="pvp-progress-fill" id="pvpProgressFill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="pvp-question-box">
+          <div class="pvp-question-label">⌨️ GÕ TỪ TIẾNG ANH SAU:</div>
+          <div class="pvp-question-text" id="pvpQuestionText">...</div>
+        </div>
+
+        <div class="pvp-opponent-status" id="pvpOpponentStatus" style="display:none;">
+          <span>⏳</span>
+          <span>Đối thủ đang trả lời...</span>
+        </div>
+
+        <div class="pvp-opponent-status answered" id="pvpOpponentAnswered" style="display:none;">
+          <span>✅</span>
+          <span id="pvpOppAnswerText">Đối thủ đã trả lời!</span>
+        </div>
+
+        <div class="pvp-answer-row">
+          <input type="text" id="pvpAnswerInput" class="pvp-answer-input"
+                 placeholder="Gõ từ trên..." autocomplete="off" autofocus>
+          <button class="big-btn" id="pvpSubmitBtn" onclick="submitPvPAnswer()" style="margin:0;">
+            ✅ Gửi
           </button>
-          <button class="pvp-btn-cancel" onclick="backToLobby()">🚪 Về sảnh</button>
         </div>
+
+        <div id="pvpFeedback" class="pvp-feedback" style="display:none;"></div>
+      </div>
+
+      <div id="pvpFinished" style="display:none;">
+        <div class="pvp-result-box">
+          <div class="pvp-result-icon" id="pvpResultIcon">🏆</div>
+          <h2 class="pvp-result-title" id="pvpResultTitle">Kết thúc!</h2>
+          <div class="pvp-result-rounds" id="pvpResultRounds"></div>
+          <div class="pvp-result-totals">
+            <div class="pvp-result-score">
+              <div class="pvp-result-label">😎 Bạn</div>
+              <div class="pvp-result-value" id="pvpResultYourScore">0</div>
+            </div>
+            <div class="pvp-result-vs">-</div>
+            <div class="pvp-result-score">
+              <div class="pvp-result-label">🤖 Đối thủ</div>
+              <div class="pvp-result-value" id="pvpResultOppScore">0</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <button class="big-btn" id="pvpRematchBtn" onclick="voteRematch()" style="margin:0;">
+              🔄 Chơi lại
+            </button>
+            <button class="pvp-btn-cancel" onclick="backToLobby()">🚪 Về sảnh</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-meme">
+      <h2 class="panel-title">🎨 Meme Generator</h2>
+      <div class="meme-form">
+        <input type="text" class="meme-input" id="memeInput" placeholder="📥 Văn bản gốc...">
+        <input type="text" class="meme-input" id="memeOutput" placeholder="✅ Văn bản đã mã hóa...">
+      </div>
+      <h3 style="margin-bottom:12px;">Chọn template:</h3>
+      <div class="meme-templates" id="memeTemplates"></div>
+      <button class="big-btn" onclick="generateMeme()">🎨 Tạo Meme</button>
+      <div class="meme-preview" id="memePreview"></div>
+    </div>
+
+  </div>
+
+  <div class="afk-warning-banner" id="afkWarningBanner">
+    <span class="afk-icon">⚠️</span>
+    <span id="afkWarningText">Bạn đang AFK! Vui lòng tương tác.</span>
+  </div>
+
+  <button class="pvp-leave-btn" id="pvpLeaveBtn" onclick="confirmLeaveMatch()">
+    🚪 Rời trận
+  </button>
+
+  <div class="leave-confirm-overlay" id="leaveConfirmOverlay">
+    <div class="leave-confirm-box">
+      <div class="leave-confirm-icon">🚪</div>
+      <h3>Rời trận đấu?</h3>
+      <p>
+        Nếu bạn rời trận bây giờ, bạn sẽ bị xử <strong style="color:#e74c3c;">THUA</strong>
+        và đối thủ thắng trận này.
+      </p>
+      <div class="leave-confirm-actions">
+        <button class="leave-confirm-btn cancel" onclick="closeLeaveConfirm()">❌ Ở lại</button>
+        <button class="leave-confirm-btn confirm" onclick="doLeaveMatch()">🚪 Rời trận</button>
       </div>
     </div>
   </div>
 
-  <div class="panel" id="panel-meme">
-    <h2 class="panel-title">🎨 Meme Generator</h2>
-    <div class="meme-form">
-      <input type="text" class="meme-input" id="memeInput" placeholder="📥 Văn bản gốc...">
-      <input type="text" class="meme-input" id="memeOutput" placeholder="✅ Văn bản đã mã hóa...">
-    </div>
-    <h3 style="margin-bottom:12px;">Chọn template:</h3>
-    <div class="meme-templates" id="memeTemplates"></div>
-    <button class="big-btn" onclick="generateMeme()">🎨 Tạo Meme</button>
-    <div class="meme-preview" id="memePreview"></div>
-  </div>
+  <div class="toast" id="toast"></div>
 
-</div>
+  <script>
+  // ═══════════════════════════════════════════════════════════
+  //  SPLASH SCREEN
+  // ═══════════════════════════════════════════════════════════
+  const splashMessages = [
+    'Đang khởi tạo...',
+    'Đang tải bảng xếp hạng...',
+    'Đang chuẩn bị game...',
+    'Sắp xong rồi...',
+    'Sẵn sàng!'
+  ];
 
-<div class="afk-warning-banner" id="afkWarningBanner">
-  <span class="afk-icon">⚠️</span>
-  <span id="afkWarningText">Bạn đang AFK! Vui lòng tương tác.</span>
-</div>
+  const splashProgress = document.getElementById('splashProgress');
+  const splashStatus = document.getElementById('splashStatus');
 
-<button class="pvp-leave-btn" id="pvpLeaveBtn" onclick="confirmLeaveMatch()">
-  🚪 Rời trận
-</button>
-
-<div class="leave-confirm-overlay" id="leaveConfirmOverlay">
-  <div class="leave-confirm-box">
-    <div class="leave-confirm-icon">🚪</div>
-    <h3>Rời trận đấu?</h3>
-    <p>
-      Nếu bạn rời trận bây giờ, bạn sẽ bị xử <strong style="color:#e74c3c;">THUA</strong>
-      và đối thủ thắng trận này.
-    </p>
-    <div class="leave-confirm-actions">
-      <button class="leave-confirm-btn cancel" onclick="closeLeaveConfirm()">❌ Ở lại</button>
-      <button class="leave-confirm-btn confirm" onclick="doLeaveMatch()">🚪 Rời trận</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-// ═══════════════════════════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════════════════════════
-const $ = id => document.getElementById(id);
-
-function showToast(msg, type = '') {
-  const t = $('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + type;
-  setTimeout(() => t.className = 'toast ' + type, 3000);
-}
-
-async function api(url, options = {}) {
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    ...options
-  });
-  return await res.json();
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  })[c]);
-}
-
-function formatTime(iso) {
-  if (!iso) return '—';
-  try { return new Date(iso).toLocaleString('vi-VN'); }
-  catch { return iso; }
-}
-
-// ═══════════════════════════════════════════════════════════
-//  TABS
-// ═══════════════════════════════════════════════════════════
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    // Chặn nếu tabs đang bị khóa và click tab khác PvP
-    const tabsEl = $('mainTabs');
-    if (tabsEl && tabsEl.classList.contains('pvp-locked')) {
-      if (tab.dataset.tab !== 'pvp') {
-        showToast('🔒 Bạn đang trong trận đấu! Không thể chuyển tab.', 'error');
-        return;
-      }
-    }
-
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    $(`panel-${tab.dataset.tab}`).classList.add('active');
-
-    if (tab.dataset.tab === 'leaderboard') loadLeaderboard();
-    if (tab.dataset.tab === 'daily') loadDaily();
-    if (tab.dataset.tab === 'rewards') loadRewards();
-    if (tab.dataset.tab === 'pvp') { loadPublicRooms(); loadFriends(); loadPvPHistory(); }
-    if (tab.dataset.tab === 'meme') loadMemeTemplates();
-  });
-});
-
-document.querySelectorAll('.pvp-subtab').forEach(st => {
-  st.addEventListener('click', () => {
-    document.querySelectorAll('.pvp-subtab').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.pvp-section').forEach(s => s.classList.remove('active'));
-    st.classList.add('active');
-    $(`pvp-${st.dataset.subtab}`).classList.add('active');
-    if (st.dataset.subtab === 'lobby') loadPublicRooms();
-    if (st.dataset.subtab === 'friends') loadFriends();
-    if (st.dataset.subtab === 'history') loadPvPHistory();
-  });
-});
-
-// ═══════════════════════════════════════════════════════════
-//  USER STATS
-// ═══════════════════════════════════════════════════════════
-async function loadMyStats() {
-  try {
-    const data = await api('/api/game/me');
-    if (data.success) {
-      $('myPoints').textContent = data.game.points || 0;
-      $('myLevel').textContent = data.level_info.current_level || 1;
-      $('myRank').textContent = data.rank ? '#' + data.rank : '—';
-    }
-  } catch (e) {}
-}
-
-// ═══════════════════════════════════════════════════════════
-//  LEADERBOARD
-// ═══════════════════════════════════════════════════════════
-async function loadLeaderboard() {
-  const container = $('leaderboardList');
-  container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
-  try {
-    const data = await api('/api/game/leaderboard');
-    if (!data.success || !data.leaderboard.length) {
-      container.innerHTML = '<div class="empty-msg"><div class="empty-msg-icon">🏆</div>Chưa có ai chơi!<br>Hãy là người đầu tiên 🎉</div>';
-      return;
-    }
-    container.innerHTML = data.leaderboard.map(u => `
-      <div class="lb-row rank-${u.rank <= 3 ? u.rank : ''}">
-        <div class="lb-rank">${u.medal}</div>
-        <div class="lb-avatar">${escapeHtml(u.username[0] || '?').toUpperCase()}</div>
-        <div class="lb-info">
-          <strong>${escapeHtml(u.username)} ${u.is_super_admin ? '👑' : ''}</strong>
-          <small>Level ${u.level} • ${u.pvp_wins} thắng PvP • ${u.daily_count} daily</small>
-        </div>
-        <div class="lb-points">
-          <strong>${u.points}</strong>
-          <small>điểm</small>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    container.innerHTML = '<div class="empty-msg" style="color:#e74c3c;">❌ Lỗi tải dữ liệu</div>';
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-//  DAILY
-// ═══════════════════════════════════════════════════════════
-async function loadDaily() {
-  const container = $('dailyContent');
-  container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
-  try {
-    const data = await api('/api/game/daily');
-    if (!data.success) { container.innerHTML = '❌ Lỗi tải'; return; }
-    const c = data.challenge;
-    const completed = data.completed;
-    container.innerHTML = `
-      ${data.streak > 0 ? `<div class="streak-badge">🔥 Chuỗi: ${data.streak} ngày</div>` : ''}
-      <div class="daily-card ${completed ? 'completed' : ''}">
-        <div class="daily-header">
-          <div class="daily-date">📅 ${new Date().toLocaleDateString('vi-VN')}</div>
-          <div class="daily-points">+${c.points} điểm</div>
-        </div>
-        <div class="daily-desc">${completed ? '✅ ' : ''}${escapeHtml(c.description)}</div>
-        <div class="daily-hint">
-          <strong>📝 Input:</strong> ${escapeHtml(c.text)}
-          ${c.key ? `<br><strong>🔑 Key:</strong> ${escapeHtml(c.key)}` : ''}
-        </div>
-        ${completed
-          ? '<div style="text-align:center;padding:20px;color:#27ae60;font-weight:700;font-size:18px;">✅ Hôm nay đã hoàn thành!</div>'
-          : `<div class="daily-input-row">
-               <input type="text" class="daily-input" id="dailyAnswer" placeholder="Nhập đáp án..." autocomplete="off">
-               <button class="daily-btn" id="dailySubmitBtn" onclick="submitDaily()">✅ Trả lời</button>
-             </div>`}
-      </div>
-    `;
-    if (!completed) {
-      setTimeout(() => $('dailyAnswer')?.focus(), 200);
-      $('dailyAnswer')?.addEventListener('keydown', e => { if (e.key === 'Enter') submitDaily(); });
-    }
-  } catch (e) { container.innerHTML = '❌ Lỗi kết nối'; }
-}
-
-async function submitDaily() {
-  const input = $('dailyAnswer');
-  if (!input) return;
-  const answer = input.value.trim();
-  if (!answer) { showToast('⚠️ Nhập đáp án!', 'error'); return; }
-  const btn = $('dailySubmitBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="loading-spinner"></div>';
-  try {
-    const data = await api('/api/game/daily/submit', {
-      method: 'POST',
-      body: JSON.stringify({ answer })
-    });
-    if (!data.success) {
-      showToast('❌ ' + data.error, 'error');
-      btn.disabled = false;
-      btn.textContent = '✅ Trả lời';
-      return;
-    }
-    if (data.correct) {
-      showToast(`🎉 Đúng! +${data.points_earned} điểm${data.bonus ? ` (bonus +${data.bonus})` : ''}`, 'reward');
-      loadMyStats();
-      setTimeout(() => loadDaily(), 800);
-    } else {
-      showToast('❌ Sai rồi! Thử lại vào ngày mai nhé!', 'error');
-      btn.disabled = false;
-      btn.textContent = '✅ Trả lời';
-    }
-  } catch (e) {
-    showToast('❌ Lỗi kết nối!', 'error');
-    btn.disabled = false;
-    btn.textContent = '✅ Trả lời';
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-//  REWARDS
-// ═══════════════════════════════════════════════════════════
-async function loadRewards() {
-  const grid = $('rewardsGrid');
-  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
-  try {
-    const data = await api('/api/game/rewards');
-    if (!data.success) return;
-    grid.innerHTML = data.rewards.map(r => {
-      let btn = '';
-      if (r.status === 'claimed') btn = '<button class="reward-claim-btn" disabled>✅ Đã nhận</button>';
-      else if (r.status === 'unlocked') btn = `<button class="reward-claim-btn" onclick="claimReward('${r.id}')">🎁 Nhận ngay</button>`;
-      else btn = '<button class="reward-claim-btn" disabled>🔒 Chưa đủ điều kiện</button>';
-      return `
-        <div class="reward-card ${r.status}">
-          <div class="reward-icon">${r.icon}</div>
-          <div class="reward-name">${escapeHtml(r.name)}</div>
-          <div class="reward-desc">${escapeHtml(r.description)}</div>
-          <div class="reward-points">+${r.points_reward} điểm</div>
-          ${btn}
-        </div>
-      `;
-    }).join('');
-  } catch (e) {
-    grid.innerHTML = '<div style="text-align:center;padding:40px;color:#e74c3c;">❌ Lỗi tải</div>';
-  }
-}
-
-async function claimReward(id) {
-  try {
-    const data = await api('/api/game/rewards/claim', {
-      method: 'POST',
-      body: JSON.stringify({ reward_id: id })
-    });
-    if (data.success) {
-      showToast(`🎁 ${data.message}`, 'reward');
-      loadMyStats();
-      loadRewards();
-    } else showToast('❌ ' + data.error, 'error');
-  } catch (e) { showToast('❌ Lỗi kết nối!', 'error'); }
-}
-
-// ═══════════════════════════════════════════════════════════
-//  RANDOM
-// ═══════════════════════════════════════════════════════════
-async function rollRandom() {
-  const display = $('randomDisplay');
-  display.innerHTML = '<div class="random-emoji">🎲</div><div style="color:#999;">Đang quay...</div>';
-  const excludeOW = $('optExcludeOneWay').checked;
-  const excludeKey = $('optExcludeKey').checked;
-  await new Promise(r => setTimeout(r, 1500));
-  try {
-    const data = await api(`/api/game/random-method?exclude_one_way=${excludeOW}&exclude_key=${excludeKey}`);
-    if (data.success) {
-      display.innerHTML = `
-        <div class="random-emoji">🎯</div>
-        <div class="random-method-name">${escapeHtml(data.name)}</div>
-        <div class="random-method-code">${data.method}</div>
-      `;
-      showToast(`🎲 Đã chọn: ${data.name}`, 'reward');
-    }
-  } catch (e) { display.innerHTML = '<div style="color:#e74c3c;">❌ Lỗi</div>'; }
-}
-
-// ═══════════════════════════════════════════════════════════
-//  PVP VARIABLES
-// ═══════════════════════════════════════════════════════════
-let pvpRoomCode = null;
-let pvpCurrentRoom = null;
-let pvpPollInterval = null;
-let pvpChatPollInterval = null;
-let pvpHeartbeatInterval = null;
-let pvpKickCheckInterval = null;
-let pvpHasAnswered = false;
-let pvpPollingActive = false;
-let pvpLastActivity = Date.now();
-let pvpAfkWarningShown = false;
-let pvpLastOppAfkWarning = 0;
-let lastQuestionKey = null;
-let pvpIsTyping = false;
-
-// Biến rời web
-let pvpTabHiddenAt = null;
-let pvpLeaveBeaconSent = false;
-const PVP_HIDDEN_TIMEOUT = 30000;
-
-// Theo dõi hoạt động user
-['mousemove', 'keydown', 'click', 'touchstart', 'scroll'].forEach(evt => {
-  document.addEventListener(evt, () => {
-    pvpLastActivity = Date.now();
-    const banner = $('afkWarningBanner');
-    if (banner.classList.contains('show')) {
-      banner.classList.remove('show');
-      pvpAfkWarningShown = false;
-    }
-  }, { passive: true });
-});
-
-// ═══════════════════════════════════════════════════════════
-//  🔒 KHÓA / MỞ KHÓA TABS KHI ĐANG PVP
-// ═══════════════════════════════════════════════════════════
-function lockTabs() {
-  const tabs = $('mainTabs');
-  if (tabs) tabs.classList.add('pvp-locked');
-  const banner = $('pvpLockBanner');
-  if (banner) banner.classList.add('show');
-}
-
-function unlockTabs() {
-  const tabs = $('mainTabs');
-  if (tabs) tabs.classList.remove('pvp-locked');
-  const banner = $('pvpLockBanner');
-  if (banner) banner.classList.remove('show');
-}
-
-// ═══════════════════════════════════════════════════════════
-//  🚪 RỜI WEB = XỬ THUA
-// ═══════════════════════════════════════════════════════════
-function handleLeaveWeb() {
-  if (!pvpRoomCode) return;
-  if (pvpCurrentRoom?.status !== 'playing') return;
-  if (pvpLeaveBeaconSent) return;
-
-  pvpLeaveBeaconSent = true;
-
-  const data = JSON.stringify({
-    code: pvpRoomCode,
-    reason: 'leave_web'
-  });
-
-  try {
-    fetch('/api/pvp/leave-match', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: data,
-      keepalive: true,
-    }).catch(() => {});
-  } catch (e) {
-    console.debug('Beacon error:', e);
-  }
-}
-
-// Đóng tab / trình duyệt
-window.addEventListener('beforeunload', (e) => {
-  if (!pvpRoomCode) return;
-  if (pvpCurrentRoom?.status !== 'playing') return;
-
-  handleLeaveWeb();
-});
-
-// Chuyển tab / ẩn trang
-document.addEventListener('visibilitychange', () => {
-  if (!pvpRoomCode) return;
-  if (pvpCurrentRoom?.status !== 'playing') return;
-
-  if (document.hidden) {
-    pvpTabHiddenAt = Date.now();
-    showToast('⚠️ Bạn đã rời khỏi tab game! Quay lại trong 30s nếu không sẽ bị xử thua.', 'warning');
+  function runSplash() {
+    splashProgress.style.width = '30%';
+    splashStatus.textContent = splashMessages[0];
+    markSplashStep(1, 'active');
 
     setTimeout(() => {
-      if (pvpTabHiddenAt && Date.now() - pvpTabHiddenAt >= PVP_HIDDEN_TIMEOUT - 1000) {
-        if (document.hidden && pvpRoomCode && pvpCurrentRoom?.status === 'playing') {
-          handleLeaveWeb();
-          showToast('🚪 Bạn đã rời tab quá 30s → Xử thua!', 'error');
+      splashProgress.style.width = '60%';
+      splashStatus.textContent = splashMessages[1];
+      markSplashStep(1, 'done');
+      markSplashStep(2, 'active');
+    }, 500);
+
+    setTimeout(() => {
+      splashProgress.style.width = '90%';
+      splashStatus.textContent = splashMessages[3];
+      markSplashStep(2, 'done');
+      markSplashStep(3, 'active');
+    }, 1100);
+
+    setTimeout(() => {
+      splashProgress.style.width = '100%';
+      splashStatus.textContent = splashMessages[4];
+      markSplashStep(3, 'done');
+    }, 1600);
+
+    setTimeout(() => {
+      document.getElementById('splashScreen').classList.add('hide');
+      document.body.style.overflow = '';
+      document.getElementById('mainContainer').classList.add('show');
+    }, 2000);
+  }
+
+  function markSplashStep(n, state) {
+    const el = document.querySelector(`.splash-step[data-step="${n}"]`);
+    if (el) {
+      el.classList.remove('active', 'done');
+      el.classList.add(state);
+    }
+  }
+
+  window.addEventListener('load', () => {
+    document.body.style.overflow = 'hidden';
+    setTimeout(runSplash, 200);
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  //  UTILS
+  // ═══════════════════════════════════════════════════════════
+  const $ = id => document.getElementById(id);
+
+  function showToast(msg, type = '') {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.className = 'toast ' + type, 3000);
+  }
+
+  async function api(url, options = {}) {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      ...options
+    });
+    return await res.json();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+
+  function formatTime(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('vi-VN'); }
+    catch { return iso; }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  TABS
+  // ═══════════════════════════════════════════════════════════
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabsEl = $('mainTabs');
+      if (tabsEl && tabsEl.classList.contains('pvp-locked')) {
+        if (tab.dataset.tab !== 'pvp') {
+          showToast('🔒 Bạn đang trong trận đấu! Không thể chuyển tab.', 'error');
+          return;
         }
       }
-    }, PVP_HIDDEN_TIMEOUT);
 
-  } else {
-    if (pvpTabHiddenAt) {
-      const hiddenDuration = Date.now() - pvpTabHiddenAt;
-      pvpTabHiddenAt = null;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      $(`panel-${tab.dataset.tab}`).classList.add('active');
 
-      if (hiddenDuration < PVP_HIDDEN_TIMEOUT) {
-        showToast('✅ Đã quay lại! Tiếp tục chơi.', 'success');
-      }
-    }
-  }
-});
-
-// ═══ DANH SÁCH PHÒNG PUBLIC ═══
-async function loadPublicRooms() {
-  const container = $('publicRoomsList');
-  container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
-  try {
-    const data = await api('/api/pvp/rooms');
-    if (!data.success || !data.rooms.length) {
-      container.innerHTML = '<div class="empty-msg"><div class="empty-msg-icon">📭</div>Chưa có phòng nào.<br>Tạo phòng đầu tiên nhé!</div>';
-      return;
-    }
-    container.innerHTML = data.rooms.map(r => `
-      <div class="room-list-item">
-        <div class="room-list-info">
-          <strong>😎 ${escapeHtml(r.host_display)} <span style="color:#ffd700;font-size:12px;">Lv${r.host_level}</span></strong>
-          <small>⏱️ ${r.age_minutes} phút trước • ⚙️ ${r.rules.rounds} ván × ${r.rules.questions_per_round} câu</small>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <span class="room-list-code">${r.code}</span>
-          <button class="btn-sm primary" onclick="joinByCode('${r.code}')">🚪 Vào</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    container.innerHTML = '<div class="empty-msg" style="color:#e74c3c;">❌ Lỗi tải</div>';
-  }
-}
-
-async function joinByCode(code) {
-  $('pvpJoinCode').value = code;
-  joinPvPRoom();
-}
-
-async function joinPvPRoom() {
-  const code = $('pvpJoinCode').value.trim().toUpperCase();
-  if (!code || code.length !== 6) {
-    showToast('⚠️ Nhập mã 6 ký tự!', 'error');
-    return;
-  }
-  try {
-    const data = await api('/api/pvp/join', {
-      method: 'POST',
-      body: JSON.stringify({ code })
+      if (tab.dataset.tab === 'leaderboard') loadLeaderboard();
+      if (tab.dataset.tab === 'daily') loadDaily();
+      if (tab.dataset.tab === 'rewards') loadRewards();
+      if (tab.dataset.tab === 'pvp') { loadPublicRooms(); loadFriends(); loadPvPHistory(); }
+      if (tab.dataset.tab === 'meme') loadMemeTemplates();
     });
-    if (!data.success) { showToast('❌ ' + data.error, 'error'); return; }
-    pvpRoomCode = data.code;
-    pvpCurrentRoom = data.room;
-    showPvPWaiting(data.room);
-    startPvPPolling();
-    startChatPolling();
-    startHeartbeat();
-  } catch (e) { showToast('❌ Lỗi vào phòng!', 'error'); }
-}
+  });
 
-async function createPvPRoom() {
-  const is_public = $('ruleIsPublic').checked;
-  const rounds = parseInt($('ruleRounds').value) || 3;
-  const questions = parseInt($('ruleQuestions').value) || 10;
-
-  try {
-    const data = await api('/api/pvp/create', {
-      method: 'POST',
-      body: JSON.stringify({
-        is_public,
-        rules: { rounds, questions_per_round: questions }
-      })
+  document.querySelectorAll('.pvp-subtab').forEach(st => {
+    st.addEventListener('click', () => {
+      document.querySelectorAll('.pvp-subtab').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.pvp-section').forEach(s => s.classList.remove('active'));
+      st.classList.add('active');
+      $(`pvp-${st.dataset.subtab}`).classList.add('active');
+      if (st.dataset.subtab === 'lobby') loadPublicRooms();
+      if (st.dataset.subtab === 'friends') loadFriends();
+      if (st.dataset.subtab === 'history') loadPvPHistory();
     });
-    if (!data.success) { showToast('❌ ' + data.error, 'error'); return; }
-    pvpRoomCode = data.code;
-    pvpCurrentRoom = data.room;
-    showPvPWaiting(data.room);
-    startPvPPolling();
-    startChatPolling();
-    startHeartbeat();
-  } catch (e) { showToast('❌ Lỗi tạo phòng!', 'error'); }
-}
+  });
 
-// ═══ WAITING ═══
-function showPvPWaiting(room) {
-  document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = 'none');
-  $('pvpWaiting').style.display = 'block';
-  $('pvpPlaying').style.display = 'none';
-  $('pvpFinished').style.display = 'none';
-  $('pvpLeaveBtn').classList.remove('show');
-  $('oppAfkNotice').style.display = 'none';
-  unlockTabs();
-
-  $('pvpRoomCode').textContent = room.code;
-  $('pvpHostName').textContent = room.host_display;
-  $('pvpHostLevel').textContent = `Level ${room.host_level}`;
-
-  const rules = room.rules || {};
-  $('pvpWaitingRules').textContent = `${rules.rounds || 3} ván × ${rules.questions_per_round || 10} câu`;
-
-  if (room.guest) {
-    $('pvpGuestName').textContent = room.guest_display;
-    $('pvpGuestLevel').textContent = room.guest_level ? `Level ${room.guest_level}` : '';
-    $('pvpGuestSlot').classList.remove('waiting');
-    $('pvpGuestSlot').querySelector('.pvp-player-avatar').textContent = '😎';
-    $('pvpWaitingStatus').textContent = '✅ Sẵn sàng!';
-
-    if (room.is_host) {
-      $('pvpStartBtn').style.display = 'inline-block';
-      $('pvpKickBtn').style.display = 'inline-block';
-    } else {
-      $('pvpWaitingStatus').textContent = '⏳ Chờ chủ phòng bắt đầu...';
-    }
-  } else {
-    $('pvpGuestName').textContent = 'Đang chờ...';
-    $('pvpGuestLevel').textContent = '';
-    $('pvpGuestSlot').classList.add('waiting');
-    $('pvpGuestSlot').querySelector('.pvp-player-avatar').textContent = '⏳';
-    $('pvpWaitingStatus').textContent = '⏳ Đang chờ đối thủ vào phòng...';
-    $('pvpStartBtn').style.display = 'none';
-    $('pvpKickBtn').style.display = 'none';
-  }
-}
-
-async function startPvP() {
-  try {
-    const data = await api('/api/pvp/start', {
-      method: 'POST',
-      body: JSON.stringify({ code: pvpRoomCode })
-    });
-    if (!data.success) { showToast('❌ ' + data.error, 'error'); return; }
-    showPvPPlaying(data.room);
-  } catch (e) { showToast('❌ Lỗi bắt đầu!', 'error'); }
-}
-
-function showPvPPlaying(room) {
-  document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = 'none');
-  $('pvpWaiting').style.display = 'none';
-  $('pvpPlaying').style.display = 'block';
-  $('pvpFinished').style.display = 'none';
-  $('pvpLeaveBtn').classList.add('show');
-  lastQuestionKey = null;
-  updatePvPUI(room);
-  pvpHasAnswered = false;
-  pvpLastActivity = Date.now();
-  setTimeout(() => $('pvpAnswerInput')?.focus(), 200);
-
-  startAfkKickChecker();
-  lockTabs();
-
-  // Reset biến rời web
-  pvpLeaveBeaconSent = false;
-  pvpTabHiddenAt = null;
-}
-
-function updatePvPUI(room) {
-  pvpCurrentRoom = room;
-  const you = room.you;
-  const opp = room.opponent;
-
-  const youScore = room.round_info?.scores?.you || 0;
-  const oppScore = room.round_info?.scores?.opponent || 0;
-  const youWins = room.round_wins.you || 0;
-  const oppWins = room.round_wins.opponent || 0;
-
-  $('pvpMyScore').textContent = youScore;
-  $('pvpOppScore').textContent = oppScore;
-  $('pvpMyWins').textContent = youWins;
-  $('pvpOppWins').textContent = oppWins;
-  $('pvpOppName').textContent = room.opponent_display || 'Đối thủ';
-
-  const totalRounds = room.rules?.rounds || 3;
-  $('pvpRoundLabel').textContent = `Ván ${room.current_round + 1}/${totalRounds}`;
-
-  const total = room.round_info?.total_questions || 10;
-  const current = (room.round_info?.current_index || 0) + 1;
-  $('pvpCurrentQ').textContent = Math.min(current, total);
-  $('pvpTotalQ').textContent = total;
-  const pct = Math.round((current / total) * 100);
-  $('pvpProgressFill').style.width = pct + '%';
-  $('pvpProgressPct').textContent = pct + '%';
-
-  if (room.current_question) {
-    const q = room.current_question;
-    const qKey = `${room.current_round}-${q.index}-${q.word}`;
-    const isNewQuestion = (qKey !== lastQuestionKey);
-
-    if (isNewQuestion) {
-      $('pvpQuestionText').textContent = q.word || q.display;
-      lastQuestionKey = qKey;
-    }
-
-    if (q.your_answer) {
-      pvpHasAnswered = true;
-      $('pvpAnswerInput').disabled = true;
-      $('pvpSubmitBtn').disabled = true;
-      showPvPFeedback(q.your_answer);
-    } else {
-      pvpHasAnswered = false;
-      $('pvpAnswerInput').disabled = false;
-      $('pvpSubmitBtn').disabled = false;
-      if (isNewQuestion) {
-        $('pvpAnswerInput').value = '';
-        $('pvpAnswerInput').placeholder = 'Gõ từ trên...';
-        $('pvpFeedback').style.display = 'none';
-        setTimeout(() => $('pvpAnswerInput')?.focus(), 100);
-      }
-    }
-
-    if (room.opponent_answered) {
-      $('pvpOpponentStatus').style.display = 'none';
-      $('pvpOpponentAnswered').style.display = 'flex';
-      const oa = room.opponent_answer || {};
-      $('pvpOppAnswerText').textContent =
-        `Đối thủ đã gõ ${oa.correct ? '✅ đúng' : '❌ sai'} (${oa.time_taken}s)`;
-    } else {
-      $('pvpOpponentStatus').style.display = 'flex';
-      $('pvpOpponentAnswered').style.display = 'none';
-    }
-  } else {
-    lastQuestionKey = null;
-  }
-}
-
-function updateScoreOnly(room) {
-  pvpCurrentRoom = room;
-  const you = room.you;
-  const opp = room.opponent;
-
-  const youScore = room.round_info?.scores?.you || 0;
-  const oppScore = room.round_info?.scores?.opponent || 0;
-  const youWins = room.round_wins.you || 0;
-  const oppWins = room.round_wins.opponent || 0;
-
-  $('pvpMyScore').textContent = youScore;
-  $('pvpOppScore').textContent = oppScore;
-  $('pvpMyWins').textContent = youWins;
-  $('pvpOppWins').textContent = oppWins;
-  $('pvpOppName').textContent = room.opponent_display || 'Đối thủ';
-
-  const totalRounds = room.rules?.rounds || 3;
-  $('pvpRoundLabel').textContent = `Ván ${room.current_round + 1}/${totalRounds}`;
-
-  const total = room.round_info?.total_questions || 10;
-  const current = (room.round_info?.current_index || 0) + 1;
-  $('pvpCurrentQ').textContent = Math.min(current, total);
-  $('pvpTotalQ').textContent = total;
-  const pct = Math.round((current / total) * 100);
-  $('pvpProgressFill').style.width = pct + '%';
-  $('pvpProgressPct').textContent = pct + '%';
-
-  if (room.current_question) {
-    const q = room.current_question;
-    const qKey = `${room.current_round}-${q.index}-${q.word}`;
-    if (qKey !== lastQuestionKey) {
-      updatePvPUI(room);
-      return;
-    }
-    if (room.opponent_answered) {
-      $('pvpOpponentStatus').style.display = 'none';
-      $('pvpOpponentAnswered').style.display = 'flex';
-      const oa = room.opponent_answer || {};
-      $('pvpOppAnswerText').textContent =
-        `Đối thủ đã gõ ${oa.correct ? '✅ đúng' : '❌ sai'} (${oa.time_taken}s)`;
-    } else {
-      $('pvpOpponentStatus').style.display = 'flex';
-      $('pvpOpponentAnswered').style.display = 'none';
-    }
-  }
-}
-
-function showPvPFeedback(yourAnswer) {
-  const fb = $('pvpFeedback');
-  fb.style.display = 'block';
-  if (yourAnswer.correct) {
-    fb.className = 'pvp-feedback correct';
-    fb.innerHTML = `✅ Đúng! +${yourAnswer.points} điểm (${yourAnswer.time_taken}s)`;
-  } else {
-    fb.className = 'pvp-feedback wrong';
-    fb.innerHTML = `❌ Sai! Từ đúng: <strong>${pvpCurrentRoom.current_question.correct_answer || '?'}</strong>`;
-  }
-}
-
-async function submitPvPAnswer() {
-  if (pvpHasAnswered) return;
-  const input = $('pvpAnswerInput');
-  const answer = input.value.trim();
-  if (!answer) { showToast('⚠️ Nhập đáp án!', 'error'); return; }
-
-  pvpLastActivity = Date.now();
-  $('pvpSubmitBtn').disabled = true;
-  input.disabled = true;
-
-  try {
-    const data = await api('/api/pvp/submit', {
-      method: 'POST',
-      body: JSON.stringify({ code: pvpRoomCode, answer })
-    });
-    if (!data.success) {
-      showToast('❌ ' + data.error, 'error');
-      $('pvpSubmitBtn').disabled = false;
-      input.disabled = false;
-      return;
-    }
-    pvpHasAnswered = true;
-    updatePvPUI(data.room);
-    if (data.room.status === 'finished') showPvPFinished(data.room);
-  } catch (e) {
-    showToast('❌ Lỗi gửi!', 'error');
-    $('pvpSubmitBtn').disabled = false;
-    input.disabled = false;
-  }
-}
-
-$('pvpAnswerInput')?.addEventListener('keydown', e => {
-  if (e.key === 'Enter') submitPvPAnswer();
-});
-
-$('pvpAnswerInput')?.addEventListener('focus', () => { pvpIsTyping = true; });
-$('pvpAnswerInput')?.addEventListener('blur', () => { pvpIsTyping = false; });
-
-function showPvPFinished(room) {
-  document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = 'none');
-  $('pvpWaiting').style.display = 'none';
-  $('pvpPlaying').style.display = 'none';
-  $('pvpFinished').style.display = 'block';
-  $('pvpLeaveBtn').classList.remove('show');
-  stopHeartbeat();
-  stopAfkKickChecker();
-  unlockTabs();
-
-  // Reset biến rời web
-  pvpLeaveBeaconSent = false;
-  pvpTabHiddenAt = null;
-
-  const fr = room.final_result;
-  if (!fr) return;
-
-  const afkInfo = room.afk_kick_info;
-  const leaveInfo = room.left_user ? {
-    left_display: room.left_display,
-    left_reason: room.left_reason || 'manual'
-  } : null;
-
-  let resultIcon = fr.result === 'win' ? '🏆' : (fr.result === 'loss' ? '😢' : '🤝');
-  let resultTitle = fr.message;
-  let subtitleHtml = '';
-
-  if (afkInfo) {
-    const isYouWinner = afkInfo.winner === room.you;
-    if (isYouWinner) {
-      resultIcon = '⚡';
-      resultTitle = '🏆 Bạn thắng do đối thủ AFK!';
-      subtitleHtml = `<div style="color:#f39c12;font-size:15px;margin-bottom:16px;">
-        ⚡ ${escapeHtml(afkInfo.kicked_display)} đã bị kick vì AFK ${afkInfo.afk_seconds}s
-      </div>`;
-    } else {
-      resultIcon = '🚫';
-      resultTitle = '😢 Bạn bị xử thua do AFK!';
-      subtitleHtml = `<div style="color:#e74c3c;font-size:15px;margin-bottom:16px;">
-        🚫 Bạn đã bị kick khỏi trận vì AFK ${afkInfo.afk_seconds}s
-      </div>`;
-    }
-  } else if (leaveInfo) {
-    const isYouLeft = room.left_user === room.you;
-    if (isYouLeft) {
-      resultIcon = '🚪';
-      if (leaveInfo.left_reason === 'leave_web') {
-        resultTitle = '😢 Bạn bị xử thua do thoát game!';
-        subtitleHtml = `<div style="color:#e74c3c;font-size:15px;margin-bottom:16px;">
-          🚪 Bạn đã rời khỏi tab game khi đang thi đấu
-        </div>`;
-      } else {
-        resultTitle = '😢 Bạn bị xử thua do rời trận!';
-        subtitleHtml = `<div style="color:#e74c3c;font-size:15px;margin-bottom:16px;">
-          🚪 Bạn đã bấm rời trận
-        </div>`;
-      }
-    } else {
-      resultIcon = '🏆';
-      if (leaveInfo.left_reason === 'leave_web') {
-        resultTitle = '🏆 Bạn thắng do đối thủ thoát game!';
-        subtitleHtml = `<div style="color:#f39c12;font-size:15px;margin-bottom:16px;">
-          ⚡ ${escapeHtml(leaveInfo.left_display)} đã thoát game
-        </div>`;
-      } else {
-        resultTitle = '🏆 Bạn thắng do đối thủ rời trận!';
-        subtitleHtml = `<div style="color:#f39c12;font-size:15px;margin-bottom:16px;">
-          ⚡ ${escapeHtml(leaveInfo.left_display)} đã rời trận
-        </div>`;
-      }
-    }
-  }
-
-  $('pvpResultIcon').textContent = resultIcon;
-  $('pvpResultTitle').textContent = resultTitle;
-
-  const oldSub = document.querySelector('.afk-result-subtitle');
-  if (oldSub) oldSub.remove();
-
-  if (subtitleHtml) {
-    const subEl = document.createElement('div');
-    subEl.className = 'afk-result-subtitle';
-    subEl.innerHTML = subtitleHtml;
-    const titleEl = $('pvpResultTitle');
-    titleEl.parentNode.insertBefore(subEl, titleEl.nextSibling);
-  }
-
-  $('pvpResultYourScore').textContent = fr.total_score_you;
-  $('pvpResultOppScore').textContent = fr.total_score_opponent;
-
-  $('pvpResultRounds').innerHTML = fr.rounds.map(r => `
-    <div class="pvp-result-round-row ${r.winner}">
-      <span>Ván ${r.index + 1}</span>
-      <span style="font-family:monospace;">${r.your_score} - ${r.opponent_score}</span>
-      <span>${r.winner === 'you' ? '🏆' : (r.winner === 'opponent' ? '😢' : '🤝')}</span>
-    </div>
-  `).join('');
-}
-
-// ═══ POLLING ═══
-function startPvPPolling() {
-  if (pvpPollingActive) return;
-  pvpPollingActive = true;
-  stopPvPPolling();
-  pvpPollInterval = setInterval(async () => {
-    if (!pvpRoomCode) return;
-    if (pvpIsTyping) return;
-    if (document.activeElement === $('pvpAnswerInput')) return;
-
+  // ═══════════════════════════════════════════════════════════
+  //  USER STATS
+  // ═══════════════════════════════════════════════════════════
+  async function loadMyStats() {
     try {
-      const data = await api(`/api/pvp/room/${pvpRoomCode}`);
-      if (!data.success) return;
-      const room = data.room;
-      const oldStatus = pvpCurrentRoom?.status;
-
-      if (room.status === 'playing' && oldStatus !== 'playing') {
-        showPvPPlaying(room);
-      } else if (room.status === 'finished' && oldStatus !== 'finished') {
-        showPvPFinished(room);
-      } else if (room.status === 'ready' && oldStatus === 'waiting') {
-        if (room.guest) showToast(`🔔 ${room.guest_display} đã vào phòng!`);
-        showPvPWaiting(room);
-      } else if (room.status === 'playing') {
-        updateScoreOnly(room);
-      } else if (room.status === 'waiting' && room.guest === null && pvpCurrentRoom?.guest) {
-        showToast('👋 Đối thủ đã rời phòng!');
-        showPvPWaiting(room);
-      } else {
-        showPvPWaiting(room);
+      const data = await api('/api/game/me');
+      if (data.success) {
+        $('myPoints').textContent = data.game.points || 0;
+        $('myLevel').textContent = data.level_info.current_level || 1;
+        $('myRank').textContent = data.rank ? '#' + data.rank : '—';
       }
-      pvpCurrentRoom = room;
-    } catch (e) { console.debug('Poll:', e); }
-  }, 1500);
-}
-
-function stopPvPPolling() {
-  if (pvpPollInterval) { clearInterval(pvpPollInterval); pvpPollInterval = null; }
-  pvpPollingActive = false;
-}
-
-// ═══ CHAT POLLING ═══
-function startChatPolling() {
-  if (pvpChatPollInterval) clearInterval(pvpChatPollInterval);
-  pvpChatPollInterval = setInterval(async () => {
-    if (!pvpRoomCode) return;
-    if (pvpCurrentRoom?.status !== 'waiting' && pvpCurrentRoom?.status !== 'ready') return;
-    try {
-      const data = await api(`/api/pvp/chat/${pvpRoomCode}`);
-      if (data.success) renderChat(data.messages);
     } catch (e) {}
-  }, 2000);
-}
-
-function renderChat(messages) {
-  const box = $('pvpChatBox');
-  if (!box) return;
-  if (!messages || messages.length === 0) {
-    box.innerHTML = '<div style="text-align:center;color:#666;font-size:13px;padding:12px;">Chưa có tin nhắn</div>';
-    return;
   }
-  box.innerHTML = messages.slice(-20).map(m => {
-    const isMine = m.user === pvpCurrentRoom?.you;
-    return `
-      <div class="pvp-chat-msg ${isMine ? 'mine' : ''}">
-        <div class="pvp-chat-msg-name">${escapeHtml(m.display || m.user)}</div>
-        <div>${escapeHtml(m.message)}</div>
-      </div>
-    `;
-  }).join('');
-  box.scrollTop = box.scrollHeight;
-}
 
-async function sendChat() {
-  const input = $('pvpChatInput');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-  try {
-    const data = await api(`/api/pvp/chat/${pvpRoomCode}`, {
-      method: 'POST',
-      body: JSON.stringify({ message: msg })
-    });
-    if (data.success) renderChat(data.messages);
-  } catch (e) {}
-}
-
-async function kickGuest() {
-  if (!confirm('Bạn có chắc muốn kick đối thủ?')) return;
-  try {
-    const data = await api('/api/pvp/kick', {
-      method: 'POST',
-      body: JSON.stringify({ code: pvpRoomCode })
-    });
-    if (data.success) {
-      showToast('🚫 ' + data.message);
-      const r = await api(`/api/pvp/room/${pvpRoomCode}`);
-      if (r.success) { pvpCurrentRoom = r.room; showPvPWaiting(r.room); }
-    } else showToast('❌ ' + data.error, 'error');
-  } catch (e) { showToast('❌ Lỗi kick!', 'error'); }
-}
-
-async function voteRematch() {
-  try {
-    const data = await api('/api/pvp/rematch', {
-      method: 'POST',
-      body: JSON.stringify({ code: pvpRoomCode })
-    });
-    if (data.success) {
-      showToast('🔄 ' + data.message);
-      if (data.restarted) {
-        setTimeout(async () => {
-          const r = await api(`/api/pvp/room/${pvpRoomCode}`);
-          if (r.success) showPvPWaiting(r.room);
-        }, 500);
-      }
-    }
-  } catch (e) {}
-}
-
-async function leavePvP() {
-  if (!confirm('Rời phòng?')) return;
-  try {
-    await api('/api/pvp/leave', {
-      method: 'POST',
-      body: JSON.stringify({ code: pvpRoomCode })
-    });
-  } catch (e) {}
-  backToLobby();
-}
-
-function backToLobby() {
-  stopPvPPolling();
-  stopHeartbeat();
-  stopAfkKickChecker();
-  if (pvpChatPollInterval) clearInterval(pvpChatPollInterval);
-  pvpRoomCode = null;
-  pvpCurrentRoom = null;
-  lastQuestionKey = null;
-  pvpLeaveBeaconSent = false;
-  pvpTabHiddenAt = null;
-  unlockTabs();
-  $('pvpWaiting').style.display = 'none';
-  $('pvpPlaying').style.display = 'none';
-  $('pvpFinished').style.display = 'none';
-  $('pvpLeaveBtn').classList.remove('show');
-  $('oppAfkNotice').style.display = 'none';
-  $('afkWarningBanner').classList.remove('show', 'danger');
-  const oldSub = document.querySelector('.afk-result-subtitle');
-  if (oldSub) oldSub.remove();
-  document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = '');
-  document.querySelectorAll('.pvp-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.pvp-subtab').forEach(s => s.classList.remove('active'));
-  $('pvp-lobby').classList.add('active');
-  document.querySelector('.pvp-subtab[data-subtab="lobby"]').classList.add('active');
-  loadPublicRooms();
-}
-
-function copyRoomCode() {
-  if (!pvpRoomCode) return;
-  navigator.clipboard.writeText(pvpRoomCode);
-  showToast('📋 Đã copy mã phòng!');
-}
-
-async function shareLink() {
-  try {
-    const data = await api(`/api/pvp/share-link/${pvpRoomCode}`);
-    if (data.success) {
-      navigator.clipboard.writeText(data.link);
-      showToast('🔗 Đã copy link mời!');
-    }
-  } catch (e) {}
-}
-
-// ═══════════════════════════════════════════════════════════
-//  ⏰ HEARTBEAT
-// ═══════════════════════════════════════════════════════════
-function startHeartbeat() {
-  stopHeartbeat();
-  pvpHeartbeatInterval = setInterval(async () => {
-    if (!pvpRoomCode) return;
-    if (pvpCurrentRoom?.status === 'finished') return;
+  // ═══════════════════════════════════════════════════════════
+  //  LEADERBOARD
+  // ═══════════════════════════════════════════════════════════
+  async function loadLeaderboard() {
+    const container = $('leaderboardList');
+    container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
     try {
-      await api('/api/pvp/heartbeat', {
+      const data = await api('/api/game/leaderboard');
+      if (!data.success || !data.leaderboard.length) {
+        container.innerHTML = '<div class="empty-msg"><div class="empty-msg-icon">🏆</div>Chưa có ai chơi!<br>Hãy là người đầu tiên 🎉</div>';
+        return;
+      }
+      container.innerHTML = data.leaderboard.map(u => `
+        <div class="lb-row rank-${u.rank <= 3 ? u.rank : ''}">
+          <div class="lb-rank">${u.medal}</div>
+          <div class="lb-avatar">${escapeHtml(u.username[0] || '?').toUpperCase()}</div>
+          <div class="lb-info">
+            <strong>${escapeHtml(u.username)} ${u.is_super_admin ? '👑' : ''}</strong>
+            <small>Level ${u.level} • ${u.pvp_wins} thắng PvP • ${u.daily_count} daily</small>
+          </div>
+          <div class="lb-points">
+            <strong>${u.points}</strong>
+            <small>điểm</small>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      container.innerHTML = '<div class="empty-msg" style="color:#e74c3c;">❌ Lỗi tải dữ liệu</div>';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  DAILY
+  // ═══════════════════════════════════════════════════════════
+  async function loadDaily() {
+    const container = $('dailyContent');
+    container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
+    try {
+      const data = await api('/api/game/daily');
+      if (!data.success) { container.innerHTML = '❌ Lỗi tải'; return; }
+      const c = data.challenge;
+      const completed = data.completed;
+      container.innerHTML = `
+        ${data.streak > 0 ? `<div class="streak-badge">🔥 Chuỗi: ${data.streak} ngày</div>` : ''}
+        <div class="daily-card ${completed ? 'completed' : ''}">
+          <div class="daily-header">
+            <div class="daily-date">📅 ${new Date().toLocaleDateString('vi-VN')}</div>
+            <div class="daily-points">+${c.points} điểm</div>
+          </div>
+          <div class="daily-desc">${completed ? '✅ ' : ''}${escapeHtml(c.description)}</div>
+          <div class="daily-hint">
+            <strong>📝 Input:</strong> ${escapeHtml(c.text)}
+            ${c.key ? `<br><strong>🔑 Key:</strong> ${escapeHtml(c.key)}` : ''}
+          </div>
+          ${completed
+            ? '<div style="text-align:center;padding:20px;color:#27ae60;font-weight:700;font-size:18px;">✅ Hôm nay đã hoàn thành!</div>'
+            : `<div class="daily-input-row">
+                 <input type="text" class="daily-input" id="dailyAnswer" placeholder="Nhập đáp án..." autocomplete="off">
+                 <button class="daily-btn" id="dailySubmitBtn" onclick="submitDaily()">✅ Trả lời</button>
+               </div>`}
+        </div>
+      `;
+      if (!completed) {
+        setTimeout(() => $('dailyAnswer')?.focus(), 200);
+        $('dailyAnswer')?.addEventListener('keydown', e => { if (e.key === 'Enter') submitDaily(); });
+      }
+    } catch (e) { container.innerHTML = '❌ Lỗi kết nối'; }
+  }
+
+  async function submitDaily() {
+    const input = $('dailyAnswer');
+    if (!input) return;
+    const answer = input.value.trim();
+    if (!answer) { showToast('⚠️ Nhập đáp án!', 'error'); return; }
+    const btn = $('dailySubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner"></div>';
+    try {
+      const data = await api('/api/game/daily/submit', {
         method: 'POST',
-        body: JSON.stringify({ code: pvpRoomCode })
+        body: JSON.stringify({ answer })
       });
-    } catch (e) {}
-  }, 5000);
-}
-
-function stopHeartbeat() {
-  if (pvpHeartbeatInterval) {
-    clearInterval(pvpHeartbeatInterval);
-    pvpHeartbeatInterval = null;
+      if (!data.success) {
+        showToast('❌ ' + data.error, 'error');
+        btn.disabled = false;
+        btn.textContent = '✅ Trả lời';
+        return;
+      }
+      if (data.correct) {
+        showToast(`🎉 Đúng! +${data.points_earned} điểm${data.bonus ? ` (bonus +${data.bonus})` : ''}`, 'reward');
+        loadMyStats();
+        setTimeout(() => loadDaily(), 800);
+      } else {
+        showToast('❌ Sai rồi! Thử lại vào ngày mai nhé!', 'error');
+        btn.disabled = false;
+        btn.textContent = '✅ Trả lời';
+      }
+    } catch (e) {
+      showToast('❌ Lỗi kết nối!', 'error');
+      btn.disabled = false;
+      btn.textContent = '✅ Trả lời';
+    }
   }
-}
 
-// ═══════════════════════════════════════════════════════════
-//  ⏰ AUTO KICK AFK
-// ═══════════════════════════════════════════════════════════
-function startAfkKickChecker() {
-  stopAfkKickChecker();
-  pvpKickCheckInterval = setInterval(async () => {
+  // ═══════════════════════════════════════════════════════════
+  //  REWARDS
+  // ═══════════════════════════════════════════════════════════
+  async function loadRewards() {
+    const grid = $('rewardsGrid');
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
+    try {
+      const data = await api('/api/game/rewards');
+      if (!data.success) return;
+      grid.innerHTML = data.rewards.map(r => {
+        let btn = '';
+        if (r.status === 'claimed') btn = '<button class="reward-claim-btn" disabled>✅ Đã nhận</button>';
+        else if (r.status === 'unlocked') btn = `<button class="reward-claim-btn" onclick="claimReward('${r.id}')">🎁 Nhận ngay</button>`;
+        else btn = '<button class="reward-claim-btn" disabled>🔒 Chưa đủ điều kiện</button>';
+        return `
+          <div class="reward-card ${r.status}">
+            <div class="reward-icon">${r.icon}</div>
+            <div class="reward-name">${escapeHtml(r.name)}</div>
+            <div class="reward-desc">${escapeHtml(r.description)}</div>
+            <div class="reward-points">+${r.points_reward} điểm</div>
+            ${btn}
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      grid.innerHTML = '<div style="text-align:center;padding:40px;color:#e74c3c;">❌ Lỗi tải</div>';
+    }
+  }
+
+  async function claimReward(id) {
+    try {
+      const data = await api('/api/game/rewards/claim', {
+        method: 'POST',
+        body: JSON.stringify({ reward_id: id })
+      });
+      if (data.success) {
+        showToast(`🎁 ${data.message}`, 'reward');
+        loadMyStats();
+        loadRewards();
+      } else showToast('❌ ' + data.error, 'error');
+    } catch (e) { showToast('❌ Lỗi kết nối!', 'error'); }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  RANDOM
+  // ═══════════════════════════════════════════════════════════
+  async function rollRandom() {
+    const display = $('randomDisplay');
+    display.innerHTML = '<div class="random-emoji">🎲</div><div style="color:#999;">Đang quay...</div>';
+    const excludeOW = $('optExcludeOneWay').checked;
+    const excludeKey = $('optExcludeKey').checked;
+    await new Promise(r => setTimeout(r, 1500));
+    try {
+      const data = await api(`/api/game/random-method?exclude_one_way=${excludeOW}&exclude_key=${excludeKey}`);
+      if (data.success) {
+        display.innerHTML = `
+          <div class="random-emoji">🎯</div>
+          <div class="random-method-name">${escapeHtml(data.name)}</div>
+          <div class="random-method-code">${data.method}</div>
+        `;
+        showToast(`🎲 Đã chọn: ${data.name}`, 'reward');
+      }
+    } catch (e) { display.innerHTML = '<div style="color:#e74c3c;">❌ Lỗi</div>'; }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  PVP VARIABLES
+  // ═══════════════════════════════════════════════════════════
+  let pvpRoomCode = null;
+  let pvpCurrentRoom = null;
+  let pvpPollInterval = null;
+  let pvpChatPollInterval = null;
+  let pvpHeartbeatInterval = null;
+  let pvpKickCheckInterval = null;
+  let pvpHasAnswered = false;
+  let pvpPollingActive = false;
+  let pvpLastActivity = Date.now();
+  let pvpAfkWarningShown = false;
+  let pvpLastOppAfkWarning = 0;
+  let lastQuestionKey = null;
+  let pvpIsTyping = false;
+
+  let pvpTabHiddenAt = null;
+  let pvpLeaveBeaconSent = false;
+  const PVP_HIDDEN_TIMEOUT = 30000;
+
+  ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'].forEach(evt => {
+    document.addEventListener(evt, () => {
+      pvpLastActivity = Date.now();
+      const banner = $('afkWarningBanner');
+      if (banner.classList.contains('show')) {
+        banner.classList.remove('show');
+        pvpAfkWarningShown = false;
+      }
+    }, { passive: true });
+  });
+
+  function lockTabs() {
+    const tabs = $('mainTabs');
+    if (tabs) tabs.classList.add('pvp-locked');
+    const banner = $('pvpLockBanner');
+    if (banner) banner.classList.add('show');
+  }
+
+  function unlockTabs() {
+    const tabs = $('mainTabs');
+    if (tabs) tabs.classList.remove('pvp-locked');
+    const banner = $('pvpLockBanner');
+    if (banner) banner.classList.remove('show');
+  }
+
+  function handleLeaveWeb() {
+    if (!pvpRoomCode) return;
+    if (pvpCurrentRoom?.status !== 'playing') return;
+    if (pvpLeaveBeaconSent) return;
+
+    pvpLeaveBeaconSent = true;
+
+    const data = JSON.stringify({
+      code: pvpRoomCode,
+      reason: 'leave_web'
+    });
+
+    try {
+      fetch('/api/pvp/leave-match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: data,
+        keepalive: true,
+      }).catch(() => {});
+    } catch (e) {
+      console.debug('Beacon error:', e);
+    }
+  }
+
+  window.addEventListener('beforeunload', (e) => {
+    if (!pvpRoomCode) return;
+    if (pvpCurrentRoom?.status !== 'playing') return;
+    handleLeaveWeb();
+  });
+
+  document.addEventListener('visibilitychange', () => {
     if (!pvpRoomCode) return;
     if (pvpCurrentRoom?.status !== 'playing') return;
 
+    if (document.hidden) {
+      pvpTabHiddenAt = Date.now();
+      showToast('⚠️ Bạn đã rời khỏi tab game! Quay lại trong 30s nếu không sẽ bị xử thua.', 'warning');
+
+      setTimeout(() => {
+        if (pvpTabHiddenAt && Date.now() - pvpTabHiddenAt >= PVP_HIDDEN_TIMEOUT - 1000) {
+          if (document.hidden && pvpRoomCode && pvpCurrentRoom?.status === 'playing') {
+            handleLeaveWeb();
+            showToast('🚪 Bạn đã rời tab quá 30s → Xử thua!', 'error');
+          }
+        }
+      }, PVP_HIDDEN_TIMEOUT);
+
+    } else {
+      if (pvpTabHiddenAt) {
+        const hiddenDuration = Date.now() - pvpTabHiddenAt;
+        pvpTabHiddenAt = null;
+
+        if (hiddenDuration < PVP_HIDDEN_TIMEOUT) {
+          showToast('✅ Đã quay lại! Tiếp tục chơi.', 'success');
+        }
+      }
+    }
+  });
+
+  async function loadPublicRooms() {
+    const container = $('publicRoomsList');
+    container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
     try {
-      const data = await api('/api/pvp/check-kick-afk', {
+      const data = await api('/api/pvp/rooms');
+      if (!data.success || !data.rooms.length) {
+        container.innerHTML = '<div class="empty-msg"><div class="empty-msg-icon">📭</div>Chưa có phòng nào.<br>Tạo phòng đầu tiên nhé!</div>';
+        return;
+      }
+      container.innerHTML = data.rooms.map(r => `
+        <div class="room-list-item">
+          <div class="room-list-info">
+            <strong>😎 ${escapeHtml(r.host_display)} <span style="color:#ffd700;font-size:12px;">Lv${r.host_level}</span></strong>
+            <small>⏱️ ${r.age_minutes} phút trước • ⚙️ ${r.rules.rounds} ván × ${r.rules.questions_per_round} câu</small>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="room-list-code">${r.code}</span>
+            <button class="btn-sm primary" onclick="joinByCode('${r.code}')">🚪 Vào</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      container.innerHTML = '<div class="empty-msg" style="color:#e74c3c;">❌ Lỗi tải</div>';
+    }
+  }
+
+  async function joinByCode(code) {
+    $('pvpJoinCode').value = code;
+    joinPvPRoom();
+  }
+
+  async function joinPvPRoom() {
+    const code = $('pvpJoinCode').value.trim().toUpperCase();
+    if (!code || code.length !== 6) {
+      showToast('⚠️ Nhập mã 6 ký tự!', 'error');
+      return;
+    }
+    try {
+      const data = await api('/api/pvp/join', {
+        method: 'POST',
+        body: JSON.stringify({ code })
+      });
+      if (!data.success) { showToast('❌ ' + data.error, 'error'); return; }
+      pvpRoomCode = data.code;
+      pvpCurrentRoom = data.room;
+      showPvPWaiting(data.room);
+      startPvPPolling();
+      startChatPolling();
+      startHeartbeat();
+    } catch (e) { showToast('❌ Lỗi vào phòng!', 'error'); }
+  }
+
+  async function createPvPRoom() {
+    const is_public = $('ruleIsPublic').checked;
+    const rounds = parseInt($('ruleRounds').value) || 3;
+    const questions = parseInt($('ruleQuestions').value) || 10;
+
+    try {
+      const data = await api('/api/pvp/create', {
+        method: 'POST',
+        body: JSON.stringify({
+          is_public,
+          rules: { rounds, questions_per_round: questions }
+        })
+      });
+      if (!data.success) { showToast('❌ ' + data.error, 'error'); return; }
+      pvpRoomCode = data.code;
+      pvpCurrentRoom = data.room;
+      showPvPWaiting(data.room);
+      startPvPPolling();
+      startChatPolling();
+      startHeartbeat();
+    } catch (e) { showToast('❌ Lỗi tạo phòng!', 'error'); }
+  }
+
+  function showPvPWaiting(room) {
+    document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = 'none');
+    $('pvpWaiting').style.display = 'block';
+    $('pvpPlaying').style.display = 'none';
+    $('pvpFinished').style.display = 'none';
+    $('pvpLeaveBtn').classList.remove('show');
+    $('oppAfkNotice').style.display = 'none';
+    unlockTabs();
+
+    $('pvpRoomCode').textContent = room.code;
+    $('pvpHostName').textContent = room.host_display;
+    $('pvpHostLevel').textContent = `Level ${room.host_level}`;
+
+    const rules = room.rules || {};
+    $('pvpWaitingRules').textContent = `${rules.rounds || 3} ván × ${rules.questions_per_round || 10} câu`;
+
+    if (room.guest) {
+      $('pvpGuestName').textContent = room.guest_display;
+      $('pvpGuestLevel').textContent = room.guest_level ? `Level ${room.guest_level}` : '';
+      $('pvpGuestSlot').classList.remove('waiting');
+      $('pvpGuestSlot').querySelector('.pvp-player-avatar').textContent = '😎';
+      $('pvpWaitingStatus').textContent = '✅ Sẵn sàng!';
+
+      if (room.is_host) {
+        $('pvpStartBtn').style.display = 'inline-block';
+        $('pvpKickBtn').style.display = 'inline-block';
+      } else {
+        $('pvpWaitingStatus').textContent = '⏳ Chờ chủ phòng bắt đầu...';
+      }
+    } else {
+      $('pvpGuestName').textContent = 'Đang chờ...';
+      $('pvpGuestLevel').textContent = '';
+      $('pvpGuestSlot').classList.add('waiting');
+      $('pvpGuestSlot').querySelector('.pvp-player-avatar').textContent = '⏳';
+      $('pvpWaitingStatus').textContent = '⏳ Đang chờ đối thủ vào phòng...';
+      $('pvpStartBtn').style.display = 'none';
+      $('pvpKickBtn').style.display = 'none';
+    }
+  }
+
+  async function startPvP() {
+    try {
+      const data = await api('/api/pvp/start', {
         method: 'POST',
         body: JSON.stringify({ code: pvpRoomCode })
       });
+      if (!data.success) { showToast('❌ ' + data.error, 'error'); return; }
+      showPvPPlaying(data.room);
+    } catch (e) { showToast('❌ Lỗi bắt đầu!', 'error'); }
+  }
 
-      if (!data.success) return;
+  function showPvPPlaying(room) {
+    document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = 'none');
+    $('pvpWaiting').style.display = 'none';
+    $('pvpPlaying').style.display = 'block';
+    $('pvpFinished').style.display = 'none';
+    $('pvpLeaveBtn').classList.add('show');
+    lastQuestionKey = null;
+    updatePvPUI(room);
+    pvpHasAnswered = false;
+    pvpLastActivity = Date.now();
+    setTimeout(() => $('pvpAnswerInput')?.focus(), 200);
 
-      if (data.kicked) {
-        stopAfkKickChecker();
-        stopHeartbeat();
+    startAfkKickChecker();
+    lockTabs();
 
-        showToast(`⚡ ${data.kicked_display} đã bị kick vì AFK ${data.afk_seconds}s!`, 'warning');
-        playAfkKickSound();
+    pvpLeaveBeaconSent = false;
+    pvpTabHiddenAt = null;
+  }
 
-        if (data.room) {
-          showPvPFinished(data.room);
+  function updatePvPUI(room) {
+    pvpCurrentRoom = room;
+    const you = room.you;
+    const opp = room.opponent;
+
+    const youScore = room.round_info?.scores?.you || 0;
+    const oppScore = room.round_info?.scores?.opponent || 0;
+    const youWins = room.round_wins.you || 0;
+    const oppWins = room.round_wins.opponent || 0;
+
+    $('pvpMyScore').textContent = youScore;
+    $('pvpOppScore').textContent = oppScore;
+    $('pvpMyWins').textContent = youWins;
+    $('pvpOppWins').textContent = oppWins;
+    $('pvpOppName').textContent = room.opponent_display || 'Đối thủ';
+
+    const totalRounds = room.rules?.rounds || 3;
+    $('pvpRoundLabel').textContent = `Ván ${room.current_round + 1}/${totalRounds}`;
+
+    const total = room.round_info?.total_questions || 10;
+    const current = (room.round_info?.current_index || 0) + 1;
+    $('pvpCurrentQ').textContent = Math.min(current, total);
+    $('pvpTotalQ').textContent = total;
+    const pct = Math.round((current / total) * 100);
+    $('pvpProgressFill').style.width = pct + '%';
+    $('pvpProgressPct').textContent = pct + '%';
+
+    if (room.current_question) {
+      const q = room.current_question;
+      const qKey = `${room.current_round}-${q.index}-${q.word}`;
+      const isNewQuestion = (qKey !== lastQuestionKey);
+
+      if (isNewQuestion) {
+        $('pvpQuestionText').textContent = q.word || q.display;
+        lastQuestionKey = qKey;
+      }
+
+      if (q.your_answer) {
+        pvpHasAnswered = true;
+        $('pvpAnswerInput').disabled = true;
+        $('pvpSubmitBtn').disabled = true;
+        showPvPFeedback(q.your_answer);
+      } else {
+        pvpHasAnswered = false;
+        $('pvpAnswerInput').disabled = false;
+        $('pvpSubmitBtn').disabled = false;
+        if (isNewQuestion) {
+          $('pvpAnswerInput').value = '';
+          $('pvpAnswerInput').placeholder = 'Gõ từ trên...';
+          $('pvpFeedback').style.display = 'none';
+          setTimeout(() => $('pvpAnswerInput')?.focus(), 100);
         }
       }
-    } catch (e) {
-      console.debug('Kick check error:', e);
-    }
-  }, 2000);
-}
 
-function stopAfkKickChecker() {
-  if (pvpKickCheckInterval) {
-    clearInterval(pvpKickCheckInterval);
-    pvpKickCheckInterval = null;
-  }
-}
-
-function playAfkKickSound() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [523, 659, 784, 1047];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
-      gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.12);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.15);
-      osc.start(ctx.currentTime + i * 0.12);
-      osc.stop(ctx.currentTime + i * 0.12 + 0.2);
-    });
-  } catch (e) {}
-}
-
-// Kiểm tra AFK status để hiện banner
-setInterval(async () => {
-  if (!pvpRoomCode) return;
-  if (pvpCurrentRoom?.status !== 'playing') {
-    $('oppAfkNotice').style.display = 'none';
-    return;
-  }
-  try {
-    const data = await api(`/api/pvp/afk-status/${pvpRoomCode}`);
-    if (!data.success) return;
-
-    if (data.opponent_is_afk) {
-      const oppName = pvpCurrentRoom?.opponent_display || 'Đối thủ';
-      const secs = Math.round(data.opponent_afk_seconds);
-      $('oppAfkNotice').style.display = 'flex';
-      $('oppAfkText').textContent = `⚠️ ${oppName} đang AFK ${secs}s!`;
-
-      const now = Date.now();
-      if (now - pvpLastOppAfkWarning > 15000) {
-        pvpLastOppAfkWarning = now;
-        playAfkSound();
-        showToast(`⚠️ ${oppName} đang AFK!`, 'warning');
-      }
-    } else {
-      $('oppAfkNotice').style.display = 'none';
-    }
-
-    if (data.your_afk_seconds >= 20 && pvpCurrentRoom?.status === 'playing') {
-      const secs = Math.round(data.your_afk_seconds);
-      const banner = $('afkWarningBanner');
-      banner.classList.add('show');
-      if (secs >= 30) {
-        banner.classList.add('danger');
-        $('afkWarningText').textContent = `🚨 Bạn đã AFK ${secs}s! Trả lời ngay!`;
+      if (room.opponent_answered) {
+        $('pvpOpponentStatus').style.display = 'none';
+        $('pvpOpponentAnswered').style.display = 'flex';
+        const oa = room.opponent_answer || {};
+        $('pvpOppAnswerText').textContent =
+          `Đối thủ đã gõ ${oa.correct ? '✅ đúng' : '❌ sai'} (${oa.time_taken}s)`;
       } else {
-        banner.classList.remove('danger');
-        $('afkWarningText').textContent = `⏰ Bạn AFK ${secs}s! Vui lòng tương tác.`;
-      }
-
-      if (!pvpAfkWarningShown) {
-        pvpAfkWarningShown = true;
-        try {
-          await api('/api/pvp/afk-warning', {
-            method: 'POST',
-            body: JSON.stringify({ code: pvpRoomCode })
-          });
-        } catch (e) {}
+        $('pvpOpponentStatus').style.display = 'flex';
+        $('pvpOpponentAnswered').style.display = 'none';
       }
     } else {
-      $('afkWarningBanner').classList.remove('show', 'danger');
-      pvpAfkWarningShown = false;
+      lastQuestionKey = null;
     }
-  } catch (e) { console.debug('AFK check:', e); }
-}, 3000);
-
-function playAfkSound() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [600, 800, 600, 800];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
-      gain.gain.setValueAtTime(0.08, ctx.currentTime + i * 0.15);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.12);
-      osc.start(ctx.currentTime + i * 0.15);
-      osc.stop(ctx.currentTime + i * 0.15 + 0.15);
-    });
-  } catch (e) {}
-}
-
-// ═══════════════════════════════════════════════════════════
-//  🚪 LEAVE MATCH (manual)
-// ═══════════════════════════════════════════════════════════
-function confirmLeaveMatch() {
-  $('leaveConfirmOverlay').classList.add('show');
-}
-
-function closeLeaveConfirm() {
-  $('leaveConfirmOverlay').classList.remove('show');
-}
-
-async function doLeaveMatch() {
-  closeLeaveConfirm();
-  if (!pvpRoomCode) return;
-
-  try {
-    const data = await api('/api/pvp/leave-match', {
-      method: 'POST',
-      body: JSON.stringify({ code: pvpRoomCode, reason: 'manual' })
-    });
-    if (data.success) {
-      showToast('🚪 Đã rời trận! Bạn bị xử thua.', 'warning');
-      stopHeartbeat();
-      stopAfkKickChecker();
-      setTimeout(() => backToLobby(), 1500);
-    } else {
-      showToast('❌ ' + (data.error || 'Lỗi!'), 'error');
-    }
-  } catch (e) {
-    showToast('❌ Lỗi kết nối!', 'error');
   }
-}
 
-$('leaveConfirmOverlay')?.addEventListener('click', (e) => {
-  if (e.target.id === 'leaveConfirmOverlay') closeLeaveConfirm();
-});
+  function updateScoreOnly(room) {
+    pvpCurrentRoom = room;
 
-// ═══════════════════════════════════════════════════════════
-//  FRIENDS
-// ═══════════════════════════════════════════════════════════
-async function loadFriends() {
-  try {
-    const data = await api('/api/friends');
-    if (!data.success) return;
+    const youScore = room.round_info?.scores?.you || 0;
+    const oppScore = room.round_info?.scores?.opponent || 0;
+    const youWins = room.round_wins.you || 0;
+    const oppWins = room.round_wins.opponent || 0;
 
-    const reqBox = $('friendRequests');
-    if (!data.requests.length) {
-      reqBox.innerHTML = '<div class="empty-msg" style="padding:20px;">Không có lời mời</div>';
-    } else {
-      reqBox.innerHTML = data.requests.map(r => `
-        <div class="friends-list-item">
-          <div class="friends-avatar">${r.from[0].toUpperCase()}</div>
-          <div class="friends-info">
-            <strong>${escapeHtml(r.from)}</strong>
-            <small>Muốn kết bạn</small>
-          </div>
-          <button class="btn-sm success" onclick="acceptFriend('${r.from}')">✅ Chấp nhận</button>
-          <button class="btn-sm ghost" onclick="declineFriend('${r.from}')">❌</button>
-        </div>
-      `).join('');
-    }
+    $('pvpMyScore').textContent = youScore;
+    $('pvpOppScore').textContent = oppScore;
+    $('pvpMyWins').textContent = youWins;
+    $('pvpOppWins').textContent = oppWins;
+    $('pvpOppName').textContent = room.opponent_display || 'Đối thủ';
 
-    const listBox = $('friendsList');
-    if (!data.friends.length) {
-      listBox.innerHTML = '<div class="empty-msg" style="padding:20px;">Chưa có bạn bè</div>';
-    } else {
-      listBox.innerHTML = data.friends.map(f => `
-        <div class="friends-list-item">
-          <div class="friends-avatar">${escapeHtml(f.display_name[0] || '?').toUpperCase()}</div>
-          <div class="friends-info">
-            <strong>${escapeHtml(f.display_name)} ${f.status === 'banned' ? '🚫' : ''}</strong>
-            <small>Lv${f.level} • ${f.pvp_wins} thắng PvP</small>
-          </div>
-          <button class="btn-sm ghost" onclick="removeFriend('${f.username}')">🗑️</button>
-        </div>
-      `).join('');
-    }
-  } catch (e) {}
-}
+    const totalRounds = room.rules?.rounds || 3;
+    $('pvpRoundLabel').textContent = `Ván ${room.current_round + 1}/${totalRounds}`;
 
-let friendSearchTimer = null;
-function searchFriends(q) {
-  clearTimeout(friendSearchTimer);
-  if (!q || q.length < 2) { $('friendSearchResults').innerHTML = ''; return; }
-  friendSearchTimer = setTimeout(async () => {
-    try {
-      const data = await api(`/api/friends/search?q=${encodeURIComponent(q)}`);
-      if (!data.success) return;
-      if (!data.users.length) {
-        $('friendSearchResults').innerHTML = '<div class="empty-msg" style="padding:20px;">Không tìm thấy user</div>';
+    const total = room.round_info?.total_questions || 10;
+    const current = (room.round_info?.current_index || 0) + 1;
+    $('pvpCurrentQ').textContent = Math.min(current, total);
+    $('pvpTotalQ').textContent = total;
+    const pct = Math.round((current / total) * 100);
+    $('pvpProgressFill').style.width = pct + '%';
+    $('pvpProgressPct').textContent = pct + '%';
+
+    if (room.current_question) {
+      const q = room.current_question;
+      const qKey = `${room.current_round}-${q.index}-${q.word}`;
+      if (qKey !== lastQuestionKey) {
+        updatePvPUI(room);
         return;
       }
-      $('friendSearchResults').innerHTML = data.users.map(u => `
-        <div class="friends-list-item">
-          <div class="friends-avatar">${escapeHtml(u.display_name[0] || '?').toUpperCase()}</div>
-          <div class="friends-info">
-            <strong>${escapeHtml(u.display_name)}</strong>
-            <small>Lv${u.level} • ID: ${u.user_id}</small>
-          </div>
-          ${u.is_friend
-            ? '<span style="color:#27ae60;font-size:13px;">✅ Bạn bè</span>'
-            : `<button class="btn-sm primary" onclick="addFriend('${u.username}')">➕ Kết bạn</button>`}
-        </div>
-      `).join('');
-    } catch (e) {}
-  }, 300);
-}
+      if (room.opponent_answered) {
+        $('pvpOpponentStatus').style.display = 'none';
+        $('pvpOpponentAnswered').style.display = 'flex';
+        const oa = room.opponent_answer || {};
+        $('pvpOppAnswerText').textContent =
+          `Đối thủ đã gõ ${oa.correct ? '✅ đúng' : '❌ sai'} (${oa.time_taken}s)`;
+      } else {
+        $('pvpOpponentStatus').style.display = 'flex';
+        $('pvpOpponentAnswered').style.display = 'none';
+      }
+    }
+  }
 
-async function addFriend(username) {
-  try {
-    const data = await api('/api/friends/request', {
-      method: 'POST',
-      body: JSON.stringify({ username })
-    });
-    if (data.success) {
-      showToast(data.message);
-      searchFriends($('friendSearch').value);
-    } else showToast('❌ ' + data.error, 'error');
-  } catch (e) {}
-}
+  function showPvPFeedback(yourAnswer) {
+    const fb = $('pvpFeedback');
+    fb.style.display = 'block';
+    if (yourAnswer.correct) {
+      fb.className = 'pvp-feedback correct';
+      fb.innerHTML = `✅ Đúng! +${yourAnswer.points} điểm (${yourAnswer.time_taken}s)`;
+    } else {
+      fb.className = 'pvp-feedback wrong';
+      fb.innerHTML = `❌ Sai! Từ đúng: <strong>${pvpCurrentRoom.current_question.correct_answer || '?'}</strong>`;
+    }
+  }
 
-async function acceptFriend(from) {
-  try {
-    const data = await api('/api/friends/accept', {
-      method: 'POST',
-      body: JSON.stringify({ from })
-    });
-    if (data.success) { showToast('✅ ' + data.message); loadFriends(); }
-  } catch (e) {}
-}
+  async function submitPvPAnswer() {
+    if (pvpHasAnswered) return;
+    const input = $('pvpAnswerInput');
+    const answer = input.value.trim();
+    if (!answer) { showToast('⚠️ Nhập đáp án!', 'error'); return; }
 
-async function declineFriend(from) {
-  try {
-    await api('/api/friends/decline', {
-      method: 'POST',
-      body: JSON.stringify({ from })
-    });
-    showToast('Đã từ chối');
-    loadFriends();
-  } catch (e) {}
-}
+    pvpLastActivity = Date.now();
+    $('pvpSubmitBtn').disabled = true;
+    input.disabled = true;
 
-async function removeFriend(friend) {
-  if (!confirm('Xóa bạn này?')) return;
-  try {
-    await api('/api/friends/remove', {
-      method: 'POST',
-      body: JSON.stringify({ friend })
-    });
-    showToast('Đã xóa');
-    loadFriends();
-  } catch (e) {}
-}
+    try {
+      const data = await api('/api/pvp/submit', {
+        method: 'POST',
+        body: JSON.stringify({ code: pvpRoomCode, answer })
+      });
+      if (!data.success) {
+        showToast('❌ ' + data.error, 'error');
+        $('pvpSubmitBtn').disabled = false;
+        input.disabled = false;
+        return;
+      }
+      pvpHasAnswered = true;
+      updatePvPUI(data.room);
+      if (data.room.status === 'finished') showPvPFinished(data.room);
+    } catch (e) {
+      showToast('❌ Lỗi gửi!', 'error');
+      $('pvpSubmitBtn').disabled = false;
+      input.disabled = false;
+    }
+  }
 
-// ═══════════════════════════════════════════════════════════
-//  PVP HISTORY
-// ═══════════════════════════════════════════════════════════
-async function loadPvPHistory() {
-  const container = $('pvpHistoryList');
-  container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
-  try {
-    const data = await api('/api/pvp/history');
-    if (!data.success || !data.history.length) {
-      container.innerHTML = '<div class="empty-msg"><div class="empty-msg-icon">📊</div>Chưa có trận đấu nào</div>';
+  $('pvpAnswerInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitPvPAnswer();
+  });
+
+  $('pvpAnswerInput')?.addEventListener('focus', () => { pvpIsTyping = true; });
+  $('pvpAnswerInput')?.addEventListener('blur', () => { pvpIsTyping = false; });
+
+  function showPvPFinished(room) {
+    document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = 'none');
+    $('pvpWaiting').style.display = 'none';
+    $('pvpPlaying').style.display = 'none';
+    $('pvpFinished').style.display = 'block';
+    $('pvpLeaveBtn').classList.remove('show');
+    stopHeartbeat();
+    stopAfkKickChecker();
+    unlockTabs();
+
+    pvpLeaveBeaconSent = false;
+    pvpTabHiddenAt = null;
+
+    const fr = room.final_result;
+    if (!fr) return;
+
+    const afkInfo = room.afk_kick_info;
+    const leaveInfo = room.left_user ? {
+      left_display: room.left_display,
+      left_reason: room.left_reason || 'manual'
+    } : null;
+
+    let resultIcon = fr.result === 'win' ? '🏆' : (fr.result === 'loss' ? '😢' : '🤝');
+    let resultTitle = fr.message;
+    let subtitleHtml = '';
+
+    if (afkInfo) {
+      const isYouWinner = afkInfo.winner === room.you;
+      if (isYouWinner) {
+        resultIcon = '⚡';
+        resultTitle = '🏆 Bạn thắng do đối thủ AFK!';
+        subtitleHtml = `<div style="color:#f39c12;font-size:15px;margin-bottom:16px;">
+          ⚡ ${escapeHtml(afkInfo.kicked_display)} đã bị kick vì AFK ${afkInfo.afk_seconds}s
+        </div>`;
+      } else {
+        resultIcon = '🚫';
+        resultTitle = '😢 Bạn bị xử thua do AFK!';
+        subtitleHtml = `<div style="color:#e74c3c;font-size:15px;margin-bottom:16px;">
+          🚫 Bạn đã bị kick khỏi trận vì AFK ${afkInfo.afk_seconds}s
+        </div>`;
+      }
+    } else if (leaveInfo) {
+      const isYouLeft = room.left_user === room.you;
+      if (isYouLeft) {
+        resultIcon = '🚪';
+        if (leaveInfo.left_reason === 'leave_web') {
+          resultTitle = '😢 Bạn bị xử thua do thoát game!';
+          subtitleHtml = `<div style="color:#e74c3c;font-size:15px;margin-bottom:16px;">
+            🚪 Bạn đã rời khỏi tab game khi đang thi đấu
+          </div>`;
+        } else {
+          resultTitle = '😢 Bạn bị xử thua do rời trận!';
+          subtitleHtml = `<div style="color:#e74c3c;font-size:15px;margin-bottom:16px;">
+            🚪 Bạn đã bấm rời trận
+          </div>`;
+        }
+      } else {
+        resultIcon = '🏆';
+        if (leaveInfo.left_reason === 'leave_web') {
+          resultTitle = '🏆 Bạn thắng do đối thủ thoát game!';
+          subtitleHtml = `<div style="color:#f39c12;font-size:15px;margin-bottom:16px;">
+            ⚡ ${escapeHtml(leaveInfo.left_display)} đã thoát game
+          </div>`;
+        } else {
+          resultTitle = '🏆 Bạn thắng do đối thủ rời trận!';
+          subtitleHtml = `<div style="color:#f39c12;font-size:15px;margin-bottom:16px;">
+            ⚡ ${escapeHtml(leaveInfo.left_display)} đã rời trận
+          </div>`;
+        }
+      }
+    }
+
+    $('pvpResultIcon').textContent = resultIcon;
+    $('pvpResultTitle').textContent = resultTitle;
+
+    const oldSub = document.querySelector('.afk-result-subtitle');
+    if (oldSub) oldSub.remove();
+
+    if (subtitleHtml) {
+      const subEl = document.createElement('div');
+      subEl.className = 'afk-result-subtitle';
+      subEl.innerHTML = subtitleHtml;
+      const titleEl = $('pvpResultTitle');
+      titleEl.parentNode.insertBefore(subEl, titleEl.nextSibling);
+    }
+
+    $('pvpResultYourScore').textContent = fr.total_score_you;
+    $('pvpResultOppScore').textContent = fr.total_score_opponent;
+
+    $('pvpResultRounds').innerHTML = fr.rounds.map(r => `
+      <div class="pvp-result-round-row ${r.winner}">
+        <span>Ván ${r.index + 1}</span>
+        <span style="font-family:monospace;">${r.your_score} - ${r.opponent_score}</span>
+        <span>${r.winner === 'you' ? '🏆' : (r.winner === 'opponent' ? '😢' : '🤝')}</span>
+      </div>
+    `).join('');
+  }
+
+  function startPvPPolling() {
+    if (pvpPollingActive) return;
+    pvpPollingActive = true;
+    stopPvPPolling();
+    pvpPollInterval = setInterval(async () => {
+      if (!pvpRoomCode) return;
+      if (pvpIsTyping) return;
+      if (document.activeElement === $('pvpAnswerInput')) return;
+
+      try {
+        const data = await api(`/api/pvp/room/${pvpRoomCode}`);
+        if (!data.success) return;
+        const room = data.room;
+        const oldStatus = pvpCurrentRoom?.status;
+
+        if (room.status === 'playing' && oldStatus !== 'playing') {
+          showPvPPlaying(room);
+        } else if (room.status === 'finished' && oldStatus !== 'finished') {
+          showPvPFinished(room);
+        } else if (room.status === 'ready' && oldStatus === 'waiting') {
+          if (room.guest) showToast(`🔔 ${room.guest_display} đã vào phòng!`);
+          showPvPWaiting(room);
+        } else if (room.status === 'playing') {
+          updateScoreOnly(room);
+        } else if (room.status === 'waiting' && room.guest === null && pvpCurrentRoom?.guest) {
+          showToast('👋 Đối thủ đã rời phòng!');
+          showPvPWaiting(room);
+        } else {
+          showPvPWaiting(room);
+        }
+        pvpCurrentRoom = room;
+      } catch (e) { console.debug('Poll:', e); }
+    }, 1500);
+  }
+
+  function stopPvPPolling() {
+    if (pvpPollInterval) { clearInterval(pvpPollInterval); pvpPollInterval = null; }
+    pvpPollingActive = false;
+  }
+
+  function startChatPolling() {
+    if (pvpChatPollInterval) clearInterval(pvpChatPollInterval);
+    pvpChatPollInterval = setInterval(async () => {
+      if (!pvpRoomCode) return;
+      if (pvpCurrentRoom?.status !== 'waiting' && pvpCurrentRoom?.status !== 'ready') return;
+      try {
+        const data = await api(`/api/pvp/chat/${pvpRoomCode}`);
+        if (data.success) renderChat(data.messages);
+      } catch (e) {}
+    }, 2000);
+  }
+
+  function renderChat(messages) {
+    const box = $('pvpChatBox');
+    if (!box) return;
+    if (!messages || messages.length === 0) {
+      box.innerHTML = '<div style="text-align:center;color:#666;font-size:13px;padding:12px;">Chưa có tin nhắn</div>';
       return;
     }
-    container.innerHTML = data.history.map(h => {
-      const icon = h.result === 'win' ? '🏆' : (h.result === 'loss' ? '😢' : '🤝');
-      let reasonTag = '';
-      if (h.reason === 'afk') reasonTag = ' <span style="color:#e74c3c;font-size:11px;">(AFK)</span>';
-      else if (h.reason === 'leave_web') reasonTag = ' <span style="color:#e74c3c;font-size:11px;">(thoát game)</span>';
-      else if (h.reason === 'manual') reasonTag = ' <span style="color:#e74c3c;font-size:11px;">(rời trận)</span>';
-      else if (h.reason === 'opponent_afk') reasonTag = ' <span style="color:#f39c12;font-size:11px;">(đối thủ AFK)</span>';
-      else if (h.reason === 'opponent_leave_web') reasonTag = ' <span style="color:#f39c12;font-size:11px;">(đối thủ thoát)</span>';
-      else if (h.reason === 'opponent_manual') reasonTag = ' <span style="color:#f39c12;font-size:11px;">(đối thủ rời)</span>';
+    box.innerHTML = messages.slice(-20).map(m => {
+      const isMine = m.user === pvpCurrentRoom?.you;
       return `
-        <div class="history-row ${h.result}">
-          <div class="history-result">${icon}</div>
-          <div class="history-info">
-            <strong>vs ${escapeHtml(h.opponent)}${reasonTag}</strong>
-            <small>${formatTime(h.time)}</small>
-          </div>
-          <div class="history-score">${h.my_rounds}-${h.opp_rounds}</div>
+        <div class="pvp-chat-msg ${isMine ? 'mine' : ''}">
+          <div class="pvp-chat-msg-name">${escapeHtml(m.display || m.user)}</div>
+          <div>${escapeHtml(m.message)}</div>
         </div>
       `;
     }).join('');
-  } catch (e) {}
-}
-
-// ═══════════════════════════════════════════════════════════
-//  MEME
-// ═══════════════════════════════════════════════════════════
-let memeTemplatesCache = [];
-let selectedMemeTemplate = null;
-
-async function loadMemeTemplates() {
-  if (memeTemplatesCache.length) { renderMemeTemplates(); return; }
-  try {
-    const data = await api('/api/game/meme/templates');
-    if (data.success) {
-      memeTemplatesCache = data.templates;
-      renderMemeTemplates();
-    }
-  } catch (e) {}
-}
-
-function renderMemeTemplates() {
-  const container = $('memeTemplates');
-  container.innerHTML = memeTemplatesCache.map(t => `
-    <div class="meme-template ${selectedMemeTemplate === t.id ? 'selected' : ''}"
-         onclick="selectMemeTemplate('${t.id}')">
-      <img src="${t.url}" alt="${escapeHtml(t.name)}"
-           onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22%23333%22/%3E%3Ctext x=%22100%22 y=%22100%22 fill=%22%23666%22 font-size=%2220%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E${escapeHtml(t.name)}%3C/text%3E%3C/svg%3E'">
-      <div class="meme-template-name">${escapeHtml(t.name)}</div>
-    </div>
-  `).join('');
-}
-
-function selectMemeTemplate(id) {
-  selectedMemeTemplate = id;
-  renderMemeTemplates();
-}
-
-async function generateMeme() {
-  const input = $('memeInput').value.trim();
-  const output = $('memeOutput').value.trim();
-  if (!input || !output) {
-    showToast('⚠️ Nhập đủ 2 ô văn bản!', 'error');
-    return;
+    box.scrollTop = box.scrollHeight;
   }
-  try {
-    const data = await api('/api/game/meme/generate', {
-      method: 'POST',
-      body: JSON.stringify({
-        input_text: input,
-        output_text: output,
-        template_id: selectedMemeTemplate
-      })
-    });
-    if (data.success) {
-      const meme = data.meme;
-      const preview = $('memePreview');
-      preview.classList.add('show');
-      preview.innerHTML = `
-        <div style="position:relative;display:inline-block;max-width:100%;">
-          <img src="${meme.template.url}" alt="meme" style="max-width:100%;border-radius:12px;">
-          <div style="position:absolute;top:10px;left:10px;right:10px;color:#fff;font-family:Impact,sans-serif;font-size:20px;text-shadow:2px 2px 0 #000;text-align:center;">
-            ${escapeHtml(meme.texts[0])}
-          </div>
-          <div style="position:absolute;bottom:10px;left:10px;right:10px;color:#fff;font-family:Impact,sans-serif;font-size:20px;text-shadow:2px 2px 0 #000;text-align:center;">
-            ${escapeHtml(meme.texts[1])}
-          </div>
-        </div>
-        <p style="margin-top:15px;color:#999;font-size:13px;">📸 Chụp màn hình để lưu meme!</p>
-      `;
-      showToast('🎨 Tạo meme thành công! +10 điểm');
-      loadMyStats();
-    }
-  } catch (e) { showToast('❌ Lỗi tạo meme!', 'error'); }
-}
 
-// ═══════════════════════════════════════════════════════════
-//  URL PARAMS: ?join=CODE
-// ═══════════════════════════════════════════════════════════
-function checkUrlJoin() {
-  const params = new URLSearchParams(window.location.search);
-  const joinCode = params.get('join');
-  if (joinCode) {
-    setTimeout(() => {
-      document.querySelector('.tab[data-tab="pvp"]').click();
-      $('pvpJoinCode').value = joinCode.toUpperCase();
-      joinPvPRoom();
-    }, 500);
+  async function sendChat() {
+    const input = $('pvpChatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+    try {
+      const data = await api(`/api/pvp/chat/${pvpRoomCode}`, {
+        method: 'POST',
+        body: JSON.stringify({ message: msg })
+      });
+      if (data.success) renderChat(data.messages);
+    } catch (e) {}
   }
-}
 
-// ═══════════════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════════════
-loadMyStats();
-loadLeaderboard();
-checkUrlJoin();
+  async function kickGuest() {
+    if (!confirm('Bạn có chắc muốn kick đối thủ?')) return;
+    try {
+      const data = await api('/api/pvp/kick', {
+        method: 'POST',
+        body: JSON.stringify({ code: pvpRoomCode })
+      });
+      if (data.success) {
+        showToast('🚫 ' + data.message);
+        const r = await api(`/api/pvp/room/${pvpRoomCode}`);
+        if (r.success) { pvpCurrentRoom = r.room; showPvPWaiting(r.room); }
+      } else showToast('❌ ' + data.error, 'error');
+    } catch (e) { showToast('❌ Lỗi kick!', 'error'); }
+  }
 
-setInterval(() => {
-  if (!pvpRoomCode) loadMyStats();
-}, 30000);
-</script>
+  async function voteRematch() {
+    try {
+      const data = await api('/api/pvp/rematch', {
+        method: 'POST',
+        body: JSON.stringify({ code: pvpRoomCode })
+      });
+      if (data.success) {
+        showToast('🔄 ' + data.message);
+        if (data.restarted) {
+          setTimeout(async () => {
+            const r = await api(`/api/pvp/room/${pvpRoomCode}`);
+            if (r.success) showPvPWaiting(r.room);
+          }, 500);
+        }
+      }
+    } catch (e) {}
+  }
+
+  async function leavePvP() {
+    if (!confirm('Rời phòng?')) return;
+    try {
+      await api('/api/pvp/leave', {
+        method: 'POST',
+        body: JSON.stringify({ code: pvpRoomCode })
+      });
+    } catch (e) {}
+    backToLobby();
+  }
+
+  function backToLobby() {
+    stopPvPPolling();
+    stopHeartbeat();
+    stopAfkKickChecker();
+    if (pvpChatPollInterval) clearInterval(pvpChatPollInterval);
+    pvpRoomCode = null;
+    pvpCurrentRoom = null;
+    lastQuestionKey = null;
+    pvpLeaveBeaconSent = false;
+    pvpTabHiddenAt = null;
+    unlockTabs();
+    $('pvpWaiting').style.display = 'none';
+    $('pvpPlaying').style.display = 'none';
+    $('pvpFinished').style.display = 'none';
+    $('pvpLeaveBtn').classList.remove('show');
+    $('oppAfkNotice').style.display = 'none';
+    $('afkWarningBanner').classList.remove('show', 'danger');
+    const oldSub = document.querySelector('.afk-result-subtitle');
+    if (oldSub) oldSub.remove();
+    document.querySelectorAll('.pvp-subtabs, .pvp-section').forEach(el => el.style.display = '');
+    document.querySelectorAll('.pvp-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.pvp-subtab').forEach(s => s.classList.remove('active'));
+    $('pvp-lobby').classList.add('active');
+    document.querySelector('.pvp-subtab[data-subtab="lobby"]').classList.add('active');
+    loadPublicRooms();
+  }
+
+  function copyRoomCode() {
+    if (!pvpRoomCode) return;
+    navigator.clipboard.writeText(pvpRoomCode);
+    showToast('📋 Đã copy mã phòng!');
+  }
+
+  async function shareLink() {
+    try {
+      const data = await api(`/api/pvp/share-link/${pvpRoomCode}`);
+      if (data.success) {
+        navigator.clipboard.writeText(data.link);
+        showToast('🔗 Đã copy link mời!');
+      }
+    } catch (e) {}
+  }
+
+  function startHeartbeat() {
+    stopHeartbeat();
+    pvpHeartbeatInterval = setInterval(async () => {
+      if (!pvpRoomCode) return;
+      if (pvpCurrentRoom?.status === 'finished') return;
+      try {
+        await api('/api/pvp/heartbeat', {
+          method: 'POST',
+          body: JSON.stringify({ code: pvpRoomCode })
+        });
+      } catch (e) {}
+    }, 5000);
+  }
+
+  function stopHeartbeat() {
+    if (pvpHeartbeatInterval) {
+      clearInterval(pvpHeartbeatInterval);
+      pvpHeartbeatInterval = null;
+    }
+  }
+
+  function startAfkKickChecker() {
+    stopAfkKickChecker();
+    pvpKickCheckInterval = setInterval(async () => {
+      if (!pvpRoomCode) return;
+      if (pvpCurrentRoom?.status !== 'playing') return;
+
+      try {
+        const data = await api('/api/pvp/check-kick-afk', {
+          method: 'POST',
+          body: JSON.stringify({ code: pvpRoomCode })
+        });
+
+        if (!data.success) return;
+
+        if (data.kicked) {
+          stopAfkKickChecker();
+          stopHeartbeat();
+
+          showToast(`⚡ ${data.kicked_display} đã bị kick vì AFK ${data.afk_seconds}s!`, 'warning');
+          playAfkKickSound();
+
+          if (data.room) {
+            showPvPFinished(data.room);
+          }
+        }
+      } catch (e) {
+        console.debug('Kick check error:', e);
+      }
+    }, 2000);
+  }
+
+  function stopAfkKickChecker() {
+    if (pvpKickCheckInterval) {
+      clearInterval(pvpKickCheckInterval);
+      pvpKickCheckInterval = null;
+    }
+  }
+
+  function playAfkKickSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.15);
+        osc.start(ctx.currentTime + i * 0.12);
+        osc.stop(ctx.currentTime + i * 0.12 + 0.2);
+      });
+    } catch (e) {}
+  }
+
+  setInterval(async () => {
+    if (!pvpRoomCode) return;
+    if (pvpCurrentRoom?.status !== 'playing') {
+      $('oppAfkNotice').style.display = 'none';
+      return;
+    }
+    try {
+      const data = await api(`/api/pvp/afk-status/${pvpRoomCode}`);
+      if (!data.success) return;
+
+      if (data.opponent_is_afk) {
+        const oppName = pvpCurrentRoom?.opponent_display || 'Đối thủ';
+        const secs = Math.round(data.opponent_afk_seconds);
+        $('oppAfkNotice').style.display = 'flex';
+        $('oppAfkText').textContent = `⚠️ ${oppName} đang AFK ${secs}s!`;
+
+        const now = Date.now();
+        if (now - pvpLastOppAfkWarning > 15000) {
+          pvpLastOppAfkWarning = now;
+          playAfkSound();
+          showToast(`⚠️ ${oppName} đang AFK!`, 'warning');
+        }
+      } else {
+        $('oppAfkNotice').style.display = 'none';
+      }
+
+      if (data.your_afk_seconds >= 20 && pvpCurrentRoom?.status === 'playing') {
+        const secs = Math.round(data.your_afk_seconds);
+        const banner = $('afkWarningBanner');
+        banner.classList.add('show');
+        if (secs >= 30) {
+          banner.classList.add('danger');
+          $('afkWarningText').textContent = `🚨 Bạn đã AFK ${secs}s! Trả lời ngay!`;
+        } else {
+          banner.classList.remove('danger');
+          $('afkWarningText').textContent = `⏰ Bạn AFK ${secs}s! Vui lòng tương tác.`;
+        }
+
+        if (!pvpAfkWarningShown) {
+          pvpAfkWarningShown = true;
+          try {
+            await api('/api/pvp/afk-warning', {
+              method: 'POST',
+              body: JSON.stringify({ code: pvpRoomCode })
+            });
+          } catch (e) {}
+        }
+      } else {
+        $('afkWarningBanner').classList.remove('show', 'danger');
+        pvpAfkWarningShown = false;
+      }
+    } catch (e) { console.debug('AFK check:', e); }
+  }, 3000);
+
+  function playAfkSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = [600, 800, 600, 800];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime + i * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.12);
+        osc.start(ctx.currentTime + i * 0.15);
+        osc.stop(ctx.currentTime + i * 0.15 + 0.15);
+      });
+    } catch (e) {}
+  }
+
+  function confirmLeaveMatch() {
+    $('leaveConfirmOverlay').classList.add('show');
+  }
+
+  function closeLeaveConfirm() {
+    $('leaveConfirmOverlay').classList.remove('show');
+  }
+
+  async function doLeaveMatch() {
+    closeLeaveConfirm();
+    if (!pvpRoomCode) return;
+
+    try {
+      const data = await api('/api/pvp/leave-match', {
+        method: 'POST',
+        body: JSON.stringify({ code: pvpRoomCode, reason: 'manual' })
+      });
+      if (data.success) {
+        showToast('🚪 Đã rời trận! Bạn bị xử thua.', 'warning');
+        stopHeartbeat();
+        stopAfkKickChecker();
+        setTimeout(() => backToLobby(), 1500);
+      } else {
+        showToast('❌ ' + (data.error || 'Lỗi!'), 'error');
+      }
+    } catch (e) {
+      showToast('❌ Lỗi kết nối!', 'error');
+    }
+  }
+
+  $('leaveConfirmOverlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'leaveConfirmOverlay') closeLeaveConfirm();
+  });
+
+  async function loadFriends() {
+    try {
+      const data = await api('/api/friends');
+      if (!data.success) return;
+
+      const reqBox = $('friendRequests');
+      if (!data.requests.length) {
+        reqBox.innerHTML = '<div class="empty-msg" style="padding:20px;">Không có lời mời</div>';
+      } else {
+        reqBox.innerHTML = data.requests.map(r => `
+          <div class="friends-list-item">
+            <div class="friends-avatar">${r.from[0].toUpperCase()}</div>
+            <div class="friends-info">
+              <strong>${escapeHtml(r.from)}</strong>
+              <small>Muốn kết bạn</small>
+            </div>
+            <button class="btn-sm success" onclick="acceptFriend('${r.from}')">✅ Chấp nhận</button>
+            <button class="btn-sm ghost" onclick="declineFriend('${r.from}')">❌</button>
+          </div>
+        `).join('');
+      }
+
+      const listBox = $('friendsList');
+      if (!data.friends.length) {
+        listBox.innerHTML = '<div class="empty-msg" style="padding:20px;">Chưa có bạn bè</div>';
+      } else {
+        listBox.innerHTML = data.friends.map(f => `
+          <div class="friends-list-item">
+            <div class="friends-avatar">${escapeHtml(f.display_name[0] || '?').toUpperCase()}</div>
+            <div class="friends-info">
+              <strong>${escapeHtml(f.display_name)} ${f.status === 'banned' ? '🚫' : ''}</strong>
+              <small>Lv${f.level} • ${f.pvp_wins} thắng PvP</small>
+            </div>
+            <button class="btn-sm ghost" onclick="removeFriend('${f.username}')">🗑️</button>
+          </div>
+        `).join('');
+      }
+    } catch (e) {}
+  }
+
+  let friendSearchTimer = null;
+  function searchFriends(q) {
+    clearTimeout(friendSearchTimer);
+    if (!q || q.length < 2) { $('friendSearchResults').innerHTML = ''; return; }
+    friendSearchTimer = setTimeout(async () => {
+      try {
+        const data = await api(`/api/friends/search?q=${encodeURIComponent(q)}`);
+        if (!data.success) return;
+        if (!data.users.length) {
+          $('friendSearchResults').innerHTML = '<div class="empty-msg" style="padding:20px;">Không tìm thấy user</div>';
+          return;
+        }
+        $('friendSearchResults').innerHTML = data.users.map(u => `
+          <div class="friends-list-item">
+            <div class="friends-avatar">${escapeHtml(u.display_name[0] || '?').toUpperCase()}</div>
+            <div class="friends-info">
+              <strong>${escapeHtml(u.display_name)}</strong>
+              <small>Lv${u.level} • ID: ${u.user_id}</small>
+            </div>
+            ${u.is_friend
+              ? '<span style="color:#27ae60;font-size:13px;">✅ Bạn bè</span>'
+              : `<button class="btn-sm primary" onclick="addFriend('${u.username}')">➕ Kết bạn</button>`}
+          </div>
+        `).join('');
+      } catch (e) {}
+    }, 300);
+  }
+
+  async function addFriend(username) {
+    try {
+      const data = await api('/api/friends/request', {
+        method: 'POST',
+        body: JSON.stringify({ username })
+      });
+      if (data.success) {
+        showToast(data.message);
+        searchFriends($('friendSearch').value);
+      } else showToast('❌ ' + data.error, 'error');
+    } catch (e) {}
+  }
+
+  async function acceptFriend(from) {
+    try {
+      const data = await api('/api/friends/accept', {
+        method: 'POST',
+        body: JSON.stringify({ from })
+      });
+      if (data.success) { showToast('✅ ' + data.message); loadFriends(); }
+    } catch (e) {}
+  }
+
+  async function declineFriend(from) {
+    try {
+      await api('/api/friends/decline', {
+        method: 'POST',
+        body: JSON.stringify({ from })
+      });
+      showToast('Đã từ chối');
+      loadFriends();
+    } catch (e) {}
+  }
+
+  async function removeFriend(friend) {
+    if (!confirm('Xóa bạn này?')) return;
+    try {
+      await api('/api/friends/remove', {
+        method: 'POST',
+        body: JSON.stringify({ friend })
+      });
+      showToast('Đã xóa');
+      loadFriends();
+    } catch (e) {}
+  }
+
+  async function loadPvPHistory() {
+    const container = $('pvpHistoryList');
+    container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div></div>';
+    try {
+      const data = await api('/api/pvp/history');
+      if (!data.success || !data.history.length) {
+        container.innerHTML = '<div class="empty-msg"><div class="empty-msg-icon">📊</div>Chưa có trận đấu nào</div>';
+        return;
+      }
+      container.innerHTML = data.history.map(h => {
+        const icon = h.result === 'win' ? '🏆' : (h.result === 'loss' ? '😢' : '🤝');
+        let reasonTag = '';
+        if (h.reason === 'afk') reasonTag = ' <span style="color:#e74c3c;font-size:11px;">(AFK)</span>';
+        else if (h.reason === 'leave_web') reasonTag = ' <span style="color:#e74c3c;font-size:11px;">(thoát game)</span>';
+        else if (h.reason === 'manual') reasonTag = ' <span style="color:#e74c3c;font-size:11px;">(rời trận)</span>';
+        else if (h.reason === 'opponent_afk') reasonTag = ' <span style="color:#f39c12;font-size:11px;">(đối thủ AFK)</span>';
+        else if (h.reason === 'opponent_leave_web') reasonTag = ' <span style="color:#f39c12;font-size:11px;">(đối thủ thoát)</span>';
+        else if (h.reason === 'opponent_manual') reasonTag = ' <span style="color:#f39c12;font-size:11px;">(đối thủ rời)</span>';
+        return `
+          <div class="history-row ${h.result}">
+            <div class="history-result">${icon}</div>
+            <div class="history-info">
+              <strong>vs ${escapeHtml(h.opponent)}${reasonTag}</strong>
+              <small>${formatTime(h.time)}</small>
+            </div>
+            <div class="history-score">${h.my_rounds}-${h.opp_rounds}</div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {}
+  }
+
+  let memeTemplatesCache = [];
+  let selectedMemeTemplate = null;
+
+  async function loadMemeTemplates() {
+    if (memeTemplatesCache.length) { renderMemeTemplates(); return; }
+    try {
+      const data = await api('/api/game/meme/templates');
+      if (data.success) {
+        memeTemplatesCache = data.templates;
+        renderMemeTemplates();
+      }
+    } catch (e) {}
+  }
+
+  function renderMemeTemplates() {
+    const container = $('memeTemplates');
+    container.innerHTML = memeTemplatesCache.map(t => `
+      <div class="meme-template ${selectedMemeTemplate === t.id ? 'selected' : ''}"
+           onclick="selectMemeTemplate('${t.id}')">
+        <img src="${t.url}" alt="${escapeHtml(t.name)}"
+             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22%23333%22/%3E%3Ctext x=%22100%22 y=%22100%22 fill=%22%23666%22 font-size=%2220%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E${escapeHtml(t.name)}%3C/text%3E%3C/svg%3E'">
+        <div class="meme-template-name">${escapeHtml(t.name)}</div>
+      </div>
+    `).join('');
+  }
+
+  function selectMemeTemplate(id) {
+    selectedMemeTemplate = id;
+    renderMemeTemplates();
+  }
+
+  async function generateMeme() {
+    const input = $('memeInput').value.trim();
+    const output = $('memeOutput').value.trim();
+    if (!input || !output) {
+      showToast('⚠️ Nhập đủ 2 ô văn bản!', 'error');
+      return;
+    }
+    try {
+      const data = await api('/api/game/meme/generate', {
+        method: 'POST',
+        body: JSON.stringify({
+          input_text: input,
+          output_text: output,
+          template_id: selectedMemeTemplate
+        })
+      });
+      if (data.success) {
+        const meme = data.meme;
+        const preview = $('memePreview');
+        preview.classList.add('show');
+        preview.innerHTML = `
+          <div style="position:relative;display:inline-block;max-width:100%;">
+            <img src="${meme.template.url}" alt="meme" style="max-width:100%;border-radius:12px;">
+            <div style="position:absolute;top:10px;left:10px;right:10px;color:#fff;font-family:Impact,sans-serif;font-size:20px;text-shadow:2px 2px 0 #000;text-align:center;">
+              ${escapeHtml(meme.texts[0])}
+            </div>
+            <div style="position:absolute;bottom:10px;left:10px;right:10px;color:#fff;font-family:Impact,sans-serif;font-size:20px;text-shadow:2px 2px 0 #000;text-align:center;">
+              ${escapeHtml(meme.texts[1])}
+            </div>
+          </div>
+          <p style="margin-top:15px;color:#999;font-size:13px;">📸 Chụp màn hình để lưu meme!</p>
+        `;
+        showToast('🎨 Tạo meme thành công! +10 điểm');
+        loadMyStats();
+      }
+    } catch (e) { showToast('❌ Lỗi tạo meme!', 'error'); }
+  }
+
+  function checkUrlJoin() {
+    const params = new URLSearchParams(window.location.search);
+    const joinCode = params.get('join');
+    if (joinCode) {
+      setTimeout(() => {
+        document.querySelector('.tab[data-tab="pvp"]').click();
+        $('pvpJoinCode').value = joinCode.toUpperCase();
+        joinPvPRoom();
+      }, 500);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  INIT
+  // ═══════════════════════════════════════════════════════════
+  loadMyStats();
+  loadLeaderboard();
+  checkUrlJoin();
+
+  setInterval(() => {
+    if (!pvpRoomCode) loadMyStats();
+  }, 30000);
+  </script>
 
 </body>
 </html>
