@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔒 2FA Setup — Mã Hóa Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh; color: #fff; padding: 20px;
+    }
+    .container { max-width: 700px; margin: 0 auto; padding: 40px 20px; }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(102,126,234,0.3);
+      border-radius: 20px; padding: 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px; margin-bottom: 24px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px; color: #fff;
+      text-decoration: none; font-weight: 600;
+      transition: 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.15); }
+    h1 { font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+    h2 { font-size: 20px; font-weight: 700; margin: 24px 0 16px; color: #a0c4ff; }
+    p { color: #b8b8c8; line-height: 1.7; margin-bottom: 16px; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: 999px;
+      font-weight: 700; font-size: 14px; margin-bottom: 20px;
+    }
+    .status-on { background: rgba(39,174,96,0.2); color: #4ade80; border: 1px solid #27ae60; }
+    .status-off { background: rgba(231,76,60,0.2); color: #f87171; border: 1px solid #e74c3c; }
+    .btn {
+      padding: 14px 28px; border: none; border-radius: 12px;
+      font-family: inherit; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff; box-shadow: 0 8px 24px rgba(102,126,234,0.4);
+    }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .btn-danger {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: #fff;
+    }
+    .btn-danger:hover { transform: translateY(-2px); }
+    .btn-ghost { background: rgba(255,255,255,0.1); color: #fff; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.15); }
+    .qr-box {
+      background: #fff; padding: 20px;
+      border-radius: 16px; text-align: center; margin: 20px 0;
+    }
+    .qr-box img { max-width: 260px; width: 100%; }
+    .secret-box {
+      background: rgba(0,0,0,0.3); padding: 16px;
+      border-radius: 12px; margin: 16px 0;
+      font-family: monospace;
+      word-break: break-all; text-align: center;
+      font-size: 15px; letter-spacing: 2px; color: #a0e0ff;
+    }
+    .input-code {
+      width: 100%; padding: 16px; text-align: center;
+      font-size: 24px; letter-spacing: 8px;
+      background: rgba(0,0,0,0.3);
+      border: 2px solid rgba(102,126,234,0.4);
+      border-radius: 12px; color: #fff;
+      font-family: monospace;
+      outline: none; margin-bottom: 16px;
+    }
+    .input-code:focus { border-color: #667eea; }
+    .backup-list {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      background: rgba(255,215,0,0.1); padding: 20px;
+      border-radius: 12px; margin: 20px 0;
+      border: 2px solid #ffd700;
+    }
+    .backup-code {
+      font-family: monospace;
+      font-size: 16px; font-weight: 700;
+      padding: 10px; background: rgba(0,0,0,0.4);
+      border-radius: 8px; text-align: center;
+      color: #ffd700; letter-spacing: 2px;
+    }
+    .steps { list-style: none; counter-reset: step; }
+    .steps li {
+      counter-increment: step;
+      padding: 12px 12px 12px 50px;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px; position: relative;
+      color: #b8b8c8;
+    }
+    .steps li::before {
+      content: counter(step);
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%);
+      width: 24px; height: 24px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 50%; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #fff;
+    }
+    .toast {
+      position: fixed; bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(150px);
+      padding: 16px 32px; background: #27ae60;
+      border-radius: 12px; font-weight: 700;
+      transition: 0.4s; z-index: 9999;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: #e74c3c; }
+    .hidden { display: none !important; }
+    .action-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+    .warning-box {
+      background: rgba(255,215,0,0.1);
+      border-left: 4px solid #ffd700;
+      padding: 14px 18px; border-radius: 10px;
+      margin: 16px 0; font-size: 14px;
+    }
+    .warning-box strong { color: #ffd700; }
+    @media (max-width: 600px) {
+      .backup-list { grid-template-columns: 1fr; }
+      .input-code { font-size: 20px; letter-spacing: 6px; }
+      h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/admin" class="back-btn">← Về Admin Panel</a>
+
+    <div class="card">
+      <h1>🔒 Xác Thực 2 Lớp (2FA)</h1>
+      <p>Bảo vệ tài khoản admin bằng <strong>Google Authenticator</strong>, <strong>Proton Authenticator</strong>, hoặc <strong>Authy</strong>.</p>
+
+      <!-- Trạng thái -->
+      <div id="statusBadge" class="status-badge status-off">
+        ⏳ Đang tải...
+      </div>
+
+      <!-- BẬT 2FA — Bước 1: Scan QR -->
+      <div id="setupStep1" class="hidden">
+        <h2>📱 Bước 1: Scan QR Code</h2>
+        <ol class="steps">
+          <li>Mở <strong>Google Authenticator</strong> / <strong>Proton Auth</strong> / <strong>Authy</strong> trên điện thoại</li>
+          <li>Nhấn dấu <strong>+</strong> → chọn <strong>Scan QR code</strong></li>
+          <li>Quét QR bên dưới</li>
+        </ol>
+        <div class="qr-box">
+          <img id="qrImage" src="" alt="QR Code">
+        </div>
+        <p style="text-align:center;">Hoặc nhập thủ công secret:</p>
+        <div class="secret-box" id="secretText">...</div>
+        <button class="btn btn-primary" onclick="showStep2()">Đã scan → Tiếp tục</button>
+      </div>
+
+      <!-- BẬT 2FA — Bước 2: Nhập OTP -->
+      <div id="setupStep2" class="hidden">
+        <h2>🔢 Bước 2: Nhập mã xác nhận</h2>
+        <p>Nhập mã 6 số từ app Authenticator:</p>
+        <input type="text" id="setupCode" class="input-code"
+               placeholder="000000" maxlength="6" inputmode="numeric">
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="verifySetup()">✅ Xác nhận</button>
+          <button class="btn btn-ghost" onclick="backToStep1()">← Quay lại</button>
+        </div>
+      </div>
+
+      <!-- BẬT 2FA — Bước 3: Backup codes -->
+      <div id="setupStep3" class="hidden">
+        <h2>🎁 Backup Codes</h2>
+        <div class="warning-box">
+          ⚠️ <strong>CÁC MÃ DƯỚI ĐÂY CHỈ HIỆN 1 LẦN!</strong> Hãy lưu vào nơi an toàn (sổ tay, email, password manager).
+        </div>
+        <div class="backup-list" id="backupList"></div>
+        <p>Mỗi mã dùng được 1 lần khi bạn mất điện thoại.</p>
+        <button class="btn btn-primary" onclick="window.location.href='/admin'">
+          ✅ Đã lưu → Về Admin Panel
+        </button>
+      </div>
+
+      <!-- 2FA ĐÃ BẬT — Trạng thái -->
+      <div id="enabledBox" class="hidden">
+        <h2>✅ 2FA Đang Bật</h2>
+        <p>Đã bật lúc: <strong id="enabledAt" style="color:#4ade80;">—</strong></p>
+        <p>Backup codes còn lại: <strong id="backupCount" style="color:#ffd700;">0</strong></p>
+        <div class="warning-box">
+          💡 Nếu mất điện thoại, dùng <strong>backup codes</strong> để đăng nhập.
+        </div>
+        <div class="action-row">
+          <button class="btn btn-ghost" onclick="regenerateBackup()">🔄 Sinh lại backup codes</button>
+          <button class="btn btn-danger" onclick="showDisableBox()">🔓 Tắt 2FA</button>
+        </div>
+      </div>
+
+      <!-- TẮT 2FA -->
+      <div id="disableBox" class="hidden">
+        <h2>🔓 Tắt 2FA</h2>
+        <p>Nhập mã OTP để xác nhận:</p>
+        <input type="text" id="disableCode" class="input-code"
+               placeholder="000000" maxlength="6" inputmode="numeric">
+        <div class="action-row">
+          <button class="btn btn-danger" onclick="disable2FA()">🔓 Xác nhận tắt</button>
+          <button class="btn btn-ghost" onclick="hideDisableBox()">❌ Hủy</button>
+        </div>
+      </div>
+
+      <!-- 2FA CHƯA BẬT -->
+      <div id="disabledBox">
+        <h2>🔒 2FA Chưa Bật</h2>
+        <p>Bật 2FA để tăng cường bảo mật cho tài khoản admin.</p>
+        <div class="warning-box">
+          💡 Sau khi bật, bạn cần nhập mã 6 số từ app Authenticator mỗi khi đăng nhập.
+        </div>
+        <button class="btn btn-primary" onclick="startSetup()">🔒 Bật 2FA ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let currentSecret = '';
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (isError ? ' error' : '');
+      setTimeout(() => t.className = 'toast', 3000);
+    }
+
+    function hideAll() {
+      ['setupStep1', 'setupStep2', 'setupStep3', 'enabledBox', 'disableBox', 'disabledBox']
+        .forEach(id => document.getElementById(id).classList.add('hidden'));
+    }
+
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/2fa/status');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const badge = document.getElementById('statusBadge');
+        if (data.enabled) {
+          badge.className = 'status-badge status-on';
+          badge.textContent = '✅ 2FA Đang Bật';
+          hideAll();
+          document.getElementById('enabledBox').classList.remove('hidden');
+          document.getElementById('enabledAt').textContent =
+            data.enabled_at ? new Date(data.enabled_at).toLocaleString('vi-VN') : '—';
+          document.getElementById('backupCount').textContent = data.backup_codes_remaining || 0;
+        } else {
+          badge.className = 'status-badge status-off';
+          badge.textContent = '🔓 2FA Chưa Bật';
+          hideAll();
+          document.getElementById('disabledBox').classList.remove('hidden');
+        }
+      } catch (e) {
+        showToast('❌ Lỗi tải trạng thái: ' + e.message, true);
+      }
+    }
+
+    async function startSetup() {
+      try {
+        const res = await fetch('/api/2fa/setup', { method: 'POST' });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        currentSecret = data.secret;
+        document.getElementById('qrImage').src = data.qr;
+        document.getElementById('secretText').textContent = data.secret;
+
+        hideAll();
+        document.getElementById('setupStep1').classList.remove('hidden');
+      } catch (e) {
+        showToast('❌ ' + e.message, true);
+      }
+    }
+
+    function showStep2() {
+      hideAll();
+      document.getElementById('setupStep2').classList.remove('hidden');
+      setTimeout(() => document.getElementById('setupCode').focus(), 100);
+    }
+
+    function backToStep1() {
+      hideAll();
+      document.getElementById('setupStep1').classList.remove('hidden');
+    }
+
+    async function verifySetup() {
+      const code = document.getElementById('setupCode').value.trim();
+      if (!code || code.length !== 6) {
+        showToast('⚠️ Nhập đủ 6 số!', true);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/2fa/verify-setup', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const list = document.getElementById('backupList');
+        list.innerHTML = data.backup_codes.map(c =>
+          `<div class="backup-code">${c}</div>`
+        ).join('');
+
+        hideAll();
+        document.getElementById('setupStep3').classList.remove('hidden');
+        showToast('✅ Đã bật 2FA!');
+      } catch (e) {
+        showToast('❌ ' + e.message, true);
+      }
+    }
+
+    function showDisableBox() {
+      hideAll();
+      document.getElementById('disableBox').classList.remove('hidden');
+      setTimeout(() => document.getElementById('disableCode').focus(), 100);
+    }
+
+    function hideDisableBox() {
+      loadStatus();
+    }
+
+    async function disable2FA() {
+      const code = document.getElementById('disableCode').value.trim();
+      if (!code) { showToast('⚠️ Nhập mã OTP!', true); return; }
+
+      try {
+        const res = await fetch('/api/2fa/disable', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        showToast('🔓 Đã tắt 2FA!');
+        loadStatus();
+      } catch (e) {
+        showToast('❌ ' + e.message, true);
+      }
+    }
+
+    async function regenerateBackup() {
+      const code = prompt('Nhập mã OTP để xác nhận:');
+      if (!code) return;
+
+      try {
+        const res = await fetch('/api/2fa/regenerate-backup', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const list = document.getElementById('backupList');
+        list.innerHTML = data.backup_codes.map(c =>
+          `<div class="backup-code">${c}</div>`
+        ).join('');
+
+        hideAll();
+        document.getElementById('setupStep3').classList.remove('hidden');
+        showToast('✅ Đã sinh backup codes mới!');
+      } catch (e) {
+        showToast('❌ ' + e.message, true);
+      }
+    }
+
+    // Tự submit khi đủ 6 số
+    document.getElementById('setupCode').addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+      if (e.target.value.length === 6) setTimeout(verifySetup, 200);
+    });
+
+    document.getElementById('disableCode').addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+    });
+
+    loadStatus();
+  </script>
+</body>
+</html>
