@@ -6,13 +6,6 @@
   <title>🔐 Mã Hóa Tool</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <script>
-    // Chống FOUC (Flash of Unstyled Content) — set theme trước khi render
-    (function() {
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    })();
-  </script>
 </head>
 <body>
 
@@ -64,16 +57,6 @@
       </div>
       <div class="header-actions">
         <div class="stats-badge">📊 {{ methods|length }} phương pháp</div>
-
-        <!-- ⭐ THEME TOGGLE BUTTON -->
-        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Đổi giao diện Sáng/Tối" aria-label="Toggle theme">
-          <span class="theme-icon theme-icon-dark">🌙</span>
-          <span class="theme-icon theme-icon-light">☀️</span>
-          <div class="theme-toggle-track">
-            <div class="theme-toggle-thumb"></div>
-          </div>
-        </button>
-
         <div class="user-menu" id="userMenu">
           <button class="user-btn" id="userBtn">
             <div class="user-avatar">{{ username[0]|upper }}</div>
@@ -525,63 +508,7 @@
   <div id="toast" class="toast"></div>
 
   <style>
-    /* ═══════════════════════════════════════════════════════════
-       THEME VARIABLES — Dark / Light
-       ═══════════════════════════════════════════════════════════ */
-    :root[data-theme="dark"] {
-      --bg-primary: #1a1a2e;
-      --bg-secondary: #16213e;
-      --bg-card: rgba(255, 255, 255, 0.05);
-      --bg-card-hover: rgba(255, 255, 255, 0.08);
-      --bg-input: rgba(0, 0, 0, 0.3);
-      --bg-modal: #1f1f2e;
-      --bg-dropdown: #2a2a3e;
-      --bg-toast: #27ae60;
-      --text-primary: #ffffff;
-      --text-secondary: #cccccc;
-      --text-muted: #999999;
-      --border-color: rgba(255, 255, 255, 0.1);
-      --border-strong: rgba(255, 255, 255, 0.2);
-      --shadow-color: rgba(0, 0, 0, 0.4);
-      --accent-primary: #667eea;
-      --accent-secondary: #764ba2;
-    }
-
-    :root[data-theme="light"] {
-      --bg-primary: #f0f4f8;
-      --bg-secondary: #e2e8f0;
-      --bg-card: rgba(255, 255, 255, 0.9);
-      --bg-card-hover: rgba(255, 255, 255, 1);
-      --bg-input: #ffffff;
-      --bg-modal: #ffffff;
-      --bg-dropdown: #ffffff;
-      --bg-toast: #27ae60;
-      --text-primary: #1a202c;
-      --text-secondary: #4a5568;
-      --text-muted: #718096;
-      --border-color: rgba(0, 0, 0, 0.08);
-      --border-strong: rgba(0, 0, 0, 0.15);
-      --shadow-color: rgba(0, 0, 0, 0.1);
-      --accent-primary: #667eea;
-      --accent-secondary: #764ba2;
-    }
-
-    /* Theme transition — mượt mà */
-    * {
-      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-    }
-    textarea, input, .btn, .method-btn, .task-btn, .tab {
-      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    /* Body */
-    body {
-      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-      color: var(--text-primary);
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-
-    /* Nút Play Game */
+    /* ═══ NÚT PLAY GAME ═══ */
     .btn.game {
       background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
       color: #fff;
@@ -613,7 +540,7 @@
       100% { left: 100%; }
     }
 
-    /* Dropdown Game Item */
+    /* ═══ DROPDOWN GAME ITEM ═══ */
     .dropdown-item.game-item {
       background: linear-gradient(135deg, rgba(240, 147, 251, 0.15), rgba(245, 87, 108, 0.15));
       color: #c0392b;
@@ -636,232 +563,7 @@
       50%      { transform: scale(1.2); }
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       THEME TOGGLE BUTTON
-       ═══════════════════════════════════════════════════════════ */
-    .theme-toggle {
-      position: relative;
-      width: 62px;
-      height: 32px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      cursor: pointer;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 6px;
-      transition: background 0.3s ease, border-color 0.3s ease;
-      overflow: visible;
-    }
-    .theme-toggle:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: translateY(-1px);
-    }
-    .theme-toggle .theme-icon {
-      font-size: 16px;
-      z-index: 2;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      pointer-events: none;
-      user-select: none;
-    }
-    .theme-toggle-track {
-      position: absolute;
-      inset: 0;
-      border-radius: 999px;
-      pointer-events: none;
-    }
-    .theme-toggle-thumb {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 1;
-    }
-
-    /* Dark mode: thumb bên trái (moon) */
-    :root[data-theme="dark"] .theme-toggle-thumb {
-      transform: translateX(0);
-    }
-    :root[data-theme="dark"] .theme-icon-dark {
-      opacity: 1;
-      transform: scale(1);
-    }
-    :root[data-theme="dark"] .theme-icon-light {
-      opacity: 0.5;
-      transform: scale(0.85);
-    }
-
-    /* Light mode: thumb bên phải (sun) */
-    :root[data-theme="light"] .theme-toggle-thumb {
-      transform: translateX(30px);
-      background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    }
-    :root[data-theme="light"] .theme-icon-light {
-      opacity: 1;
-      transform: scale(1);
-    }
-    :root[data-theme="light"] .theme-icon-dark {
-      opacity: 0.5;
-      transform: scale(0.85);
-    }
-
-    /* ─── Override màu theo theme ─── */
-    :root[data-theme="light"] .game-header,
-    :root[data-theme="light"] header {
-      background: linear-gradient(135deg, #a8c0ff 0%, #c9a7eb 100%);
-      box-shadow: 0 15px 40px rgba(168, 192, 255, 0.4);
-    }
-
-    :root[data-theme="light"] .modal,
-    :root[data-theme="light"] .panel,
-    :root[data-theme="light"] .box,
-    :root[data-theme="light"] .daily-card,
-    :root[data-theme="light"] .reward-card,
-    :root[data-theme="light"] .pvp-waiting-box,
-    :root[data-theme="light"] .pvp-question-box,
-    :root[data-theme="light"] .pvp-scoreboard,
-    :root[data-theme="light"] .pvp-result-box,
-    :root[data-theme="light"] .user-dropdown {
-      background: var(--bg-modal);
-      border-color: var(--border-color);
-      color: var(--text-primary);
-      box-shadow: 0 10px 40px rgba(100, 126, 234, 0.15);
-    }
-
-    :root[data-theme="light"] textarea,
-    :root[data-theme="light"] input[type="text"],
-    :root[data-theme="light"] input[type="number"],
-    :root[data-theme="light"] input[type="password"],
-    :root[data-theme="light"] .daily-input,
-    :root[data-theme="light"] .pvp-answer-input,
-    :root[data-theme="light"] .pvp-code-input,
-    :root[data-theme="light"] .friend-search-input,
-    :root[data-theme="light"] .meme-input,
-    :root[data-theme="light"] .modal-search input {
-      background: var(--bg-input);
-      border-color: var(--border-strong);
-      color: var(--text-primary);
-    }
-    :root[data-theme="light"] textarea::placeholder,
-    :root[data-theme="light"] input::placeholder {
-      color: var(--text-muted);
-    }
-
-    :root[data-theme="light"] .tab,
-    :root[data-theme="light"] .pvp-subtab,
-    :root[data-theme="light"] .task-btn {
-      background: var(--bg-card);
-      border-color: var(--border-color);
-      color: var(--text-secondary);
-    }
-    :root[data-theme="light"] .tab:hover,
-    :root[data-theme="light"] .pvp-subtab:hover,
-    :root[data-theme="light"] .task-btn:hover {
-      background: var(--bg-card-hover);
-    }
-
-    :root[data-theme="light"] .method-groups-tabs {
-      background: #f8faff;
-      border-color: var(--border-color);
-    }
-    :root[data-theme="light"] .method-group-tab {
-      background: var(--bg-card);
-      border-color: var(--border-color);
-      color: var(--text-secondary);
-    }
-
-    :root[data-theme="light"] .method-btn {
-      background: var(--bg-card);
-      border-color: var(--border-color);
-      color: var(--text-primary);
-    }
-    :root[data-theme="light"] .method-btn:hover {
-      background: var(--bg-card-hover);
-    }
-
-    :root[data-theme="light"] .history-item,
-    :root[data-theme="light"] .history-row {
-      background: var(--bg-card);
-      border-color: var(--border-color);
-      color: var(--text-primary);
-    }
-    :root[data-theme="light"] .history-item code,
-    :root[data-theme="light"] .history-preview code {
-      background: #e0e7ff;
-      color: #1a1a2e;
-    }
-
-    :root[data-theme="light"] .lb-row {
-      background: var(--bg-card);
-      border-color: var(--border-color);
-      color: var(--text-primary);
-    }
-
-    :root[data-theme="light"] .rule-row {
-      background: var(--bg-card);
-      border-color: var(--border-color);
-    }
-    :root[data-theme="light"] .rule-row input {
-      background: var(--bg-input);
-      border-color: var(--border-strong);
-      color: var(--text-primary);
-    }
-
-    :root[data-theme="light"] .room-list-item {
-      background: var(--bg-card);
-      border-color: var(--border-color);
-    }
-    :root[data-theme="light"] .room-list-item:hover {
-      background: var(--bg-card-hover);
-    }
-
-    :root[data-theme="light"] .pvp-chat-box {
-      background: #f8faff;
-      border: 1px solid var(--border-color);
-    }
-    :root[data-theme="light"] .pvp-chat-msg {
-      background: var(--bg-card);
-      color: var(--text-primary);
-    }
-    :root[data-theme="light"] .pvp-chat-msg.mine {
-      background: #e0e7ff;
-      color: var(--text-primary);
-    }
-
-    :root[data-theme="light"] .user-id-box {
-      background: #f8faff;
-      border-color: var(--border-color);
-    }
-
-    /* Mobile */
-    @media (max-width: 600px) {
-      .theme-toggle {
-        width: 54px;
-        height: 28px;
-        padding: 0 5px;
-      }
-      .theme-toggle-thumb {
-        width: 20px;
-        height: 20px;
-      }
-      :root[data-theme="light"] .theme-toggle-thumb {
-        transform: translateX(26px);
-      }
-      .theme-toggle .theme-icon {
-        font-size: 14px;
-      }
-    }
-
-    /* ═══════════════════════════════════════════════════════════
-       UNBAN OVERLAY
-       ═══════════════════════════════════════════════════════════ */
+    /* ═══ UNBAN OVERLAY ═══ */
     .unban-reload-overlay {
       position: fixed;
       inset: 0;
@@ -909,8 +611,8 @@
       gap: 8px;
       padding: 12px 24px;
       overflow-x: auto;
-      border-bottom: 1px solid var(--border-color);
-      background: rgba(0, 0, 0, 0.15);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      background: #fafafa;
       scrollbar-width: thin;
       scrollbar-color: #ccc transparent;
       flex-shrink: 0;
@@ -921,10 +623,10 @@
 
     .method-group-tab {
       padding: 8px 14px;
-      background: var(--bg-card);
-      border: 2px solid var(--border-color);
+      background: #fff;
+      border: 2px solid #e5e7eb;
       border-radius: 10px;
-      color: var(--text-secondary);
+      color: #374151;
       font-family: inherit;
       font-size: 13px;
       font-weight: 700;
@@ -933,8 +635,8 @@
       transition: 0.2s;
     }
     .method-group-tab:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--border-strong);
+      background: #f3f4f6;
+      border-color: #d1d5db;
       transform: translateY(-1px);
     }
     .method-group-tab.active {
@@ -960,47 +662,6 @@
 
     .method-btn.hidden { display: none !important; }
   </style>
-
-  <script>
-    // ══════════════════════════════════════════════════════════
-    //  THEME TOGGLE
-    // ══════════════════════════════════════════════════════════
-    function toggleTheme() {
-      const root = document.documentElement;
-      const current = root.getAttribute('data-theme') || 'dark';
-      const next = current === 'dark' ? 'light' : 'dark';
-
-      // Hiệu ứng chuyển mượt
-      document.body.style.transition = 'background 0.4s ease, color 0.4s ease';
-      setTimeout(() => { document.body.style.transition = ''; }, 500);
-
-      // Đổi theme
-      root.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-
-      // Toast thông báo
-      const toast = document.getElementById('toast');
-      if (toast) {
-        toast.textContent = next === 'light' ? '☀️ Đã bật giao diện Sáng' : '🌙 Đã bật giao diện Tối';
-        toast.className = 'toast show';
-        setTimeout(() => { toast.className = 'toast'; }, 2000);
-      }
-    }
-
-    // Keyboard shortcut: Ctrl + Shift + L
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.shiftKey && (e.key === 'L' || e.key === 'l')) {
-        e.preventDefault();
-        toggleTheme();
-      }
-    });
-
-    // Theo dõi theme của hệ thống (nếu user chưa chọn)
-    if (!localStorage.getItem('theme')) {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-    }
-  </script>
 
   <script>
     // ══════════════════════════════════════════════════════════
@@ -1246,7 +907,7 @@
     }
 
     // ══════════════════════════════════════════════════════════
-    //  POLLING — 3s
+    //  POLLING — 3s (phát hiện unban)
     // ══════════════════════════════════════════════════════════
     async function pollStatus() {
       if (isHandlingBlock) return;
