@@ -1,14 +1,25 @@
 """
-Game utilities — Leaderboard, Daily, Rewards, Random, PvP (typing race + AFK), Meme
+Game utilities — Leaderboard, Daily, Rewards, Random, PvP (DB), Meme
+TẤT CẢ dữ liệu lưu vào Supabase, không mất khi rebuild.
 """
 import random
 import hashlib
 import string
 import time
-import os
-import json
 from datetime import datetime, timedelta
 from crypto_utils import METHODS, ONE_WAY_ONLY
+
+# ⭐ Import DB helper
+from db_helper import (
+    load_users, save_user, save_users, delete_user,
+    load_all_rooms, load_room, save_room, delete_room, cleanup_old_rooms_db,
+    get_friends as db_get_friends,
+    add_friend as db_add_friend,
+    remove_friend as db_remove_friend,
+    get_friend_requests as db_get_friend_requests,
+    add_friend_request as db_add_friend_request,
+    remove_friend_request as db_remove_friend_request,
+)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -133,24 +144,20 @@ def pick_random_method(exclude_one_way: bool = False, exclude_key: bool = False)
 
 
 # ═══════════════════════════════════════════════════════════
-#  PVP ROOMS
+#  PVP CONFIG
 # ═══════════════════════════════════════════════════════════
-PVP_ROOMS = {}
-FRIENDS_DB = {}
-FRIEND_REQUESTS = []
-
 ROOM_TTL = 30 * 60
 DEFAULT_QUESTIONS = 10
 DEFAULT_ROUNDS = 3
 POINTS_PER_CORRECT = 100
 MAX_SPEED_BONUS = 50
 
-# ⏰ AFK
-AFK_TIMEOUT = 30          # AFK >= 30s → kick
-AFK_WARNING_AT = 20       # Cảnh báo sớm 20s
-AFK_WARNING_INTERVAL = 10 # Nhắc lại cảnh báo mỗi 10s
+# AFK
+AFK_TIMEOUT = 30
+AFK_WARNING_AT = 20
+AFK_WARNING_INTERVAL = 10
 
-# Danh sách từ tiếng Anh để đua gõ
+# Danh sách từ tiếng Anh
 PVP_WORDS = [
     "hello", "world", "code", "game", "fast", "type", "quick", "speed",
     "race", "win", "lose", "draw", "match", "player", "arena", "skill",
@@ -177,10 +184,12 @@ PVP_WORDS = [
 
 def _gen_room_code(length: int = 6) -> str:
     chars = string.ascii_uppercase + string.digits
-    while True:
+    existing = load_all_rooms()
+    for _ in range(100):
         code = ''.join(random.choices(chars, k=length))
-        if code not in PVP_ROOMS:
+        if code not in existing:
             return code
+    return ''.join(random.choices(chars, k=length))
 
 
 def _gen_questions(count: int) -> list:
@@ -190,152 +199,124 @@ def _gen_questions(count: int) -> list:
     return [{"word": w, "display": w} for w in words]
 
 
-def load_users_from_db() -> dict:
-    """Load users từ DB hoặc JSON."""
-    DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
-    if DATABASE_URL:
-        try:
-            import psycopg2
-            from psycopg2.extras import RealDictCursor
-            conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-            try:
-                with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                    cur.execute("SELECT username, data FROM users")
-                    rows = cur.fetchall()
-                    return {row['username']: row['data'] for row in rows}
-            finally:
-                conn.close()
-        except Exception as e:
-            print(f"⚠️ Lỗi load users: {e}")
-    if not os.path.exists('users.json'):
-        return {}
-    try:
-        with open('users.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"⚠️ Lỗi đọc JSON: {e}")
-        return {}
+# ═══════════════════════════════════════════════════════════
+#  ROOM HELPERS
+# ═══════════════════════════════════════════════════════════
+def _get_room(code: str) -> dict:
+    code = code.upper().strip()
+    return load_room(code)
 
 
-def save_user_to_db(username: str, user_data: dict):
-    """Lưu user vào DB hoặc JSON."""
-    DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
-    if DATABASE_URL:
-        try:
-            import psycopg2
-            from psycopg2.extras import Json
-            conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("""
-                        INSERT INTO users (username, data, updated_at)
-                        VALUES (%s, %s, NOW())
-                        ON CONFLICT (username)
-                        DO UPDATE SET 
-                            data = EXCLUDED.data,
-                            updated_at = NOW()
-                    """, (username, Json(user_data)))
-                conn.commit()
-                return
-            finally:
-                conn.close()
-        except Exception as e:
-            print(f"❌ Lỗi save_user_to_db: {e}")
-    try:
-        users = load_users_from_db()
-        users[username] = user_data
-        with open('users.json', 'w', encoding='utf-8') as f:
-            json.dump(users, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"❌ Lỗi ghi JSON: {e}")
+def _save_room(room: dict):
+    if not room:
+        return
+    save_room(room['code'], room)
 
 
-def _save_afk_match_history(room, winner, loser, users):
-    """Lưu lịch sử khi 1 người bị kick vì AFK."""
-    try:
-        # Winner
-        if winner in users:
-            game = ensure_game_data(users[winner])
-            history = game.get("match_history", [])
-            history.insert(0, {
-                "opponent": room.get("guest_display") if winner == room["host"] else room.get("host_display"),
-                "my_score": room["round_wins"].get(winner, 0),
-                "opp_score": 0,
-                "my_rounds": room["round_wins"].get(winner, 0),
-                "opp_rounds": 0,
-                "result": "win",
-                "reason": "opponent_afk",
-                "time": datetime.now().isoformat(),
-            })
-            game["match_history"] = history[:20]
-            stats = game.setdefault("pvp_stats", {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0})
-            stats["wins"] = stats.get("wins", 0) + 1
-            stats["total_matches"] = stats.get("total_matches", 0) + 1
-            save_user_to_db(winner, users[winner])
-
-        # Loser
-        if loser in users:
-            game = ensure_game_data(users[loser])
-            history = game.get("match_history", [])
-            history.insert(0, {
-                "opponent": room.get("host_display") if loser == room["guest"] else room.get("guest_display"),
-                "my_score": 0,
-                "opp_score": room["round_wins"].get(winner, 0),
-                "my_rounds": 0,
-                "opp_rounds": room["round_wins"].get(winner, 0),
-                "result": "loss",
-                "reason": "afk",
-                "time": datetime.now().isoformat(),
-            })
-            game["match_history"] = history[:20]
-            stats = game.setdefault("pvp_stats", {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0})
-            stats["losses"] = stats.get("losses", 0) + 1
-            stats["total_matches"] = stats.get("total_matches", 0) + 1
-            game["afk_warnings_count"] = game.get("afk_warnings_count", 0) + 1
-            save_user_to_db(loser, users[loser])
-    except Exception as e:
-        print(f"⚠️ Lỗi lưu lịch sử AFK: {e}")
+def _del_room(code: str):
+    code = code.upper().strip()
+    delete_room(code)
 
 
-# ─── 1. Danh sách phòng public ───
-def list_public_rooms() -> list:
-    cleanup_old_rooms()
+def cleanup_old_rooms() -> int:
+    """Xóa phòng cũ (DB)."""
+    return cleanup_old_rooms_db()
+
+
+# ═══════════════════════════════════════════════════════════
+#  FRIENDS (DB)
+# ═══════════════════════════════════════════════════════════
+def send_friend_request(from_user: str, to_user: str) -> dict:
+    if from_user == to_user:
+        return {"success": False, "error": "Không thể kết bạn với chính mình!"}
+
+    my_friends = db_get_friends(from_user)
+    if to_user in my_friends:
+        return {"success": False, "error": "Đã là bạn bè!"}
+
+    pending = db_get_friend_requests(to_user)
+    for req in pending:
+        if req.get("from") == from_user:
+            return {"success": False, "error": "Đã gửi lời mời!"}
+
+    # Auto-accept nếu có request ngược
+    my_pending = db_get_friend_requests(from_user)
+    for req in my_pending:
+        if req.get("from") == to_user:
+            db_remove_friend_request(from_user, to_user)
+            db_add_friend(from_user, to_user)
+            db_add_friend(to_user, from_user)
+            return {"success": True, "auto_accepted": True, "message": "Đã trở thành bạn bè!"}
+
+    db_add_friend_request(to_user, from_user)
+    return {"success": True, "message": "Đã gửi lời mời kết bạn!"}
+
+
+def accept_friend_request(username: str, from_user: str) -> dict:
+    pending = db_get_friend_requests(username)
+    found = any(r.get("from") == from_user for r in pending)
+    if not found:
+        return {"success": False, "error": "Không tìm thấy lời mời!"}
+
+    db_remove_friend_request(username, from_user)
+    db_add_friend(username, from_user)
+    db_add_friend(from_user, username)
+    return {"success": True, "message": "Đã chấp nhận lời mời!"}
+
+
+def decline_friend_request(username: str, from_user: str) -> dict:
+    db_remove_friend_request(username, from_user)
+    return {"success": True, "message": "Đã từ chối!"}
+
+
+def get_friends(username: str) -> list:
+    return db_get_friends(username)
+
+
+def get_friend_requests(username: str) -> list:
+    return db_get_friend_requests(username)
+
+
+def remove_friend(username: str, friend: str) -> dict:
+    db_remove_friend(username, friend)
+    db_remove_friend(friend, username)
+    return {"success": True, "message": "Đã xóa bạn!"}
+
+
+def invite_friend_to_room(username: str, friend: str, code: str) -> dict:
+    room = _get_room(code)
+    if not room:
+        return {"success": False, "error": "Phòng không tồn tại!"}
+    if room["host"] != username and room["guest"] != username:
+        return {"success": False, "error": "Bạn không ở trong phòng!"}
+    if friend not in db_get_friends(username):
+        return {"success": False, "error": "Không phải bạn bè!"}
+
+    room.setdefault("invites", []).append({
+        "friend": friend, "from": username, "code": code,
+        "time": datetime.now().isoformat(),
+    })
+    _save_room(room)
+    return {"success": True, "message": f"Đã mời {friend} vào phòng!"}
+
+
+def get_room_invites(username: str) -> list:
     result = []
-    now = time.time()
-    for code, room in PVP_ROOMS.items():
-        if not room.get("is_public", True): continue
-        if room["status"] not in ("waiting", "ready"): continue
-        result.append({
-            "code": code,
-            "host": room["host"],
-            "host_display": room["host_display"],
-            "host_level": room.get("host_level", 1),
-            "guest": room["guest"],
-            "guest_display": room["guest_display"],
-            "status": room["status"],
-            "rules": room.get("rules", {}),
-            "created_at": room["created_at"],
-            "age_minutes": round((now - room["created_at"]) / 60, 1),
-            "slots": 2,
-            "players_count": 1 + (1 if room.get("guest") else 0),
-        })
-    result.sort(key=lambda x: -x["created_at"])
+    rooms = load_all_rooms()
+    for code, room in rooms.items():
+        for inv in room.get("invites", []):
+            if inv["friend"] == username:
+                result.append({
+                    "code": code, "from": inv["from"],
+                    "host_display": room["host_display"],
+                    "time": inv["time"],
+                })
     return result
 
 
-def broadcast_player_joined(code: str) -> dict:
-    if code not in PVP_ROOMS:
-        return {"success": False}
-    room = PVP_ROOMS[code]
-    return {
-        "success": True,
-        "message": f"{room['guest_display']} đã vào phòng!",
-        "guest": room["guest"],
-        "guest_display": room["guest_display"],
-    }
-
-
-# ─── 2. Tạo phòng ───
+# ═══════════════════════════════════════════════════════════
+#  CREATE ROOM
+# ═══════════════════════════════════════════════════════════
 def create_pvp_room(host_username: str, host_display: str,
                     is_public: bool = True,
                     host_level: int = 1,
@@ -384,103 +365,63 @@ def create_pvp_room(host_username: str, host_display: str,
         "last_afk_check": now,
         "left_user": None,
         "left_display": None,
+        "left_reason": None,
         "heartbeats": {},
         "afk_kick_info": None,
     }
-    PVP_ROOMS[code] = room
+
+    _save_room(room)  # ⭐ LƯU VÀO DB
     return room
 
 
-# ─── 3. Bạn bè ───
-def send_friend_request(from_user: str, to_user: str) -> dict:
-    if from_user == to_user:
-        return {"success": False, "error": "Không thể kết bạn với chính mình!"}
-    if to_user in FRIENDS_DB.get(from_user, []):
-        return {"success": False, "error": "Đã là bạn bè!"}
-    for req in FRIEND_REQUESTS:
-        if req["from"] == from_user and req["to"] == to_user:
-            return {"success": False, "error": "Đã gửi lời mời!"}
-    for req in FRIEND_REQUESTS:
-        if req["from"] == to_user and req["to"] == from_user:
-            FRIEND_REQUESTS.remove(req)
-            FRIENDS_DB.setdefault(from_user, []).append(to_user)
-            FRIENDS_DB.setdefault(to_user, []).append(from_user)
-            return {"success": True, "auto_accepted": True, "message": "Đã trở thành bạn bè!"}
-    FRIEND_REQUESTS.append({
-        "from": from_user, "to": to_user,
-        "time": datetime.now().isoformat(),
-    })
-    return {"success": True, "message": "Đã gửi lời mời kết bạn!"}
-
-
-def accept_friend_request(username: str, from_user: str) -> dict:
-    for req in FRIEND_REQUESTS:
-        if req["from"] == from_user and req["to"] == username:
-            FRIEND_REQUESTS.remove(req)
-            FRIENDS_DB.setdefault(username, []).append(from_user)
-            FRIENDS_DB.setdefault(from_user, []).append(username)
-            return {"success": True, "message": "Đã chấp nhận lời mời!"}
-    return {"success": False, "error": "Không tìm thấy lời mời!"}
-
-
-def decline_friend_request(username: str, from_user: str) -> dict:
-    for req in FRIEND_REQUESTS:
-        if req["from"] == from_user and req["to"] == username:
-            FRIEND_REQUESTS.remove(req)
-            return {"success": True, "message": "Đã từ chối!"}
-    return {"success": False, "error": "Không tìm thấy lời mời!"}
-
-
-def get_friends(username: str) -> list:
-    return FRIENDS_DB.get(username, [])
-
-
-def get_friend_requests(username: str) -> list:
-    return [r for r in FRIEND_REQUESTS if r["to"] == username]
-
-
-def remove_friend(username: str, friend: str) -> dict:
-    if friend in FRIENDS_DB.get(username, []):
-        FRIENDS_DB[username].remove(friend)
-    if username in FRIENDS_DB.get(friend, []):
-        FRIENDS_DB[friend].remove(username)
-    return {"success": True, "message": "Đã xóa bạn!"}
-
-
-def invite_friend_to_room(username: str, friend: str, code: str) -> dict:
-    if code not in PVP_ROOMS:
-        return {"success": False, "error": "Phòng không tồn tại!"}
-    room = PVP_ROOMS[code]
-    if room["host"] != username and room["guest"] != username:
-        return {"success": False, "error": "Bạn không ở trong phòng!"}
-    if friend not in FRIENDS_DB.get(username, []):
-        return {"success": False, "error": "Không phải bạn bè!"}
-    room.setdefault("invites", []).append({
-        "friend": friend, "from": username, "code": code,
-        "time": datetime.now().isoformat(),
-    })
-    return {"success": True, "message": f"Đã mời {friend} vào phòng!"}
-
-
-def get_room_invites(username: str) -> list:
+# ═══════════════════════════════════════════════════════════
+#  LIST PUBLIC ROOMS
+# ═══════════════════════════════════════════════════════════
+def list_public_rooms() -> list:
+    cleanup_old_rooms()
+    rooms = load_all_rooms()
     result = []
-    for code, room in PVP_ROOMS.items():
-        for inv in room.get("invites", []):
-            if inv["friend"] == username:
-                result.append({
-                    "code": code, "from": inv["from"],
-                    "host_display": room["host_display"],
-                    "time": inv["time"],
-                })
+    now = time.time()
+    for code, room in rooms.items():
+        if not room.get("is_public", True): continue
+        if room["status"] not in ("waiting", "ready"): continue
+        result.append({
+            "code": code,
+            "host": room["host"],
+            "host_display": room["host_display"],
+            "host_level": room.get("host_level", 1),
+            "guest": room["guest"],
+            "guest_display": room["guest_display"],
+            "status": room["status"],
+            "rules": room.get("rules", {}),
+            "created_at": room["created_at"],
+            "age_minutes": round((now - room["created_at"]) / 60, 1),
+            "slots": 2,
+            "players_count": 1 + (1 if room.get("guest") else 0),
+        })
+    result.sort(key=lambda x: -x["created_at"])
     return result
 
 
-# ─── 4. Chat ───
+def broadcast_player_joined(code: str) -> dict:
+    room = _get_room(code)
+    if not room:
+        return {"success": False}
+    return {
+        "success": True,
+        "message": f"{room['guest_display']} đã vào phòng!",
+        "guest": room["guest"],
+        "guest_display": room["guest_display"],
+    }
+
+
+# ═══════════════════════════════════════════════════════════
+#  CHAT
+# ═══════════════════════════════════════════════════════════
 def send_chat_message(code: str, username: str, display: str, message: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     if username not in (room["host"], room["guest"]):
         return {"success": False, "error": "Bạn không ở trong phòng!"}
     message = message.strip()[:200]
@@ -492,22 +433,24 @@ def send_chat_message(code: str, username: str, display: str, message: str) -> d
     })
     room["chat"] = room["chat"][-50:]
     room["last_activity"] = time.time()
+    _save_room(room)
     return {"success": True, "message": "Đã gửi!"}
 
 
 def get_chat_messages(code: str) -> list:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return []
-    return PVP_ROOMS[code].get("chat", [])
+    return room.get("chat", [])
 
 
-# ─── 5. Rules ───
+# ═══════════════════════════════════════════════════════════
+#  UPDATE RULES
+# ═══════════════════════════════════════════════════════════
 def update_room_rules(code: str, username: str, rules: dict) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     if room["host"] != username:
         return {"success": False, "error": "Chỉ chủ phòng mới đổi luật!"}
     if room["status"] != "waiting":
@@ -537,12 +480,15 @@ def update_room_rules(code: str, username: str, rules: dict) -> dict:
                 "question_started_at": None, "started_at": None,
             })
     room["rounds"] = new_rounds[:rounds]
+    _save_room(room)
 
     return {"success": True, "message": f"Đã cập nhật: {rounds} ván × {questions} câu",
             "rules": room["rules"]}
 
 
-# ─── 6. Share link ───
+# ═══════════════════════════════════════════════════════════
+#  SHARE LINK
+# ═══════════════════════════════════════════════════════════
 def get_room_share_link(code: str, base_url: str = "") -> str:
     if base_url:
         base_url = base_url.rstrip("/")
@@ -550,7 +496,9 @@ def get_room_share_link(code: str, base_url: str = "") -> str:
     return f"/game?join={code}"
 
 
-# ─── 8. Xem đối thủ ───
+# ═══════════════════════════════════════════════════════════
+#  OPPONENT INFO
+# ═══════════════════════════════════════════════════════════
 def get_opponent_info(room: dict, username: str, all_users: dict) -> dict:
     opponent = room["guest"] if room["host"] == username else room["host"]
     if not opponent:
@@ -570,12 +518,13 @@ def get_opponent_info(room: dict, username: str, all_users: dict) -> dict:
     }
 
 
-# ─── 9. Kick ───
+# ═══════════════════════════════════════════════════════════
+#  KICK GUEST
+# ═══════════════════════════════════════════════════════════
 def kick_guest(code: str, host_username: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     if room["host"] != host_username:
         return {"success": False, "error": "Chỉ chủ phòng mới kick!"}
     if not room["guest"]:
@@ -596,28 +545,18 @@ def kick_guest(code: str, host_username: str) -> dict:
         r["scores"] = {}
         r["winner"] = None
         r["question_started_at"] = None
+    _save_room(room)
     return {"success": True, "kicked": kicked, "kicked_display": kicked_display,
             "message": f"Đã kick {kicked_display}!"}
 
 
-# ─── 10. Cleanup ───
-def cleanup_old_rooms() -> int:
-    now = time.time()
-    to_delete = []
-    for code, room in PVP_ROOMS.items():
-        if now - room.get("last_activity", 0) > ROOM_TTL:
-            to_delete.append(code)
-    for code in to_delete:
-        del PVP_ROOMS[code]
-    return len(to_delete)
-
-
-# ─── 11. Rematch ───
+# ═══════════════════════════════════════════════════════════
+#  REMATCH
+# ═══════════════════════════════════════════════════════════
 def vote_rematch(code: str, username: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     if room["status"] != "finished":
         return {"success": False, "error": "Trận chưa kết thúc!"}
     if username not in (room["host"], room["guest"]):
@@ -642,21 +581,25 @@ def vote_rematch(code: str, username: str) -> dict:
         room["rematch_votes"] = []
         room["left_user"] = None
         room["left_display"] = None
+        room["left_reason"] = None
         room["afk_kick_info"] = None
         room["afk_warnings"] = {}
         room["heartbeats"] = {}
         room["last_activity"] = time.time()
+        _save_room(room)
         return {"success": True, "restarted": True, "message": "Cả 2 đồng ý! Trận mới bắt đầu!"}
+    _save_room(room)
     return {"success": True, "votes": votes, "message": "Đã vote. Chờ đối thủ..."}
 
 
-# ─── JOIN / START / SUBMIT ───
+# ═══════════════════════════════════════════════════════════
+#  JOIN ROOM
+# ═══════════════════════════════════════════════════════════
 def join_pvp_room(code: str, guest_username: str, guest_display: str,
                   guest_level: int = 1) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     if room["host"] == guest_username:
         return {"success": False, "error": "Bạn là chủ phòng này!"}
     if room["guest"] is not None and room["guest"] != guest_username:
@@ -669,14 +612,17 @@ def join_pvp_room(code: str, guest_username: str, guest_display: str,
     room["status"] = "ready"
     room["round_wins"][guest_username] = 0
     room["last_activity"] = time.time()
+    _save_room(room)
     return {"success": True, "room": room}
 
 
+# ═══════════════════════════════════════════════════════════
+#  START ROOM
+# ═══════════════════════════════════════════════════════════
 def start_pvp_room(code: str, host_username: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     if room["host"] != host_username:
         return {"success": False, "error": "Chỉ chủ phòng mới bắt đầu!"}
     if not room["guest"]:
@@ -706,19 +652,24 @@ def start_pvp_room(code: str, host_username: str) -> dict:
     room["afk_warnings"] = {}
     room["left_user"] = None
     room["left_display"] = None
+    room["left_reason"] = None
     room["heartbeats"] = {
         room["host"]: time.time(),
         room["guest"]: time.time(),
     }
     room["afk_kick_info"] = None
+
+    _save_room(room)
     return {"success": True, "room": room}
 
 
+# ═══════════════════════════════════════════════════════════
+#  SUBMIT ANSWER
+# ═══════════════════════════════════════════════════════════
 def submit_pvp_answer(code: str, username: str, answer: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     if room["status"] != "playing":
         return {"success": False, "error": "Chưa bắt đầu!"}
     if username not in (room["host"], room["guest"]):
@@ -787,27 +738,35 @@ def submit_pvp_answer(code: str, username: str, answer: str) -> dict:
         else:
             r["question_started_at"] = time.time()
 
+    _save_room(room)
     return {
         "success": True, "correct": correct, "points": points,
         "time_taken": time_taken, "room": room,
     }
 
 
+# ═══════════════════════════════════════════════════════════
+#  GET ROOM
+# ═══════════════════════════════════════════════════════════
 def get_pvp_room(code: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    return {"success": True, "room": PVP_ROOMS[code]}
+    return {"success": True, "room": room}
 
 
+# ═══════════════════════════════════════════════════════════
+#  LEAVE ROOM (waiting room)
+# ═══════════════════════════════════════════════════════════
 def leave_pvp_room(code: str, username: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": True}
-    room = PVP_ROOMS[code]
+
     if room["host"] == username:
-        del PVP_ROOMS[code]
+        _del_room(code)
         return {"success": True, "destroyed": True}
+
     if room["guest"] == username:
         room["guest"] = None
         room["guest_display"] = None
@@ -821,18 +780,19 @@ def leave_pvp_room(code: str, username: str) -> dict:
             r["scores"] = {}
             r["winner"] = None
             r["question_started_at"] = None
+        _save_room(room)
         return {"success": True}
+
     return {"success": True}
 
 
 # ═══════════════════════════════════════════════════════════
-#  🚪 RỜI TRẬN
+#  LEAVE MATCH (đang chơi)
 # ═══════════════════════════════════════════════════════════
-def leave_match(code: str, username: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+def leave_match(code: str, username: str, reason: str = "manual") -> dict:
+    room = _get_room(code)
+    if not room:
         return {"success": True, "destroyed": True}
-    room = PVP_ROOMS[code]
 
     if room["status"] == "playing":
         opponent = room["guest"] if room["host"] == username else room["host"]
@@ -842,21 +802,32 @@ def leave_match(code: str, username: str) -> dict:
         room["finished_at"] = time.time()
         room["left_user"] = username
         room["left_display"] = room["host_display"] if username == room["host"] else room["guest_display"]
+        room["left_reason"] = reason
         room["last_activity"] = time.time()
-        return {"success": True, "left": True, "room": room,
-                "message": f"{room['left_display']} đã rời trận!"}
+        _save_room(room)
+
+        reason_msg = {
+            "manual": "đã rời trận",
+            "leave_web": "đã thoát game",
+            "afk": "đã AFK",
+        }.get(reason, "đã rời trận")
+
+        return {
+            "success": True, "left": True, "room": room,
+            "reason": reason,
+            "message": f"{room['left_display']} {reason_msg}!",
+        }
 
     return leave_pvp_room(code, username)
 
 
 # ═══════════════════════════════════════════════════════════
-#  ⏰ HEARTBEAT
+#  HEARTBEAT
 # ═══════════════════════════════════════════════════════════
 def heartbeat(code: str, username: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     if username not in (room["host"], room["guest"]):
         return {"success": False, "error": "Bạn không ở trong phòng!"}
     room.setdefault("heartbeats", {})[username] = time.time()
@@ -864,17 +835,17 @@ def heartbeat(code: str, username: str) -> dict:
     warnings = room.get("afk_warnings", {})
     if username in warnings:
         del warnings[username]
+    _save_room(room)
     return {"success": True, "heartbeat_at": room["heartbeats"][username]}
 
 
 # ═══════════════════════════════════════════════════════════
-#  ⏰ AFK STATUS
+#  AFK STATUS
 # ═══════════════════════════════════════════════════════════
 def check_afk_status(code: str, username: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     if username not in (room["host"], room["guest"]):
         return {"success": False, "error": "Bạn không ở trong phòng!"}
 
@@ -902,25 +873,24 @@ def check_afk_status(code: str, username: str) -> dict:
 
 
 def add_afk_warning(code: str, username: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     warnings = room.setdefault("afk_warnings", {})
     user_warnings = warnings.setdefault(username, [])
     now = time.time()
     if not user_warnings or (now - user_warnings[-1]) >= AFK_WARNING_INTERVAL:
         user_warnings.append(now)
         room["last_activity"] = now
+        _save_room(room)
         return {"success": True, "warning_added": True, "count": len(user_warnings)}
     return {"success": True, "warning_added": False, "count": len(user_warnings)}
 
 
 def get_afk_warnings(code: str, username: str) -> dict:
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-    room = PVP_ROOMS[code]
     warnings = room.get("afk_warnings", {})
     return {
         "success": True,
@@ -930,18 +900,12 @@ def get_afk_warnings(code: str, username: str) -> dict:
 
 
 # ═══════════════════════════════════════════════════════════
-#  ⏰ AUTO KICK AFK — Đối thủ AFK >= 30s → kick, requestor thắng
+#  AUTO KICK AFK
 # ═══════════════════════════════════════════════════════════
 def check_and_kick_afk(code: str, requestor: str) -> dict:
-    """
-    Kiểm tra đối thủ có AFK >= 30s không.
-    Nếu có → kick đối thủ, requestor thắng trận.
-    """
-    code = code.upper().strip()
-    if code not in PVP_ROOMS:
+    room = _get_room(code)
+    if not room:
         return {"success": False, "error": "Không tìm thấy phòng!"}
-
-    room = PVP_ROOMS[code]
 
     if room["status"] != "playing":
         return {"success": True, "kicked": False}
@@ -965,7 +929,7 @@ def check_and_kick_afk(code: str, requestor: str) -> dict:
             "opponent_afk_seconds": round(opp_afk, 1),
         }
 
-    # ═══ ĐỐI THỦ AFK >= 30s → KICK ═══
+    # ═══ KICK ═══
     opponent_display = (
         room["guest_display"] if room["host"] == requestor else room["host_display"]
     )
@@ -974,7 +938,6 @@ def check_and_kick_afk(code: str, requestor: str) -> dict:
     )
 
     room["round_wins"][requestor] = room["round_wins"].get(requestor, 0) + 999
-
     room["status"] = "finished"
     room["finished_at"] = now
     room["afk_kick_info"] = {
@@ -986,9 +949,11 @@ def check_and_kick_afk(code: str, requestor: str) -> dict:
         "time": datetime.now().isoformat(),
     }
 
+    _save_room(room)
+
     # Lưu lịch sử
     try:
-        users = load_users_from_db()
+        users = load_users()
         _save_afk_match_history(room, requestor, opponent, users)
     except Exception as e:
         print(f"⚠️ Lỗi lưu lịch sử AFK kick: {e}")
@@ -1005,20 +970,70 @@ def check_and_kick_afk(code: str, requestor: str) -> dict:
     }
 
 
-# ─── 12. Lịch sử ───
+def _save_afk_match_history(room, winner, loser, users):
+    """Lưu lịch sử khi 1 người bị kick vì AFK."""
+    try:
+        if winner in users:
+            game = ensure_game_data(users[winner])
+            history = game.get("match_history", [])
+            history.insert(0, {
+                "opponent": room.get("guest_display") if winner == room["host"] else room.get("host_display"),
+                "my_score": room["round_wins"].get(winner, 0),
+                "opp_score": 0,
+                "my_rounds": room["round_wins"].get(winner, 0),
+                "opp_rounds": 0,
+                "result": "win",
+                "reason": "opponent_afk",
+                "time": datetime.now().isoformat(),
+            })
+            game["match_history"] = history[:20]
+            stats = game.setdefault("pvp_stats", {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0})
+            stats["wins"] = stats.get("wins", 0) + 1
+            stats["total_matches"] = stats.get("total_matches", 0) + 1
+            save_user(winner, users[winner])
+
+        if loser in users:
+            game = ensure_game_data(users[loser])
+            history = game.get("match_history", [])
+            history.insert(0, {
+                "opponent": room.get("host_display") if loser == room["guest"] else room.get("guest_display"),
+                "my_score": 0,
+                "opp_score": room["round_wins"].get(winner, 0),
+                "my_rounds": 0,
+                "opp_rounds": room["round_wins"].get(winner, 0),
+                "result": "loss",
+                "reason": "afk",
+                "time": datetime.now().isoformat(),
+            })
+            game["match_history"] = history[:20]
+            stats = game.setdefault("pvp_stats", {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0})
+            stats["losses"] = stats.get("losses", 0) + 1
+            stats["total_matches"] = stats.get("total_matches", 0) + 1
+            game["afk_warnings_count"] = game.get("afk_warnings_count", 0) + 1
+            save_user(loser, users[loser])
+    except Exception as e:
+        print(f"⚠️ Lỗi lưu lịch sử AFK: {e}")
+
+
+# ═══════════════════════════════════════════════════════════
+#  MATCH HISTORY
+# ═══════════════════════════════════════════════════════════
 def add_match_to_history(user: dict, opponent_display: str,
                           my_score: int, opp_score: int,
                           my_rounds: int, opp_rounds: int,
-                          result: str) -> None:
+                          result: str, reason: str = None) -> None:
     game = ensure_game_data(user)
     history = game.get("match_history", [])
-    history.insert(0, {
+    entry = {
         "opponent": opponent_display,
         "my_score": my_score, "opp_score": opp_score,
         "my_rounds": my_rounds, "opp_rounds": opp_rounds,
         "result": result,
         "time": datetime.now().isoformat(),
-    })
+    }
+    if reason:
+        entry["reason"] = reason
+    history.insert(0, entry)
     game["match_history"] = history[:20]
 
 
@@ -1066,12 +1081,19 @@ def init_game_data() -> dict:
         "pvp_stats": {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0},
         "match_history": [],
         "afk_warnings_count": 0,
+        "friends": [],
+        "friend_requests": [],
     }
 
 
 def ensure_game_data(user: dict) -> dict:
     if "game" not in user:
         user["game"] = init_game_data()
+    # Đảm bảo có friends + friend_requests
+    if "friends" not in user["game"]:
+        user["game"]["friends"] = []
+    if "friend_requests" not in user["game"]:
+        user["game"]["friend_requests"] = []
     return user["game"]
 
 
