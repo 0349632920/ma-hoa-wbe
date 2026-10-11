@@ -5,6 +5,17 @@ from crypto_utils import (
     LANGUAGES,
     get_methods_by_group, GROUP_NAMES, METHODS_REGISTRY,
 )
+# ═══ Import 2FA ═══
+from two_factor import (
+    generate_secret,
+    get_totp_uri,
+    generate_qr_base64,
+    verify_code,
+    generate_backup_codes,
+    hash_backup_code,
+    verify_backup_code,
+    get_remaining_seconds,
+)
 from game_utils import (
     get_daily_challenge, check_rewards, pick_random_method,
     generate_meme_template,
