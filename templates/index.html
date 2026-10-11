@@ -338,18 +338,18 @@
     </div>
   </div>
 
-  <!-- MODAL PHƯƠNG PHÁP — 9 TABS NHÓM -->
+  <!-- MODAL PHƯƠNG PHÁP — 12 TABS NHÓM -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <div class="modal-header">
         <div>
           <h2>🔐 Chọn kiểu mã hóa</h2>
-          <p>{{ methods|length }} phương pháp có sẵn — 8 nhóm</p>
+          <p>{{ methods|length }} phương pháp có sẵn — 12 nhóm</p>
         </div>
         <button class="modal-close" id="closeModalBtn">✕</button>
       </div>
 
-      <!-- ⭐ TABS NHÓM -->
+      <!-- TABS NHÓM -->
       <div class="method-groups-tabs" id="methodGroupTabs">
         <button class="method-group-tab active" data-group="all">
           🌐 Tất cả ({{ methods|length }})
@@ -357,9 +357,11 @@
         {% if group_names and methods_by_group %}
           {% for group_key, group_name in group_names.items() %}
             {% set count = methods_by_group[group_key]|length if group_key in methods_by_group else 0 %}
+            {% if count > 0 %}
             <button class="method-group-tab" data-group="{{ group_key }}">
               {{ group_name }} ({{ count }})
             </button>
+            {% endif %}
           {% endfor %}
         {% endif %}
       </div>
@@ -383,7 +385,6 @@
               {% endfor %}
             {% endfor %}
           {% else %}
-            {# Fallback nếu không có methods_by_group #}
             {% for key, name in methods.items() %}
             <button class="method-btn" data-method="{{ key }}" data-group="all" title="{{ name }}">
               <span class="method-name">{{ name }}</span>
@@ -604,7 +605,7 @@
     }
 
     /* ═══════════════════════════════════════════════════════════
-       METHOD GROUP TABS — 8 NHÓM
+       METHOD GROUP TABS — 12 NHÓM
        ═══════════════════════════════════════════════════════════ */
     .method-groups-tabs {
       display: flex;
@@ -652,7 +653,7 @@
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    /* Màu riêng cho từng nhóm khi active */
+    /* Màu riêng cho 12 nhóm khi active */
     .method-group-tab[data-group="classical"].active  { background: linear-gradient(135deg, #d4a373, #a67c52); box-shadow: 0 4px 12px rgba(212, 163, 115, 0.4); }
     .method-group-tab[data-group="math"].active       { background: linear-gradient(135deg, #4a90e2, #2c5faa); box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4); }
     .method-group-tab[data-group="hash"].active       { background: linear-gradient(135deg, #e74c3c, #c0392b); box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); }
@@ -661,6 +662,10 @@
     .method-group-tab[data-group="special"].active    { background: linear-gradient(135deg, #16a085, #0e6655); box-shadow: 0 4px 12px rgba(22, 160, 133, 0.4); }
     .method-group-tab[data-group="game"].active       { background: linear-gradient(135deg, #e84393, #b03070); box-shadow: 0 4px 12px rgba(232, 67, 147, 0.4); }
     .method-group-tab[data-group="language"].active   { background: linear-gradient(135deg, #f39c12, #b9770e); box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4); }
+    .method-group-tab[data-group="encoding"].active   { background: linear-gradient(135deg, #3498db, #2471a3); box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4); }
+    .method-group-tab[data-group="protocol"].active   { background: linear-gradient(135deg, #9b59b6, #7d3c98); box-shadow: 0 4px 12px rgba(155, 89, 182, 0.4); }
+    .method-group-tab[data-group="machines"].active   { background: linear-gradient(135deg, #e67e22, #ca6f1e); box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4); }
+    .method-group-tab[data-group="emoji"].active      { background: linear-gradient(135deg, #ffd700, #d4ac0d); color: #1a1a2e; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4); }
     .method-group-tab[data-group="all"].active        { background: linear-gradient(135deg, #667eea, #764ba2); }
 
     /* Ẩn method thuộc nhóm khác */
@@ -747,38 +752,80 @@
 
     const oneWayMethods = new Set([
       'md5','sha1','sha224','sha256','sha384','sha512',
-      'sha3_256','sha3_512','blake2b','blake2s','crc32',
-      'uuid','random_hex'
+      'sha3_256','sha3_512','blake2b','blake2s','blake3','ripemd160','whirlpool',
+      'keccak256','keccak512','crc32','crc16','adler32','fnv1a','fnv1','murmur3',
+      'xxhash','siphash','hmac_sha256','hmac_sha512','hmac_md5','hmac_sha1',
+      'shake128','shake256','pbkdf2','scrypt','md5_double','sha256_double',
+      'sha256_truncated','sha512_truncated','md5_truncated',
+      'tiger','haval','gost','snefru','cityhash','farmhash','highwayhash',
+      'spookyhash','jenkins','pkce','unix_crypt','sha_crypt'
     ]);
     const keyMethods = new Set([
-      'caesar','affine','vigenere','beaufort','autokey',
-      'playfair','hill','railfence','columnar','xor','aes'
+      'caesar','affine','vigenere','beaufort','variant_beaufort','autokey','porta',
+      'gronsfeld','bifid','trifid','foursquare','twosquare','adfgvx','adfgx',
+      'nihilist','bazeries','syllabary','scytale','myszkowski','columnar','amsco',
+      'grandpre','xor','playfair','hill','wheatstone','ragbaby','progressive',
+      'railfence','route','runningkey','solitaire','chaocipher',
+      'enigma','enigma_m3','enigma_m4','typex','vic','lorenz','lorenz_sz40',
+      'lorenz_sz42','sigsaly','sigsaly_vocoder',
+      'aes128','aes128_ecb','aes128_cbc','aes128_ctr','aes128_cfb','aes128_ofb','aes128_gcm',
+      'aes192','aes192_ecb','aes192_cbc','aes192_ctr','aes192_cfb','aes192_ofb','aes192_gcm',
+      'aes256_ecb','aes256_cbc','aes256_ctr','aes256_cfb','aes256_ofb','aes256_gcm',
+      'aes_gcm','aes_cbc','aes_ctr',
+      'des','tripledes','blowfish','twofish','serpent','rc2','rc4','rc5','rc6',
+      'chacha20','chacha20_poly','xchacha20_poly','salsa20','camellia','aria','sm4',
+      'seed','idea','cast5','cast6','tea','xtea','xxtea','speck','simon','present',
+      'kasumi','misty1','skipjack','rabbit','hc128','hc256','grain128','trivium',
+      'mickey','fernet','otp','vernam',
+      'rsa','rsa_oaep','rsa_pss','rsa_pkcs1','rsa_3072','rsa_4096','ecc','ecdsa',
+      'ed25519','ed448','x25519','x448','curve25519','curve448','dh','dh_2048',
+      'dh_4096','elgamal','dsa','ecdh','ecdh_x25519','ecdh_x448','ecdh_p256',
+      'ecdh_p384','ecdh_p521','paillier','rabin','ntru','kyber','dilithium',
+      'falcon','sphincs','bls','schnorr',
+      'hmac_sha256','hmac_sha512','hmac_md5','hmac_sha1','pbkdf2','scrypt',
+      'jwt','jws','jwe','tls_record','oauth_token','kerberos_ticket',
     ]);
     const keyLabels = {
       'caesar': '🔢 Khóa dịch chuyển (1-25):',
       'affine': '🔢 Khóa affine (a,b):',
       'vigenere': '🔑 Từ khóa Vigenère:',
       'beaufort': '🔑 Từ khóa Beaufort:',
+      'variant_beaufort': '🔑 Từ khóa Variant Beaufort:',
       'autokey': '🔑 Từ khóa Autokey:',
       'playfair': '🔑 Từ khóa Playfair:',
-      'hill': '🔢 Ma trận Hill:',
+      'hill': '🔢 Ma trận Hill (a,b,c,d):',
       'railfence': '🔢 Số ray (>=2):',
       'columnar': '🔑 Từ khóa Columnar:',
       'xor': '🔑 Khóa XOR:',
-      'aes': '🔐 Mật khẩu AES:'
+      'aes128': '🔐 Mật khẩu AES-128:',
+      'aes256_cbc': '🔐 Mật khẩu AES-256-CBC:',
+      'aes256_gcm': '🔐 Mật khẩu AES-256-GCM:',
+      'enigma': '⚙️ Cài đặt rotor (vd: AAA):',
+      'des': '🔐 Mật khẩu DES:',
+      'fernet': '🔐 Khóa Fernet:',
+      'jwt': '🔑 Secret key JWT:',
+      'rsa': '🔐 Khóa RSA:',
     };
     const keyPlaceholders = {
       'caesar': 'Mặc định: 3',
       'affine': 'Mặc định: 5,8',
       'vigenere': 'Mặc định: KEY',
       'beaufort': 'Mặc định: KEY',
+      'variant_beaufort': 'Mặc định: KEY',
       'autokey': 'Mặc định: KEY',
       'playfair': 'Mặc định: KEY',
       'hill': 'Mặc định: 3,3,2,5',
       'railfence': 'Mặc định: 3',
       'columnar': 'Mặc định: KEY',
       'xor': 'Mặc định: KEY',
-      'aes': 'Nhập mật khẩu...'
+      'aes128': 'Nhập mật khẩu...',
+      'aes256_cbc': 'Nhập mật khẩu...',
+      'aes256_gcm': 'Nhập mật khẩu...',
+      'enigma': 'Ví dụ: AAA',
+      'des': 'Nhập mật khẩu...',
+      'fernet': 'Nhập khóa...',
+      'jwt': 'Ví dụ: secret',
+      'rsa': 'Nhập khóa...',
     };
 
     const modalOverlay = document.getElementById('modalOverlay');
@@ -1276,8 +1323,6 @@
       tab.addEventListener('click', () => {
         document.querySelectorAll('.method-group-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-
-        const group = tab.dataset.group;
 
         // Reset search
         searchInput.value = '';
