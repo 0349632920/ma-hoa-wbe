@@ -2262,6 +2262,180 @@ def admin_delete():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
+# ═══════════════════════════════════════════════════════════════════════════
+#  2FA — TWO FACTOR AUTHENTICATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.route('/admin/2fa')
+@admin_required
+def admin_2fa_page():
+    """Trang setup 2FA cho admin."""
+    return render_template('admin_2fa.html')
+
+
+@app.route('/api/2fa/status', methods=['GET'])
+@admin_required
+def status_2fa():
+    """Lấy trạng thái 2FA của user hiện tại."""
+    users = load_users()
+    user = users.get(session['username'], {})
+    return jsonify({
+        'success': True,
+        'enabled': user.get('totp_enabled', False),
+        'enabled_at': user.get('totp_enabled_at'),
+        'backup_codes_remaining': len(user.get('totp_backup_codes', [])),
+    })
+
+
+@app.route('/api/2fa/setup', methods=['POST'])
+@admin_required
+def setup_2fa():
+    """Bước 1: Sinh secret + QR code cho user scan."""
+    try:
+        users = load_users()
+        username = session['username']
+        user = users.get(username)
+
+        if not user:
+            return jsonify({'success': False, 'error': 'User không tồn tại!'}), 404
+
+        if user.get('totp_enabled'):
+            return jsonify({'success': False, 'error': '2FA đã được bật!'}), 400
+
+        secret = generate_secret()
+        uri = get_totp_uri(secret, username)
+        qr_base64 = generate_qr_base64(uri)
+
+        user['totp_secret_pending'] = secret
+        save_user(username, user)
+
+        return jsonify({
+            'success': True,
+            'secret': secret,
+            'uri': uri,
+            'qr': qr_base64,
+            'manual_entry': secret,
+            'message': 'Scan QR bằng app Authenticator, rồi nhập mã để xác nhận.',
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+@app.route('/api/2fa/verify-setup', methods=['POST'])
+@admin_required
+def verify_setup_2fa():
+    """Bước 2: Xác nhận mã OTP + trả backup codes."""
+    try:
+        data = request.get_json()
+        code = data.get('code', '').strip()
+
+        if not code:
+            return jsonify({'success': False, 'error': 'Nhập mã OTP!'}), 400
+
+        users = load_users()
+        username = session['username']
+        user = users.get(username)
+
+        if not user:
+            return jsonify({'success': False, 'error': 'User không tồn tại!'}), 404
+
+        secret = user.get('totp_secret_pending', '')
+        if not secret:
+            return jsonify({'success': False, 'error': 'Chưa gọi /api/2fa/setup!'}), 400
+
+        if not verify_code(secret, code):
+            return jsonify({'success': False, 'error': 'Mã OTP không đúng!'}), 401
+
+        user['totp_enabled'] = True
+        user['totp_secret'] = secret
+        user['totp_secret_pending'] = None
+        user['totp_enabled_at'] = datetime.now().isoformat()
+
+        backup_plain = generate_backup_codes()
+        user['totp_backup_codes'] = [hash_backup_code(c) for c in backup_plain]
+
+        log = user.get('activity_log', [])
+        log.insert(0, {
+            'action': 'enable_2fa',
+            'detail': 'Đã bật 2FA',
+            'time': datetime.now().isoformat(),
+        })
+        user['activity_log'] = log[:50]
+        save_user(username, user)
+
+        return jsonify({
+            'success': True,
+            'message': '✅ Đã bật 2FA thành công!',
+            'backup_codes': backup_plain,
+            'warning': '⚠️ LƯU NGAY các mã dự phòng này!',
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+@app.route('/api/2fa/disable', methods=['POST'])
+@admin_required
+def disable_2fa():
+    """Tắt 2FA (yêu cầu nhập mã OTP)."""
+    try:
+        data = request.get_json()
+        code = data.get('code', '').strip()
+
+        users = load_users()
+        username = session['username']
+        user = users.get(username)
+
+        if not user:
+            return jsonify({'success': False, 'error': 'User không tồn tại!'}), 404
+
+        if not user.get('totp_enabled'):
+            return jsonify({'success': False, 'error': '2FA chưa được bật!'}), 400
+
+        secret = user.get('totp_secret', '')
+        if not verify_code(secret, code):
+            return jsonify({'success': False, 'error': 'Mã OTP không đúng!'}), 401
+
+        user['totp_enabled'] = False
+        user['totp_secret'] = None
+        user['totp_backup_codes'] = []
+        save_user(username, user)
+
+        return jsonify({'success': True, 'message': '🔓 Đã tắt 2FA!'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+@app.route('/api/2fa/regenerate-backup', methods=['POST'])
+@admin_required
+def regenerate_backup_codes():
+    """Sinh lại backup codes mới."""
+    try:
+        data = request.get_json()
+        code = data.get('code', '').strip()
+
+        users = load_users()
+        username = session['username']
+        user = users.get(username)
+
+        if not user.get('totp_enabled'):
+            return jsonify({'success': False, 'error': '2FA chưa bật!'}), 400
+
+        secret = user.get('totp_secret', '')
+        if not verify_code(secret, code):
+            return jsonify({'success': False, 'error': 'Mã OTP không đúng!'}), 401
+
+        backup_plain = generate_backup_codes()
+        user['totp_backup_codes'] = [hash_backup_code(c) for c in backup_plain]
+        save_user(username, user)
+
+        return jsonify({
+            'success': True,
+            'backup_codes': backup_plain,
+            'message': 'Đã sinh backup codes mới!',
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
 
 @app.route('/api/admin/force-delete', methods=['POST'])
 @super_admin_required
