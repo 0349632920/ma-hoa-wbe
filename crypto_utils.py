@@ -2376,3 +2376,8 @@ if __name__ == '__main__':
     print("Test Base64:", process_text("Hello", "base64", "encrypt") if 'base64' in METHODS_REGISTRY else "N/A")
     print("Test Morse:", process_text("SOS", "morse", "encrypt"))
     print("Test DNA:", process_text("Hi", "dna", "encrypt"))
+  # ═══════════════════════════════════════════════════════════════════════════
+  #  ALIAS TƯƠNG THÍCH NGƯỢC (cho app.py)
+  # ═══════════════════════════════════════════════════════════════════════════
+process = process_text
+ONE_WAY_ONLY = ONE_WAY_METHODS
