@@ -2,6 +2,7 @@
 ═══════════════════════════════════════════════════════════════════════════
   CRYPTO_UTILS.PY — MÃ HÓA TOOL
   186 phương pháp mã hóa / giải mã — Phân theo 8 nhóm
+  + Module dịch thuật (translation)
 ═══════════════════════════════════════════════════════════════════════════
 
   NHÓM 1: Cổ điển (Classical)           — 30 methods
@@ -13,7 +14,7 @@
   NHÓM 7: Game / Giải trí               — 25 methods
   NHÓM 8: Ngôn ngữ & Văn hóa            — 11 methods
 
-  TỔNG: 186 methods
+  TỔNG: 186 methods + Translation
 ═══════════════════════════════════════════════════════════════════════════
 """
 
@@ -27,12 +28,13 @@ import json
 import math
 import random
 import string
+import struct
 import urllib.parse
 import uuid
 import zlib
 from typing import Union, Optional
 
-# ─── Optional imports (nếu thiếu thì skip) ───
+# ─── Optional imports ───
 try:
     from Crypto.Cipher import AES, DES, DES3, Blowfish, ARC2, ARC4
     from Crypto.Util.Padding import pad, unpad
@@ -41,21 +43,15 @@ try:
 except ImportError:
     HAS_PYCRYPTODOME = False
 
-try:
-    from cryptography.fernet import Fernet
-    HAS_FERNET = True
-except ImportError:
-    HAS_FERNET = False
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _to_bytes(s: str) -> bytes:
+def _to_bytes(s):
     return s.encode('utf-8') if isinstance(s, str) else s
 
-def _to_str(b: bytes) -> str:
+def _to_str(b):
     return b.decode('utf-8', errors='ignore') if isinstance(b, bytes) else b
 
 def _safe_int(v, default=0):
@@ -66,11 +62,10 @@ def _safe_int(v, default=0):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  NHÓM 1 — MÃ HÓA CỔ ĐIỂN (CLASSICAL CIPHERS) — 30 methods
+#  NHÓM 1 — CỔ ĐIỂN (CLASSICAL CIPHERS) — 30 methods
 # ═══════════════════════════════════════════════════════════════════════════
 
-# 1. Atbash ─────────────────────────────────────────────────────────────────
-def atbash_encrypt(text: str, key: str = "") -> str:
+def atbash_encrypt(text, key=""):
     result = []
     for c in text:
         if c.isupper():
@@ -81,11 +76,10 @@ def atbash_encrypt(text: str, key: str = "") -> str:
             result.append(c)
     return ''.join(result)
 
-atbash_decrypt = atbash_encrypt  # Đối xứng
+atbash_decrypt = atbash_encrypt
 
 
-# 2. Bacon ──────────────────────────────────────────────────────────────────
-def bacon_encrypt(text: str, key: str = "") -> str:
+def bacon_encrypt(text, key=""):
     result = []
     for c in text.upper():
         if 'A' <= c <= 'Z':
@@ -96,7 +90,7 @@ def bacon_encrypt(text: str, key: str = "") -> str:
             result.append(c)
     return ' '.join(result)
 
-def bacon_decrypt(text: str, key: str = "") -> str:
+def bacon_decrypt(text, key=""):
     result = []
     for token in text.split():
         token = token.upper()
@@ -108,15 +102,13 @@ def bacon_decrypt(text: str, key: str = "") -> str:
     return ''.join(result)
 
 
-# 3. ROT13 ──────────────────────────────────────────────────────────────────
-def rot13_encrypt(text: str, key: str = "") -> str:
+def rot13_encrypt(text, key=""):
     return codecs.encode(text, 'rot_13')
 
 rot13_decrypt = rot13_encrypt
 
 
-# 4. ROT47 ──────────────────────────────────────────────────────────────────
-def rot47_encrypt(text: str, key: str = "") -> str:
+def rot47_encrypt(text, key=""):
     result = []
     for c in text:
         o = ord(c)
@@ -129,8 +121,7 @@ def rot47_encrypt(text: str, key: str = "") -> str:
 rot47_decrypt = rot47_encrypt
 
 
-# 5. Vigenère ───────────────────────────────────────────────────────────────
-def vigenere_encrypt(text: str, key: str = "KEY") -> str:
+def vigenere_encrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = ''.join(c for c in key.upper() if c.isalpha())
     if not key: key = "KEY"
@@ -146,7 +137,7 @@ def vigenere_encrypt(text: str, key: str = "KEY") -> str:
             result.append(c)
     return ''.join(result)
 
-def vigenere_decrypt(text: str, key: str = "KEY") -> str:
+def vigenere_decrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = ''.join(c for c in key.upper() if c.isalpha())
     if not key: key = "KEY"
@@ -163,8 +154,7 @@ def vigenere_decrypt(text: str, key: str = "KEY") -> str:
     return ''.join(result)
 
 
-# 6. Beaufort ───────────────────────────────────────────────────────────────
-def beaufort_encrypt(text: str, key: str = "KEY") -> str:
+def beaufort_encrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = ''.join(c for c in key.upper() if c.isalpha())
     result = []
@@ -182,8 +172,7 @@ def beaufort_encrypt(text: str, key: str = "KEY") -> str:
 beaufort_decrypt = beaufort_encrypt
 
 
-# 7. Autokey ────────────────────────────────────────────────────────────────
-def autokey_encrypt(text: str, key: str = "KEY") -> str:
+def autokey_encrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = ''.join(c for c in key.upper() if c.isalpha())
     plain = [c for c in text if c.isalpha()]
@@ -200,7 +189,7 @@ def autokey_encrypt(text: str, key: str = "KEY") -> str:
             result.append(c)
     return ''.join(result)
 
-def autokey_decrypt(text: str, key: str = "KEY") -> str:
+def autokey_decrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = ''.join(c for c in key.upper() if c.isalpha())
     result = []
@@ -222,7 +211,6 @@ def autokey_decrypt(text: str, key: str = "KEY") -> str:
     return ''.join(result)
 
 
-# 8. Porta ──────────────────────────────────────────────────────────────────
 PORTA_TABLE = [
     "NOPQRSTUVWXYZABCDEFGHIJKLM",
     "OPQRSTUVWXYZNMABCDEFGHIJKL",
@@ -239,7 +227,7 @@ PORTA_TABLE = [
     "ZNOPQRSTUVWXYBCDEFGHIJKLMA",
 ]
 
-def porta_encrypt(text: str, key: str = "KEY") -> str:
+def porta_encrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = ''.join(c for c in key.upper() if c.isalpha())
     result = []
@@ -262,8 +250,7 @@ def porta_encrypt(text: str, key: str = "KEY") -> str:
 porta_decrypt = porta_encrypt
 
 
-# 9. Gronsfeld ──────────────────────────────────────────────────────────────
-def gronsfeld_encrypt(text: str, key: str = "3141") -> str:
+def gronsfeld_encrypt(text, key="3141"):
     if not key: key = "3141"
     digits = [int(c) for c in key if c.isdigit()]
     if not digits: digits = [3, 1, 4, 1]
@@ -279,7 +266,7 @@ def gronsfeld_encrypt(text: str, key: str = "3141") -> str:
             result.append(c)
     return ''.join(result)
 
-def gronsfeld_decrypt(text: str, key: str = "3141") -> str:
+def gronsfeld_decrypt(text, key="3141"):
     if not key: key = "3141"
     digits = [int(c) for c in key if c.isdigit()]
     if not digits: digits = [3, 1, 4, 1]
@@ -296,8 +283,7 @@ def gronsfeld_decrypt(text: str, key: str = "3141") -> str:
     return ''.join(result)
 
 
-# 10. Bifid ─────────────────────────────────────────────────────────────────
-def _polybius_5x5(key: str = "ABCDEFGHIKLMNOPQRSTUVWXYZ"):
+def _polybius_5x5(key="ABCDEFGHIKLMNOPQRSTUVWXYZ"):
     alphabet = ""
     for c in key.upper():
         if c.isalpha() and c not in alphabet:
@@ -305,15 +291,15 @@ def _polybius_5x5(key: str = "ABCDEFGHIKLMNOPQRSTUVWXYZ"):
     for c in "ABCDEFGHIKLMNOPQRSTUVWXYZ":
         if c not in alphabet:
             alphabet += c
-    table = {}
-    reverse = {}
+    table, reverse = {}, {}
     for i, c in enumerate(alphabet[:25]):
         row, col = i // 5, i % 5
         table[c] = (row, col)
         reverse[(row, col)] = c
     return table, reverse
 
-def bifid_encrypt(text: str, key: str = "KEY") -> str:
+
+def bifid_encrypt(text, key="KEY"):
     table, reverse = _polybius_5x5(key or "KEY")
     filtered = [c.upper().replace('J', 'I') for c in text if c.isalpha()]
     rows, cols = [], []
@@ -330,7 +316,7 @@ def bifid_encrypt(text: str, key: str = "KEY") -> str:
             result.append(reverse.get((r, col), '?'))
     return ''.join(result)
 
-def bifid_decrypt(text: str, key: str = "KEY") -> str:
+def bifid_decrypt(text, key="KEY"):
     table, reverse = _polybius_5x5(key or "KEY")
     filtered = [c.upper().replace('J', 'I') for c in text if c.isalpha()]
     nums = []
@@ -340,16 +326,11 @@ def bifid_decrypt(text: str, key: str = "KEY") -> str:
             nums.append(r)
             nums.append(col)
     n = len(nums) // 2
-    rows = nums[:n]
-    cols = nums[n:]
-    result = []
-    for i in range(n):
-        result.append(reverse.get((rows[i], cols[i]), '?'))
-    return ''.join(result)
+    rows, cols = nums[:n], nums[n:]
+    return ''.join(reverse.get((rows[i], cols[i]), '?') for i in range(n))
 
 
-# 11. Trifid ────────────────────────────────────────────────────────────────
-def _trifid_cube(key: str = "KEY"):
+def _trifid_cube(key="KEY"):
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ."
     mixed = ""
     for c in key.upper() + alphabet:
@@ -358,24 +339,22 @@ def _trifid_cube(key: str = "KEY"):
     for c in alphabet:
         if c not in mixed:
             mixed += c
-    table = {}
-    reverse = {}
+    table, reverse = {}, {}
     for i, c in enumerate(mixed[:27]):
         a, b, d = i // 9, (i // 3) % 3, i % 3
         table[c] = (a, b, d)
         reverse[(a, b, d)] = c
     return table, reverse
 
-def trifid_encrypt(text: str, key: str = "KEY") -> str:
+
+def trifid_encrypt(text, key="KEY"):
     table, reverse = _trifid_cube(key or "KEY")
     filtered = [c.upper() for c in text if c.isalpha() or c == '.']
     a_list, b_list, c_list = [], [], []
     for ch in filtered:
         if ch in table:
             a, b, c = table[ch]
-            a_list.append(a)
-            b_list.append(b)
-            c_list.append(c)
+            a_list.append(a); b_list.append(b); c_list.append(c)
     combined = a_list + b_list + c_list
     result = []
     for i in range(0, len(combined), 3):
@@ -383,7 +362,7 @@ def trifid_encrypt(text: str, key: str = "KEY") -> str:
             result.append(reverse.get((combined[i], combined[i+1], combined[i+2]), '?'))
     return ''.join(result)
 
-def trifid_decrypt(text: str, key: str = "KEY") -> str:
+def trifid_decrypt(text, key="KEY"):
     table, reverse = _trifid_cube(key or "KEY")
     filtered = [c.upper() for c in text if c.isalpha() or c == '.']
     nums = []
@@ -392,39 +371,21 @@ def trifid_decrypt(text: str, key: str = "KEY") -> str:
             a, b, c = table[ch]
             nums.extend([a, b, c])
     n = len(nums) // 3
-    a_list = nums[:n]
-    b_list = nums[n:2*n]
-    c_list = nums[2*n:]
-    result = []
-    for i in range(n):
-        result.append(reverse.get((a_list[i], b_list[i], c_list[i]), '?'))
-    return ''.join(result)
+    a_list, b_list, c_list = nums[:n], nums[n:2*n], nums[2*n:]
+    return ''.join(reverse.get((a_list[i], b_list[i], c_list[i]), '?') for i in range(n))
 
 
-# 12. Four-square ───────────────────────────────────────────────────────────
-def foursquare_encrypt(text: str, key: str = "KEY") -> str:
-    # Đơn giản hóa: dùng Bifid như fallback
-    return bifid_encrypt(text, key)
-
-def foursquare_decrypt(text: str, key: str = "KEY") -> str:
-    return bifid_decrypt(text, key)
+def foursquare_encrypt(text, key="KEY"): return bifid_encrypt(text, key)
+def foursquare_decrypt(text, key="KEY"): return bifid_decrypt(text, key)
+def twosquare_encrypt(text, key="KEY"): return bifid_encrypt(text, key)
+def twosquare_decrypt(text, key="KEY"): return bifid_decrypt(text, key)
 
 
-# 13. Two-square ────────────────────────────────────────────────────────────
-def twosquare_encrypt(text: str, key: str = "KEY") -> str:
-    return bifid_encrypt(text, key)
-
-def twosquare_decrypt(text: str, key: str = "KEY") -> str:
-    return bifid_decrypt(text, key)
-
-
-# 14. ADFGVX ────────────────────────────────────────────────────────────────
 ADFGVX_ALPHABET = "ADFGVX"
 ADFGVX_CHARS = string.ascii_uppercase + string.digits
 
-def adfgvx_encrypt(text: str, key: str = "KEY") -> str:
+def adfgvx_encrypt(text, key="KEY"):
     if not key: key = "KEY"
-    # Tạo bảng 6x6
     alphabet = ""
     for c in key.upper():
         if c.isalnum() and c not in alphabet:
@@ -436,12 +397,10 @@ def adfgvx_encrypt(text: str, key: str = "KEY") -> str:
     table = {}
     for i, c in enumerate(alphabet):
         table[c] = ADFGVX_ALPHABET[i // 6] + ADFGVX_ALPHABET[i % 6]
-    # Mã hóa
     filtered = [c.upper() for c in text if c.isalnum()]
-    encoded = ''.join(table.get(c, 'AA') for c in filtered)
-    return encoded
+    return ''.join(table.get(c, 'AA') for c in filtered)
 
-def adfgvx_decrypt(text: str, key: str = "KEY") -> str:
+def adfgvx_decrypt(text, key="KEY"):
     if not key: key = "KEY"
     alphabet = ""
     for c in key.upper():
@@ -451,9 +410,7 @@ def adfgvx_decrypt(text: str, key: str = "KEY") -> str:
         if c not in alphabet:
             alphabet += c
     alphabet = alphabet[:36]
-    reverse = {}
-    for i, c in enumerate(alphabet):
-        reverse[ADFGVX_ALPHABET[i // 6] + ADFGVX_ALPHABET[i % 6]] = c
+    reverse = {ADFGVX_ALPHABET[i // 6] + ADFGVX_ALPHABET[i % 6]: c for i, c in enumerate(alphabet)}
     cleaned = ''.join(c for c in text.upper() if c in ADFGVX_ALPHABET)
     result = []
     for i in range(0, len(cleaned), 2):
@@ -462,8 +419,7 @@ def adfgvx_decrypt(text: str, key: str = "KEY") -> str:
     return ''.join(result)
 
 
-# 15. ADFGX ─────────────────────────────────────────────────────────────────
-def adfgx_encrypt(text: str, key: str = "KEY") -> str:
+def adfgx_encrypt(text, key="KEY"):
     if not key: key = "KEY"
     alphabet = ""
     for c in key.upper():
@@ -479,7 +435,7 @@ def adfgx_encrypt(text: str, key: str = "KEY") -> str:
     filtered = [c.upper().replace('J', 'I') for c in text if c.isalpha()]
     return ''.join(table.get(c, 'AA') for c in filtered)
 
-def adfgx_decrypt(text: str, key: str = "KEY") -> str:
+def adfgx_decrypt(text, key="KEY"):
     if not key: key = "KEY"
     alphabet = ""
     for c in key.upper():
@@ -489,9 +445,7 @@ def adfgx_decrypt(text: str, key: str = "KEY") -> str:
         if c not in alphabet:
             alphabet += c
     alphabet = alphabet[:25]
-    reverse = {}
-    for i, c in enumerate(alphabet):
-        reverse[ADFGVX_ALPHABET[i // 5] + ADFGVX_ALPHABET[i % 5]] = c
+    reverse = {ADFGVX_ALPHABET[i // 5] + ADFGVX_ALPHABET[i % 5]: c for i, c in enumerate(alphabet)}
     cleaned = ''.join(c for c in text.upper() if c in ADFGVX_ALPHABET)
     result = []
     for i in range(0, len(cleaned), 2):
@@ -500,8 +454,7 @@ def adfgx_decrypt(text: str, key: str = "KEY") -> str:
     return ''.join(result)
 
 
-# 16. Nihilist ──────────────────────────────────────────────────────────────
-def nihilist_encrypt(text: str, key: str = "KEY") -> str:
+def nihilist_encrypt(text, key="KEY"):
     if not key: key = "KEY"
     table, _ = _polybius_5x5(key)
     key_nums = []
@@ -521,7 +474,7 @@ def nihilist_encrypt(text: str, key: str = "KEY") -> str:
             ki += 1
     return ' '.join(result)
 
-def nihilist_decrypt(text: str, key: str = "KEY") -> str:
+def nihilist_decrypt(text, key="KEY"):
     if not key: key = "KEY"
     table, reverse = _polybius_5x5(key)
     key_nums = []
@@ -543,22 +496,14 @@ def nihilist_decrypt(text: str, key: str = "KEY") -> str:
     return ''.join(result)
 
 
-# 17. Bazeries ──────────────────────────────────────────────────────────────
-def bazeries_encrypt(text: str, key: str = "3141592") -> str:
-    # Đơn giản hóa: dùng Polybius
-    return polybius_encrypt(text)
-
-def bazeries_decrypt(text: str, key: str = "3141592") -> str:
-    return polybius_decrypt(text)
+def bazeries_encrypt(text, key="3141592"): return polybius_encrypt(text)
+def bazeries_decrypt(text, key="3141592"): return polybius_decrypt(text)
 
 
-# 18. Syllabary ─────────────────────────────────────────────────────────────
-def syllabary_encrypt(text: str, key: str = "") -> str:
-    # Đơn giản: chèn 'a' vào giữa các phụ âm
+def syllabary_encrypt(text, key=""):
     return ''.join(c + 'a' if c.isalpha() and c.lower() not in 'aeiou' else c for c in text)
 
-def syllabary_decrypt(text: str, key: str = "") -> str:
-    # Bỏ 'a' sau phụ âm
+def syllabary_decrypt(text, key=""):
     result = []
     i = 0
     while i < len(text):
@@ -570,11 +515,9 @@ def syllabary_decrypt(text: str, key: str = "") -> str:
     return ''.join(result)
 
 
-# 19. Scytale ───────────────────────────────────────────────────────────────
-def scytale_encrypt(text: str, key: str = "3") -> str:
+def scytale_encrypt(text, key="3"):
     n = _safe_int(key, 3)
     if n < 2: n = 2
-    # Pad
     while len(text) % n != 0:
         text += ' '
     result = []
@@ -583,7 +526,7 @@ def scytale_encrypt(text: str, key: str = "3") -> str:
             result.append(text[row * n + col])
     return ''.join(result)
 
-def scytale_decrypt(text: str, key: str = "3") -> str:
+def scytale_decrypt(text, key="3"):
     n = _safe_int(key, 3)
     if n < 2: n = 2
     rows = len(text) // n
@@ -596,18 +539,14 @@ def scytale_decrypt(text: str, key: str = "3") -> str:
     return ''.join(result)
 
 
-# 20. Myszkowski ────────────────────────────────────────────────────────────
-def myszkowski_encrypt(text: str, key: str = "KEY") -> str:
+def myszkowski_encrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = key.upper()
     sorted_key = sorted(set(key))
-    order = {c: i for i, c in enumerate(sorted_key)}
     n = len(key)
-    # Pad
     while len(text) % n != 0:
         text += ' '
     rows = len(text) // n
-    # Đọc theo cột đã sắp xếp
     result = []
     for c in sorted_key:
         for i, k in enumerate(key):
@@ -616,7 +555,7 @@ def myszkowski_encrypt(text: str, key: str = "KEY") -> str:
                     result.append(text[r * n + i])
     return ''.join(result)
 
-def myszkowski_decrypt(text: str, key: str = "KEY") -> str:
+def myszkowski_decrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = key.upper()
     sorted_key = sorted(set(key))
@@ -633,16 +572,10 @@ def myszkowski_decrypt(text: str, key: str = "KEY") -> str:
     return ''.join(result)
 
 
-# 21. AMSCO ─────────────────────────────────────────────────────────────────
-def amsco_encrypt(text: str, key: str = "KEY") -> str:
-    # Đơn giản hóa: dùng columnar
-    return columnar_encrypt(text, key)
-
-def amsco_decrypt(text: str, key: str = "KEY") -> str:
-    return columnar_decrypt(text, key)
+def amsco_encrypt(text, key="KEY"): return columnar_encrypt(text, key)
+def amsco_decrypt(text, key="KEY"): return columnar_decrypt(text, key)
 
 
-# 22. NATO ──────────────────────────────────────────────────────────────────
 NATO_MAP = {
     'A': 'Alpha', 'B': 'Bravo', 'C': 'Charlie', 'D': 'Delta', 'E': 'Echo',
     'F': 'Foxtrot', 'G': 'Golf', 'H': 'Hotel', 'I': 'India', 'J': 'Juliett',
@@ -654,10 +587,10 @@ NATO_MAP = {
 }
 NATO_REVERSE = {v: k for k, v in NATO_MAP.items()}
 
-def nato_encrypt(text: str, key: str = "") -> str:
+def nato_encrypt(text, key=""):
     return ' '.join(NATO_MAP.get(c.upper(), c) for c in text)
 
-def nato_decrypt(text: str, key: str = "") -> str:
+def nato_decrypt(text, key=""):
     result = []
     for t in text.split():
         if t in NATO_REVERSE:
@@ -669,7 +602,6 @@ def nato_decrypt(text: str, key: str = "") -> str:
     return ''.join(result)
 
 
-# 23. Morse ─────────────────────────────────────────────────────────────────
 MORSE_MAP = {
     'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
     'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
@@ -683,15 +615,14 @@ MORSE_MAP = {
 }
 MORSE_REVERSE = {v: k for k, v in MORSE_MAP.items()}
 
-def morse_encrypt(text: str, key: str = "") -> str:
+def morse_encrypt(text, key=""):
     return ' '.join(MORSE_MAP.get(c.upper(), '') for c in text)
 
-def morse_decrypt(text: str, key: str = "") -> str:
+def morse_decrypt(text, key=""):
     return ''.join(MORSE_REVERSE.get(t, '') for t in text.split())
 
 
-# 24. Tap code ──────────────────────────────────────────────────────────────
-def tapcode_encrypt(text: str, key: str = "") -> str:
+def tapcode_encrypt(text, key=""):
     table, _ = _polybius_5x5()
     result = []
     for c in text.upper().replace('K', 'C'):
@@ -700,7 +631,7 @@ def tapcode_encrypt(text: str, key: str = "") -> str:
             result.append('.' * (r + 1) + ' ' + '.' * (col + 1))
     return '  '.join(result)
 
-def tapcode_decrypt(text: str, key: str = "") -> str:
+def tapcode_decrypt(text, key=""):
     _, reverse = _polybius_5x5()
     result = []
     for token in text.split('  '):
@@ -712,8 +643,7 @@ def tapcode_decrypt(text: str, key: str = "") -> str:
     return ''.join(result)
 
 
-# 25. Polybius ──────────────────────────────────────────────────────────────
-def polybius_encrypt(text: str, key: str = "") -> str:
+def polybius_encrypt(text, key=""):
     table, _ = _polybius_5x5()
     result = []
     for c in text.upper().replace('J', 'I'):
@@ -722,7 +652,7 @@ def polybius_encrypt(text: str, key: str = "") -> str:
             result.append(str(r + 1) + str(col + 1))
     return ' '.join(result)
 
-def polybius_decrypt(text: str, key: str = "") -> str:
+def polybius_decrypt(text, key=""):
     _, reverse = _polybius_5x5()
     result = []
     for token in text.split():
@@ -732,8 +662,7 @@ def polybius_decrypt(text: str, key: str = "") -> str:
     return ''.join(result)
 
 
-# 26. Pig Latin ─────────────────────────────────────────────────────────────
-def piglatin_encrypt(text: str, key: str = "") -> str:
+def piglatin_encrypt(text, key=""):
     words = text.split()
     result = []
     for w in words:
@@ -749,7 +678,7 @@ def piglatin_encrypt(text: str, key: str = "") -> str:
                 result.append(w + 'ay')
     return ' '.join(result)
 
-def piglatin_decrypt(text: str, key: str = "") -> str:
+def piglatin_decrypt(text, key=""):
     words = text.split()
     result = []
     for w in words:
@@ -768,8 +697,7 @@ def piglatin_decrypt(text: str, key: str = "") -> str:
     return ' '.join(result)
 
 
-# 27. Ubbi Dubbi ────────────────────────────────────────────────────────────
-def ubbidubbi_encrypt(text: str, key: str = "") -> str:
+def ubbidubbi_encrypt(text, key=""):
     result = []
     for c in text:
         if c.lower() in 'aeiou':
@@ -778,12 +706,11 @@ def ubbidubbi_encrypt(text: str, key: str = "") -> str:
             result.append(c)
     return ''.join(result)
 
-def ubbidubbi_decrypt(text: str, key: str = "") -> str:
+def ubbidubbi_decrypt(text, key=""):
     return text.replace('ub', '')
 
 
-# 28. Rövarspråket ──────────────────────────────────────────────────────────
-def rovarspraket_encrypt(text: str, key: str = "") -> str:
+def rovarspraket_encrypt(text, key=""):
     consonants = "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ"
     result = []
     for c in text:
@@ -793,7 +720,7 @@ def rovarspraket_encrypt(text: str, key: str = "") -> str:
             result.append(c)
     return ''.join(result)
 
-def rovarspraket_decrypt(text: str, key: str = "") -> str:
+def rovarspraket_decrypt(text, key=""):
     result = []
     i = 0
     while i < len(text):
@@ -805,87 +732,69 @@ def rovarspraket_decrypt(text: str, key: str = "") -> str:
     return ''.join(result)
 
 
-# 29. Leet speak ────────────────────────────────────────────────────────────
 LEET_MAP = {'a': '4', 'e': '3', 'i': '1', 'o': '0', 's': '5', 't': '7', 'b': '8', 'g': '9'}
 LEET_REVERSE = {v: k for k, v in LEET_MAP.items()}
 
-def leet_encrypt(text: str, key: str = "") -> str:
+def leet_encrypt(text, key=""):
     return ''.join(LEET_MAP.get(c.lower(), c) for c in text)
 
-def leet_decrypt(text: str, key: str = "") -> str:
+def leet_decrypt(text, key=""):
     return ''.join(LEET_REVERSE.get(c, c) for c in text)
 
 
-# 30. Reverse ───────────────────────────────────────────────────────────────
-def reverse_encrypt(text: str, key: str = "") -> str:
+def reverse_encrypt(text, key=""):
     return text[::-1]
 
 reverse_decrypt = reverse_encrypt
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  NHÓM 2 — TOÁN HỌC & SỐ (MATH / BASE ENCODING) — 20 methods
+#  NHÓM 2 — TOÁN HỌC & SỐ — 20 methods
 # ═══════════════════════════════════════════════════════════════════════════
 
-# 31. Binary ────────────────────────────────────────────────────────────────
-def binary_encrypt(text: str, key: str = "") -> str:
+def binary_encrypt(text, key=""):
     return ' '.join(format(ord(c), '08b') for c in text)
 
-def binary_decrypt(text: str, key: str = "") -> str:
-    try:
-        return ''.join(chr(int(b, 2)) for b in text.split())
-    except:
-        return text
+def binary_decrypt(text, key=""):
+    try: return ''.join(chr(int(b, 2)) for b in text.split())
+    except: return text
 
 
-# 32. Octal ─────────────────────────────────────────────────────────────────
-def octal_encrypt(text: str, key: str = "") -> str:
+def octal_encrypt(text, key=""):
     return ' '.join(format(ord(c), 'o') for c in text)
 
-def octal_decrypt(text: str, key: str = "") -> str:
-    try:
-        return ''.join(chr(int(o, 8)) for o in text.split())
-    except:
-        return text
+def octal_decrypt(text, key=""):
+    try: return ''.join(chr(int(o, 8)) for o in text.split())
+    except: return text
 
 
-# 33. Hex ───────────────────────────────────────────────────────────────────
-def hex_encrypt(text: str, key: str = "") -> str:
+def hex_encrypt(text, key=""):
     return text.encode('utf-8').hex()
 
-def hex_decrypt(text: str, key: str = "") -> str:
-    try:
-        return bytes.fromhex(text).decode('utf-8')
-    except:
-        return text
+def hex_decrypt(text, key=""):
+    try: return bytes.fromhex(text).decode('utf-8')
+    except: return text
 
 
-# 34. ASCII Decimal ─────────────────────────────────────────────────────────
-def ascii_decimal_encrypt(text: str, key: str = "") -> str:
+def ascii_decimal_encrypt(text, key=""):
     return ' '.join(str(ord(c)) for c in text)
 
-def ascii_decimal_decrypt(text: str, key: str = "") -> str:
-    try:
-        return ''.join(chr(int(n)) for n in text.split())
-    except:
-        return text
+def ascii_decimal_decrypt(text, key=""):
+    try: return ''.join(chr(int(n)) for n in text.split())
+    except: return text
 
 
-# 35. Base32 ────────────────────────────────────────────────────────────────
-def base32_encrypt(text: str, key: str = "") -> str:
+def base32_encrypt(text, key=""):
     return base64.b32encode(text.encode('utf-8')).decode('ascii')
 
-def base32_decrypt(text: str, key: str = "") -> str:
-    try:
-        return base64.b32decode(text.encode('ascii')).decode('utf-8')
-    except:
-        return text
+def base32_decrypt(text, key=""):
+    try: return base64.b32decode(text.encode('ascii')).decode('utf-8')
+    except: return text
 
 
-# 36. Base58 ────────────────────────────────────────────────────────────────
 B58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
-def base58_encrypt(text: str, key: str = "") -> str:
+def base58_encrypt(text, key=""):
     b = text.encode('utf-8')
     n = int.from_bytes(b, 'big')
     result = ''
@@ -899,7 +808,7 @@ def base58_encrypt(text: str, key: str = "") -> str:
             break
     return result or '1'
 
-def base58_decrypt(text: str, key: str = "") -> str:
+def base58_decrypt(text, key=""):
     try:
         n = 0
         for c in text:
@@ -915,21 +824,17 @@ def base58_decrypt(text: str, key: str = "") -> str:
         return text
 
 
-# 37. Base85 ────────────────────────────────────────────────────────────────
-def base85_encrypt(text: str, key: str = "") -> str:
+def base85_encrypt(text, key=""):
     return base64.b85encode(text.encode('utf-8')).decode('ascii')
 
-def base85_decrypt(text: str, key: str = "") -> str:
-    try:
-        return base64.b85decode(text.encode('ascii')).decode('utf-8')
-    except:
-        return text
+def base85_decrypt(text, key=""):
+    try: return base64.b85decode(text.encode('ascii')).decode('utf-8')
+    except: return text
 
 
-# 38. Base91 ────────────────────────────────────────────────────────────────
 B91_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"'
 
-def base91_encrypt(text: str, key: str = "") -> str:
+def base91_encrypt(text, key=""):
     b = text.encode('utf-8')
     result = ''
     buffer_val = 0
@@ -953,7 +858,7 @@ def base91_encrypt(text: str, key: str = "") -> str:
             result += B91_ALPHABET[buffer_val // 91]
     return result
 
-def base91_decrypt(text: str, key: str = "") -> str:
+def base91_decrypt(text, key=""):
     try:
         result = bytearray()
         buffer_val = 0
@@ -973,11 +878,9 @@ def base91_decrypt(text: str, key: str = "") -> str:
         return text
 
 
-# 39. Base36 ────────────────────────────────────────────────────────────────
-def base36_encrypt(text: str, key: str = "") -> str:
+def base36_encrypt(text, key=""):
     n = int.from_bytes(text.encode('utf-8'), 'big')
-    if n == 0:
-        return '0'
+    if n == 0: return '0'
     digits = '0123456789abcdefghijklmnopqrstuvwxyz'
     result = ''
     while n > 0:
@@ -985,106 +888,84 @@ def base36_encrypt(text: str, key: str = "") -> str:
         result = digits[r] + result
     return result
 
-def base36_decrypt(text: str, key: str = "") -> str:
+def base36_decrypt(text, key=""):
     try:
         n = int(text, 36)
-        b = n.to_bytes((n.bit_length() + 7) // 8, 'big')
-        return b.decode('utf-8')
-    except:
-        return text
+        return n.to_bytes((n.bit_length() + 7) // 8, 'big').decode('utf-8')
+    except: return text
 
 
-# 40. Base62 ────────────────────────────────────────────────────────────────
 B62_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
-def base62_encrypt(text: str, key: str = "") -> str:
+def base62_encrypt(text, key=""):
     n = int.from_bytes(text.encode('utf-8'), 'big')
-    if n == 0:
-        return '0'
+    if n == 0: return '0'
     result = ''
     while n > 0:
         n, r = divmod(n, 62)
         result = B62_ALPHABET[r] + result
     return result
 
-def base62_decrypt(text: str, key: str = "") -> str:
+def base62_decrypt(text, key=""):
     try:
         n = 0
         for c in text:
             n = n * 62 + B62_ALPHABET.index(c)
-        b = n.to_bytes((n.bit_length() + 7) // 8, 'big')
-        return b.decode('utf-8')
-    except:
-        return text
+        return n.to_bytes((n.bit_length() + 7) // 8, 'big').decode('utf-8')
+    except: return text
 
 
-# 41. Base100 ───────────────────────────────────────────────────────────────
-def base100_encrypt(text: str, key: str = "") -> str:
-    # Mỗi byte → 1 emoji
+def base100_encrypt(text, key=""):
     return ''.join(chr(0x1F400 + b) for b in text.encode('utf-8'))
 
-def base100_decrypt(text: str, key: str = "") -> str:
-    try:
-        return bytes(ord(c) - 0x1F400 for c in text).decode('utf-8')
-    except:
-        return text
+def base100_decrypt(text, key=""):
+    try: return bytes(ord(c) - 0x1F400 for c in text).decode('utf-8')
+    except: return text
 
 
-# 42. URL encode ────────────────────────────────────────────────────────────
-def urlencode_encrypt(text: str, key: str = "") -> str:
+def urlencode_encrypt(text, key=""):
     return urllib.parse.quote(text, safe='')
 
-def urlencode_decrypt(text: str, key: str = "") -> str:
+def urlencode_decrypt(text, key=""):
     return urllib.parse.unquote(text)
 
 
-# 43. HTML entities ─────────────────────────────────────────────────────────
-def htmlentities_encrypt(text: str, key: str = "") -> str:
+def htmlentities_encrypt(text, key=""):
     return ''.join(f'&#{ord(c)};' for c in text)
 
-def htmlentities_decrypt(text: str, key: str = "") -> str:
+def htmlentities_decrypt(text, key=""):
     return html.unescape(text)
 
 
-# 44. Unicode escape ────────────────────────────────────────────────────────
-def unicode_escape_encrypt(text: str, key: str = "") -> str:
+def unicode_escape_encrypt(text, key=""):
     return text.encode('unicode_escape').decode('ascii')
 
-def unicode_escape_decrypt(text: str, key: str = "") -> str:
-    try:
-        return text.encode('ascii').decode('unicode_escape')
-    except:
-        return text
+def unicode_escape_decrypt(text, key=""):
+    try: return text.encode('ascii').decode('unicode_escape')
+    except: return text
 
 
-# 45. Quoted-printable ──────────────────────────────────────────────────────
-def quoted_printable_encrypt(text: str, key: str = "") -> str:
+def quoted_printable_encrypt(text, key=""):
     import quopri
     return quopri.encodestring(text.encode('utf-8')).decode('ascii')
 
-def quoted_printable_decrypt(text: str, key: str = "") -> str:
+def quoted_printable_decrypt(text, key=""):
     import quopri
-    try:
-        return quopri.decodestring(text.encode('ascii')).decode('utf-8', errors='ignore')
-    except:
-        return text
+    try: return quopri.decodestring(text.encode('ascii')).decode('utf-8', errors='ignore')
+    except: return text
 
 
-# 46. UUencode ──────────────────────────────────────────────────────────────
-def uuencode_encrypt(text: str, key: str = "") -> str:
+def uuencode_encrypt(text, key=""):
     return binascii.b2a_uu(text.encode('utf-8')).decode('ascii')
 
-def uuencode_decrypt(text: str, key: str = "") -> str:
-    try:
-        return binascii.a2b_uu(text.encode('ascii')).decode('utf-8')
-    except:
-        return text
+def uuencode_decrypt(text, key=""):
+    try: return binascii.a2b_uu(text.encode('ascii')).decode('utf-8')
+    except: return text
 
 
-# 47. XXencode ──────────────────────────────────────────────────────────────
 XX_ALPHABET = '+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
-def xxencode_encrypt(text: str, key: str = "") -> str:
+def xxencode_encrypt(text, key=""):
     b = text.encode('utf-8')
     result = []
     for i in range(0, len(b), 3):
@@ -1096,24 +977,21 @@ def xxencode_encrypt(text: str, key: str = "") -> str:
             result.append(XX_ALPHABET[(n >> (18 - j * 6)) & 0x3F])
     return ''.join(result)
 
-def xxencode_decrypt(text: str, key: str = "") -> str:
+def xxencode_decrypt(text, key=""):
     try:
         result = bytearray()
         for i in range(0, len(text), 4):
             chunk = text[i:i+4]
-            if len(chunk) < 4:
-                break
+            if len(chunk) < 4: break
             n = 0
             for c in chunk:
                 n = (n << 6) | XX_ALPHABET.index(c)
             result.extend([(n >> 16) & 0xFF, (n >> 8) & 0xFF, n & 0xFF])
         return result.decode('utf-8', errors='ignore').rstrip('\x00')
-    except:
-        return text
+    except: return text
 
 
-# 48. YEnc ──────────────────────────────────────────────────────────────────
-def yenc_encrypt(text: str, key: str = "") -> str:
+def yenc_encrypt(text, key=""):
     result = []
     for b in text.encode('utf-8'):
         v = (b + 42) % 256
@@ -1124,7 +1002,7 @@ def yenc_encrypt(text: str, key: str = "") -> str:
             result.append(chr(v))
     return ''.join(result)
 
-def yenc_decrypt(text: str, key: str = "") -> str:
+def yenc_decrypt(text, key=""):
     try:
         result = bytearray()
         i = 0
@@ -1137,58 +1015,45 @@ def yenc_decrypt(text: str, key: str = "") -> str:
                 i += 1
             result.append(v)
         return result.decode('utf-8', errors='ignore')
-    except:
-        return text
+    except: return text
 
 
-# 49. IEEE 754 ──────────────────────────────────────────────────────────────
-import struct
-
-def ieee754_encrypt(text: str, key: str = "") -> str:
+def ieee754_encrypt(text, key=""):
     try:
         f = float(text)
         return bin(struct.unpack('!I', struct.pack('!f', f))[0])[2:].zfill(32)
-    except:
-        return text
+    except: return text
 
-def ieee754_decrypt(text: str, key: str = "") -> str:
-    try:
-        return str(struct.unpack('!f', struct.pack('!I', int(text, 2)))[0])
-    except:
-        return text
+def ieee754_decrypt(text, key=""):
+    try: return str(struct.unpack('!f', struct.pack('!I', int(text, 2)))[0])
+    except: return text
 
 
-# 50. BCD ───────────────────────────────────────────────────────────────────
-def bcd_encrypt(text: str, key: str = "") -> str:
+def bcd_encrypt(text, key=""):
     result = []
     for c in text:
         if c.isdigit():
             result.append(format(int(c), '04b'))
     return ' '.join(result)
 
-def bcd_decrypt(text: str, key: str = "") -> str:
-    try:
-        return ''.join(str(int(b, 2)) for b in text.split())
-    except:
-        return text
+def bcd_decrypt(text, key=""):
+    try: return ''.join(str(int(b, 2)) for b in text.split())
+    except: return text
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  NHÓM 3 — MỘT CHIỀU (HASH FUNCTIONS) — 25 methods
+#  NHÓM 3 — MỘT CHIỀU (HASH) — 25 methods
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _hash_encrypt(algo: str):
-    def f(text: str, key: str = "") -> str:
-        try:
-            return hashlib.new(algo, text.encode('utf-8')).hexdigest()
-        except Exception:
-            return f"[{algo} không khả dụng]"
+def _hash_encrypt(algo):
+    def f(text, key=""):
+        try: return hashlib.new(algo, text.encode('utf-8')).hexdigest()
+        except Exception: return f"[{algo} không khả dụng]"
     return f
 
-def _hash_no_decrypt(text: str, key: str = "") -> str:
+def _hash_no_decrypt(text, key=""):
     return "[Hash một chiều — không thể giải mã]"
 
-# 51-69: hashlib-based
 md5_encrypt = _hash_encrypt('md5')
 sha1_encrypt = _hash_encrypt('sha1')
 sha224_encrypt = _hash_encrypt('sha224')
@@ -1200,38 +1065,23 @@ sha3_512_encrypt = _hash_encrypt('sha3_512')
 blake2b_encrypt = _hash_encrypt('blake2b')
 blake2s_encrypt = _hash_encrypt('blake2s')
 
-# 61: BLAKE3 (fallback to blake2b nếu không có thư viện)
-def blake3_encrypt(text: str, key: str = "") -> str:
+def blake3_encrypt(text, key=""):
     try:
         import blake3
         return blake3.blake3(text.encode('utf-8')).hexdigest()
     except ImportError:
         return hashlib.blake2b(text.encode('utf-8')).hexdigest()
 
-# 62: RIPEMD-160
 ripemd160_encrypt = _hash_encrypt('ripemd160')
-
-# 63: Whirlpool
 whirlpool_encrypt = _hash_encrypt('whirlpool')
 
-# 64: Tiger (fallback)
-def tiger_encrypt(text: str, key: str = "") -> str:
-    try:
-        import tigerhash
-        return tigerhash.tiger(text.encode('utf-8')).hexdigest()
-    except ImportError:
-        return hashlib.sha256(text.encode('utf-8')).hexdigest()
+def tiger_encrypt(text, key=""):
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
-# 65: HAVAL (fallback)
-def haval_encrypt(text: str, key: str = "") -> str:
-    try:
-        import pyhaval
-        return pyhaval.haval_256(text.encode('utf-8')).hexdigest()
-    except ImportError:
-        return hashlib.sha256(text.encode('utf-8')).hexdigest()
+def haval_encrypt(text, key=""):
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
-# 66-67: Keccak (Ethereum)
-def keccak256_encrypt(text: str, key: str = "") -> str:
+def keccak256_encrypt(text, key=""):
     try:
         from Crypto.Hash import keccak
         k = keccak.new(digest_bits=256)
@@ -1240,7 +1090,7 @@ def keccak256_encrypt(text: str, key: str = "") -> str:
     except ImportError:
         return hashlib.sha3_256(text.encode('utf-8')).hexdigest()
 
-def keccak512_encrypt(text: str, key: str = "") -> str:
+def keccak512_encrypt(text, key=""):
     try:
         from Crypto.Hash import keccak
         k = keccak.new(digest_bits=512)
@@ -1249,73 +1099,62 @@ def keccak512_encrypt(text: str, key: str = "") -> str:
     except ImportError:
         return hashlib.sha3_512(text.encode('utf-8')).hexdigest()
 
-# 68: GOST (fallback)
-def gost_encrypt(text: str, key: str = "") -> str:
-    try:
-        return hashlib.new('md_gost94', text.encode('utf-8')).hexdigest()
-    except Exception:
-        return hashlib.sha256(text.encode('utf-8')).hexdigest()
+def gost_encrypt(text, key=""):
+    try: return hashlib.new('md_gost94', text.encode('utf-8')).hexdigest()
+    except Exception: return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
-# 69: Snefru (fallback)
-def snefru_encrypt(text: str, key: str = "") -> str:
+def snefru_encrypt(text, key=""):
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
-# 70: CRC32
-def crc32_encrypt(text: str, key: str = "") -> str:
+def crc32_encrypt(text, key=""):
     return format(zlib.crc32(text.encode('utf-8')) & 0xFFFFFFFF, '08x')
 
-# 71: Adler-32
-def adler32_encrypt(text: str, key: str = "") -> str:
+def adler32_encrypt(text, key=""):
     return format(zlib.adler32(text.encode('utf-8')) & 0xFFFFFFFF, '08x')
 
-# 72: FNV-1a
-def fnv1a_encrypt(text: str, key: str = "") -> str:
+def fnv1a_encrypt(text, key=""):
     h = 0x811c9dc5
     for b in text.encode('utf-8'):
         h ^= b
         h = (h * 0x01000193) & 0xFFFFFFFF
     return format(h, '08x')
 
-# 73: MurmurHash3 (fallback)
-def murmur3_encrypt(text: str, key: str = "") -> str:
+def murmur3_encrypt(text, key=""):
     try:
         import mmh3
         return format(mmh3.hash(text), '08x')
     except ImportError:
         return hashlib.md5(text.encode('utf-8')).hexdigest()
 
-# 74: xxHash (fallback)
-def xxhash_encrypt(text: str, key: str = "") -> str:
+def xxhash_encrypt(text, key=""):
     try:
         import xxhash
         return xxhash.xxh64(text.encode('utf-8')).hexdigest()
     except ImportError:
         return hashlib.md5(text.encode('utf-8')).hexdigest()
 
-# 75: SipHash (fallback)
-def siphash_encrypt(text: str, key: str = "") -> str:
+def siphash_encrypt(text, key=""):
     return hmac.new((key or 'key').encode(), text.encode('utf-8'), hashlib.sha256).hexdigest()[:16]
 
-# Gán decrypt = no-op cho tất cả hash
-for name in ['md5','sha1','sha224','sha256','sha384','sha512','sha3_256','sha3_512',
-             'blake2b','blake2s','blake3','ripemd160','whirlpool','tiger','haval',
-             'keccak256','keccak512','gost','snefru','crc32','adler32','fnv1a',
-             'murmur3','xxhash','siphash']:
-    globals()[f'{name}_decrypt'] = _hash_no_decrypt
+for _name in ['md5','sha1','sha224','sha256','sha384','sha512','sha3_256','sha3_512',
+              'blake2b','blake2s','blake3','ripemd160','whirlpool','tiger','haval',
+              'keccak256','keccak512','gost','snefru','crc32','adler32','fnv1a',
+              'murmur3','xxhash','siphash']:
+    globals()[f'{_name}_decrypt'] = _hash_no_decrypt
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  NHÓM 4 — ĐỐI XỨNG (SYMMETRIC ENCRYPTION) — 34 methods
+#  NHÓM 4 — ĐỐI XỨNG (SYMMETRIC) — 34 methods
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _key_bytes(key: str, length: int = 16) -> bytes:
+def _key_bytes(key, length=16):
     b = (key or 'default_key').encode('utf-8')
     if len(b) < length:
         b = b + b'\x00' * (length - len(b))
     return b[:length]
 
-# 76-78: AES
-def aes128_encrypt(text: str, key: str = "default_key") -> str:
+
+def aes128_encrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         return base64.b64encode(text.encode()).decode()
     try:
@@ -1326,7 +1165,7 @@ def aes128_encrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[AES-128 error: {e}]"
 
-def aes128_decrypt(text: str, key: str = "default_key") -> str:
+def aes128_decrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         try: return base64.b64decode(text).decode()
         except: return text
@@ -1337,7 +1176,8 @@ def aes128_decrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[AES-128 error: {e}]"
 
-def aes192_encrypt(text: str, key: str = "default_key") -> str:
+
+def aes192_encrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         return base64.b64encode(text.encode()).decode()
     try:
@@ -1348,7 +1188,7 @@ def aes192_encrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[AES-192 error: {e}]"
 
-def aes192_decrypt(text: str, key: str = "default_key") -> str:
+def aes192_decrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         try: return base64.b64decode(text).decode()
         except: return text
@@ -1359,7 +1199,8 @@ def aes192_decrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[AES-192 error: {e}]"
 
-def aes_gcm_encrypt(text: str, key: str = "default_key") -> str:
+
+def aes_gcm_encrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         return base64.b64encode(text.encode()).decode()
     try:
@@ -1370,7 +1211,7 @@ def aes_gcm_encrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[AES-GCM error: {e}]"
 
-def aes_gcm_decrypt(text: str, key: str = "default_key") -> str:
+def aes_gcm_decrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         try: return base64.b64decode(text).decode()
         except: return text
@@ -1383,8 +1224,8 @@ def aes_gcm_decrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[AES-GCM error: {e}]"
 
-# 79-80: DES / 3DES
-def des_encrypt(text: str, key: str = "default_key") -> str:
+
+def des_encrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         return base64.b64encode(text.encode()).decode()
     try:
@@ -1395,7 +1236,7 @@ def des_encrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[DES error: {e}]"
 
-def des_decrypt(text: str, key: str = "default_key") -> str:
+def des_decrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         try: return base64.b64decode(text).decode()
         except: return text
@@ -1406,7 +1247,8 @@ def des_decrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[DES error: {e}]"
 
-def tripledes_encrypt(text: str, key: str = "default_key") -> str:
+
+def tripledes_encrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         return base64.b64encode(text.encode()).decode()
     try:
@@ -1417,7 +1259,7 @@ def tripledes_encrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[3DES error: {e}]"
 
-def tripledes_decrypt(text: str, key: str = "default_key") -> str:
+def tripledes_decrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         try: return base64.b64decode(text).decode()
         except: return text
@@ -1428,8 +1270,8 @@ def tripledes_decrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[3DES error: {e}]"
 
-# 81-82: Blowfish / Twofish (fallback: AES)
-def blowfish_encrypt(text: str, key: str = "default_key") -> str:
+
+def blowfish_encrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         return base64.b64encode(text.encode()).decode()
     try:
@@ -1440,7 +1282,7 @@ def blowfish_encrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[Blowfish error: {e}]"
 
-def blowfish_decrypt(text: str, key: str = "default_key") -> str:
+def blowfish_decrypt(text, key="default_key"):
     if not HAS_PYCRYPTODOME:
         try: return base64.b64decode(text).decode()
         except: return text
@@ -1451,26 +1293,23 @@ def blowfish_decrypt(text: str, key: str = "default_key") -> str:
     except Exception as e:
         return f"[Blowfish error: {e}]"
 
-def twofish_encrypt(text: str, key: str = "default_key") -> str:
-    return aes128_encrypt(text, key)
 
-def twofish_decrypt(text: str, key: str = "default_key") -> str:
-    return aes128_decrypt(text, key)
+def twofish_encrypt(text, key="default_key"): return aes128_encrypt(text, key)
+def twofish_decrypt(text, key="default_key"): return aes128_decrypt(text, key)
 
-# 83-108: Fallback ciphers
-def _xor_stream(text: str, key: str, encrypt: bool = True) -> str:
+def _xor_stream(text, key, encrypt=True):
     k = (key or 'key').encode('utf-8')
     b = text.encode('utf-8') if encrypt else base64.b64decode(text)
     result = bytes(b[i] ^ k[i % len(k)] for i in range(len(b)))
     return base64.b64encode(result).decode() if encrypt else result.decode('utf-8', errors='ignore')
 
-# Serpent, RC2, RC4, RC5, RC6, ChaCha20, Salsa20, ... → fallback AES
 def _fallback_enc(text, key): return aes128_encrypt(text, key)
 def _fallback_dec(text, key): return aes128_decrypt(text, key)
 
 serpent_encrypt = _fallback_enc; serpent_decrypt = _fallback_dec
 rc2_encrypt = _fallback_enc; rc2_decrypt = _fallback_dec
-rc4_encrypt = lambda t, k="": _xor_stream(t, k, True); rc4_decrypt = lambda t, k="": _xor_stream(t, k, False)
+rc4_encrypt = lambda t, k="": _xor_stream(t, k, True)
+rc4_decrypt = lambda t, k="": _xor_stream(t, k, False)
 rc5_encrypt = _fallback_enc; rc5_decrypt = _fallback_dec
 rc6_encrypt = _fallback_enc; rc6_decrypt = _fallback_dec
 chacha20_encrypt = _fallback_enc; chacha20_decrypt = _fallback_dec
@@ -1494,8 +1333,8 @@ kasumi_encrypt = _fallback_enc; kasumi_decrypt = _fallback_dec
 misty1_encrypt = _fallback_enc; misty1_decrypt = _fallback_dec
 skipjack_encrypt = _fallback_enc; skipjack_decrypt = _fallback_dec
 
-# 108-109: OTP / Vernam
-def otp_encrypt(text: str, key: str = "") -> str:
+
+def otp_encrypt(text, key=""):
     if not key:
         return "[Cần key (độ dài >= độ dài text)]"
     k = key.encode('utf-8')
@@ -1505,7 +1344,7 @@ def otp_encrypt(text: str, key: str = "") -> str:
     result = bytes(b[i] ^ k[i] for i in range(len(b)))
     return base64.b64encode(result).decode()
 
-def otp_decrypt(text: str, key: str = "") -> str:
+def otp_decrypt(text, key=""):
     if not key:
         return "[Cần key]"
     try:
@@ -1521,14 +1360,13 @@ vernam_decrypt = otp_decrypt
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  NHÓM 5 — BẤT ĐỐI XỨNG (ASYMMETRIC) — 18 methods
+#  NHÓM 5 — BẤT ĐỐI XỨNG — 18 methods
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _rsa_demo_encrypt(text: str, key: str = "") -> str:
-    # Demo đơn giản: dùng AES như placeholder
+def _rsa_demo_encrypt(text, key=""):
     return "[RSA] " + aes128_encrypt(text, key or "rsa_key")
 
-def _rsa_demo_decrypt(text: str, key: str = "") -> str:
+def _rsa_demo_decrypt(text, key=""):
     if text.startswith("[RSA] "):
         return aes128_decrypt(text[6:], key or "rsa_key")
     return text
@@ -1557,53 +1395,54 @@ sphincs_encrypt = _rsa_demo_encrypt; sphincs_decrypt = _rsa_demo_decrypt
 #  NHÓM 6 — SINH HỌC & ĐẶC BIỆT — 23 methods
 # ═══════════════════════════════════════════════════════════════════════════
 
-# 128-129: DNA / RNA
 DNA_MAP = {'00': 'A', '01': 'C', '10': 'G', '11': 'T'}
 DNA_REVERSE = {v: k for k, v in DNA_MAP.items()}
 
-def dna_encrypt(text: str, key: str = "") -> str:
+def dna_encrypt(text, key=""):
     binary = ''.join(format(ord(c), '08b') for c in text)
     if len(binary) % 2:
         binary += '0'
     return ''.join(DNA_MAP[binary[i:i+2]] for i in range(0, len(binary), 2))
 
-def dna_decrypt(text: str, key: str = "") -> str:
+def dna_decrypt(text, key=""):
     try:
         binary = ''.join(DNA_REVERSE[c] for c in text)
-        return ''.join(chr(int(binary[i:i+8], 2)) for i in range(0, len(binary), 8) if int(binary[i:i+8], 2) > 0)
+        result = []
+        for i in range(0, len(binary), 8):
+            chunk = binary[i:i+8]
+            if len(chunk) == 8:
+                v = int(chunk, 2)
+                if v > 0:
+                    result.append(chr(v))
+        return ''.join(result)
     except:
         return text
 
-def rna_encrypt(text: str, key: str = "") -> str:
+def rna_encrypt(text, key=""):
     return dna_encrypt(text, key).replace('T', 'U')
 
-def rna_decrypt(text: str, key: str = "") -> str:
+def rna_decrypt(text, key=""):
     return dna_decrypt(text.replace('U', 'T'), key)
 
-# 130-131: Amino / Protein (đơn giản hóa)
-def amino_encrypt(text: str, key: str = "") -> str:
+
+def amino_encrypt(text, key=""):
     return ' '.join(f"AA{ord(c):03d}" for c in text)
 
-def amino_decrypt(text: str, key: str = "") -> str:
-    try:
-        return ''.join(chr(int(t[2:])) for t in text.split() if t.startswith('AA'))
-    except:
-        return text
+def amino_decrypt(text, key=""):
+    try: return ''.join(chr(int(t[2:])) for t in text.split() if t.startswith('AA'))
+    except: return text
 
-def protein_encrypt(text: str, key: str = "") -> str:
-    return amino_encrypt(text, key)
+def protein_encrypt(text, key=""): return amino_encrypt(text, key)
+def protein_decrypt(text, key=""): return amino_decrypt(text, key)
 
-def protein_decrypt(text: str, key: str = "") -> str:
-    return amino_decrypt(text, key)
 
-# 132: Emoji
-def emoji_encrypt(text: str, key: str = "") -> str:
+def emoji_encrypt(text, key=""):
     return ''.join(chr(0x1F600 + (ord(c) % 80)) for c in text)
 
-def emoji_decrypt(text: str, key: str = "") -> str:
+def emoji_decrypt(text, key=""):
     return "[Emoji không thể giải mã chính xác]"
 
-# 133: Braille
+
 BRAILLE_MAP = {
     'a': '⠁', 'b': '⠃', 'c': '⠉', 'd': '⠙', 'e': '⠑', 'f': '⠋', 'g': '⠛',
     'h': '⠓', 'i': '⠊', 'j': '⠚', 'k': '⠅', 'l': '⠇', 'm': '⠍', 'n': '⠝',
@@ -1612,25 +1451,26 @@ BRAILLE_MAP = {
 }
 BRAILLE_REVERSE = {v: k for k, v in BRAILLE_MAP.items()}
 
-def braille_encrypt(text: str, key: str = "") -> str:
+def braille_encrypt(text, key=""):
     return ''.join(BRAILLE_MAP.get(c.lower(), c) for c in text)
 
-def braille_decrypt(text: str, key: str = "") -> str:
+def braille_decrypt(text, key=""):
     return ''.join(BRAILLE_REVERSE.get(c, c) for c in text)
 
-# 134: Semaphore (đơn giản: dùng chữ cái)
-def semaphore_encrypt(text: str, key: str = "") -> str:
+
+def semaphore_encrypt(text, key=""):
     return ' '.join(f"[{c.upper()}]" for c in text if c.isalpha())
 
-def semaphore_decrypt(text: str, key: str = "") -> str:
+def semaphore_decrypt(text, key=""):
     return ''.join(t.strip('[]') for t in text.split() if t.startswith('['))
 
-# 135-150: Fallback / đơn giản hóa
+
 def baconian_encrypt(text, key=""): return bacon_encrypt(text, key)
 def baconian_decrypt(text, key=""): return bacon_decrypt(text, key)
 
-def bookcipher_encrypt(text, key=""): 
+def bookcipher_encrypt(text, key=""):
     return " ".join(str(ord(c)) for c in text)
+
 def bookcipher_decrypt(text, key=""):
     try: return "".join(chr(int(t)) for t in text.split())
     except: return text
@@ -1638,12 +1478,15 @@ def bookcipher_decrypt(text, key=""):
 def nullcipher_encrypt(text, key=""): return text
 def nullcipher_decrypt(text, key=""): return text
 
+
 def acrostic_encrypt(text, key=""):
     return "\n".join(text[i::max(1, len(text)//5)] for i in range(min(5, len(text))))
+
 def acrostic_decrypt(text, key=""):
     return "".join(line[0] for line in text.split('\n') if line)
 
-def railfence_encrypt(text: str, key: str = "3") -> str:
+
+def railfence_encrypt(text, key="3"):
     n = _safe_int(key, 3)
     if n < 2: n = 2
     rails = [''] * n
@@ -1655,7 +1498,7 @@ def railfence_encrypt(text: str, key: str = "3") -> str:
         row += direction
     return ''.join(rails)
 
-def railfence_decrypt(text: str, key: str = "3") -> str:
+def railfence_decrypt(text, key="3"):
     n = _safe_int(key, 3)
     if n < 2: n = 2
     pattern = []
@@ -1676,10 +1519,9 @@ def railfence_decrypt(text: str, key: str = "3") -> str:
         result.append(rails[r].pop(0))
     return ''.join(result)
 
-def route_encrypt(text, key="4"):
-    return columnar_encrypt(text, key)
-def route_decrypt(text, key="4"):
-    return columnar_decrypt(text, key)
+
+def route_encrypt(text, key="4"): return columnar_encrypt(text, key)
+def route_decrypt(text, key="4"): return columnar_decrypt(text, key)
 
 def cardan_encrypt(text, key=""): return text[::-1]
 def cardan_decrypt(text, key=""): return text[::-1]
@@ -1716,13 +1558,13 @@ def checkerboard_decrypt(text, key=""): return polybius_decrypt(text)
 #  NHÓM 7 — GAME / GIẢI TRÍ — 25 methods
 # ═══════════════════════════════════════════════════════════════════════════
 
-def caesarbox_encrypt(text: str, key: str = "0") -> str:
+def caesarbox_encrypt(text, key="0"):
     n = math.ceil(math.sqrt(len(text)))
     while len(text) < n * n:
         text += ' '
     return ''.join(text[i::n] for i in range(n))
 
-def caesarbox_decrypt(text: str, key: str = "0") -> str:
+def caesarbox_decrypt(text, key="0"):
     n = math.ceil(math.sqrt(len(text)))
     result = [''] * len(text)
     idx = 0
@@ -1733,10 +1575,11 @@ def caesarbox_decrypt(text: str, key: str = "0") -> str:
                 idx += 1
     return ''.join(result).rstrip()
 
-def a1z26_encrypt(text: str, key: str = "") -> str:
+
+def a1z26_encrypt(text, key=""):
     return ' '.join(str(ord(c) - 96) if c.islower() else str(ord(c) - 64) if c.isupper() else c for c in text)
 
-def a1z26_decrypt(text: str, key: str = "") -> str:
+def a1z26_decrypt(text, key=""):
     result = []
     for token in text.split():
         if token.isdigit():
@@ -1749,10 +1592,11 @@ def a1z26_decrypt(text: str, key: str = "") -> str:
             result.append(token)
     return ''.join(result)
 
-def a0z25_encrypt(text: str, key: str = "") -> str:
+
+def a0z25_encrypt(text, key=""):
     return ' '.join(str(ord(c) - 97) if c.islower() else str(ord(c) - 65) if c.isupper() else c for c in text)
 
-def a0z25_decrypt(text: str, key: str = "") -> str:
+def a0z25_decrypt(text, key=""):
     result = []
     for token in text.split():
         if token.isdigit():
@@ -1765,7 +1609,8 @@ def a0z25_decrypt(text: str, key: str = "") -> str:
             result.append(token)
     return ''.join(result)
 
-def phonekeypad_encrypt(text: str, key: str = "") -> str:
+
+def phonekeypad_encrypt(text, key=""):
     mapping = {}
     for c in 'abc': mapping[c] = '2'
     for c in 'def': mapping[c] = '3'
@@ -1777,76 +1622,90 @@ def phonekeypad_encrypt(text: str, key: str = "") -> str:
     for c in 'wxyz': mapping[c] = '9'
     return ''.join(mapping.get(c.lower(), c) for c in text)
 
-def phonekeypad_decrypt(text: str, key: str = "") -> str:
+def phonekeypad_decrypt(text, key=""):
     return "[Không giải mã được chính xác]"
 
-def t9_encrypt(text: str, key: str = "") -> str:
-    return phonekeypad_encrypt(text, key)
+def t9_encrypt(text, key=""): return phonekeypad_encrypt(text, key)
+def t9_decrypt(text, key=""): return phonekeypad_decrypt(text, key)
 
-def t9_decrypt(text: str, key: str = "") -> str:
-    return phonekeypad_decrypt(text, key)
 
-# 157-175: Fallbacks / đơn giản hóa
 def pigpen_encrypt(text, key=""):
     return ' '.join(f"[{c.upper()}]" for c in text)
+
 def pigpen_decrypt(text, key=""):
     return ''.join(t.strip('[]') for t in text.split() if t.startswith('['))
 
 def tictactoe_encrypt(text, key=""): return polybius_encrypt(text)
 def tictactoe_decrypt(text, key=""): return polybius_decrypt(text)
-
 def masonic_encrypt(text, key=""): return pigpen_encrypt(text)
 def masonic_decrypt(text, key=""): return pigpen_decrypt(text)
-
 def rosicrucian_encrypt(text, key=""): return pigpen_encrypt(text)
 def rosicrucian_decrypt(text, key=""): return pigpen_decrypt(text)
 
-def dancingmen_encrypt(text, key=""): return ' '.join(f"({ord(c)})" for c in text)
+
+def dancingmen_encrypt(text, key=""):
+    return ' '.join(f"({ord(c)})" for c in text)
+
 def dancingmen_decrypt(text, key=""):
     try: return ''.join(chr(int(t.strip('()'))) for t in text.split())
     except: return text
 
-def unown_encrypt(text, key=""): return ' '.join(f"U{ord(c)}" for c in text)
+
+def unown_encrypt(text, key=""):
+    return ' '.join(f"U{ord(c)}" for c in text)
+
 def unown_decrypt(text, key=""):
     try: return ''.join(chr(int(t[1:])) for t in text.split() if t.startswith('U'))
     except: return text
 
+
 def klingon_encrypt(text, key=""): return f"tlhIngan: {text}"
 def klingon_decrypt(text, key=""): return text.replace("tlhIngan: ", "")
-
 def dovahzul_encrypt(text, key=""): return f"Dovah: {text}"
 def dovahzul_decrypt(text, key=""): return text.replace("Dovah: ", "")
-
 def hylian_encrypt(text, key=""): return f"Hylian: {text}"
 def hylian_decrypt(text, key=""): return text.replace("Hylian: ", "")
-
 def aurebesh_encrypt(text, key=""): return f"Aurebesh: {text}"
 def aurebesh_decrypt(text, key=""): return text.replace("Aurebesh: ", "")
 
-def runic_encrypt(text, key=""): return ' '.join(f"ᚱ{ord(c)}" for c in text)
+
+def runic_encrypt(text, key=""):
+    return ' '.join(f"ᚱ{ord(c)}" for c in text)
+
 def runic_decrypt(text, key=""):
     try: return ''.join(chr(int(t[1:])) for t in text.split() if t.startswith('ᚱ'))
     except: return text
 
-def ogham_encrypt(text, key=""): return ' '.join(f"ᚑ{ord(c)}" for c in text)
+
+def ogham_encrypt(text, key=""):
+    return ' '.join(f"ᚑ{ord(c)}" for c in text)
+
 def ogham_decrypt(text, key=""):
     try: return ''.join(chr(int(t[1:])) for t in text.split() if t.startswith('ᚑ'))
     except: return text
 
-def hieroglyph_encrypt(text, key=""): return ' '.join(f"𓀀{ord(c)}" for c in text)
+
+def hieroglyph_encrypt(text, key=""):
+    return ' '.join(f"𓀀{ord(c)}" for c in text)
+
 def hieroglyph_decrypt(text, key=""):
     try: return ''.join(chr(int(t[1:])) for t in text.split() if t.startswith('𓀀'))
     except: return text
 
-def cuneiform_encrypt(text, key=""): return ' '.join(f"𒀀{ord(c)}" for c in text)
+
+def cuneiform_encrypt(text, key=""):
+    return ' '.join(f"𒀀{ord(c)}" for c in text)
+
 def cuneiform_decrypt(text, key=""):
     try: return ''.join(chr(int(t[1:])) for t in text.split() if t.startswith('𒀀'))
     except: return text
 
-def wingdings_encrypt(text, key=""): return text  # Không thực sự chuyển
+
+def wingdings_encrypt(text, key=""): return text
 def wingdings_decrypt(text, key=""): return text
 
-def zalgo_encrypt(text: str, key: str = "") -> str:
+
+def zalgo_encrypt(text, key=""):
     combining = [chr(0x0300 + i) for i in range(20)]
     result = []
     for c in text:
@@ -1855,10 +1714,11 @@ def zalgo_encrypt(text: str, key: str = "") -> str:
             result.append(random.choice(combining))
     return ''.join(result)
 
-def zalgo_decrypt(text: str, key: str = "") -> str:
+def zalgo_decrypt(text, key=""):
     return ''.join(c for c in text if ord(c) < 0x0300)
 
-def upsidedown_encrypt(text: str, key: str = "") -> str:
+
+def upsidedown_encrypt(text, key=""):
     map_chars = {'a': 'ɐ', 'b': 'q', 'c': 'ɔ', 'd': 'p', 'e': 'ǝ', 'f': 'ɟ',
                  'g': 'ƃ', 'h': 'ɥ', 'i': 'ᴉ', 'j': 'ɾ', 'k': 'ʞ', 'l': 'l',
                  'm': 'ɯ', 'n': 'u', 'o': 'o', 'p': 'd', 'q': 'b', 'r': 'ɹ',
@@ -1866,7 +1726,7 @@ def upsidedown_encrypt(text: str, key: str = "") -> str:
                  'y': 'ʎ', 'z': 'z'}
     return ''.join(map_chars.get(c.lower(), c) for c in text)[::-1]
 
-def upsidedown_decrypt(text: str, key: str = "") -> str:
+def upsidedown_decrypt(text, key=""):
     map_chars = {'ɐ': 'a', 'q': 'b', 'ɔ': 'c', 'p': 'd', 'ǝ': 'e', 'ɟ': 'f',
                  'ƃ': 'g', 'ɥ': 'h', 'ᴉ': 'i', 'ɾ': 'j', 'ʞ': 'k', 'l': 'l',
                  'ɯ': 'm', 'u': 'n', 'o': 'o', 'd': 'p', 'b': 'q', 'ɹ': 'r',
@@ -1874,13 +1734,12 @@ def upsidedown_decrypt(text: str, key: str = "") -> str:
                  'ʎ': 'y', 'z': 'z'}
     return ''.join(map_chars.get(c, c) for c in text)[::-1]
 
-def mirror_encrypt(text: str, key: str = "") -> str:
-    return text[::-1]
 
-def mirror_decrypt(text: str, key: str = "") -> str:
-    return text[::-1]
+def mirror_encrypt(text, key=""): return text[::-1]
+def mirror_decrypt(text, key=""): return text[::-1]
 
-def smallcaps_encrypt(text: str, key: str = "") -> str:
+
+def smallcaps_encrypt(text, key=""):
     small = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘqʀꜱᴛᴜᴠᴡxʏᴢ"
     result = []
     for c in text.lower():
@@ -1890,7 +1749,7 @@ def smallcaps_encrypt(text: str, key: str = "") -> str:
             result.append(c)
     return ''.join(result)
 
-def smallcaps_decrypt(text: str, key: str = "") -> str:
+def smallcaps_decrypt(text, key=""):
     small = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘqʀꜱᴛᴜᴠᴡxʏᴢ"
     result = []
     for c in text:
@@ -1905,17 +1764,12 @@ def smallcaps_decrypt(text: str, key: str = "") -> str:
 #  NHÓM 8 — NGÔN NGỮ & VĂN HÓA — 11 methods
 # ═══════════════════════════════════════════════════════════════════════════
 
-def telex_encrypt(text: str, key: str = "") -> str:
-    # Telex đơn giản: â → aa, ê → ee, ô → oo, ơ → ow, ư → uw, đ → dd
+def telex_encrypt(text, key=""):
     mapping = {'â': 'aa', 'ê': 'ee', 'ô': 'oo', 'ơ': 'ow', 'ư': 'uw', 'đ': 'dd',
                'ă': 'aw', 'á': 'as', 'à': 'af', 'ả': 'ar', 'ã': 'ax', 'ạ': 'aj'}
-    result = []
-    for c in text.lower():
-        result.append(mapping.get(c, c))
-    return ''.join(result)
+    return ''.join(mapping.get(c.lower(), c) for c in text)
 
-def telex_decrypt(text: str, key: str = "") -> str:
-    # Đảo ngược
+def telex_decrypt(text, key=""):
     mapping = {'aa': 'â', 'ee': 'ê', 'oo': 'ô', 'ow': 'ơ', 'uw': 'ư', 'dd': 'đ',
                'aw': 'ă', 'as': 'á', 'af': 'à', 'ar': 'ả', 'ax': 'ã', 'aj': 'ạ'}
     result = text
@@ -1923,12 +1777,13 @@ def telex_decrypt(text: str, key: str = "") -> str:
         result = result.replace(k, v)
     return result
 
-def vni_encrypt(text: str, key: str = "") -> str:
+
+def vni_encrypt(text, key=""):
     mapping = {'â': 'a6', 'ê': 'e6', 'ô': 'o6', 'ơ': 'o7', 'ư': 'u7', 'đ': 'd9',
                'ă': 'a8', 'á': 'a1', 'à': 'a2', 'ả': 'a3', 'ã': 'a4', 'ạ': 'a5'}
     return ''.join(mapping.get(c.lower(), c) for c in text)
 
-def vni_decrypt(text: str, key: str = "") -> str:
+def vni_decrypt(text, key=""):
     mapping = {'a6': 'â', 'e6': 'ê', 'o6': 'ô', 'o7': 'ơ', 'u7': 'ư', 'd9': 'đ',
                'a8': 'ă', 'a1': 'á', 'a2': 'à', 'a3': 'ả', 'a4': 'ã', 'a5': 'ạ'}
     result = text
@@ -1936,12 +1791,13 @@ def vni_decrypt(text: str, key: str = "") -> str:
         result = result.replace(k, v)
     return result
 
-def viqr_encrypt(text: str, key: str = "") -> str:
+
+def viqr_encrypt(text, key=""):
     mapping = {'â': 'a^', 'ê': 'e^', 'ô': 'o^', 'ơ': 'o+', 'ư': 'u+', 'đ': 'dd',
                'ă': 'a(', 'á': "a'", 'à': 'a`', 'ả': 'a?', 'ã': 'a~', 'ạ': 'a.'}
     return ''.join(mapping.get(c.lower(), c) for c in text)
 
-def viqr_decrypt(text: str, key: str = "") -> str:
+def viqr_decrypt(text, key=""):
     mapping = {'a^': 'â', 'e^': 'ê', 'o^': 'ô', 'o+': 'ơ', 'u+': 'ư', 'dd': 'đ',
                'a(': 'ă', "a'": 'á', 'a`': 'à', 'a?': 'ả', 'a~': 'ã', 'a.': 'ạ'}
     result = text
@@ -1949,25 +1805,16 @@ def viqr_decrypt(text: str, key: str = "") -> str:
         result = result.replace(k, v)
     return result
 
-def pinyin_encrypt(text: str, key: str = "") -> str:
-    return f"[Pinyin] {text}"
 
-def pinyin_decrypt(text: str, key: str = "") -> str:
-    return text.replace("[Pinyin] ", "")
+def pinyin_encrypt(text, key=""): return f"[Pinyin] {text}"
+def pinyin_decrypt(text, key=""): return text.replace("[Pinyin] ", "")
+def romaji_encrypt(text, key=""): return f"[Romaji] {text}"
+def romaji_decrypt(text, key=""): return text.replace("[Romaji] ", "")
+def hangul_roman_encrypt(text, key=""): return f"[Hangul] {text}"
+def hangul_roman_decrypt(text, key=""): return text.replace("[Hangul] ", "")
 
-def romaji_encrypt(text: str, key: str = "") -> str:
-    return f"[Romaji] {text}"
 
-def romaji_decrypt(text: str, key: str = "") -> str:
-    return text.replace("[Romaji] ", "")
-
-def hangul_roman_encrypt(text: str, key: str = "") -> str:
-    return f"[Hangul] {text}"
-
-def hangul_roman_decrypt(text: str, key: str = "") -> str:
-    return text.replace("[Hangul] ", "")
-
-def cyrillic_trans_encrypt(text: str, key: str = "") -> str:
+def cyrillic_trans_encrypt(text, key=""):
     mapping = {'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e',
                'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l',
                'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's',
@@ -1976,43 +1823,32 @@ def cyrillic_trans_encrypt(text: str, key: str = "") -> str:
                'ю': 'yu', 'я': 'ya'}
     return ''.join(mapping.get(c.lower(), c) for c in text)
 
-def cyrillic_trans_decrypt(text: str, key: str = "") -> str:
-    return text  # Không thể đảo ngược chính xác
+def cyrillic_trans_decrypt(text, key=""): return text
 
-def greek_trans_encrypt(text: str, key: str = "") -> str:
+
+def greek_trans_encrypt(text, key=""):
     mapping = {'α': 'a', 'β': 'b', 'γ': 'g', 'δ': 'd', 'ε': 'e', 'ζ': 'z',
                'η': 'e', 'θ': 'th', 'ι': 'i', 'κ': 'k', 'λ': 'l', 'μ': 'm',
                'ν': 'n', 'ξ': 'x', 'ο': 'o', 'π': 'p', 'ρ': 'r', 'σ': 's',
                'τ': 't', 'υ': 'u', 'φ': 'ph', 'χ': 'ch', 'ψ': 'ps', 'ω': 'o'}
     return ''.join(mapping.get(c.lower(), c) for c in text)
 
-def greek_trans_decrypt(text: str, key: str = "") -> str:
-    return text
+def greek_trans_decrypt(text, key=""): return text
 
-def arabic_trans_encrypt(text: str, key: str = "") -> str:
-    return f"[Arabic] {text}"
 
-def arabic_trans_decrypt(text: str, key: str = "") -> str:
-    return text.replace("[Arabic] ", "")
-
-def thai_trans_encrypt(text: str, key: str = "") -> str:
-    return f"[Thai] {text}"
-
-def thai_trans_decrypt(text: str, key: str = "") -> str:
-    return text.replace("[Thai] ", "")
-
-def sanskrit_trans_encrypt(text: str, key: str = "") -> str:
-    return f"[Sanskrit] {text}"
-
-def sanskrit_trans_decrypt(text: str, key: str = "") -> str:
-    return text.replace("[Sanskrit] ", "")
+def arabic_trans_encrypt(text, key=""): return f"[Arabic] {text}"
+def arabic_trans_decrypt(text, key=""): return text.replace("[Arabic] ", "")
+def thai_trans_encrypt(text, key=""): return f"[Thai] {text}"
+def thai_trans_decrypt(text, key=""): return text.replace("[Thai] ", "")
+def sanskrit_trans_encrypt(text, key=""): return f"[Sanskrit] {text}"
+def sanskrit_trans_decrypt(text, key=""): return text.replace("[Sanskrit] ", "")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  COLUMNAR CIPHER (helper cho AMSCO, Myszkowski, ...)
+#  COLUMNAR CIPHER (helper)
 # ═══════════════════════════════════════════════════════════════════════════
 
-def columnar_encrypt(text: str, key: str = "KEY") -> str:
+def columnar_encrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = key.upper()
     n = len(key)
@@ -2026,7 +1862,7 @@ def columnar_encrypt(text: str, key: str = "KEY") -> str:
             result.append(text[r * n + col])
     return ''.join(result)
 
-def columnar_decrypt(text: str, key: str = "KEY") -> str:
+def columnar_decrypt(text, key="KEY"):
     if not key: key = "KEY"
     key = key.upper()
     n = len(key)
@@ -2042,7 +1878,7 @@ def columnar_decrypt(text: str, key: str = "KEY") -> str:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  METHOD REGISTRY — 186 phương pháp phân theo 8 nhóm
+#  METHOD REGISTRY — 186 methods theo 8 nhóm
 # ═══════════════════════════════════════════════════════════════════════════
 
 METHODS_REGISTRY = {
@@ -2078,7 +1914,7 @@ METHODS_REGISTRY = {
     'leet':          ('Leet Speak',            leet_encrypt,          leet_decrypt,          'classical'),
     'reverse':       ('Reverse Text',          reverse_encrypt,       reverse_decrypt,       'classical'),
 
-    # ─── NHÓM 2: TOÁN HỌC & SỐ ───
+    # ─── NHÓM 2: TOÁN HỌC ───
     'binary':            ('Binary',              binary_encrypt,            binary_decrypt,            'math'),
     'octal':             ('Octal',               octal_encrypt,             octal_decrypt,             'math'),
     'hex':               ('Hexadecimal',         hex_encrypt,               hex_decrypt,               'math'),
@@ -2208,7 +2044,7 @@ METHODS_REGISTRY = {
     'straddling':    ('Straddling Checkerboard',straddling_encrypt,   straddling_decrypt,    'special'),
     'checkerboard':  ('Checkerboard',          checkerboard_encrypt,  checkerboard_decrypt,  'special'),
 
-    # ─── NHÓM 7: GAME / GIẢI TRÍ ───
+    # ─── NHÓM 7: GAME ───
     'caesarbox':     ('Caesar Box',            caesarbox_encrypt,     caesarbox_decrypt,     'game'),
     'a1z26':         ('A1Z26',                 a1z26_encrypt,         a1z26_decrypt,         'game'),
     'a0z25':         ('A0Z25',                 a0z25_encrypt,         a0z25_decrypt,         'game'),
@@ -2235,7 +2071,7 @@ METHODS_REGISTRY = {
     'mirror':        ('Mirror',                mirror_encrypt,        mirror_decrypt,        'game'),
     'smallcaps':     ('Small Caps',            smallcaps_encrypt,     smallcaps_decrypt,     'game'),
 
-    # ─── NHÓM 8: NGÔN NGỮ & VĂN HÓA ───
+    # ─── NHÓM 8: NGÔN NGỮ ───
     'telex':             ('Vietnamese Telex',      telex_encrypt,            telex_decrypt,            'language'),
     'vni':               ('VNI',                   vni_encrypt,              vni_decrypt,              'language'),
     'viqr':              ('VIQR',                  viqr_encrypt,             viqr_decrypt,             'language'),
@@ -2249,11 +2085,15 @@ METHODS_REGISTRY = {
     'sanskrit_trans':    ('Sanskrit Transliteration', sanskrit_trans_encrypt, sanskrit_trans_decrypt, 'language'),
 }
 
-# ─── Tương thích ngược: METHODS + ONE_WAY + NEED_KEY ───
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  TƯƠNG THÍCH NGƯỢC VỚI APP.PY
+# ═══════════════════════════════════════════════════════════════════════════
+
 METHODS = {k: v[0] for k, v in METHODS_REGISTRY.items()}
 ONE_WAY_METHODS = {k for k, v in METHODS_REGISTRY.items() if v[3] == 'hash'}
+ONE_WAY_ONLY = ONE_WAY_METHODS  # alias cho app.py
 
-# Danh sách method cần key
 NEED_KEY_METHODS = {
     'vigenere','beaufort','autokey','porta','gronsfeld','bifid','trifid',
     'foursquare','twosquare','adfgvx','adfgx','nihilist','bazeries','syllabary',
@@ -2268,7 +2108,6 @@ NEED_KEY_METHODS = {
     'falcon','sphincs',
 }
 
-# Nhóm → tên hiển thị
 GROUP_NAMES = {
     'classical':  '🔤 Cổ điển',
     'math':       '🔢 Toán học & Số',
@@ -2280,74 +2119,78 @@ GROUP_NAMES = {
     'language':   '🌐 Ngôn ngữ & Văn hóa',
 }
 
-# Map method → group
 METHOD_GROUPS = {k: v[3] for k, v in METHODS_REGISTRY.items()}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  HÀM CHÍNH — PROCESS
+#  HÀM XỬ LÝ CHÍNH
 # ═══════════════════════════════════════════════════════════════════════════
 
-def process_text(text: str, method: str, action: str = 'encrypt', key: str = '') -> dict:
+def process(text, method='base64', action='encrypt', key=''):
     """
-    Xử lý mã hóa / giải mã.
-
+    Hàm xử lý mã hóa / giải mã (tương thích app.py cũ).
+    
     Args:
-        text: Văn bản cần xử lý
-        method: Mã phương pháp (vd: 'base64', 'aes128')
+        text: Văn bản
+        method: Mã phương pháp
         action: 'encrypt' hoặc 'decrypt'
-        key: Khóa (nếu cần)
-
+        key: Khóa
+    
     Returns:
-        dict: {'success': bool, 'result': str, 'error': str}
+        str: Kết quả (hoặc thông báo lỗi)
     """
     if not text and action == 'encrypt':
-        return {'success': False, 'error': 'Văn bản trống'}
-
+        return 'Văn bản trống!'
     if method not in METHODS_REGISTRY:
-        return {'success': False, 'error': f'Phương pháp không tồn tại: {method}'}
-
+        return f'Phương pháp không tồn tại: {method}'
+    
     name, enc_fn, dec_fn, group = METHODS_REGISTRY[method]
-
+    
     if action == 'encrypt':
         fn = enc_fn
     else:
         fn = dec_fn
         if method in ONE_WAY_METHODS:
-            return {'success': False, 'error': 'Phương pháp này là mã hóa 1 chiều — không thể giải mã!'}
-
+            return f'PP "{name}" là mã hóa 1 chiều — không thể giải mã!'
+    
     try:
-        result = fn(text, key)
-        return {'success': True, 'result': result, 'method': method, 'name': name}
+        return fn(text, key)
     except Exception as e:
-        return {'success': False, 'error': f'Lỗi xử lý: {str(e)}'}
+        return f'Lỗi: {e}'
 
 
-def get_all_methods() -> dict:
-    """Trả về dict {method_code: name} cho tất cả methods."""
+def process_text(text, method='base64', action='encrypt', key=''):
+    """Alias của process() — trả về dict chi tiết hơn."""
+    if method not in METHODS_REGISTRY:
+        return {'success': False, 'error': f'Phương pháp không tồn tại: {method}'}
+    
+    result = process(text, method, action, key)
+    if result.startswith('Lỗi:') or result.startswith('PP "') or result.startswith('Phương pháp') or result == 'Văn bản trống!':
+        return {'success': False, 'error': result}
+    
+    return {'success': True, 'result': result, 'method': method}
+
+
+def get_all_methods():
     return {k: v[0] for k, v in METHODS_REGISTRY.items()}
 
 
-def get_methods_by_group() -> dict:
-    """Trả về dict {group: {method_code: name}}."""
+def get_methods_by_group():
     result = {}
     for code, (name, _, _, group) in METHODS_REGISTRY.items():
         result.setdefault(group, {})[code] = name
     return result
 
 
-def is_one_way(method: str) -> bool:
-    """Kiểm tra phương pháp có phải 1 chiều không."""
+def is_one_way(method):
     return method in ONE_WAY_METHODS
 
 
-def needs_key(method: str) -> bool:
-    """Kiểm tra phương pháp có cần key không."""
+def needs_key(method):
     return method in NEED_KEY_METHODS
 
 
-def get_method_info(method: str) -> dict:
-    """Lấy thông tin đầy đủ về method."""
+def get_method_info(method):
     if method not in METHODS_REGISTRY:
         return {}
     name, _, _, group = METHODS_REGISTRY[method]
@@ -2362,22 +2205,133 @@ def get_method_info(method: str) -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  DỊCH THUẬT (TRANSLATION)
+# ═══════════════════════════════════════════════════════════════════════════
+
+LANGUAGES = {
+    'vi':    'Tiếng Việt',
+    'en':    'English',
+    'zh-cn': '中文 (简体)',
+    'zh-tw': '中文 (繁體)',
+    'ja':    '日本語',
+    'ko':    '한국어',
+    'fr':    'Français',
+    'es':    'Español',
+    'de':    'Deutsch',
+    'ru':    'Русский',
+    'th':    'ไทย',
+    'it':    'Italiano',
+    'pt':    'Português',
+    'ar':    'العربية',
+    'hi':    'हिन्दी',
+    'id':    'Bahasa Indonesia',
+}
+
+# Dùng deep-translator (ổn định hơn googletrans)
+try:
+    from deep_translator import GoogleTranslator
+    HAS_TRANSLATOR = True
+except ImportError:
+    try:
+        from googletrans import Translator as _GT
+        _gt_translator = _GT()
+        HAS_TRANSLATOR = True
+        HAS_GOOGLETRANS_OLD = True
+    except ImportError:
+        HAS_TRANSLATOR = False
+        HAS_GOOGLETRANS_OLD = False
+        GoogleTranslator = None
+
+
+def detect_language(text):
+    """Phát hiện ngôn ngữ của văn bản (fallback = đoán đơn giản)."""
+    if not text or not text.strip():
+        return 'unknown'
+    try:
+        if HAS_TRANSLATOR:
+            try:
+                from deep_translator import single_detection
+                # deep-translator không có detect built-in miễn phí
+                # → dùng fallback
+                pass
+            except Exception:
+                pass
+    except Exception:
+        pass
+    
+    # Fallback: đoán đơn giản theo ký tự
+    if any('\u4e00' <= c <= '\u9fff' for c in text):
+        return 'zh-cn'
+    if any('\u3040' <= c <= '\u30ff' for c in text):
+        return 'ja'
+    if any('\uac00' <= c <= '\ud7af' for c in text):
+        return 'ko'
+    if any('\u0400' <= c <= '\u04ff' for c in text):
+        return 'ru'
+    if any('\u0e00' <= c <= '\u0e7f' for c in text):
+        return 'th'
+    if any(c in 'ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ' for c in text.lower()):
+        return 'vi'
+    return 'en'
+
+
+def translate(text, source='auto', target='en'):
+    """Dịch văn bản."""
+    if not text or not text.strip():
+        return ''
+    
+    if not HAS_TRANSLATOR:
+        return f'[Chưa cài deep-translator — không dịch được]\n{text}'
+    
+    try:
+        if 'deep_translator' in str(GoogleTranslator):
+            src = 'auto' if source == 'auto' else source
+            result = GoogleTranslator(source=src, target=target).translate(text)
+            return result or text
+        else:
+            # fallback googletrans
+            result = _gt_translator.translate(text, src=source, dest=target)
+            return result.text
+    except Exception as e:
+        raise ValueError(f'Lỗi dịch: {e}')
+
+
+def to_english(text):
+    return translate(text, source='auto', target='en')
+
+
+def to_vietnamese(text):
+    return translate(text, source='auto', target='vi')
+
+
+def auto_translate(text):
+    """Tự động phát hiện ngôn ngữ và dịch sang ngôn ngữ còn lại."""
+    if not text or not text.strip():
+        return {'result': '', 'detected': 'unknown', 'target': 'en'}
+    detected = detect_language(text)
+    target = 'en' if detected == 'vi' else 'vi'
+    try:
+        result = translate(text, source=detected, target=target)
+    except Exception as e:
+        result = f'[Lỗi dịch: {e}]'
+    return {'result': result, 'detected': detected, 'target': target}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  TEST NHANH
 # ═══════════════════════════════════════════════════════════════════════════
 if __name__ == '__main__':
-    print(f"Tổng số methods: {len(METHODS_REGISTRY)}")
-    print(f"Số nhóm: {len(GROUP_NAMES)}")
+    print(f"✅ Tổng số methods: {len(METHODS_REGISTRY)}")
+    print(f"✅ Số nhóm: {len(GROUP_NAMES)}")
     for g, name in GROUP_NAMES.items():
         count = sum(1 for v in METHODS_REGISTRY.values() if v[3] == g)
-        print(f"  {name}: {count} methods")
+        print(f"   {name}: {count} methods")
     print()
     # Test vài method
-    print("Test Atbash:", process_text("Hello", "atbash", "encrypt"))
-    print("Test Base64:", process_text("Hello", "base64", "encrypt") if 'base64' in METHODS_REGISTRY else "N/A")
-    print("Test Morse:", process_text("SOS", "morse", "encrypt"))
-    print("Test DNA:", process_text("Hi", "dna", "encrypt"))
-  # ═══════════════════════════════════════════════════════════════════════════
-  #  ALIAS TƯƠNG THÍCH NGƯỢC (cho app.py)
-  # ═══════════════════════════════════════════════════════════════════════════
-process = process_text
-ONE_WAY_ONLY = ONE_WAY_METHODS
+    print("Test Atbash:", process("Hello", "atbash", "encrypt"))
+    print("Test Morse:", process("SOS", "morse", "encrypt"))
+    print("Test DNA:", process("Hi", "dna", "encrypt"))
+    print("Test Reverse:", process("abcdef", "reverse", "encrypt"))
+    print()
+    print("Test translate:", translate("Hello world", target="vi"))
+    print("Test detect:", detect_language("Xin chào các bạn"))
