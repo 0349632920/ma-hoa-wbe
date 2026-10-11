@@ -1786,39 +1786,121 @@ def domino_decrypt(text, key=""):
 #  NHÓM 8 — NGÔN NGỮ & VĂN HÓA (Language) — 30 methods
 # ═══════════════════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════════════════
+#  TIẾNG VIỆT — TELEX / VNI / VIQR (FULL FIX)
+# ═══════════════════════════════════════════════════════════════════════════
+
+TELEX_MAP = {
+    'a': 'a', 'á': 'as', 'à': 'af', 'ả': 'ar', 'ã': 'ax', 'ạ': 'aj',
+    'ă': 'aw', 'ắ': 'aws', 'ằ': 'awf', 'ẳ': 'awr', 'ẵ': 'awx', 'ặ': 'awj',
+    'â': 'aa', 'ấ': 'aas', 'ầ': 'aaf', 'ẩ': 'aar', 'ẫ': 'aax', 'ậ': 'aaj',
+    'e': 'e', 'é': 'es', 'è': 'ef', 'ẻ': 'er', 'ẽ': 'ex', 'ẹ': 'ej',
+    'ê': 'ee', 'ế': 'ees', 'ề': 'eef', 'ể': 'eer', 'ễ': 'eex', 'ệ': 'eej',
+    'i': 'i', 'í': 'is', 'ì': 'if', 'ỉ': 'ir', 'ĩ': 'ix', 'ị': 'ij',
+    'o': 'o', 'ó': 'os', 'ò': 'of', 'ỏ': 'or', 'õ': 'ox', 'ọ': 'oj',
+    'ô': 'oo', 'ố': 'oos', 'ồ': 'oof', 'ổ': 'oor', 'ỗ': 'oox', 'ộ': 'ooj',
+    'ơ': 'ow', 'ớ': 'ows', 'ờ': 'owf', 'ở': 'owr', 'ỡ': 'owx', 'ợ': 'owj',
+    'u': 'u', 'ú': 'us', 'ù': 'uf', 'ủ': 'ur', 'ũ': 'ux', 'ụ': 'uj',
+    'ư': 'uw', 'ứ': 'uws', 'ừ': 'uwf', 'ử': 'uwr', 'ữ': 'uwx', 'ự': 'uwj',
+    'y': 'y', 'ý': 'ys', 'ỳ': 'yf', 'ỷ': 'yr', 'ỹ': 'yx', 'ỵ': 'yj',
+    'đ': 'dd',
+}
+TELEX_REVERSE = {v: k for k, v in TELEX_MAP.items()}
+TELEX_KEYS = sorted(TELEX_REVERSE.keys(), key=len, reverse=True)
+
 def telex_encrypt(text, key=""):
-    m = {'â':'aa','ê':'ee','ô':'oo','ơ':'ow','ư':'uw','đ':'dd',
-         'ă':'aw','á':'as','à':'af','ả':'ar','ã':'ax','ạ':'aj'}
-    return ''.join(m.get(c.lower(), c) for c in text)
+    result = []
+    for c in text:
+        lower = c.lower()
+        if lower in TELEX_MAP:
+            code = TELEX_MAP[lower]
+            result.append(code.upper() if c.isupper() else code)
+        else:
+            result.append(c)
+    return ''.join(result)
+
 def telex_decrypt(text, key=""):
-    m = {'aa':'â','ee':'ê','oo':'ô','ow':'ơ','uw':'ư','dd':'đ',
-         'aw':'ă','as':'á','af':'à','ar':'ả','ax':'ã','aj':'ạ'}
     result = text
-    for k, v in m.items(): result = result.replace(k, v)
+    for code in TELEX_KEYS:
+        viet_char = TELEX_REVERSE[code]
+        result = result.replace(code.upper(), viet_char.upper())
+        result = result.replace(code, viet_char)
     return result
+
+VNI_MAP = {
+    'a': 'a', 'á': 'a1', 'à': 'a2', 'ả': 'a3', 'ã': 'a4', 'ạ': 'a5',
+    'ă': 'a8', 'ắ': 'a81', 'ằ': 'a82', 'ẳ': 'a83', 'ẵ': 'a84', 'ặ': 'a85',
+    'â': 'a6', 'ấ': 'a61', 'ầ': 'a62', 'ẩ': 'a63', 'ẫ': 'a64', 'ậ': 'a65',
+    'e': 'e', 'é': 'e1', 'è': 'e2', 'ẻ': 'e3', 'ẽ': 'e4', 'ẹ': 'e5',
+    'ê': 'e6', 'ế': 'e61', 'ề': 'e62', 'ể': 'e63', 'ễ': 'e64', 'ệ': 'e65',
+    'i': 'i', 'í': 'i1', 'ì': 'i2', 'ỉ': 'i3', 'ĩ': 'i4', 'ị': 'i5',
+    'o': 'o', 'ó': 'o1', 'ò': 'o2', 'ỏ': 'o3', 'õ': 'o4', 'ọ': 'o5',
+    'ô': 'o6', 'ố': 'o61', 'ồ': 'o62', 'ổ': 'o63', 'ỗ': 'o64', 'ộ': 'o65',
+    'ơ': 'o7', 'ớ': 'o71', 'ờ': 'o72', 'ở': 'o73', 'ỡ': 'o74', 'ợ': 'o75',
+    'u': 'u', 'ú': 'u1', 'ù': 'u2', 'ủ': 'u3', 'ũ': 'u4', 'ụ': 'u5',
+    'ư': 'u7', 'ứ': 'u71', 'ừ': 'u72', 'ử': 'u73', 'ữ': 'u74', 'ự': 'u75',
+    'y': 'y', 'ý': 'y1', 'ỳ': 'y2', 'ỷ': 'y3', 'ỹ': 'y4', 'ỵ': 'y5',
+    'đ': 'd9',
+}
+VNI_REVERSE = {v: k for k, v in VNI_MAP.items()}
+VNI_KEYS = sorted(VNI_REVERSE.keys(), key=len, reverse=True)
 
 def vni_encrypt(text, key=""):
-    m = {'â':'a6','ê':'e6','ô':'o6','ơ':'o7','ư':'u7','đ':'d9',
-         'ă':'a8','á':'a1','à':'a2','ả':'a3','ã':'a4','ạ':'a5'}
-    return ''.join(m.get(c.lower(), c) for c in text)
+    result = []
+    for c in text:
+        lower = c.lower()
+        if lower in VNI_MAP:
+            code = VNI_MAP[lower]
+            result.append(code.upper() if c.isupper() else code)
+        else:
+            result.append(c)
+    return ''.join(result)
+
 def vni_decrypt(text, key=""):
-    m = {'a6':'â','e6':'ê','o6':'ô','o7':'ơ','u7':'ư','d9':'đ',
-         'a8':'ă','a1':'á','a2':'à','a3':'ả','a4':'ã','a5':'ạ'}
     result = text
-    for k, v in m.items(): result = result.replace(k, v)
+    for code in VNI_KEYS:
+        viet_char = VNI_REVERSE[code]
+        result = result.replace(code.upper(), viet_char.upper())
+        result = result.replace(code, viet_char)
     return result
+
+VIQR_MAP = {
+    'a': 'a', 'á': "a'", 'à': 'a`', 'ả': 'a?', 'ã': 'a~', 'ạ': 'a.',
+    'ă': 'a(', 'ắ': "a('", 'ằ': 'a(`', 'ẳ': 'a(?', 'ẵ': 'a(~', 'ặ': 'a(.',
+    'â': 'a^', 'ấ': "a^'", 'ầ': 'a^`', 'ẩ': 'a^?', 'ẫ': 'a^~', 'ậ': 'a^.',
+    'e': 'e', 'é': "e'", 'è': 'e`', 'ẻ': 'e?', 'ẽ': 'e~', 'ẹ': 'e.',
+    'ê': 'e^', 'ế': "e^'", 'ề': 'e^`', 'ể': 'e^?', 'ễ': 'e^~', 'ệ': 'e^.',
+    'i': 'i', 'í': "i'", 'ì': 'i`', 'ỉ': 'i?', 'ĩ': 'i~', 'ị': 'i.',
+    'o': 'o', 'ó': "o'", 'ò': 'o`', 'ỏ': 'o?', 'õ': 'o~', 'ọ': 'o.',
+    'ô': 'o^', 'ố': "o^'", 'ồ': 'o^`', 'ổ': 'o^?', 'ỗ': 'o^~', 'ộ': 'o^.',
+    'ơ': 'o+', 'ớ': "o+'", 'ờ': 'o+`', 'ở': 'o+?', 'ỡ': 'o+~', 'ợ': 'o+.',
+    'u': 'u', 'ú': "u'", 'ù': 'u`', 'ủ': 'u?', 'ũ': 'u~', 'ụ': 'u.',
+    'ư': 'u+', 'ứ': "u+'", 'ừ': 'u+`', 'ử': 'u+?', 'ữ': 'u+~', 'ự': 'u+.',
+    'y': 'y', 'ý': "y'", 'ỳ': 'y`', 'ỷ': 'y?', 'ỹ': 'y~', 'ỵ': 'y.',
+    'đ': 'dd',
+}
+VIQR_REVERSE = {v: k for k, v in VIQR_MAP.items()}
+VIQR_KEYS = sorted(VIQR_REVERSE.keys(), key=len, reverse=True)
 
 def viqr_encrypt(text, key=""):
-    m = {'â':'a^','ê':'e^','ô':'o^','ơ':'o+','ư':'u+','đ':'dd',
-         'ă':'a(','á':"a'",'à':'a`','ả':'a?','ã':'a~','ạ':'a.'}
-    return ''.join(m.get(c.lower(), c) for c in text)
-def viqr_decrypt(text, key=""):
-    m = {'a^':'â','e^':'ê','o^':'ô','o+':'ơ','u+':'ư','dd':'đ',
-         'a(':'ă',"a'":'á','a`':'à','a?':'ả','a~':'ã','a.':'ạ'}
-    result = text
-    for k, v in m.items(): result = result.replace(k, v)
-    return result
+    result = []
+    for c in text:
+        lower = c.lower()
+        if lower in VIQR_MAP:
+            code = VIQR_MAP[lower]
+            result.append(code.upper() if c.isupper() else code)
+        else:
+            result.append(c)
+    return ''.join(result)
 
+def viqr_decrypt(text, key=""):
+    result = text
+    for code in VIQR_KEYS:
+        viet_char = VIQR_REVERSE[code]
+        result = result.replace(code.upper(), viet_char.upper())
+        result = result.replace(code, viet_char)
+    return result
+  
 def pinyin_encrypt(text, key=""): return f"[Pinyin] {text}"
 def pinyin_decrypt(text, key=""): return text.replace("[Pinyin] ", "")
 def romaji_encrypt(text, key=""): return f"[Romaji] {text}"
