@@ -3,14 +3,13 @@ from crypto_utils import (
     process, METHODS, ONE_WAY_ONLY,
     translate, to_english, to_vietnamese, auto_translate, detect_language,
     LANGUAGES,
+    get_methods_by_group, GROUP_NAMES, METHODS_REGISTRY,
 )
 from game_utils import (
-    # Daily / Rewards
     get_daily_challenge, check_rewards, pick_random_method,
     generate_meme_template,
     points_to_level, level_to_next, add_points, update_streak,
     ensure_game_data, init_game_data, REWARDS, MEME_TEMPLATES,
-    # PvP
     create_pvp_room, join_pvp_room, start_pvp_room,
     submit_pvp_answer, get_pvp_room, leave_pvp_room,
     cleanup_old_rooms,
@@ -25,7 +24,6 @@ from game_utils import (
     kick_guest,
     vote_rematch,
     add_match_to_history,
-    # AFK
     heartbeat, check_afk_status, add_afk_warning, get_afk_warnings,
     leave_match,
     check_and_kick_afk,
@@ -538,7 +536,7 @@ def log_activity(username, action, detail=''):
     save_user(username, user)
 
 
-def _format_duration(delta: timedelta) -> str:
+def _format_duration(delta):
     total_seconds = int(delta.total_seconds())
     days = total_seconds // 86400
     hours = (total_seconds % 86400) // 3600
@@ -971,7 +969,7 @@ def acknowledge_warnings():
 
 
 # ============================================================
-# MAIN PAGES
+# MAIN PAGES — ROUTE / ĐÃ SỬA ĐỂ TRUYỀN methods_by_group
 # ============================================================
 @app.route('/')
 @login_required
@@ -987,8 +985,13 @@ def index():
         return redirect(url_for('banned_page', user=username))
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
+
+    # ⭐ TRUYỀN THÊM methods_by_group + group_names CHO MODAL 9 TABS
     return render_template('index.html',
         methods=METHODS,
+        methods_by_group=get_methods_by_group(),
+        group_names=GROUP_NAMES,
+        total_methods=len(METHODS),
         username=user.get('display_name', username),
         real_username=username,
         user_id=user.get('user_id', '—'),
@@ -1127,14 +1130,9 @@ def game_page():
     return render_template('game.html')
 
 
-# ⭐ ROUTE MỚI: TRANG CHƠI PVP RIÊNG
 @app.route('/game/room/<code>/play')
 @login_required
 def pvp_play_page(code):
-    """
-    Trang chơi PvP riêng biệt.
-    URL: /game/room/<code>/play
-    """
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -1148,19 +1146,13 @@ def pvp_play_page(code):
         return redirect(url_for('deleted_page'))
 
     code = code.upper().strip()
-
-    # Kiểm tra phòng có tồn tại
     result = get_pvp_room(code)
     if not result['success']:
         return redirect(url_for('game_page'))
 
     room = result['room']
-
-    # Kiểm tra user có trong phòng không
     if username not in (room['host'], room.get('guest')):
         return redirect(url_for('game_page'))
-
-    # Nếu phòng chưa bắt đầu → về game
     if room['status'] not in ('playing', 'finished'):
         return redirect(url_for('game_page'))
 
@@ -1446,7 +1438,6 @@ def api_pvp_leave():
 def api_pvp_leave_match():
     username = session['username']
 
-    # Hỗ trợ cả JSON và sendBeacon
     try:
         data = request.get_json(silent=True)
         if not data:
@@ -1733,7 +1724,7 @@ def api_pvp_history():
     return jsonify({'success': True, 'history': game.get('match_history', [])})
 
 
-def _save_match_history(room: dict, requestor: str):
+def _save_match_history(room, requestor):
     users = load_users()
     host = room['host']
     guest = room['guest']
@@ -1796,7 +1787,7 @@ def _save_match_history(room: dict, requestor: str):
         save_user(guest, users[guest])
 
 
-def _sanitize_room(room: dict, username: str) -> dict:
+def _sanitize_room(room, username):
     opponent = room["guest"] if room["host"] == username else room["host"]
     is_host = (room["host"] == username)
 
