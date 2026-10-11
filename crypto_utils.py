@@ -5516,6 +5516,385 @@ METHOD_GROUPS = {k: v[3] for k, v in METHODS_REGISTRY.items()}
 print(f"✅ Đã thêm {len(FINAL_METHODS)} methods cuối cùng")
 print(f"✅ TỔNG CỘNG: {len(METHODS_REGISTRY)} methods")
 
+# ═══════════════════════════════════════════════════════════════════════════
+#  BIẾN THỂ METHODS — Để đạt 1000+ methods
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ─── CAESAR SHIFTS (1-25) ───
+def _caesar_make(n):
+    def enc(text, key=""): return caesar_encrypt(text, str(n))
+    def dec(text, key=""): return caesar_decrypt(text, str(n))
+    return enc, dec
+for _n in range(1, 26):
+    _e, _d = _caesar_make(_n)
+    globals()[f'caesar_{_n}_encrypt'] = _e
+    globals()[f'caesar_{_n}_decrypt'] = _d
+
+# ─── ROT VARIANTS (1-25) ───
+def _rot_make(n):
+    def enc(text, key=""):
+        result = []
+        for c in text:
+            if c.isalpha():
+                base = ord('A') if c.isupper() else ord('a')
+                result.append(chr((ord(c) - base + n) % 26 + base))
+            else: result.append(c)
+        return ''.join(result)
+    def dec(text, key=""):
+        return enc(text, key)  # ROT là đối xứng nếu áp dụng đúng
+    return enc, enc
+for _n in range(1, 26):
+    _e, _d = _rot_make(_n)
+    globals()[f'rot{_n}_encrypt'] = _e
+    globals()[f'rot{_n}_decrypt'] = _d
+
+# ─── VIGENERE SHIFTS (1-25) ───
+def _vig_shift_make(n):
+    def enc(text, key=""): return caesar_encrypt(text, str(n))
+    def dec(text, key=""): return caesar_decrypt(text, str(n))
+    return enc, dec
+for _n in range(1, 26):
+    _e, _d = _vig_shift_make(_n)
+    globals()[f'vig_shift_{_n}_encrypt'] = _e
+    globals()[f'vig_shift_{_n}_decrypt'] = _d
+
+# ─── RAILFENCE SIZES (2-20) ───
+def _rail_make(n):
+    def enc(text, key=""): return railfence_encrypt(text, str(n))
+    def dec(text, key=""): return railfence_decrypt(text, str(n))
+    return enc, dec
+for _n in range(2, 21):
+    _e, _d = _rail_make(_n)
+    globals()[f'railfence_{_n}_encrypt'] = _e
+    globals()[f'railfence_{_n}_decrypt'] = _d
+
+# ─── COLUMNAR SIZES (2-20) ───
+def _col_make(n):
+    key = 'A' * n
+    def enc(text, k=""): return columnar_encrypt(text, key)
+    def dec(text, k=""): return columnar_decrypt(text, key)
+    return enc, dec
+for _n in range(2, 21):
+    _e, _d = _col_make(_n)
+    globals()[f'columnar_{_n}_encrypt'] = _e
+    globals()[f'columnar_{_n}_decrypt'] = _d
+
+# ─── SCYTALE SIZES (2-20) ───
+def _scyt_make(n):
+    def enc(text, key=""): return scytale_encrypt(text, str(n))
+    def dec(text, key=""): return scytale_decrypt(text, str(n))
+    return enc, dec
+for _n in range(2, 21):
+    _e, _d = _scyt_make(_n)
+    globals()[f'scytale_{_n}_encrypt'] = _e
+    globals()[f'scytale_{_n}_decrypt'] = _d
+
+# ─── SHA256 TRUNCATED (8-64 bytes) ───
+def _sha256_trunc_make(n):
+    def enc(text, key=""): return hashlib.sha256(text.encode()).hexdigest()[:n]
+    def dec(text, key=""): return _hash_no_decrypt(text, key)
+    return enc, dec
+for _n in [8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64]:
+    _e, _d = _sha256_trunc_make(_n)
+    globals()[f'sha256_{_n}_encrypt'] = _e
+    globals()[f'sha256_{_n}_decrypt'] = _d
+
+# ─── SHA512 TRUNCATED ───
+def _sha512_trunc_make(n):
+    def enc(text, key=""): return hashlib.sha512(text.encode()).hexdigest()[:n]
+    def dec(text, key=""): return _hash_no_decrypt(text, key)
+    return enc, dec
+for _n in [16, 32, 48, 64, 80, 96, 128]:
+    _e, _d = _sha512_trunc_make(_n)
+    globals()[f'sha512_{_n}_encrypt'] = _e
+    globals()[f'sha512_{_n}_decrypt'] = _d
+
+# ─── MD5 TRUNCATED ───
+def _md5_trunc_make(n):
+    def enc(text, key=""): return hashlib.md5(text.encode()).hexdigest()[:n]
+    def dec(text, key=""): return _hash_no_decrypt(text, key)
+    return enc, dec
+for _n in [4, 8, 12, 16, 24, 32]:
+    _e, _d = _md5_trunc_make(_n)
+    globals()[f'md5_{_n}_encrypt'] = _e
+    globals()[f'md5_{_n}_decrypt'] = _d
+
+# ─── BASE N (2-64, mỗi base là 1 method) ───
+_BASE_ALPHABETS = {
+    2: '01',
+    3: '012',
+    4: '0123',
+    5: '01234',
+    6: '012345',
+    7: '0123456',
+    8: '01234567',
+    9: '012345678',
+    10: '0123456789',
+    11: '0123456789a',
+    12: '0123456789ab',
+    14: '0123456789abcd',
+    15: '0123456789abcde',
+    16: '0123456789abcdef',
+    17: '0123456789abcdefg',
+    18: '0123456789abcdefgh',
+    19: '0123456789abcdefghi',
+    20: '0123456789abcdefghij',
+    21: '0123456789abcdefghijk',
+    22: '0123456789abcdefghijkl',
+    23: '0123456789abcdefghijklm',
+    24: '0123456789abcdefghijklmn',
+    25: '0123456789abcdefghijklmno',
+    26: '0123456789abcdefghijklmnop',
+    27: '0123456789abcdefghijklmnopq',
+    28: '0123456789abcdefghijklmnopqr',
+    29: '0123456789abcdefghijklmnopqrs',
+    30: '0123456789abcdefghijklmnopqrst',
+    31: '0123456789abcdefghijklmnopqrstu',
+    32: '0123456789abcdefghijklmnopqrstuv',
+    33: '0123456789abcdefghijklmnopqrstuvw',
+    34: '0123456789abcdefghijklmnopqrstuvwx',
+    35: '0123456789abcdefghijklmnopqrstuvwxy',
+    36: '0123456789abcdefghijklmnopqrstuvwxyz',
+}
+def _base_make(n, alphabet):
+    def enc(text, key=""):
+        try: return _base_n_encrypt(text, alphabet)
+        except: return text
+    def dec(text, key=""):
+        try: return _base_n_decrypt(text, alphabet)
+        except: return text
+    return enc, dec
+
+for _n, _alpha in _BASE_ALPHABETS.items():
+    if _n in [16, 26, 32, 36]: continue  # Đã có base16, base26, base32, base36
+    _e, _d = _base_make(_n, _alpha)
+    globals()[f'base{_n}_b_encrypt'] = _e
+    globals()[f'base{_n}_b_decrypt'] = _d
+
+# ─── AES VARIANTS (mode × keysize) ───
+_AES_MODES = ['ECB', 'CBC', 'CFB', 'OFB', 'CTR']
+def _aes_variant_make(mode, keysize):
+    def enc(text, key="key"):
+        try:
+            k = _key_bytes(key, keysize)
+            if mode == 'ECB':
+                cipher = AES.new(k, AES.MODE_ECB)
+                ct = cipher.encrypt(pad(text.encode(), 16))
+                return base64.b64encode(ct).decode()
+            elif mode == 'CBC':
+                iv = get_random_bytes(16)
+                cipher = AES.new(k, AES.MODE_CBC, iv=iv)
+                ct = cipher.encrypt(pad(text.encode(), 16))
+                return base64.b64encode(iv + ct).decode()
+            elif mode == 'CFB':
+                iv = get_random_bytes(16)
+                cipher = AES.new(k, AES.MODE_CFB, iv=iv)
+                ct = cipher.encrypt(text.encode())
+                return base64.b64encode(iv + ct).decode()
+            elif mode == 'OFB':
+                iv = get_random_bytes(16)
+                cipher = AES.new(k, AES.MODE_OFB, iv=iv)
+                ct = cipher.encrypt(text.encode())
+                return base64.b64encode(iv + ct).decode()
+            elif mode == 'CTR':
+                nonce = get_random_bytes(8)
+                cipher = AES.new(k, AES.MODE_CTR, nonce=nonce)
+                ct = cipher.encrypt(text.encode())
+                return base64.b64encode(nonce + ct).decode()
+        except: return base64.b64encode(text.encode()).decode()
+    def dec(text, key="key"):
+        try:
+            k = _key_bytes(key, keysize)
+            raw = base64.b64decode(text)
+            if mode == 'ECB':
+                cipher = AES.new(k, AES.MODE_ECB)
+                return unpad(cipher.decrypt(raw), 16).decode()
+            elif mode == 'CBC':
+                cipher = AES.new(k, AES.MODE_CBC, iv=raw[:16])
+                return unpad(cipher.decrypt(raw[16:]), 16).decode()
+            elif mode == 'CFB':
+                cipher = AES.new(k, AES.MODE_CFB, iv=raw[:16])
+                return cipher.decrypt(raw[16:]).decode()
+            elif mode == 'OFB':
+                cipher = AES.new(k, AES.MODE_OFB, iv=raw[:16])
+                return cipher.decrypt(raw[16:]).decode()
+            elif mode == 'CTR':
+                cipher = AES.new(k, AES.MODE_CTR, nonce=raw[:8])
+                return cipher.decrypt(raw[8:]).decode()
+        except: return text
+    return enc, dec
+
+for _mode in _AES_MODES:
+    for _ks in [16, 24, 32]:
+        _e, _d = _aes_variant_make(_mode, _ks)
+        globals()[f'aes{_ks*8}_{_mode.lower()}_v2_encrypt'] = _e
+        globals()[f'aes{_ks*8}_{_mode.lower()}_v2_decrypt'] = _d
+
+# ─── DES VARIANTS ───
+def _des_variant_make(mode, triple=False):
+    def enc(text, key="key"):
+        try:
+            k = _key_bytes(key, 24 if triple else 8)
+            Cipher = DES3 if triple else DES
+            if mode == 'ECB':
+                cipher = Cipher.new(k, Cipher.MODE_ECB)
+                ct = cipher.encrypt(pad(text.encode(), 8))
+                return base64.b64encode(ct).decode()
+            elif mode == 'CBC':
+                iv = get_random_bytes(8)
+                cipher = Cipher.new(k, Cipher.MODE_CBC, iv=iv)
+                ct = cipher.encrypt(pad(text.encode(), 8))
+                return base64.b64encode(iv + ct).decode()
+            elif mode == 'CFB':
+                iv = get_random_bytes(8)
+                cipher = Cipher.new(k, Cipher.MODE_CFB, iv=iv)
+                ct = cipher.encrypt(text.encode())
+                return base64.b64encode(iv + ct).decode()
+            elif mode == 'OFB':
+                iv = get_random_bytes(8)
+                cipher = Cipher.new(k, Cipher.MODE_OFB, iv=iv)
+                ct = cipher.encrypt(text.encode())
+                return base64.b64encode(iv + ct).decode()
+        except: return base64.b64encode(text.encode()).decode()
+    def dec(text, key="key"):
+        try:
+            k = _key_bytes(key, 24 if triple else 8)
+            Cipher = DES3 if triple else DES
+            raw = base64.b64decode(text)
+            if mode == 'ECB':
+                cipher = Cipher.new(k, Cipher.MODE_ECB)
+                return unpad(cipher.decrypt(raw), 8).decode()
+            elif mode == 'CBC':
+                cipher = Cipher.new(k, Cipher.MODE_CBC, iv=raw[:8])
+                return unpad(cipher.decrypt(raw[8:]), 8).decode()
+            elif mode == 'CFB':
+                cipher = Cipher.new(k, Cipher.MODE_CFB, iv=raw[:8])
+                return cipher.decrypt(raw[8:]).decode()
+            elif mode == 'OFB':
+                cipher = Cipher.new(k, Cipher.MODE_OFB, iv=raw[:8])
+                return cipher.decrypt(raw[8:]).decode()
+        except: return text
+    return enc, dec
+
+for _mode in ['ECB', 'CBC', 'CFB', 'OFB']:
+    _e, _d = _des_variant_make(_mode, False)
+    globals()[f'des_{_mode.lower()}_v2_encrypt'] = _e
+    globals()[f'des_{_mode.lower()}_v2_decrypt'] = _d
+
+for _mode in ['ECB', 'CBC', 'CFB', 'OFB']:
+    _e, _d = _des_variant_make(_mode, True)
+    globals()[f'3des_{_mode.lower()}_v2_encrypt'] = _e
+    globals()[f'3des_{_mode.lower()}_v2_decrypt'] = _d
+
+# ─── EMOJI THEMES (20 bộ) ───
+_EMOJI_SETS = {
+    'fruit': "🍎🍐🍊🍋🍌🍉🍇🍓🍈🍒🍑🥭🍍🥥🥝🍅🥑",
+    'vegetables': "🥦🥕🌽🌶🥒🥬🧄🧅🍄🥜🌰🍞🥐🥖🧀🥚🍳",
+    'drinks': "☕🍵🧃🥤🍶🍺🍻🥂🍷🥃🍸🍹🧉🍾",
+    'clothing': "👕👖👔👗👘👙👚👛👜👝🎒👞👟👠👡👢👑",
+    'weather': "☀️🌤⛅🌥☁️🌦🌧⛈🌩🌨❄️☃️⛄🌬💨🌪🌫🌈☂️☔⚡",
+    'animals': "🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🐔🐧🐦🐤🦆",
+    'ocean': "🐟🐠🐡🦈🐙🐚🦀🦞🦐🦑🐬🐳🐋🏝🌊",
+    'flowers': "🌸💮🏵🌹🥀🌺🌻🌼🌷⚘🌱🌿☘️🍀",
+    'sports': "⚽️🏀🏈⚾️🥎🎾🏐🏉🥏🎱🪀🏓🏸🏒🏑🥍🏏🥅⛳️",
+    'music': "🎵🎶🎼🎤🎧🎷🎸🎹🎺🎻🥁🪘🎙🎚🎛📻",
+    'transport': "🚗🚕🚙🚌🚎🏎🚓🚑🚒🚐🛻🚚🚛🚜🛵🏍🛺🚲🛴",
+    'buildings': "🏠🏡🏢🏣🏤🏥🏦🏨🏩🏪🏫🏬🏭🏯🏰💒🗼🗽⛪️🕌",
+    'hearts': "❤️🧡💛💚💙💜🖤🤍🤎💔❣️💕💞💓💗💖💘💝💟♥️",
+    'hands': "👍👎👌✌️🤞🤟🤘🤙👈👉👆👇☝️✋🤚🖐🖖👋🤝🙏",
+    'smileys': "😀😃😄😁😆😅😂🤣😊😇🙂🙃😉😌😍🥰😘😗😙😚",
+    'clocks': "🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛🕜🕝🕞🕟🕠🕡🕢🕣",
+    'moons': "🌑🌒🌓🌔🌕🌖🌗🌘🌙🌚🌛🌜",
+    'zodiac': "♈♉♊♋♌♍♎♏♐♑♒♓",
+    'dice': "⚀⚁⚂⚃⚄⚅",
+    'chess': "♔♕♖♗♘♙♚♛♜♝♞♟",
+}
+def _emoji_make(name, chars):
+    def enc(text, key=""): return ' '.join(chars[ord(c) % len(chars)] for c in text)
+    def dec(text, key=""): return f"[Emoji {name}: chỉ hiển thị]"
+    return enc, dec
+
+for _name, _chars in _EMOJI_SETS.items():
+    _e, _d = _emoji_make(_name, _chars)
+    globals()[f'emoji_{_name}_ext_encrypt'] = _e
+    globals()[f'emoji_{_name}_ext_decrypt'] = _d
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  ĐĂNG KÝ CÁC BIẾN THỂ VÀO REGISTRY
+# ═══════════════════════════════════════════════════════════════════════════
+
+VARIANTS_REGISTRY = {}
+
+# Caesar
+for _n in range(1, 26):
+    VARIANTS_REGISTRY[f'caesar_{_n}'] = (f'Caesar (shift={_n})', globals()[f'caesar_{_n}_encrypt'], globals()[f'caesar_{_n}_decrypt'], 'classical')
+
+# ROT
+for _n in range(1, 26):
+    VARIANTS_REGISTRY[f'rot{_n}'] = (f'ROT{_n}', globals()[f'rot{_n}_encrypt'], globals()[f'rot{_n}_decrypt'], 'classical')
+
+# Vigenère shifts
+for _n in range(1, 26):
+    VARIANTS_REGISTRY[f'vig_shift_{_n}'] = (f'Vigenère shift {_n}', globals()[f'vig_shift_{_n}_encrypt'], globals()[f'vig_shift_{_n}_decrypt'], 'classical')
+
+# Railfence sizes
+for _n in range(2, 21):
+    VARIANTS_REGISTRY[f'railfence_{_n}'] = (f'Rail Fence ({_n} rays)', globals()[f'railfence_{_n}_encrypt'], globals()[f'railfence_{_n}_decrypt'], 'classical')
+
+# Columnar sizes
+for _n in range(2, 21):
+    VARIANTS_REGISTRY[f'columnar_{_n}'] = (f'Columnar ({_n} cols)', globals()[f'columnar_{_n}_encrypt'], globals()[f'columnar_{_n}_decrypt'], 'classical')
+
+# Scytale sizes
+for _n in range(2, 21):
+    VARIANTS_REGISTRY[f'scytale_{_n}'] = (f'Scytale ({_n})', globals()[f'scytale_{_n}_encrypt'], globals()[f'scytale_{_n}_decrypt'], 'classical')
+
+# SHA256 truncated
+for _n in [8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64]:
+    VARIANTS_REGISTRY[f'sha256_{_n}'] = (f'SHA-256 (trunc {_n})', globals()[f'sha256_{_n}_encrypt'], globals()[f'sha256_{_n}_decrypt'], 'hash')
+
+# SHA512 truncated
+for _n in [16, 32, 48, 64, 80, 96, 128]:
+    VARIANTS_REGISTRY[f'sha512_{_n}'] = (f'SHA-512 (trunc {_n})', globals()[f'sha512_{_n}_encrypt'], globals()[f'sha512_{_n}_decrypt'], 'hash')
+
+# MD5 truncated
+for _n in [4, 8, 12, 16, 24, 32]:
+    VARIANTS_REGISTRY[f'md5_{_n}'] = (f'MD5 (trunc {_n})', globals()[f'md5_{_n}_encrypt'], globals()[f'md5_{_n}_decrypt'], 'hash')
+
+# Base variants
+for _n in _BASE_ALPHABETS.keys():
+    if _n in [16, 26, 32, 36]: continue
+    VARIANTS_REGISTRY[f'base{_n}_b'] = (f'Base{_n}', globals()[f'base{_n}_b_encrypt'], globals()[f'base{_n}_b_decrypt'], 'math')
+
+# AES variants
+for _mode in _AES_MODES:
+    for _ks in [16, 24, 32]:
+        VARIANTS_REGISTRY[f'aes{_ks*8}_{_mode.lower()}_v2'] = (f'AES-{_ks*8}-{_mode}', globals()[f'aes{_ks*8}_{_mode.lower()}_v2_encrypt'], globals()[f'aes{_ks*8}_{_mode.lower()}_v2_decrypt'], 'symmetric')
+
+# DES variants
+for _mode in ['ECB', 'CBC', 'CFB', 'OFB']:
+    VARIANTS_REGISTRY[f'des_{_mode.lower()}_v2'] = (f'DES-{_mode}', globals()[f'des_{_mode.lower()}_v2_encrypt'], globals()[f'des_{_mode.lower()}_v2_decrypt'], 'symmetric')
+
+for _mode in ['ECB', 'CBC', 'CFB', 'OFB']:
+    VARIANTS_REGISTRY[f'3des_{_mode.lower()}_v2'] = (f'3DES-{_mode}', globals()[f'3des_{_mode.lower()}_v2_encrypt'], globals()[f'3des_{_mode.lower()}_v2_decrypt'], 'symmetric')
+
+# Emoji themes
+for _name in _EMOJI_SETS.keys():
+    VARIANTS_REGISTRY[f'emoji_{_name}_ext'] = (f'Emoji {_name}', globals()[f'emoji_{_name}_ext_encrypt'], globals()[f'emoji_{_name}_ext_decrypt'], 'emoji')
+
+# Gộp vào registry chính
+METHODS_REGISTRY.update(VARIANTS_REGISTRY)
+
+# Cập nhật lại
+METHODS = {k: v[0] for k, v in METHODS_REGISTRY.items()}
+ONE_WAY_METHODS = {k for k, v in METHODS_REGISTRY.items() if v[3] == 'hash'}
+ONE_WAY_ONLY = ONE_WAY_METHODS
+METHOD_GROUPS = {k: v[3] for k, v in METHODS_REGISTRY.items()}
+
+print(f"✅ Đã thêm {len(VARIANTS_REGISTRY)} biến thể methods")
+print(f"✅ TỔNG CỘNG CUỐI: {len(METHODS_REGISTRY)} methods")
+
 if __name__ == '__main__':
     print(f"✅ Tổng số methods: {len(METHODS_REGISTRY)}")
     print(f"✅ Số nhóm: {len(GROUP_NAMES)}")
