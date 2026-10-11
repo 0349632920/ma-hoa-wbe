@@ -25,7 +25,7 @@ from game_utils import (
     kick_guest,
     vote_rematch,
     add_match_to_history,
-    # ⏰ AFK
+    # AFK
     heartbeat, check_afk_status, add_afk_warning, get_afk_warnings,
     leave_match,
     check_and_kick_afk,
@@ -1127,6 +1127,49 @@ def game_page():
     return render_template('game.html')
 
 
+# ⭐ ROUTE MỚI: TRANG CHƠI PVP RIÊNG
+@app.route('/game/room/<code>/play')
+@login_required
+def pvp_play_page(code):
+    """
+    Trang chơi PvP riêng biệt.
+    URL: /game/room/<code>/play
+    """
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    code = code.upper().strip()
+
+    # Kiểm tra phòng có tồn tại
+    result = get_pvp_room(code)
+    if not result['success']:
+        return redirect(url_for('game_page'))
+
+    room = result['room']
+
+    # Kiểm tra user có trong phòng không
+    if username not in (room['host'], room.get('guest')):
+        return redirect(url_for('game_page'))
+
+    # Nếu phòng chưa bắt đầu → về game
+    if room['status'] not in ('playing', 'finished'):
+        return redirect(url_for('game_page'))
+
+    return render_template('pvp_play.html',
+        room_code=code,
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+
 @app.route('/api/game/leaderboard')
 @login_required
 def api_leaderboard():
@@ -1402,11 +1445,35 @@ def api_pvp_leave():
 @login_required
 def api_pvp_leave_match():
     username = session['username']
-    data = request.get_json()
+
+    # Hỗ trợ cả JSON và sendBeacon
+    try:
+        data = request.get_json(silent=True)
+        if not data:
+            raw = request.get_data(as_text=True)
+            if raw:
+                import json as _json
+                data = _json.loads(raw)
+    except Exception:
+        data = {}
+
+    if not data:
+        data = request.form.to_dict() or {}
+
     code = (data.get('code') or '').strip().upper()
-    result = leave_match(code, username)
+    reason = (data.get('reason') or 'manual').strip()
+
+    if not code:
+        return jsonify({'success': False, 'error': 'Thiếu code!'}), 400
+
+    result = leave_match(code, username, reason)
+
     if result.get('left') and result.get('room'):
-        result['room'] = _sanitize_room(result['room'], username)
+        room = result['room']
+        if room.get('status') == 'finished':
+            _save_match_history(room, username)
+        result['room'] = _sanitize_room(room, username)
+
     return jsonify(result)
 
 
@@ -1678,13 +1745,54 @@ def _save_match_history(room: dict, requestor: str):
     guest_wins = room['round_wins'].get(guest, 0)
     host_result = 'win' if host_wins > guest_wins else ('loss' if host_wins < guest_wins else 'draw')
     guest_result = 'win' if guest_wins > host_wins else ('loss' if guest_wins < host_wins else 'draw')
+
+    left_user = room.get('left_user')
+    left_reason = room.get('left_reason', 'manual')
+
     if host in users:
-        add_match_to_history(users[host], room['guest_display'],
-                             host_score, guest_score, host_wins, guest_wins, host_result)
+        entry = {
+            "opponent": room.get('guest_display', 'Đối thủ'),
+            "my_score": host_score, "opp_score": guest_score,
+            "my_rounds": host_wins, "opp_rounds": guest_wins,
+            "result": host_result,
+            "time": datetime.now().isoformat(),
+        }
+        if left_user == guest:
+            entry["reason"] = f"opponent_{left_reason}"
+        elif left_user == host:
+            entry["reason"] = left_reason
+        game = ensure_game_data(users[host])
+        history = game.get("match_history", [])
+        history.insert(0, entry)
+        game["match_history"] = history[:20]
+        stats = game.setdefault("pvp_stats", {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0})
+        if host_result == 'win': stats["wins"] = stats.get("wins", 0) + 1
+        elif host_result == 'loss': stats["losses"] = stats.get("losses", 0) + 1
+        else: stats["draws"] = stats.get("draws", 0) + 1
+        stats["total_matches"] = stats.get("total_matches", 0) + 1
         save_user(host, users[host])
+
     if guest in users:
-        add_match_to_history(users[guest], room['host_display'],
-                             guest_score, host_score, guest_wins, host_wins, guest_result)
+        entry = {
+            "opponent": room.get('host_display', 'Đối thủ'),
+            "my_score": guest_score, "opp_score": host_score,
+            "my_rounds": guest_wins, "opp_rounds": host_wins,
+            "result": guest_result,
+            "time": datetime.now().isoformat(),
+        }
+        if left_user == host:
+            entry["reason"] = f"opponent_{left_reason}"
+        elif left_user == guest:
+            entry["reason"] = left_reason
+        game = ensure_game_data(users[guest])
+        history = game.get("match_history", [])
+        history.insert(0, entry)
+        game["match_history"] = history[:20]
+        stats = game.setdefault("pvp_stats", {"wins": 0, "losses": 0, "draws": 0, "total_matches": 0})
+        if guest_result == 'win': stats["wins"] = stats.get("wins", 0) + 1
+        elif guest_result == 'loss': stats["losses"] = stats.get("losses", 0) + 1
+        else: stats["draws"] = stats.get("draws", 0) + 1
+        stats["total_matches"] = stats.get("total_matches", 0) + 1
         save_user(guest, users[guest])
 
 
@@ -1715,6 +1823,7 @@ def _sanitize_room(room: dict, username: str) -> dict:
         "afk_kick_info": room.get("afk_kick_info"),
         "left_user": room.get("left_user"),
         "left_display": room.get("left_display"),
+        "left_reason": room.get("left_reason"),
     }
 
     round_idx = room["current_round"]
