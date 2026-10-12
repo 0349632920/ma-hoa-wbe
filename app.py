@@ -333,6 +333,7 @@ def seed_accounts():
                 'warnings': [],
                 'ban_info': None,
                 'delete_info': None,
+                'game_ban': None,                       # ⭐ MỚI
                 'activity_log': [{'action': 'seed', 'detail': f'Tạo tự động — ID: {user_id}', 'time': now}],
                 'suspicious_score': 0,
                 'warnings_shown': True,
@@ -379,6 +380,7 @@ def init_super_admin():
             'warnings': [],
             'ban_info': None,
             'delete_info': None,
+            'game_ban': None,                            # ⭐ MỚI
             'activity_log': [{'action': 'system', 'detail': f'Super Admin — ID: {user_id}', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
@@ -413,6 +415,8 @@ def init_super_admin():
         user['protected'] = True; changed = True
     if 'game' not in user:
         user['game'] = {}; changed = True
+    if 'game_ban' not in user:
+        user['game_ban'] = None; changed = True
 
     defaults = {'created_at': now, 'last_login': None, 'login_count': 0,
                 'history': [], 'warnings': [], 'ban_info': None,
@@ -534,6 +538,95 @@ def _format_duration(delta):
 
 
 # ============================================================
+# ⭐ GAME BAN — KIỂM TRA & XỬ LÝ (MỚI)
+# ============================================================
+def is_game_banned(user):
+    """Kiểm tra user có bị cấm chơi game không.
+    Trả về (True, game_ban_dict) hoặc (False, None)."""
+    if not user:
+        return False, None
+
+    gb = user.get('game_ban')
+    if not gb or not gb.get('is_banned'):
+        return False, None
+
+    # Nếu là cấm tạm thời → kiểm tra hết hạn
+    if gb.get('is_temp'):
+        ban_until = gb.get('ban_until')
+        if ban_until:
+            try:
+                if datetime.now() >= datetime.fromisoformat(ban_until):
+                    return False, None
+            except Exception:
+                pass
+
+    return True, gb
+
+
+def clear_expired_game_ban(username):
+    """Nếu user có game_ban đã hết hạn → xóa khỏi DB."""
+    users = load_users()
+    if username not in users:
+        return False
+
+    user = users[username]
+    gb = user.get('game_ban')
+
+    if not gb or not gb.get('is_banned'):
+        return False
+    if not gb.get('is_temp'):
+        return False
+
+    ban_until = gb.get('ban_until')
+    if not ban_until:
+        return False
+
+    try:
+        if datetime.now() >= datetime.fromisoformat(ban_until):
+            user['game_ban'] = None
+            save_user(username, user)
+            print(f"🔓 Auto-unban game: {username} (hết hạn lúc {ban_until})")
+            return True
+    except Exception as e:
+        print(f"⚠️ Lỗi clear_expired_game_ban {username}: {e}")
+
+    return False
+
+
+def check_and_auto_unban_game(username):
+    """Tự clear game_ban hết hạn, trả về user dict MỚI NHẤT."""
+    clear_expired_game_ban(username)
+    users = load_users()
+    return users.get(username, {})
+
+
+def auto_unban_expired_game():
+    """Quét toàn bộ users, clear game_ban đã hết hạn (chạy lúc startup)."""
+    users = load_users()
+    now = datetime.now()
+    count = 0
+    for username, user in users.items():
+        gb = user.get('game_ban')
+        if not gb or not gb.get('is_banned'):
+            continue
+        if not gb.get('is_temp'):
+            continue
+        ban_until = gb.get('ban_until')
+        if not ban_until:
+            continue
+        try:
+            if now >= datetime.fromisoformat(ban_until):
+                user['game_ban'] = None
+                save_user(username, user)
+                count += 1
+                print(f"🔓 Auto-unban game: {username}")
+        except Exception as e:
+            print(f"⚠️ Lỗi auto_unban_game {username}: {e}")
+    if count:
+        print(f"📊 Auto game-unban: {count} user")
+
+
+# ============================================================
 # DECORATORS
 # ============================================================
 def login_required(f):
@@ -637,6 +730,7 @@ def register():
             'warnings': [],
             'ban_info': None,
             'delete_info': None,
+            'game_ban': None,                       # ⭐ MỚI
             'activity_log': [{'action': 'register', 'detail': f'Đăng ký — ID: {user_id}', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
@@ -1193,6 +1287,21 @@ def game_page():
         return redirect(url_for('banned_page', user=username))
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
+
+    # ⭐ Check cấm game (tự clear nếu hết hạn)
+    user = check_and_auto_unban_game(username)
+    banned, gb = is_game_banned(user)
+    if banned and not is_super_admin(username):
+        return render_template('game_banned.html',
+            username=user.get('display_name', username),
+            user_id=user.get('user_id', '—'),
+            reason=gb.get('reason', 'Vi phạm quy định game'),
+            banned_at=gb.get('banned_at', '—'),
+            banned_by=gb.get('banned_by', 'Admin'),
+            is_temp=gb.get('is_temp', False),
+            ban_until=gb.get('ban_until'),
+            duration_label=gb.get('duration_label', 'Vĩnh viễn'))
+
     return render_template('game.html',
         username=user.get('display_name', username),
         user_id=user.get('user_id', '—'))
@@ -1215,6 +1324,12 @@ def game_guess_page():
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
 
+    # ⭐ Check cấm game
+    user = check_and_auto_unban_game(username)
+    banned, gb = is_game_banned(user)
+    if banned and not is_super_admin(username):
+        return redirect(url_for('game_page'))
+
     session['guess_secret'] = random.randint(1, 100)
     session['guess_count'] = 0
     return render_template('game_guess.html',
@@ -1229,6 +1344,17 @@ def api_guess_check():
     username = session.get('username', '')
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    # ⭐ Check cấm game
+    user = check_and_auto_unban_game(username)
+    banned, gb = is_game_banned(user)
+    if banned and not is_super_admin(username):
+        return jsonify({
+            'success': False, 'game_banned': True,
+            'error': 'Bạn đã bị cấm chơi game!',
+            'reason': gb.get('reason', ''),
+            'redirect': '/game'
+        }), 403
 
     data = request.get_json() or {}
     try:
@@ -1305,6 +1431,12 @@ def game_snake_page():
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
 
+    # ⭐ Check cấm game
+    user = check_and_auto_unban_game(username)
+    banned, gb = is_game_banned(user)
+    if banned and not is_super_admin(username):
+        return redirect(url_for('game_page'))
+
     return render_template('game_snake.html',
         username=user.get('display_name', username),
         user_id=user.get('user_id', '—'))
@@ -1317,6 +1449,17 @@ def api_snake_score():
     username = session.get('username', '')
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    # ⭐ Check cấm game
+    user = check_and_auto_unban_game(username)
+    banned, gb = is_game_banned(user)
+    if banned and not is_super_admin(username):
+        return jsonify({
+            'success': False, 'game_banned': True,
+            'error': 'Bạn đã bị cấm chơi game!',
+            'reason': gb.get('reason', ''),
+            'redirect': '/game'
+        }), 403
 
     data = request.get_json() or {}
     try:
@@ -1356,6 +1499,17 @@ def api_snake_best():
     username = session.get('username', '')
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    # ⭐ Check cấm game
+    user = check_and_auto_unban_game(username)
+    banned, gb = is_game_banned(user)
+    if banned and not is_super_admin(username):
+        return jsonify({
+            'success': False, 'game_banned': True,
+            'error': 'Bạn đã bị cấm chơi game!',
+            'reason': gb.get('reason', ''),
+            'redirect': '/game'
+        }), 403
 
     game = users[username].get('game', {})
     return jsonify({'success': True, 'best': game.get('snake_best', 0)})
@@ -1430,6 +1584,8 @@ def admin_users():
             'suspicious_score': data.get('suspicious_score', 0),
             'ban_info': data.get('ban_info'),
             'delete_info': data.get('delete_info'),
+            'game_ban': data.get('game_ban'),                                       # ⭐ MỚI
+            'is_game_banned': bool(data.get('game_ban') and data.get('game_ban', {}).get('is_banned')),  # ⭐ MỚI
             'protected': data.get('protected', False),
             'is_super_admin': is_super_admin(username),
             'can_ban_1_day': len(data.get('warnings', [])) >= (MAX_WARN_BEFORE_BAN_OPTION - 1)
@@ -1633,6 +1789,7 @@ def admin_user_detail(username):
             'warnings': user.get('warnings', []),
             'ban_info': user.get('ban_info'),
             'delete_info': user.get('delete_info'),
+            'game_ban': user.get('game_ban'),                        # ⭐ MỚI
             'activity_log': user.get('activity_log', [])[:20],
             'history_count': len(user.get('history', [])),
             'suspicious_score': user.get('suspicious_score', 0),
@@ -1652,9 +1809,12 @@ def admin_stats():
     pending_delete = sum(1 for u in users.values() if u.get('status') == 'pending_delete')
     admins = sum(1 for u in users.values() if u.get('role') in ('admin', 'super_admin'))
     suspicious = sum(1 for u in users.values() if u.get('suspicious_score', 0) >= WARN_THRESHOLD)
+    game_banned = sum(1 for u in users.values()
+                      if u.get('game_ban') and u.get('game_ban', {}).get('is_banned'))   # ⭐ MỚI
     return jsonify({'success': True, 'stats': {
         'total': total, 'active': active, 'warned': warned, 'banned': banned,
-        'pending_delete': pending_delete, 'admins': admins, 'suspicious': suspicious
+        'pending_delete': pending_delete, 'admins': admins, 'suspicious': suspicious,
+        'game_banned': game_banned                                                       # ⭐ MỚI
     }})
 
 
@@ -1818,6 +1978,250 @@ def admin_seed():
                         'total_users': len(users)})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+# ============================================================
+# ⭐ ADMIN — QUẢN LÝ CẤM GAME (MỚI)
+# ============================================================
+GAME_BAN_DURATIONS = {
+    '1h':     ('1 giờ',    timedelta(hours=1)),
+    '6h':     ('6 giờ',    timedelta(hours=6)),
+    '12h':    ('12 giờ',   timedelta(hours=12)),
+    '1day':   ('1 ngày',   timedelta(days=1)),
+    '3days':  ('3 ngày',   timedelta(days=3)),
+    '7days':  ('7 ngày',   timedelta(days=7)),
+    '30days': ('30 ngày',  timedelta(days=30)),
+}
+
+
+@app.route('/admin/game-ban')
+@admin_required
+def admin_game_ban_page():
+    return render_template('admin_game_ban.html',
+        username=session['username'],
+        is_super_admin=is_super_admin(session['username']))
+
+
+@app.route('/api/admin/game-ban', methods=['POST'])
+@super_admin_required
+def admin_game_ban():
+    """Cấm 1 hoặc nhiều user chơi game."""
+    try:
+        data = request.get_json() or {}
+        targets = data.get('usernames', [])
+        if isinstance(targets, str):
+            targets = [targets]
+        reason = (data.get('reason') or '').strip() or 'Vi phạm quy định game'
+        duration = data.get('duration', 'permanent')
+        custom_value = data.get('custom_value')
+        custom_unit = data.get('custom_unit', 'hours')
+
+        if not targets:
+            return jsonify({'success': False, 'error': 'Chưa chọn user nào!'}), 400
+
+        delta = None
+        is_temp = False
+        duration_label = 'Vĩnh viễn'
+
+        if duration == 'permanent':
+            is_temp = False
+            duration_label = 'Vĩnh viễn'
+        elif duration in GAME_BAN_DURATIONS:
+            duration_label, delta = GAME_BAN_DURATIONS[duration]
+            is_temp = True
+        elif duration == 'custom':
+            try:
+                custom_value = int(custom_value)
+            except (TypeError, ValueError):
+                return jsonify({'success': False, 'error': 'Giá trị thời gian không hợp lệ!'}), 400
+            if custom_value <= 0 or custom_value > 3650:
+                return jsonify({'success': False, 'error': 'Thời gian phải từ 1–3650!'}), 400
+            if custom_unit == 'minutes':
+                delta = timedelta(minutes=custom_value)
+                duration_label = f'{custom_value} phút'
+            elif custom_unit == 'hours':
+                delta = timedelta(hours=custom_value)
+                duration_label = f'{custom_value} giờ'
+            elif custom_unit == 'days':
+                delta = timedelta(days=custom_value)
+                duration_label = f'{custom_value} ngày'
+            else:
+                return jsonify({'success': False, 'error': 'Đơn vị không hợp lệ!'}), 400
+            is_temp = True
+        else:
+            return jsonify({'success': False, 'error': f'Thời gian không hợp lệ: {duration}'}), 400
+
+        users = load_users()
+        now = datetime.now()
+        banned_list = []
+        skipped_list = []
+
+        for target in targets:
+            target = (target or '').strip()
+            if not target:
+                continue
+            if target not in users:
+                skipped_list.append({'username': target, 'reason': 'Không tồn tại'})
+                continue
+            if usernames_match(target, session['username']):
+                skipped_list.append({'username': target, 'reason': 'Không thể tự cấm chính mình'})
+                continue
+            if is_super_admin(target):
+                skipped_list.append({'username': target, 'reason': 'Không thể cấm Super Admin'})
+                continue
+
+            target_id = users[target].get('user_id', '—')
+            game_ban = {
+                'is_banned': True,
+                'reason': reason,
+                'banned_at': now.isoformat(),
+                'banned_by': session['username'],
+                'is_temp': is_temp,
+                'ban_until': (now + delta).isoformat() if is_temp and delta else None,
+                'duration_label': duration_label,
+            }
+            users[target]['game_ban'] = game_ban
+            save_user(target, users[target])
+            banned_list.append({'username': target, 'user_id': target_id})
+
+        names = ', '.join(b['username'] for b in banned_list)
+        if banned_list:
+            log_activity(session['username'], 'game_ban',
+                        f"Cấm game [{names}] ({duration_label}) — {reason}")
+
+        return jsonify({
+            'success': True,
+            'banned_count': len(banned_list),
+            'skipped_count': len(skipped_list),
+            'banned': banned_list,
+            'skipped': skipped_list,
+            'duration_label': duration_label,
+            'message': f'🚫 Đã cấm game {len(banned_list)} user ({duration_label})'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+@app.route('/api/admin/game-unban', methods=['POST'])
+@super_admin_required
+def admin_game_unban():
+    """Bỏ cấm game cho 1 hoặc nhiều user."""
+    try:
+        data = request.get_json() or {}
+        targets = data.get('usernames', [])
+        if isinstance(targets, str):
+            targets = [targets]
+        if not targets:
+            return jsonify({'success': False, 'error': 'Chưa chọn user nào!'}), 400
+
+        users = load_users()
+        unbanned = []
+        skipped = []
+
+        for target in targets:
+            target = (target or '').strip()
+            if not target or target not in users:
+                skipped.append(target)
+                continue
+            if not users[target].get('game_ban'):
+                skipped.append(target)
+                continue
+            users[target]['game_ban'] = None
+            save_user(target, users[target])
+            unbanned.append(target)
+
+        if unbanned:
+            log_activity(session['username'], 'game_unban',
+                        f"Bỏ cấm game [{', '.join(unbanned)}]")
+
+        return jsonify({
+            'success': True,
+            'unbanned_count': len(unbanned),
+            'skipped_count': len(skipped),
+            'unbanned': unbanned,
+            'message': f'✅ Đã bỏ cấm game {len(unbanned)} user'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+@app.route('/api/admin/game-ban-list')
+@admin_required
+def admin_game_ban_list():
+    """Danh sách user đang bị cấm game."""
+    users = load_users()
+    banned_users = []
+    now = datetime.now()
+    for uname, udata in users.items():
+        gb = udata.get('game_ban')
+        if not gb or not gb.get('is_banned'):
+            continue
+        if gb.get('is_temp') and gb.get('ban_until'):
+            try:
+                if now >= datetime.fromisoformat(gb['ban_until']):
+                    continue
+            except Exception:
+                pass
+        banned_users.append({
+            'username': uname,
+            'user_id': udata.get('user_id', '—'),
+            'display_name': udata.get('display_name', uname),
+            'is_super_admin': is_super_admin(uname),
+            'reason': gb.get('reason'),
+            'banned_at': gb.get('banned_at'),
+            'banned_by': gb.get('banned_by'),
+            'is_temp': gb.get('is_temp', False),
+            'ban_until': gb.get('ban_until'),
+            'duration_label': gb.get('duration_label', 'Vĩnh viễn'),
+        })
+    banned_users.sort(key=lambda x: x.get('banned_at', ''), reverse=True)
+    return jsonify({'success': True, 'users': banned_users, 'total': len(banned_users)})
+
+
+@app.route('/api/admin/game-ban-search')
+@admin_required
+def admin_game_ban_search():
+    """Tìm user để cấm game (chỉ user thường, không phải admin/super_admin)."""
+    q = (request.args.get('q') or '').strip().lower()
+    users = load_users()
+    result = []
+    for uname, udata in users.items():
+        if is_super_admin(uname):
+            continue
+        if udata.get('role') in ('admin', 'super_admin'):
+            continue
+        if q and q not in uname.lower() and q not in udata.get('display_name', '').lower():
+            continue
+        gb = udata.get('game_ban')
+        is_banned = bool(gb and gb.get('is_banned'))
+        if is_banned and gb.get('is_temp') and gb.get('ban_until'):
+            try:
+                if datetime.now() >= datetime.fromisoformat(gb['ban_until']):
+                    is_banned = False
+            except Exception:
+                pass
+        result.append({
+            'username': uname,
+            'user_id': udata.get('user_id', '—'),
+            'display_name': udata.get('display_name', uname),
+            'status': udata.get('status', 'active'),
+            'is_banned': is_banned,
+        })
+    result.sort(key=lambda x: x['username'].lower())
+    return jsonify({'success': True, 'users': result[:200]})
+
+
+@app.route('/api/admin/game-ban-status/<username>')
+@admin_required
+def admin_game_ban_status(username):
+    users = load_users()
+    if username not in users:
+        return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
+    clear_expired_game_ban(username)
+    users = load_users()
+    user = users.get(username, {})
+    banned, gb = is_game_banned(user)
+    return jsonify({'success': True, 'is_banned': banned, 'game_ban': gb})
 
 
 # ============================================================
@@ -1999,6 +2403,7 @@ init_super_admin()
 seed_accounts()
 auto_unban_expired()
 auto_delete_expired()
+auto_unban_expired_game()      # ⭐ MỚI
 
 
 if __name__ == '__main__':
