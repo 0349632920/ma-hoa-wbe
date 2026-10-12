@@ -15,30 +15,6 @@ from two_factor import (
     verify_backup_code,
     get_remaining_seconds,
 )
-from game_utils import (
-    get_daily_challenge, check_rewards, pick_random_method,
-    generate_meme_template,
-    points_to_level, level_to_next, add_points, update_streak,
-    ensure_game_data, init_game_data, REWARDS, MEME_TEMPLATES,
-    create_pvp_room, join_pvp_room, start_pvp_room,
-    submit_pvp_answer, get_pvp_room, leave_pvp_room,
-    cleanup_old_rooms,
-    list_public_rooms, broadcast_player_joined,
-    update_room_rules,
-    send_friend_request, accept_friend_request, decline_friend_request,
-    get_friends, get_friend_requests, remove_friend,
-    invite_friend_to_room, get_room_invites,
-    send_chat_message, get_chat_messages,
-    get_room_share_link,
-    get_opponent_info,
-    kick_guest,
-    vote_rematch,
-    add_match_to_history,
-    heartbeat, check_afk_status, add_afk_warning, get_afk_warnings,
-    leave_match,
-    check_and_kick_afk,
-    AFK_TIMEOUT, AFK_WARNING_AT,
-)
 from dotenv import load_dotenv
 from functools import wraps
 from datetime import datetime, timedelta
@@ -363,7 +339,6 @@ def seed_accounts():
                 'suspicious_score': 0,
                 'warnings_shown': True,
                 'protected': (role == 'super_admin'),
-                'game': init_game_data()
             }
             created += 1
             print(f"  ✅ Đã tạo: {username} ({role}) — ID: {user_id}")
@@ -409,7 +384,6 @@ def init_super_admin():
             'suspicious_score': 0,
             'warnings_shown': True,
             'protected': True,
-            'game': init_game_data()
         }
         save_user(admin_name, users[admin_name])
         print(f"👑 Đã tạo SUPER ADMIN: {admin_name} — ID: {user_id}")
@@ -667,7 +641,6 @@ def register():
             'suspicious_score': 0,
             'warnings_shown': True,
             'protected': False,
-            'game': init_game_data()
         }
         save_user(username, users[username])
 
