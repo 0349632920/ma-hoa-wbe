@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐍 Rắn săn mồi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .snake-container {
+            max-width: 500px;
+            width: 100%;
+            padding: 28px;
+            background: rgba(15, 15, 25, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .snake-container h1 {
+            font-size: 1.9rem;
+            margin-bottom: 12px;
+            padding: 10px 22px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            display: inline-block;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+        }
+
+        .hint {
+            color: #c8c8e0;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            padding: 8px 14px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .hint b { color: #2ed573; }
+
+        .snake-info {
+            display: flex;
+            justify-content: space-around;
+            margin: 18px 0;
+            font-size: 1.1rem;
+            padding: 10px 0;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+        }
+
+        .snake-info b { color: #2ed573; }
+
+        #snake-canvas {
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: block;
+            margin: 0 auto 18px;
+            max-width: 100%;
+            background: #1a1a2e;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .snake-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #2ed573;
+            color: #0f0c29;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #7bed9f;
+            transform: scale(1.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn.orange { background: #ffa502; }
+        .btn.orange:hover:not(:disabled) { background: #ffbe4d; }
+        .btn.blue { background: #1e90ff; color: #fff; }
+        .btn.blue:hover:not(:disabled) { background: #4da6ff; }
+
+        .back {
+            display: inline-block;
+            margin-top: 16px;
+            color: #e0e0ff;
+            text-decoration: none;
+            font-size: 0.95rem;
+            padding: 8px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .back:hover {
+            color: #2ed573;
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateX(-4px);
+        }
+    </style>
+</head>
+<body>
+    <div class="snake-container">
+        <h1>🐍 Rắn săn mồi</h1>
+        <p class="hint">Dùng <b>mũi tên</b> hoặc <b>WASD</b>. Nhấn <b>Space</b> để tạm dừng.</p>
+
+        <div class="snake-info">
+            <span>Điểm: <b id="score">0</b></span>
+            <span>Kỷ lục: <b id="best">0</b></span>
+        </div>
+
+        <canvas id="snake-canvas" width="400" height="400"></canvas>
+
+        <div class="snake-controls">
+            <button class="btn" id="start-btn">▶️ Bắt đầu</button>
+            <button class="btn orange" id="pause-btn" disabled>⏸️ Tạm dừng</button>
+            <button class="btn blue" id="restart-btn">🔄 Chơi lại</button>
+        </div>
+        <br>
+        <a class="back" href="{{ url_for('game_page') }}">← Chọn game khác</a>
+    </div>
+
+    <script src="{{ url_for('static', filename='snake.js') }}"></script>
+</body>
+</html>
