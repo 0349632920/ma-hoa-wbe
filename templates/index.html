@@ -92,6 +92,12 @@
               <span style="position: absolute; right: 16px; font-size: 0.7rem; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 2px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">AI</span>
             </button>
 
+            <!-- ⭐ NÚT VÒNG QUAY -->
+            <button class="dropdown-item" onclick="window.location.href='/wheel'" style="background: linear-gradient(135deg, rgba(255, 165, 2, 0.15), rgba(230, 126, 34, 0.15)); color: #e67e22; font-weight: 700; position: relative;">
+              🎡 Vòng quay
+              <span style="position: absolute; right: 16px; font-size: 0.7rem; background: linear-gradient(135deg, #ffa502, #e67e22); color: #fff; padding: 2px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">HOT</span>
+            </button>
+
             <button class="dropdown-item game-item" onclick="window.location.href='/game'">🎮 Play Game</button>
             <button class="dropdown-item danger" onclick="logout()">🚪 Đăng xuất</button>
 
@@ -576,6 +582,18 @@
       50%      { transform: scale(1.2); }
     }
 
+    /* ═══ NÚT CHẾ TÊN & VÒNG QUAY TRONG DROPDOWN ═══ */
+    .dropdown-item[onclick*="/ten"]:hover,
+    .dropdown-item[onclick*="/wheel"]:hover {
+      transform: translateX(4px);
+    }
+    .dropdown-item[onclick*="/ten"]:hover {
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .dropdown-item[onclick*="/wheel"]:hover {
+      box-shadow: 0 4px 12px rgba(255, 165, 2, 0.3);
+    }
+
     /* ═══ UNBAN OVERLAY ═══ */
     .unban-reload-overlay {
       position: fixed;
@@ -616,9 +634,7 @@
       100% { width: 100%; }
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       METHOD GROUP TABS — 12 NHÓM
-       ═══════════════════════════════════════════════════════════ */
+    /* ═══ METHOD GROUP TABS ═══ */
     .method-groups-tabs {
       display: flex;
       gap: 8px;
@@ -675,19 +691,14 @@
 
     .method-btn.hidden { display: none !important; }
 
-    /* ═══════════════════════════════════════════════
-       RANDOM METHOD BUTTON — VỚI HIỆU ỨNG QUAY TRÒN
-       ═══════════════════════════════════════════════ */
+    /* ═══ RANDOM METHOD BUTTON ═══ */
     .method-picker-row {
       display: flex;
       gap: 10px;
       align-items: stretch;
       width: 100%;
     }
-
-    .method-picker-row .method-picker-btn {
-      flex: 1;
-    }
+    .method-picker-row .method-picker-btn { flex: 1; }
 
     .random-method-btn {
       position: relative;
@@ -710,15 +721,11 @@
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
-
     .random-method-btn:hover:not(.spinning) {
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
     }
-
-    .random-method-btn:active:not(.spinning) {
-      transform: scale(0.95);
-    }
+    .random-method-btn:active:not(.spinning) { transform: scale(0.95); }
 
     .random-dice {
       display: inline-block;
@@ -749,7 +756,6 @@
       box-shadow: 0 0 30px rgba(102, 126, 234, 0.8),
                   0 0 60px rgba(118, 75, 162, 0.5);
     }
-
     @keyframes gradientShift {
       0%   { background-position: 0% 50%; }
       50%  { background-position: 100% 50%; }
@@ -759,7 +765,6 @@
     .random-method-btn.spinning .random-dice {
       animation: diceSpinFast 0.5s linear infinite;
     }
-
     @keyframes diceSpinFast {
       0%   { transform: rotate(0deg) scale(1); }
       25%  { transform: rotate(180deg) scale(1.15); }
@@ -772,7 +777,6 @@
       opacity: 1;
       animation: ringSpin 0.8s linear infinite;
     }
-
     @keyframes ringSpin {
       0%   { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -787,7 +791,6 @@
       animation: pulseRing 1s ease-in-out infinite;
       z-index: 0;
     }
-
     @keyframes pulseRing {
       0%, 100% { opacity: 0.3; transform: scale(1); }
       50%      { opacity: 0.6; transform: scale(1.05); }
@@ -804,7 +807,6 @@
       pointer-events: none;
       z-index: 3;
     }
-
     @keyframes diceEmit {
       0% {
         transform: translate(-50%, -50%) rotate(0deg) translateY(0);
@@ -816,10 +818,7 @@
       }
     }
 
-    .random-method-btn.success {
-      animation: successFlash 0.8s ease;
-    }
-
+    .random-method-btn.success { animation: successFlash 0.8s ease; }
     @keyframes successFlash {
       0%   { box-shadow: 0 0 30px rgba(102, 126, 234, 0.8); }
       50%  { box-shadow: 0 0 60px rgba(46, 213, 115, 1),
@@ -829,9 +828,7 @@
              transform: scale(1); }
     }
 
-    /* ═══════════════════════════════════════════════
-       FIREWORKS EFFECT — PHÁO HOA
-       ═══════════════════════════════════════════════ */
+    /* ═══ FIREWORKS ═══ */
     .fireworks-container {
       position: fixed;
       inset: 0;
@@ -839,7 +836,6 @@
       z-index: 99998;
       overflow: hidden;
     }
-
     .firework-spark {
       position: absolute;
       width: 3px;
@@ -873,24 +869,20 @@
       border: 2px solid rgba(255, 255, 255, 0.3);
       max-width: 90vw;
     }
-
     .random-result-banner.show {
       transform: translate(-50%, -50%) scale(1);
       opacity: 1;
     }
-
     .random-result-banner .random-result-icon {
       font-size: 2.5rem;
       display: block;
       margin-bottom: 8px;
       animation: resultIconBounce 0.6s ease infinite alternate;
     }
-
     @keyframes resultIconBounce {
       from { transform: translateY(0) scale(1); }
       to   { transform: translateY(-8px) scale(1.1); }
     }
-
     .random-result-banner .random-result-label {
       font-size: 0.85rem;
       font-weight: 600;
@@ -899,14 +891,12 @@
       letter-spacing: 2px;
       margin-bottom: 6px;
     }
-
     .random-result-banner .random-result-name {
       font-size: 1.6rem;
       font-weight: 800;
       text-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
       letter-spacing: 0.5px;
     }
-
     .random-result-banner .random-result-code {
       display: inline-block;
       margin-top: 8px;
@@ -930,22 +920,8 @@
         height: 30px;
         border-width: 2.5px;
       }
-      .random-result-banner {
-        padding: 20px 28px;
-      }
-      .random-result-banner .random-result-name {
-        font-size: 1.3rem;
-      }
-    }
-
-    /* ═══ NÚT CHẾ TÊN AI TRONG DROPDOWN ═══ */
-    .dropdown-item[onclick*="/ten"] {
-      position: relative;
-      transition: all 0.2s;
-    }
-    .dropdown-item[onclick*="/ten"]:hover {
-      transform: translateX(4px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      .random-result-banner { padding: 20px 28px; }
+      .random-result-banner .random-result-name { font-size: 1.3rem; }
     }
   </style>
 
@@ -1193,7 +1169,7 @@
     }
 
     // ══════════════════════════════════════════════════════════
-    //  POLLING — 3s (phát hiện unban)
+    //  POLLING — 3s
     // ══════════════════════════════════════════════════════════
     async function pollStatus() {
       if (isHandlingBlock) return;
@@ -1648,7 +1624,7 @@
     }
 
     // ══════════════════════════════════════════════════════════
-    //  RANDOM METHOD — Với pháo hoa + banner kết quả
+    //  RANDOM METHOD
     // ══════════════════════════════════════════════════════════
     let isRandomSpinning = false;
 
