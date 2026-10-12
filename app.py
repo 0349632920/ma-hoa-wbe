@@ -50,9 +50,6 @@ WARN_THRESHOLD = 30
 MAX_WARN_BEFORE_BAN_OPTION = 3
 PENDING_DELETE_DAYS = 7
 
-DEFAULT_QUESTIONS_PER_ROUND = 10
-DEFAULT_TOTAL_ROUNDS = 3
-
 
 # ============================================================
 # DATABASE LAYER
@@ -90,7 +87,7 @@ def init_db():
                     );
                 """)
                 cur.execute("""
-                    CREATE INDEX IF NOT EXISTS idx_users_data 
+                    CREATE INDEX IF NOT EXISTS idx_users_data
                     ON users USING GIN (data);
                 """)
         print("✅ Đã khởi tạo bảng users trên Supabase")
@@ -129,7 +126,7 @@ def save_users(users):
                             INSERT INTO users (username, data, updated_at)
                             VALUES (%s, %s, NOW())
                             ON CONFLICT (username)
-                            DO UPDATE SET 
+                            DO UPDATE SET
                                 data = EXCLUDED.data,
                                 updated_at = NOW()
                         """, (username, Json(data)))
@@ -153,7 +150,7 @@ def save_user(username, user_data):
                         INSERT INTO users (username, data, updated_at)
                         VALUES (%s, %s, NOW())
                         ON CONFLICT (username)
-                        DO UPDATE SET 
+                        DO UPDATE SET
                             data = EXCLUDED.data,
                             updated_at = NOW()
                     """, (username, Json(user_data)))
@@ -251,7 +248,8 @@ def generate_user_id(users=None):
     while str(base_id) in existing_ids:
         base_id += 1
     return str(base_id)
-    
+
+
 # ============================================================
 # SEED ACCOUNTS
 # ============================================================
@@ -339,6 +337,7 @@ def seed_accounts():
                 'suspicious_score': 0,
                 'warnings_shown': True,
                 'protected': (role == 'super_admin'),
+                'game': {}
             }
             created += 1
             print(f"  ✅ Đã tạo: {username} ({role}) — ID: {user_id}")
@@ -384,6 +383,7 @@ def init_super_admin():
             'suspicious_score': 0,
             'warnings_shown': True,
             'protected': True,
+            'game': {}
         }
         save_user(admin_name, users[admin_name])
         print(f"👑 Đã tạo SUPER ADMIN: {admin_name} — ID: {user_id}")
@@ -412,7 +412,7 @@ def init_super_admin():
     if not user.get('protected'):
         user['protected'] = True; changed = True
     if 'game' not in user:
-        user['game'] = init_game_data(); changed = True
+        user['game'] = {}; changed = True
 
     defaults = {'created_at': now, 'last_login': None, 'login_count': 0,
                 'history': [], 'warnings': [], 'ban_info': None,
@@ -641,6 +641,7 @@ def register():
             'suspicious_score': 0,
             'warnings_shown': True,
             'protected': False,
+            'game': {}
         }
         save_user(username, users[username])
 
@@ -762,7 +763,6 @@ def login():
 
 @app.route('/api/login/2fa', methods=['POST'])
 def login_2fa():
-    """Xác thực mã OTP trong bước 2 của đăng nhập."""
     try:
         data = request.get_json()
         username = data.get('username', '').strip()
@@ -789,7 +789,6 @@ def login_2fa():
         secret = user.get('totp_secret', '')
         backup_hashes = user.get('totp_backup_codes', [])
 
-        # Thử verify TOTP
         if verify_code(secret, code):
             session.permanent = True
             session['username'] = found_user
@@ -812,7 +811,6 @@ def login_2fa():
                 'redirect': '/',
             })
 
-        # Thử verify backup code
         matched_hash = verify_backup_code(code, backup_hashes)
         if matched_hash:
             backup_hashes.remove(matched_hash)
@@ -888,7 +886,8 @@ def me():
         'warnings_shown': user.get('warnings_shown', False),
         'history_count': len(user.get('history', []))
     })
-    
+
+
 # ============================================================
 # BAN PAGE
 # ============================================================
@@ -1176,8 +1175,10 @@ def api_history():
     users = load_users()
     user = users.get(session['username'], {})
     return jsonify({'success': True, 'history': user.get('history', [])})
+
+
 # ============================================================
-# GAME HUB (CHỈ CÒN 2 GAME: ĐOÁN SỐ + RẮN SĂN MỒI)
+# GAME HUB - CHỈ CÓ 2 GAME
 # ============================================================
 @app.route('/game')
 @login_required
@@ -1251,10 +1252,9 @@ def api_guess_check():
         elif count <= 10: points = 15
         else:             points = 5
 
-        # Lưu điểm cao nhất
         user = users[username]
         game = user.setdefault('game', {})
-        best = game.get('guess_best_count')  # số lần đoán ít nhất
+        best = game.get('guess_best_count')
         if best is None or count < best:
             game['guess_best_count'] = count
         game['guess_total_wins'] = game.get('guess_total_wins', 0) + 1
@@ -1360,8 +1360,9 @@ def api_snake_best():
     game = users[username].get('game', {})
     return jsonify({'success': True, 'best': game.get('snake_best', 0)})
 
+
 # ============================================================
-# LEADERBOARD ĐƠN GIẢN (2 GAME MỚI)
+# LEADERBOARD
 # ============================================================
 @app.route('/api/game/leaderboard')
 @login_required
@@ -1380,8 +1381,8 @@ def api_leaderboard():
                 'user_id': udata.get('user_id', '—'),
                 'points': points,
                 'snake_best': snake_best,
-                'guess_best_count': guess_best,  # None nếu chưa chơi
-                'is_super_admin': is_super_admin(uname),
+                'guess_best_count': guess_best,
+                'is_super_admin': is_super_admin(uname)
             })
     board.sort(key=lambda x: -x['points'])
     for i, u in enumerate(board):
@@ -1391,7 +1392,8 @@ def api_leaderboard():
         elif i == 2: u['medal'] = '🥉'
         else: u['medal'] = f'#{i+1}'
     return jsonify({'success': True, 'leaderboard': board[:50]})
-    
+
+
 # ============================================================
 # ADMIN PANEL
 # ============================================================
@@ -1818,10 +1820,9 @@ def admin_seed():
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-#  2FA — TWO FACTOR AUTHENTICATION
-# ═══════════════════════════════════════════════════════════════════════════
-
+# ============================================================
+# 2FA — TWO FACTOR AUTHENTICATION
+# ============================================================
 @app.route('/admin/2fa')
 @admin_required
 def admin_2fa_page():
