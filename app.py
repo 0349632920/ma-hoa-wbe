@@ -1491,6 +1491,48 @@ def api_snake_score():
         'points_earned': (score // 10) if is_new_record else 0,
     })
 
+# ============================================================
+# API CHECK BAN — DÙNG CHO POLLING TRANG GAME
+# ============================================================
+@app.route('/api/game/check-ban')
+@login_required
+def api_game_check_ban():
+    """Kiểm tra trạng thái cấm game của user hiện tại (dùng cho polling)."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    # Check ban tài khoản
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return jsonify({
+            'success': True,
+            'account_banned': True,
+            'redirect': f'/banned?user={username}'
+        })
+
+    # Check pending delete
+    if user.get('status') == 'pending_delete':
+        return jsonify({
+            'success': True,
+            'pending_delete': True,
+            'redirect': '/deleted'
+        })
+
+    # Check cấm game
+    user = check_and_auto_unban_game(username)
+    banned, gb = is_game_banned(user)
+
+    return jsonify({
+        'success': True,
+        'is_banned': banned,
+        'account_banned': False,
+        'pending_delete': False,
+        'game_ban': gb,
+        'user_id': user.get('user_id', '—'),
+        'username': user.get('display_name', username),
+    })
 
 @app.route('/api/game/snake/best')
 @login_required
