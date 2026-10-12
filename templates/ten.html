@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎭 Chế tên AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            padding: 30px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Hiệu ứng nền động */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(245, 87, 108, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(46, 213, 115, 0.08) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50%      { transform: scale(1.1) rotate(5deg); }
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #c8c8e0;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .subtitle .ai-glow {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25));
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #b8b8ff;
+            margin-left: 6px;
+        }
+
+        .back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            color: #c8c8e0;
+            text-decoration: none;
+            padding: 10px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .back:hover {
+            color: #2ed573;
+            border-color: #2ed573;
+            transform: translateX(-4px);
+        }
+
+        .card {
+            background: rgba(15, 15, 25, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #c8c8e0;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            outline: none;
+            font-family: inherit;
+            transition: all 0.2s;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .name-input:focus {
+            border-color: #2ed573;
+            box-shadow: 0 0 0 4px rgba(46, 213, 115, 0.15);
+        }
+        .name-input::placeholder {
+            color: #666;
+            font-weight: 400;
+        }
+
+        /* ═══ MODE SELECTOR ═══ */
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .mode-btn {
+            padding: 16px 12px;
+            border-radius: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        .mode-btn.active {
+            border-color: transparent;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        .mode-btn[data-mode="nghiem"].active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        .mode-btn[data-mode="ngau"].active {
+            background: linear-gradient(135deg, #f5576c, #f093fb);
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
+        }
+        .mode-btn[data-mode="mix"].active {
+            background: linear-gradient(135deg, #ffd700, #ffa502);
+            color: #1a1a2e;
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+        }
+
+        .mode-icon { font-size: 1.8rem; }
+        .mode-name { font-weight: 700; font-size: 0.95rem; }
+        .mode-desc { font-size: 0.75rem; opacity: 0.85; }
+
+        /* ═══ GENERATE BUTTON ═══ */
+        .generate-btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #2ed573, #16a085);
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(46, 213, 115, 0.4);
+        }
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ═══ AI THINKING STATE ═══ */
+        .generate-btn.loading {
+            color: transparent;
+            pointer-events: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            background-size: 200% 200%;
+            animation: gradientShift 2s ease infinite;
+        }
+        .generate-btn.loading::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        .generate-btn.loading::after {
+            content: attr(data-ai-text);
+            position: absolute;
+            bottom: -32px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.85rem;
+            color: #b8b8ff;
+            white-space: nowrap;
+            animation: aiPulse 1.5s ease-in-out infinite;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes gradientShift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes aiPulse {
+            0%, 100% { opacity: 0.5; }
+            50%      { opacity: 1; }
+        }
+
+        /* AI glow effect trên nút khi loading */
+        .generate-btn.loading {
+            box-shadow: 0 0 40px rgba(102, 126, 234, 0.6),
+                        0 0 80px rgba(118, 75, 162, 0.4);
+        }
+
+        /* ═══ RESULTS ═══ */
+        .results-card {
+            display: none;
+            animation: slideUp 0.4s ease;
+        }
+        .results-card.show { display: block; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+        }
+        .results-header .icon {
+            font-size: 2rem;
+            animation: iconPop 0.6s ease;
+        }
+        @keyframes iconPop {
+            0%   { transform: scale(0); }
+            70%  { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .results-header .name {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* AI badge */
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            -webkit-text-fill-color: #fff;
+            animation: aiBadgeGlow 2s ease-in-out infinite;
+        }
+        @keyframes aiBadgeGlow {
+            0%, 100% { box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+            50%      { box-shadow: 0 4px 20px rgba(102, 126, 234, 0.7); }
+        }
+
+        .local-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #c8c8e0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Meanings */
+        .meanings-section {
+            margin-bottom: 22px;
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 14px;
+            border-left: 4px solid #667eea;
+        }
+        .meanings-title {
+            font-size: 0.85rem;
+            color: #9999bb;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        .meaning-row {
+            display: flex;
+            gap: 12px;
+            padding: 8px 0;
+            font-size: 1rem;
+            align-items: baseline;
+        }
+        .meaning-row .part {
+            color: #2ed573;
+            font-weight: 700;
+            min-width: 80px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .meaning-row .arrow {
+            color: #666;
+        }
+        .meaning-row .meaning {
+            color: #c8c8e0;
+            font-style: italic;
+        }
+
+        /* Results list */
+        .result-item {
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            border-left: 4px solid #2ed573;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: all 0.2s;
+            animation: resultIn 0.5s ease backwards;
+        }
+        .result-item:nth-child(1) { animation-delay: 0.1s; }
+        .result-item:nth-child(2) { animation-delay: 0.25s; }
+        .result-item:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes resultIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .result-item:hover {
+            background: rgba(0, 0, 0, 0.35);
+            transform: translateX(4px);
+        }
+
+        .result-item .number {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(46, 213, 115, 0.2);
+            border: 2px solid #2ed573;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: #2ed573;
+        }
+
+        .result-item .text {
+            flex: 1;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #fff;
+            word-break: break-word;
+        }
+
+        /* Typing cursor */
+        .result-item .text.typing::after {
+            content: '▊';
+            color: #2ed573;
+            animation: blink 0.7s steps(2) infinite;
+            margin-left: 2px;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .result-item .copy-btn {
+            flex-shrink: 0;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: #c8c8e0;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            font-weight: 600;
+        }
+        .result-item .copy-btn:hover {
+            background: rgba(46, 213, 115, 0.2);
+            border-color: #2ed573;
+            color: #2ed573;
+        }
+        .result-item .copy-btn.copied {
+            background: #2ed573;
+            color: #0f0c29;
+            border-color: #2ed573;
+        }
+
+        /* ═══ TOAST ═══ */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #27ae60;
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: all 0.4s;
+            pointer-events: none;
+            z-index: 9999;
+            max-width: 90vw;
+            text-align: center;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.error { background: #e74c3c; }
+        .toast.info { background: linear-gradient(135deg, #667eea, #764ba2); }
+
+        /* ═══ EMPTY STATE ═══ */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-state .icon {
+            font-size: 5rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+            animation: emptyFloat 3s ease-in-out infinite;
+        }
+        @keyframes emptyFloat {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-10px); }
+        }
+        .empty-state p {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* ═══ AI FLOATING PARTICLES ═══ */
+        .ai-particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            overflow: hidden;
+            display: none;
+        }
+        .ai-particles.show { display: block; }
+
+        .ai-particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #667eea;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #667eea,
+                        0 0 30px rgba(102, 126, 234, 0.5);
+            pointer-events: none;
+            animation: particleFloat 3s ease-out forwards;
+        }
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-200px) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Neural network effect khi loading */
+        .neural-bg {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .neural-bg.active { opacity: 1; }
+
+        @media (max-width: 640px) {
+            h1 { font-size: 1.6rem; }
+            .card { padding: 20px; }
+            .mode-grid { grid-template-columns: 1fr; }
+            .mode-btn {
+                flex-direction: row;
+                gap: 12px;
+                text-align: left;
+                justify-content: flex-start;
+                padding: 14px 18px;
+            }
+            .mode-btn .mode-desc { margin-left: auto; }
+            .result-item { padding: 12px 16px; }
+            .result-item .text { font-size: 0.95rem; }
+            .generate-btn.loading::after {
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="neural-bg" id="neuralBg"></div>
+    <div class="ai-particles" id="aiParticles"></div>
+
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back">← Về trang chủ</a>
+
+        <h1>🎭 Chế tên AI</h1>
+        <p class="subtitle">
+            Nhập tên của bạn — AI sẽ phân tích và chế ra ý nghĩa thú vị!
+            <span class="ai-glow">🤖 Powered by Llama 3</span>
+        </p>
+
+        <!-- FORM -->
+        <div class="card">
+            <div class="form-group">
+                <label>📝 Tên của bạn là gì?</label>
+                <input type="text"
+                       id="nameInput"
+                       class="name-input"
+                       placeholder="Ví dụ: Trí Dũng, Hùng, Minh Châu..."
+                       maxlength="50"
+                       autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>🎨 Chọn chế độ chế:</label>
+                <div class="mode-grid">
+                    <button class="mode-btn active" data-mode="nghiem" onclick="selectMode('nghiem')">
+                        <div class="mode-icon">📖</div>
+                        <div class="mode-name">Nghiêm túc</div>
+                        <div class="mode-desc">Giải nghĩa Hán Việt</div>
+                    </button>
+                    <button class="mode-btn" data-mode="ngau" onclick="selectMode('ngau')">
+                        <div class="mode-icon">⚔️</div>
+                        <div class="mode-name">Ngầu</div>
+                        <div class="mode-desc">Khen quá đà</div>
+                    </button>
+                    <button class="mode-btn" data-mode="mix" onclick="selectMode('mix')">
+                        <div class="mode-icon">🎲</div>
+                        <div class="mode-name">Random mix</div>
+                        <div class="mode-desc">Mỗi lần 1 kiểu</div>
+                    </button>
+                </div>
+            </div>
+
+            <button class="generate-btn" id="generateBtn" onclick="generate()" data-ai-text="🤖 AI đang suy nghĩ...">
+                <span id="generateBtnText">🎭 Chế tên ngay</span>
+            </button>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="card results-card" id="resultsCard">
+            <div class="results-header">
+                <span class="icon">✨</span>
+                <span class="name" id="resultName">—</span>
+                <span id="resultBadge"></span>
+            </div>
+
+            <div class="meanings-section" id="meaningsSection">
+                <div class="meanings-title">📖 Ý nghĩa từng âm tiết</div>
+                <div id="meaningsList"></div>
+            </div>
+
+            <div class="results-list" id="resultsList"></div>
+
+            <button class="generate-btn" onclick="generate()" style="margin-top: 16px;" id="regenBtn">
+                <span>🔄 Chế lại</span>
+            </button>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div class="card empty-state" id="emptyState">
+            <div class="icon">🎭</div>
+            <p>Nhập tên của bạn và bấm <strong>"Chế tên ngay"</strong><br>để AI phân tích và tạo ý nghĩa thú vị!</p>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let currentMode = 'nghiem';
+        let isGenerating = false;
+
+        function selectMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === mode);
+            });
+        }
+
+        // ═══ AI PARTICLES EFFECT ═══
+        function spawnAIParticles() {
+            const container = document.getElementById('aiParticles');
+            container.classList.add('show');
+
+            for (let i = 0; i < 25; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.className = 'ai-particle';
+
+                    const startX = Math.random() * window.innerWidth;
+                    const startY = window.innerHeight - 100;
+
+                    particle.style.left = startX + 'px';
+                    particle.style.top = startY + 'px';
+
+                    // Random màu
+                    const colors = ['#667eea', '#764ba2', '#f093fb', '#2ed573', '#f5576c'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.background = color;
+                    particle.style.boxShadow = `0 0 15px ${color}, 0 0 30px ${color}80`;
+
+                    // Random size
+                    const size = 4 + Math.random() * 8;
+                    particle.style.width = size + 'px';
+                    particle.style.height = size + 'px';
+
+                    // Random duration
+                    particle.style.animationDuration = (2 + Math.random() * 2) + 's';
+
+                    container.appendChild(particle);
+
+                    setTimeout(() => particle.remove(), 4000);
+                }, i * 80);
+            }
+
+            // Tắt sau 4 giây
+            setTimeout(() => {
+                container.classList.remove('show');
+            }, 4000);
+        }
+
+        // ═══ NEURAL BACKGROUND ═══
+        function toggleNeuralBg(active) {
+            const bg = document.getElementById('neuralBg');
+            if (active) bg.classList.add('active');
+            else bg.classList.remove('active');
+        }
+
+        async function generate() {
+            if (isGenerating) return;
+
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name) {
+                showToast('⚠️ Vui lòng nhập tên!', 'error');
+                document.getElementById('nameInput').focus();
+                return;
+            }
+
+            isGenerating = true;
+
+            const btn = document.getElementById('generateBtn');
+            const btnText = document.getElementById('generateBtnText');
+            const regenBtn = document.getElementById('regenBtn');
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+            if (regenBtn) regenBtn.disabled = true;
+
+            // Hiệu ứng AI
+            spawnAIParticles();
+            toggleNeuralBg(true);
+
+            try {
+                const res = await fetch('/api/ten/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, mode: currentMode })
+                });
+
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                    return;
+                }
+
+                if (!data.success) {
+                    showToast('❌ ' + (data.error || 'Có lỗi xảy ra!'), 'error');
+                    return;
+                }
+
+                renderResults(data.data, data.ai);
+                showToast(data.ai ? '🤖 AI đã chế xong!' : '🎭 Đã chế xong!', 'info');
+            } catch (e) {
+                showToast('❌ Lỗi kết nối!', 'error');
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                if (regenBtn) regenBtn.disabled = false;
+                toggleNeuralBg(false);
+                isGenerating = false;
+            }
+        }
+
+        function renderResults(data, isAI) {
+            // Ẩn empty state
+            document.getElementById('emptyState').style.display = 'none';
+
+            // Hiện results
+            const card = document.getElementById('resultsCard');
+            card.classList.remove('show');
+            void card.offsetWidth;
+            card.classList.add('show');
+
+            // Tên + Badge
+            const nameEl = document.getElementById('resultName');
+            nameEl.innerHTML = escapeHtml(data.name);
+
+            const badgeEl = document.getElementById('resultBadge');
+            if (isAI) {
+                badgeEl.innerHTML = '<span class="ai-badge">🤖 AI</span>';
+            } else {
+                badgeEl.innerHTML = '<span class="local-badge">📖 Local</span>';
+            }
+
+            // Ý nghĩa
+            const meaningsList = document.getElementById('meaningsList');
+            if (data.meanings && data.meanings.length > 0) {
+                meaningsList.innerHTML = data.meanings.map(m => `
+                    <div class="meaning-row">
+                        <span class="part">${escapeHtml(m.part)}</span>
+                        <span class="arrow">→</span>
+                        <span class="meaning">${escapeHtml(m.meaning)}</span>
+                    </div>
+                `).join('');
+                document.getElementById('meaningsSection').style.display = 'block';
+            } else {
+                document.getElementById('meaningsSection').style.display = 'none';
+            }
+
+            // Kết quả với typing effect
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '';
+
+            data.results.forEach((r, i) => {
+                setTimeout(() => {
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.innerHTML = `
+                        <div class="number">${i + 1}</div>
+                        <div class="text" data-full-text="${escapeAttr(r)}"></div>
+                        <button class="copy-btn" onclick="copyText(this, '${escapeJs(r)}')" title="Sao chép">
+                            📋
+                        </button>
+                    `;
+                    resultsList.appendChild(item);
+
+                    // Typing effect
+                    if (isAI) {
+                        typeText(item.querySelector('.text'), r);
+                    } else {
+                        item.querySelector('.text').textContent = r;
+                    }
+                }, i * 300);
+            });
+
+            // Cuộn xuống kết quả
+            setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 200);
+        }
+
+        // ═══ TYPING EFFECT cho AI ═══
+        function typeText(el, text) {
+            el.classList.add('typing');
+            let i = 0;
+            const speed = 20; // ms mỗi ký tự
+
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    el.textContent = text.slice(0, i + 1);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                    el.classList.remove('typing');
+                }
+            }, speed);
+        }
+
+        function copyText(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '✅';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = '📋';
+                    btn.classList.remove('copied');
+                }, 1500);
+                showToast('📋 Đã sao chép!', 'info');
+            }).catch(() => {
+                showToast('❌ Không thể sao chép!', 'error');
+            });
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function escapeAttr(s) {
+            return escapeHtml(s).replace(/"/g, '&quot;');
+        }
+
+        function escapeJs(s) {
+            return String(s)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r');
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show';
+            if (type === 'error') t.classList.add('error');
+            if (type === 'info') t.classList.add('info');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // Enter để generate
+        document.getElementById('nameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') generate();
+        });
+
+        // Focus input khi load
+        setTimeout(() => document.getElementById('nameInput').focus(), 300);
+    </script>
+</body>
+</html>
