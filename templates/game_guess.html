@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Đoán số</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .guess-container {
+            max-width: 560px; margin: 60px auto; padding: 32px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px; text-align: center;
+            backdrop-filter: blur(12px);
+        }
+        .guess-container h1 { margin-bottom: 10px; }
+        .guess-container .sub { color: #b8b8d1; margin-bottom: 24px; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .input-row input {
+            flex: 1; padding: 14px 16px; font-size: 1.1rem;
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3); color: #fff; outline: none;
+        }
+        .input-row input:focus { border-color: #2ed573; }
+        .btn {
+            padding: 14px 24px; border: none; border-radius: 12px;
+            background: #2ed573; color: #0f0c29; font-weight: 700;
+            cursor: pointer; transition: all .2s; font-size: 1rem;
+        }
+        .btn:hover:not(:disabled) { background: #7bed9f; transform: scale(1.04); }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn.secondary { background: #ffa502; }
+        .result {
+            min-height: 56px; padding: 16px; border-radius: 12px;
+            font-size: 1.1rem; margin-bottom: 12px; transition: all .3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .result.correct { background: rgba(46,213,115,.25); border: 1px solid #2ed573; }
+        .result.low     { background: rgba(30,144,255,.25); border: 1px solid #1e90ff; }
+        .result.high    { background: rgba(255,71,87,.25);  border: 1px solid #ff4757; }
+        .result.warn    { background: rgba(255,165,2,.25);  border: 1px solid #ffa502; }
+        .counter { color: #b8b8d1; margin: 12px 0 20px; }
+        .back { display: inline-block; margin-top: 16px; color: #b8b8d1; text-decoration: none; }
+        .back:hover { color: #2ed573; }
+    </style>
+</head>
+<body>
+    <div class="guess-container">
+        <h1>🎯 Đoán số bí mật</h1>
+        <p class="sub">Mình đang nghĩ đến số từ <b>1 đến 100</b>. Đoán xem!</p>
+
+        <div class="input-row">
+            <input type="number" id="guess-input" min="1" max="100" placeholder="Nhập số...">
+            <button class="btn" id="guess-btn">Đoán</button>
+        </div>
+
+        <div id="result" class="result"></div>
+        <p class="counter">Số lần đoán: <b id="count">0</b></p>
+
+        <button class="btn secondary" id="reset-btn">🔄 Chơi lại</button>
+        <br>
+        <a class="back" href="{{ url_for('game_page') }}">← Chọn game khác</a>
+    </div>
+
+    <script src="{{ url_for('static', filename='guess.js') }}"></script>
+</body>
+</html>
