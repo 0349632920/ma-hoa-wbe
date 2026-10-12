@@ -2434,6 +2434,130 @@ def api_2fa_regenerate_backup():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
+# ============================================================
+# CHẾ TÊN — AI (GROQ) + FALLBACK TỪ ĐIỂN
+# ============================================================
+@app.route('/ten')
+@login_required
+def ten_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('ten.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+
+@app.route('/api/ten/generate', methods=['POST'])
+@login_required
+def api_ten_generate():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return jsonify({'success': False, 'error': 'Bạn đã bị ban!', 'redirect': '/banned'}), 403
+
+    data = request.get_json() or {}
+    name = (data.get('name') or '').strip()
+    mode = (data.get('mode') or 'nghiem').strip().lower()
+
+    if not name:
+        return jsonify({'success': False, 'error': 'Vui lòng nhập tên!'}), 400
+    if len(name) > 50:
+        return jsonify({'success': False, 'error': 'Tên quá dài (tối đa 50 ký tự)!'}), 400
+    if mode not in ('nghiem', 'ngau', 'mix'):
+        mode = 'nghiem'
+
+    # ═══ THỬ AI TRƯỚC ═══
+    if groq_client:
+        try:
+            result = _generate_name_with_ai(name, mode)
+            return jsonify({'success': True, 'data': result, 'ai': True})
+        except Exception as e:
+            print(f"⚠️ Groq error: {e}")
+
+    # ═══ FALLBACK TỪ ĐIỂN ═══
+    try:
+        result = generate_name(name, mode=mode)
+        if 'error' in result:
+            return jsonify({'success': False, 'error': result['error']}), 400
+        return jsonify({'success': True, 'data': result, 'ai': False})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+def _generate_name_with_ai(name, mode):
+    """Gọi Groq AI để chế tên."""
+    system_prompt = """Bạn là chuyên gia phân tích tên tiếng Việt.
+Trả về JSON hợp lệ, KHÔNG thêm text khác, KHÔNG dùng markdown."""
+
+    mode_prompts = {
+        'nghiem': 'NGHIÊM TÚC — giải nghĩa Hán Việt thật, trang trọng.',
+        'ngau': 'NGẦU — khen quá đà, hào hùng, có thể dùng emoji ⚔️👑🔥⚡.',
+        'mix': 'RANDOM MIX — 3 câu với 3 phong cách khác nhau: nghiêm túc, ngầu, vui.'
+    }
+
+    user_prompt = f"""Phân tích tên: "{name}"
+Phong cách: {mode_prompts.get(mode, mode_prompts['nghiem'])}
+
+Trả về JSON:
+{{
+  "name": "{name}",
+  "parts": ["âm1", "âm2"],
+  "meanings": [
+    {{"part": "Âm1", "meaning": "nghĩa Hán Việt"}},
+    {{"part": "Âm2", "meaning": "nghĩa Hán Việt"}}
+  ],
+  "results": [
+    "Câu 1 diễn giải ý nghĩa tên",
+    "Câu 2",
+    "Câu 3"
+  ]
+}}"""
+
+    chat_completion = groq_client.chat.completions.create(
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        model="llama-3.3-70b-versatile",
+        temperature=0.9,
+        max_tokens=800,
+        response_format={"type": "json_object"}
+    )
+
+    response_text = chat_completion.choices[0].message.content.strip()
+
+    if response_text.startswith('```'):
+        parts = response_text.split('```')
+        if len(parts) >= 2:
+            response_text = parts[1]
+            if response_text.startswith('json'):
+                response_text = response_text[4:]
+    response_text = response_text.strip()
+
+    import json as _json
+    result = _json.loads(response_text)
+
+    result.setdefault('name', name)
+    result.setdefault('parts', name.split())
+    result.setdefault('meanings', [])
+    result.setdefault('results', [])
+    result['mode'] = mode
+
+    return result
+
 
 # ============================================================
 # HEALTH CHECK
