@@ -798,3 +798,562 @@
     <div class="confetti-container" id="confettiContainer"></div>
 
     <div class="toast" id="toast"></div>
+    <script>
+        
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+        let items = [];
+        let isSpinning = false;
+        let currentRotation = 0;
+        let soundEnabled = true;
+        let history = [];
+
+        // Bảng màu đẹp (12 màu)
+        const COLORS = [
+            '#667eea', '#764ba2', '#f093fb', '#f5576c',
+            '#2ed573', '#1e90ff', '#ffa502', '#ff4757',
+            '#a55eea', '#26de81', '#fd9644', '#45aaf2'
+        ];
+
+        // ═══════════════════════════════════════════════════════════
+        //  LOCALSTORAGE
+        // ═══════════════════════════════════════════════════════════
+        function saveToStorage() {
+            try {
+                localStorage.setItem('wheel_items', JSON.stringify(items));
+                localStorage.setItem('wheel_history', JSON.stringify(history.slice(0, 50)));
+                localStorage.setItem('wheel_settings', JSON.stringify({
+                    sound: soundEnabled,
+                    removeAfterSpin: document.getElementById('removeAfterSpin').checked,
+                    showConfetti: document.getElementById('showConfetti').checked,
+                    showResultModal: document.getElementById('showResultModal').checked,
+                    spinDuration: parseInt(document.getElementById('spinDuration').value) || 5,
+                    volume: parseInt(document.getElementById('volumeSlider').value) || 50,
+                    fontSize: parseInt(document.getElementById('fontSize').value) || 14,
+                }));
+            } catch (e) {}
+        }
+
+        function loadFromStorage() {
+            try {
+                const savedItems = localStorage.getItem('wheel_items');
+                if (savedItems) {
+                    items = JSON.parse(savedItems) || [];
+                    document.getElementById('namesInput').value = items.join('\n');
+                }
+
+                const savedHistory = localStorage.getItem('wheel_history');
+                if (savedHistory) history = JSON.parse(savedHistory) || [];
+
+                const savedSettings = localStorage.getItem('wheel_settings');
+                if (savedSettings) {
+                    const s = JSON.parse(savedSettings);
+                    soundEnabled = s.sound !== false;
+                    document.getElementById('removeAfterSpin').checked = !!s.removeAfterSpin;
+                    document.getElementById('showConfetti').checked = s.showConfetti !== false;
+                    document.getElementById('showResultModal').checked = s.showResultModal !== false;
+                    document.getElementById('spinDuration').value = s.spinDuration || 5;
+                    document.getElementById('volumeSlider').value = s.volume || 50;
+                    document.getElementById('fontSize').value = s.fontSize || 14;
+                }
+            } catch (e) {}
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  VẼ VÒNG QUAY
+        // ═══════════════════════════════════════════════════════════
+        function renderWheel() {
+            const wheel = document.getElementById('wheel');
+            const labelsContainer = document.getElementById('wheelLabels');
+            const emptyState = document.getElementById('emptyState');
+
+            if (items.length === 0) {
+                wheel.style.background = 'rgba(255, 255, 255, 0.03)';
+                wheel.style.transform = 'rotate(0deg)';
+                labelsContainer.innerHTML = '';
+                emptyState.style.display = 'flex';
+                currentRotation = 0;
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            const n = items.length;
+            const anglePerItem = 360 / n;
+
+            // ═══ Tạo conic-gradient ═══
+            let gradientStops = [];
+            for (let i = 0; i < n; i++) {
+                const color = COLORS[i % COLORS.length];
+                const start = i * anglePerItem;
+                const end = (i + 1) * anglePerItem;
+                gradientStops.push(`${color} ${start}deg ${end}deg`);
+            }
+            wheel.style.background = `conic-gradient(${gradientStops.join(', ')})`;
+
+            // ═══ Đặt labels ═══
+            labelsContainer.innerHTML = '';
+            const fontSize = parseInt(document.getElementById('fontSize').value) || 14;
+            const radius = wheel.offsetWidth / 2;
+
+            for (let i = 0; i < n; i++) {
+                const angle = i * anglePerItem + anglePerItem / 2;
+
+                const label = document.createElement('div');
+                label.className = 'wheel-label';
+                label.textContent = items[i];
+                label.style.fontSize = fontSize + 'px';
+
+                // Đặt ở giữa ô, cách tâm 40% bán kính
+                const dist = radius * 0.65;
+                label.style.transform = `rotate(${angle - 90}deg) translate(${dist}px, -50%)`;
+                label.style.transformOrigin = '0 0';
+                label.style.maxWidth = Math.min(180, radius * 0.55) + 'px';
+
+                labelsContainer.appendChild(label);
+            }
+
+            // Reset rotation để khớp với vòng mới
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            currentRotation = 0;
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  ÁP DỤNG DANH SÁCH TỪ TEXTAREA
+        // ═══════════════════════════════════════════════════════════
+        function applyChanges() {
+            const text = document.getElementById('namesInput').value;
+            items = text.split('\n')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            if (items.length > 50) {
+                showToast('⚠️ Tối đa 50 mục! Đã cắt bớt.', true);
+                items = items.slice(0, 50);
+                document.getElementById('namesInput').value = items.join('\n');
+            }
+
+            renderWheel();
+            saveToStorage();
+
+            if (items.length > 0) {
+                showToast(`✅ Đã cập nhật ${items.length} mục`);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  QUAY
+        // ═══════════════════════════════════════════════════════════
+        function spin() {
+            if (isSpinning) return;
+            if (items.length < 2) {
+                showToast('⚠️ Cần ít nhất 2 mục để quay!', true);
+                return;
+            }
+
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('wheelCenter').classList.add('disabled');
+
+            const n = items.length;
+            const anglePerItem = 360 / n;
+
+            // Random chỉ số kết quả
+            const randomIndex = Math.floor(Math.random() * n);
+
+            // Góc để ô randomIndex nằm ở đỉnh (kim ở trên cùng, 0°)
+            // Ô i chiếm từ i*anglePerItem đến (i+1)*anglePerItem
+            // Muốn ô đó nằm ở 0°, cần quay vòng: -(i*anglePerItem + anglePerItem/2)
+            const targetAngle = 360 - (randomIndex * anglePerItem + anglePerItem / 2);
+
+            // Số vòng quay thêm
+            const extraSpins = 5 + Math.floor(Math.random() * 4);
+
+            // Tính rotation mới = rotation hiện tại + nhiều vòng + góc dừng
+            const currentMod = currentRotation % 360;
+            const deltaToTarget = ((targetAngle - currentMod) + 360) % 360;
+            const totalRotation = currentRotation + (extraSpins * 360) + deltaToTarget;
+
+            currentRotation = totalRotation;
+
+            const duration = parseInt(document.getElementById('spinDuration').value) || 5;
+            const wheel = document.getElementById('wheel');
+            wheel.style.transition = `transform ${duration}s cubic-bezier(0.17, 0.67, 0.12, 0.99)`;
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+            // ═══ Phát âm thanh tick trong lúc quay ═══
+            if (soundEnabled) {
+                playTickSound(duration);
+            }
+
+            // ═══ Sau khi quay xong ═══
+            setTimeout(() => {
+                isSpinning = false;
+                document.getElementById('spinBtn').disabled = false;
+                document.getElementById('wheelCenter').classList.remove('disabled');
+
+                const winner = items[randomIndex];
+
+                // Lưu lịch sử
+                history.unshift({
+                    name: winner,
+                    time: new Date().toISOString()
+                });
+                history = history.slice(0, 50);
+                saveToStorage();
+
+                // Hiện kết quả
+                showResult(winner);
+
+                // Xóa sau khi quay
+                if (document.getElementById('removeAfterSpin').checked) {
+                    items.splice(randomIndex, 1);
+                    document.getElementById('namesInput').value = items.join('\n');
+                    // Không render lại ngay, đợi 500ms để modal hiện đã
+                    setTimeout(() => {
+                        renderWheel();
+                        saveToStorage();
+                    }, 500);
+                }
+            }, duration * 1000 + 100);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  HIỆN KẾT QUẢ
+        // ═══════════════════════════════════════════════════════════
+        function showResult(winner) {
+            // Confetti
+            if (document.getElementById('showConfetti').checked) {
+                createConfetti();
+            }
+
+            // Âm thanh chiến thắng
+            if (soundEnabled) {
+                playWinSound();
+            }
+
+            // Modal
+            if (document.getElementById('showResultModal').checked) {
+                document.getElementById('resultValue').textContent = winner;
+                document.getElementById('resultModal').classList.add('show');
+            } else {
+                showToast(`🎉 Kết quả: ${winner}`);
+            }
+        }
+
+        function closeResult() {
+            document.getElementById('resultModal').classList.remove('show');
+        }
+
+        function closeResultAndSpin() {
+            closeResult();
+            setTimeout(() => spin(), 300);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  ÂM THANH
+        // ═══════════════════════════════════════════════════════════
+        function getAudioContext() {
+            try {
+                return new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) { return null; }
+        }
+
+        function playTickSound(duration) {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const volume = (parseInt(document.getElementById('volumeSlider').value) || 50) / 100;
+
+            // Tick giảm dần theo thời gian (chậm dần)
+            let totalTicks = 40;
+            let elapsed = 0;
+            let delay = 0.05;
+
+            for (let i = 0; i < totalTicks; i++) {
+                if (elapsed >= duration - 0.3) break;
+
+                setTimeout(() => {
+                    try {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(800 + Math.random() * 200, ctx.currentTime);
+                        gain.gain.setValueAtTime(volume * 0.08, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+                        osc.start(ctx.currentTime);
+                        osc.stop(ctx.currentTime + 0.04);
+                    } catch (e) {}
+                }, elapsed * 1000);
+
+                // Chậm dần
+                elapsed += delay;
+                delay *= 1.08;
+            }
+        }
+
+        function playWinSound() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const volume = (parseInt(document.getElementById('volumeSlider').value) || 50) / 100;
+            const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+
+            notes.forEach((freq, i) => {
+                try {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
+                    gain.gain.setValueAtTime(volume * 0.15, ctx.currentTime + i * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.25);
+                    osc.start(ctx.currentTime + i * 0.1);
+                    osc.stop(ctx.currentTime + i * 0.1 + 0.3);
+                } catch (e) {}
+            });
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundToggle');
+            btn.textContent = soundEnabled ? '🔊 Âm thanh' : '🔇 Tắt tiếng';
+            btn.classList.toggle('active', soundEnabled);
+            saveToStorage();
+            showToast(soundEnabled ? '🔊 Đã bật âm thanh' : '🔇 Đã tắt âm thanh');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  CONFETTI
+        // ═══════════════════════════════════════════════════════════
+        function createConfetti() {
+            const container = document.getElementById('confettiContainer');
+            const colors = ['#ff4757', '#ffa502', '#ffd700', '#2ed573', '#1e90ff', '#a55eea', '#ff6b7a', '#7bed9f'];
+            const total = 100;
+
+            for (let i = 0; i < total; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+
+                    // Random vị trí, màu, kích thước
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-20px';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = (6 + Math.random() * 10) + 'px';
+                    confetti.style.height = (6 + Math.random() * 10) + 'px';
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+
+                    // Animation
+                    const duration = 2000 + Math.random() * 2000;
+                    const rotate = Math.random() * 720 - 360;
+                    const translateX = (Math.random() - 0.5) * 400;
+
+                    confetti.animate([
+                        { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+                        { transform: `translate(${translateX}px, 100vh) rotate(${rotate}deg)`, opacity: 0 }
+                    ], {
+                        duration: duration,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    });
+
+                    container.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), duration + 100);
+                }, i * 20);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  LỊCH SỬ
+        // ═══════════════════════════════════════════════════════════
+        function openHistory() {
+            renderHistory();
+            document.getElementById('historyPanel').classList.add('show');
+        }
+
+        function closeHistory() {
+            document.getElementById('historyPanel').classList.remove('show');
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+
+            if (history.length === 0) {
+                list.innerHTML = `
+                    <div class="history-empty">
+                        <div style="font-size: 3rem; margin-bottom: 12px; opacity: 0.5;">📭</div>
+                        Chưa có lịch sử
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = history.map((h, i) => {
+                const date = new Date(h.time);
+                const timeStr = date.toLocaleString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+
+                return `
+                    <div class="history-item">
+                        <div class="h-name">${escapeHtml(h.name)}</div>
+                        <div class="h-time">🕐 ${timeStr}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearHistory() {
+            if (!confirm('Xóa toàn bộ lịch sử?')) return;
+            history = [];
+            saveToStorage();
+            renderHistory();
+            showToast('🗑️ Đã xóa lịch sử');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  UTILS
+        // ═══════════════════════════════════════════════════════════
+        function clearAll() {
+            if (!confirm('Xóa toàn bộ danh sách?')) return;
+            items = [];
+            document.getElementById('namesInput').value = '';
+            renderWheel();
+            saveToStorage();
+            showToast('🗑️ Đã xóa hết');
+        }
+
+        function shuffleItems() {
+            if (items.length < 2) {
+                showToast('⚠️ Cần ít nhất 2 mục!', true);
+                return;
+            }
+            for (let i = items.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [items[i], items[j]] = [items[j], items[i]];
+            }
+            document.getElementById('namesInput').value = items.join('\n');
+            renderWheel();
+            saveToStorage();
+            showToast('🔀 Đã trộn danh sách');
+        }
+
+        function sortItems() {
+            if (items.length < 2) {
+                showToast('⚠️ Cần ít nhất 2 mục!', true);
+                return;
+            }
+            items.sort((a, b) => a.localeCompare(b, 'vi'));
+            document.getElementById('namesInput').value = items.join('\n');
+            renderWheel();
+            saveToStorage();
+            showToast('🔤 Đã sắp xếp');
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  EVENTS
+        // ═══════════════════════════════════════════════════════════
+
+        // Click ngoài modal để đóng
+        document.getElementById('resultModal').addEventListener('click', (e) => {
+            if (e.target.id === 'resultModal') closeResult();
+        });
+
+        // Escape để đóng modal/history
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeResult();
+                closeHistory();
+            }
+            // Space để quay (nếu không focus vào input)
+            if (e.key === ' ' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                spin();
+            }
+        });
+
+        // Ctrl+Enter để apply
+        document.getElementById('namesInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                applyChanges();
+            }
+        });
+
+        // Auto-apply khi gõ (debounce 500ms)
+        let applyTimer;
+        document.getElementById('namesInput').addEventListener('input', () => {
+            clearTimeout(applyTimer);
+            applyTimer = setTimeout(applyChanges, 500);
+        });
+
+        // Settings change → lưu
+        ['removeAfterSpin', 'showConfetti', 'showResultModal', 'spinDuration', 'volumeSlider', 'fontSize'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', () => {
+                    if (id === 'fontSize') renderWheel();
+                    saveToStorage();
+                });
+            }
+        });
+
+        // Resize → render lại labels
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (items.length > 0) renderWheel();
+            }, 200);
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        //  INIT
+        // ═══════════════════════════════════════════════════════════
+        function init() {
+            loadFromStorage();
+
+            // Set trạng thái âm thanh
+            const soundBtn = document.getElementById('soundToggle');
+            soundBtn.textContent = soundEnabled ? '🔊 Âm thanh' : '🔇 Tắt tiếng';
+            soundBtn.classList.toggle('active', soundEnabled);
+
+            // Render nếu có items
+            if (items.length > 0) {
+                renderWheel();
+            } else {
+                renderWheel(); // hiện empty state
+            }
+
+            console.log('🎡 Wheel initialized with', items.length, 'items');
+        }
+
+        init();
+    </script>
+</body>
+</html>
