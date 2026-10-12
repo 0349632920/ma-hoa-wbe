@@ -153,14 +153,20 @@
 
     <div class="method-picker-section">
       <label>🎯 Kiểu mã hóa:</label>
-      <button class="method-picker-btn" id="openPickerBtn">
-        <span class="picker-icon">🔤</span>
-        <span class="picker-text">
-          <strong id="selectedMethodName">Base64</strong>
-          <small id="selectedMethodCode">base64</small>
-        </span>
-        <span class="picker-arrow">▼</span>
-      </button>
+      <div class="method-picker-row">
+        <button class="method-picker-btn" id="openPickerBtn">
+          <span class="picker-icon">🔤</span>
+          <span class="picker-text">
+            <strong id="selectedMethodName">Base64</strong>
+            <small id="selectedMethodCode">base64</small>
+          </span>
+          <span class="picker-arrow">▼</span>
+        </button>
+        <button class="random-method-btn" id="randomMethodBtn" onclick="randomMethod()" title="Random 1 kiểu mã hóa">
+          <span class="random-dice" id="randomDice">🎲</span>
+          <span class="random-ring"></span>
+        </button>
+      </div>
     </div>
 
     <div id="keySection" class="key-section hidden">
@@ -661,6 +667,269 @@
     .method-group-tab[data-group="all"].active        { background: linear-gradient(135deg, #667eea, #764ba2); }
 
     .method-btn.hidden { display: none !important; }
+
+    /* ═══════════════════════════════════════════════
+       RANDOM METHOD BUTTON — VỚI HIỆU ỨNG QUAY TRÒN
+       ═══════════════════════════════════════════════ */
+    .method-picker-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .method-picker-row .method-picker-btn {
+      flex: 1;
+    }
+
+    .random-method-btn {
+      position: relative;
+      padding: 0 22px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-size: 1.6rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      min-width: 70px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      overflow: hidden;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .random-method-btn:hover:not(.spinning) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    }
+
+    .random-method-btn:active:not(.spinning) {
+      transform: scale(0.95);
+    }
+
+    .random-dice {
+      display: inline-block;
+      transition: transform 0.3s;
+      position: relative;
+      z-index: 2;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    .random-ring {
+      position: absolute;
+      width: 38px;
+      height: 38px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .random-method-btn.spinning {
+      cursor: wait;
+      background: linear-gradient(135deg, #764ba2, #667eea, #764ba2);
+      background-size: 200% 200%;
+      animation: gradientShift 1.5s ease infinite;
+      box-shadow: 0 0 30px rgba(102, 126, 234, 0.8),
+                  0 0 60px rgba(118, 75, 162, 0.5);
+    }
+
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .random-method-btn.spinning .random-dice {
+      animation: diceSpinFast 0.5s linear infinite;
+    }
+
+    @keyframes diceSpinFast {
+      0%   { transform: rotate(0deg) scale(1); }
+      25%  { transform: rotate(180deg) scale(1.15); }
+      50%  { transform: rotate(360deg) scale(0.9); }
+      75%  { transform: rotate(540deg) scale(1.15); }
+      100% { transform: rotate(720deg) scale(1); }
+    }
+
+    .random-method-btn.spinning .random-ring {
+      opacity: 1;
+      animation: ringSpin 0.8s linear infinite;
+    }
+
+    @keyframes ringSpin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .random-method-btn.spinning::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+      animation: pulseRing 1s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    @keyframes pulseRing {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50%      { opacity: 0.6; transform: scale(1.05); }
+    }
+
+    .random-method-btn.spinning::after {
+      content: '🎲';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      font-size: 0.9rem;
+      opacity: 0;
+      animation: diceEmit 1s ease-out infinite;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    @keyframes diceEmit {
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg) translateY(0);
+        opacity: 0.8;
+      }
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg) translateY(-40px);
+        opacity: 0;
+      }
+    }
+
+    .random-method-btn.success {
+      animation: successFlash 0.8s ease;
+    }
+
+    @keyframes successFlash {
+      0%   { box-shadow: 0 0 30px rgba(102, 126, 234, 0.8); }
+      50%  { box-shadow: 0 0 60px rgba(46, 213, 115, 1),
+                          0 0 100px rgba(46, 213, 115, 0.6);
+             transform: scale(1.1); }
+      100% { box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+             transform: scale(1); }
+    }
+
+    /* ═══════════════════════════════════════════════
+       FIREWORKS EFFECT — PHÁO HOA
+       ═══════════════════════════════════════════════ */
+    .fireworks-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 99998;
+      overflow: hidden;
+    }
+
+    .firework-spark {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #fff;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .random-result-banner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.3);
+      z-index: 99999;
+      padding: 24px 40px;
+      background: linear-gradient(135deg, #667eea, #764ba2, #f5576c);
+      background-size: 200% 200%;
+      border-radius: 20px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-weight: 800;
+      text-align: center;
+      box-shadow: 0 25px 80px rgba(102, 126, 234, 0.6),
+                  0 0 100px rgba(245, 87, 108, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: gradientShift 2s ease infinite;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      max-width: 90vw;
+    }
+
+    .random-result-banner.show {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+
+    .random-result-banner .random-result-icon {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 8px;
+      animation: resultIconBounce 0.6s ease infinite alternate;
+    }
+
+    @keyframes resultIconBounce {
+      from { transform: translateY(0) scale(1); }
+      to   { transform: translateY(-8px) scale(1.1); }
+    }
+
+    .random-result-banner .random-result-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .random-result-banner .random-result-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      text-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.5px;
+    }
+
+    .random-result-banner .random-result-code {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 14px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 480px) {
+      .random-method-btn {
+        min-width: 60px;
+        padding: 0 16px;
+        font-size: 1.3rem;
+      }
+      .random-ring {
+        width: 30px;
+        height: 30px;
+        border-width: 2.5px;
+      }
+      .random-result-banner {
+        padding: 20px 28px;
+      }
+      .random-result-banner .random-result-name {
+        font-size: 1.3rem;
+      }
+    }
   </style>
 
   <script>
@@ -1359,6 +1628,174 @@
         tabDecryptEl.style.opacity = '1';
         tabDecryptEl.style.cursor = 'pointer';
       }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  RANDOM METHOD — Với pháo hoa + banner kết quả
+    // ══════════════════════════════════════════════════════════
+    let isRandomSpinning = false;
+
+    function createFireworks(x, y) {
+      let container = document.getElementById('fireworksContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'fireworksContainer';
+        container.className = 'fireworks-container';
+        document.body.appendChild(container);
+      }
+
+      const colors = [
+        '#ff4757', '#ffa502', '#ffd700', '#2ed573',
+        '#1e90ff', '#a55eea', '#ff6b7a', '#7bed9f',
+        '#ffbe4d', '#5f27cd', '#00d2d3', '#ff9ff3'
+      ];
+
+      const particleCount = 60;
+      const bursts = [
+        { x: x, y: y, delay: 0 },
+        { x: x - 150, y: y - 80, delay: 150 },
+        { x: x + 150, y: y - 80, delay: 300 },
+        { x: x, y: y - 180, delay: 450 },
+      ];
+
+      bursts.forEach(burst => {
+        setTimeout(() => {
+          const centerColor = colors[Math.floor(Math.random() * colors.length)];
+          for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'firework-spark';
+
+            const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.3;
+            const distance = 80 + Math.random() * 120;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+
+            const color = Math.random() > 0.5
+              ? centerColor
+              : colors[Math.floor(Math.random() * colors.length)];
+
+            particle.style.left = burst.x + 'px';
+            particle.style.top = burst.y + 'px';
+            particle.style.background = color;
+            particle.style.color = color;
+            particle.style.width = (2 + Math.random() * 3) + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.boxShadow = `0 0 ${8 + Math.random() * 12}px ${color}`;
+
+            container.appendChild(particle);
+
+            const duration = 700 + Math.random() * 500;
+            const startTime = performance.now();
+
+            function animate(now) {
+              const progress = Math.min((now - startTime) / duration, 1);
+              const eased = 1 - Math.pow(1 - progress, 3);
+              const currentX = tx * eased;
+              const currentY = ty * eased + 100 * progress * progress;
+
+              particle.style.transform = `translate(${currentX}px, ${currentY}px) scale(${1 - progress * 0.7})`;
+              particle.style.opacity = 1 - progress;
+
+              if (progress < 1) {
+                requestAnimationFrame(animate);
+              } else {
+                particle.remove();
+              }
+            }
+            requestAnimationFrame(animate);
+          }
+        }, burst.delay);
+      });
+
+      setTimeout(() => {
+        if (container && container.children.length === 0) {
+          container.remove();
+        }
+      }, 3000);
+    }
+
+    function showRandomResultBanner(methodName, methodCode) {
+      const old = document.getElementById('randomResultBanner');
+      if (old) old.remove();
+
+      const banner = document.createElement('div');
+      banner.id = 'randomResultBanner';
+      banner.className = 'random-result-banner';
+      banner.innerHTML = `
+        <span class="random-result-icon">🎉</span>
+        <div class="random-result-label">Đã chọn</div>
+        <div class="random-result-name">${escapeHtml(methodName)}</div>
+        <div class="random-result-code">${escapeHtml(methodCode)}</div>
+      `;
+      document.body.appendChild(banner);
+
+      requestAnimationFrame(() => {
+        banner.classList.add('show');
+      });
+
+      setTimeout(() => {
+        banner.classList.remove('show');
+        setTimeout(() => banner.remove(), 500);
+      }, 2000);
+    }
+
+    function randomMethod() {
+      if (isRandomSpinning) return;
+
+      const allBtns = document.querySelectorAll('.method-btn');
+      if (allBtns.length === 0) {
+        showToast('⚠️ Chưa có phương pháp nào!', true);
+        return;
+      }
+
+      isRandomSpinning = true;
+
+      const diceBtn = document.getElementById('randomMethodBtn');
+      const diceEl = document.getElementById('randomDice');
+
+      diceBtn.classList.add('spinning');
+
+      const icons = ['🎲', '🎯', '🔮', '⚡', '✨', '🌟', '💫', '🎰'];
+      let iconIdx = 0;
+      const iconInterval = setInterval(() => {
+        iconIdx = (iconIdx + 1) % icons.length;
+        diceEl.textContent = icons[iconIdx];
+      }, 80);
+
+      setTimeout(() => {
+        clearInterval(iconInterval);
+
+        const methods = Array.from(allBtns);
+        const randomIdx = Math.floor(Math.random() * methods.length);
+        const chosenBtn = methods[randomIdx];
+
+        currentMethod = chosenBtn.dataset.method;
+        document.getElementById('selectedMethodName').textContent = chosenBtn.title;
+        document.getElementById('selectedMethodCode').textContent = currentMethod;
+
+        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+        chosenBtn.classList.add('active');
+        updateUI();
+
+        diceEl.textContent = '🎲';
+        diceBtn.classList.remove('spinning');
+        diceBtn.classList.add('success');
+
+        setTimeout(() => diceBtn.classList.remove('success'), 800);
+
+        const rect = diceBtn.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        createFireworks(centerX, centerY);
+
+        showRandomResultBanner(chosenBtn.title, currentMethod);
+
+        isRandomSpinning = false;
+
+        if (modalOverlay.classList.contains('show')) {
+          chosenBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 1500);
     }
 
     // ══════════════════════════════════════════════════════════
