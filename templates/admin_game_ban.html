@@ -4,30 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🚫 Quản lý cấm chơi game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             color: #fff;
             min-height: 100vh;
             padding: 30px 20px;
         }
+
         .container { max-width: 1100px; margin: 0 auto; }
-        h1 { text-align: center; margin-bottom: 30px; font-size: 2.2rem; }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
         .back {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             margin-bottom: 20px;
             color: #c8c8e0;
             text-decoration: none;
-            padding: 8px 16px;
+            padding: 10px 18px;
             background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             transition: all 0.2s;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
-        .back:hover { color: #2ed573; }
+        .back:hover {
+            color: #2ed573;
+            border-color: #2ed573;
+            transform: translateX(-4px);
+        }
 
+        /* ═══ TABS ═══ */
         .tabs {
             display: flex;
             gap: 10px;
@@ -36,25 +59,42 @@
             flex-wrap: wrap;
         }
         .tab {
-            padding: 10px 22px;
-            border-radius: 10px;
+            padding: 12px 24px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.15);
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
             transition: all 0.2s;
             color: #fff;
             font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
         .tab:hover { background: rgba(255, 255, 255, 0.15); }
         .tab.active {
-            background: #2ed573;
-            color: #0f0c29;
-            border-color: #2ed573;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+            border-color: #e74c3c;
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.35);
+        }
+        .tab .tab-badge {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            min-width: 22px;
+            text-align: center;
         }
 
         .panel { display: none; }
-        .panel.active { display: block; }
+        .panel.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .card {
             background: rgba(15, 15, 25, 0.85);
@@ -62,13 +102,18 @@
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 20px;
+            backdrop-filter: blur(12px);
         }
         .card h2 {
             font-size: 1.2rem;
             margin-bottom: 16px;
             color: #2ed573;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
+        /* ═══ SEARCH ═══ */
         .search-box {
             display: flex;
             gap: 10px;
@@ -83,9 +128,14 @@
             color: #fff;
             font-size: 1rem;
             outline: none;
+            font-family: inherit;
         }
-        .search-box input:focus { border-color: #2ed573; }
+        .search-box input:focus {
+            border-color: #2ed573;
+            box-shadow: 0 0 0 3px rgba(46, 213, 115, 0.15);
+        }
 
+        /* ═══ USER LIST ═══ */
         .user-list {
             max-height: 400px;
             overflow-y: auto;
@@ -93,6 +143,14 @@
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
+        .user-list::-webkit-scrollbar { width: 8px; }
+        .user-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+        .user-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .user-list::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
         .user-item {
             display: flex;
             align-items: center;
@@ -100,16 +158,16 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             cursor: pointer;
             transition: background 0.15s;
+            gap: 12px;
         }
         .user-item:last-child { border-bottom: none; }
         .user-item:hover { background: rgba(255, 255, 255, 0.05); }
-        .user-item.selected { background: rgba(46, 213, 115, 0.15); }
+        .user-item.selected { background: rgba(231, 76, 60, 0.15); }
         .user-item input[type="checkbox"] {
-            margin-right: 12px;
             width: 18px;
             height: 18px;
             cursor: pointer;
-            accent-color: #2ed573;
+            accent-color: #e74c3c;
             flex-shrink: 0;
         }
         .user-item .info { flex: 1; min-width: 0; }
@@ -121,23 +179,34 @@
         }
         .user-item .meta {
             color: #9999bb;
-            font-size: 0.85rem;
-            font-family: monospace;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
         }
         .user-item .badge {
-            padding: 3px 10px;
+            padding: 4px 10px;
             border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.72rem;
+            font-weight: 700;
             background: rgba(255, 71, 87, 0.2);
             color: #ff6b7a;
             border: 1px solid rgba(255, 71, 87, 0.4);
             flex-shrink: 0;
+            white-space: nowrap;
         }
-        .user-item .badge.admin-badge {
-            background: rgba(46, 213, 115, 0.2);
-            color: #7bed9f;
-            border-color: rgba(46, 213, 115, 0.4);
+        .user-item .badge.status-banned {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff6b7a;
+            border-color: rgba(255, 71, 87, 0.4);
+        }
+        .user-item .badge.status-warned {
+            background: rgba(255, 165, 2, 0.2);
+            color: #ffbe4d;
+            border-color: rgba(255, 165, 2, 0.4);
+        }
+        .user-item .badge.status-pending {
+            background: rgba(155, 89, 182, 0.2);
+            color: #c39bd3;
+            border-color: rgba(155, 89, 182, 0.4);
         }
 
         .select-all-row {
@@ -145,25 +214,29 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 12px;
-            padding: 8px 0;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
         }
         .select-all-row input {
             width: 18px;
             height: 18px;
             cursor: pointer;
-            accent-color: #2ed573;
+            accent-color: #e74c3c;
         }
         .select-all-row label {
             cursor: pointer;
             color: #c8c8e0;
             font-size: 0.9rem;
+            font-weight: 600;
         }
 
+        /* ═══ FORM ═══ */
         .form-group { margin-bottom: 16px; }
         .form-group label {
             display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
+            margin-bottom: 8px;
+            font-weight: 700;
             font-size: 0.9rem;
             color: #c8c8e0;
         }
@@ -171,7 +244,7 @@
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 11px 14px;
+            padding: 12px 14px;
             border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             background: rgba(0, 0, 0, 0.3);
@@ -179,11 +252,13 @@
             font-size: 0.95rem;
             outline: none;
             font-family: inherit;
+            transition: all 0.2s;
         }
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
             border-color: #2ed573;
+            box-shadow: 0 0 0 3px rgba(46, 213, 115, 0.15);
         }
         .form-group select option {
             background: #1a1a2e;
@@ -191,7 +266,7 @@
         }
         .form-group textarea {
             resize: vertical;
-            min-height: 70px;
+            min-height: 80px;
         }
 
         .row {
@@ -199,35 +274,50 @@
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
-        .custom-row { display: none; }
-        .custom-row.show {
-            display: grid;
+        .custom-row {
+            display: none;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
+            margin-top: 8px;
+            padding: 16px;
+            background: rgba(46, 213, 115, 0.08);
+            border: 1px dashed rgba(46, 213, 115, 0.4);
+            border-radius: 12px;
         }
+        .custom-row.show { display: grid; }
 
+        /* ═══ BUTTONS ═══ */
         .btn {
-            padding: 12px 24px;
+            padding: 13px 26px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             background: #2ed573;
             color: #0f0c29;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
             font-size: 1rem;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .btn:hover:not(:disabled) {
             background: #7bed9f;
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 213, 115, 0.3);
         }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn.danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
         }
-        .btn.danger { background: #ff4757; color: #fff; }
-        .btn.danger:hover:not(:disabled) { background: #ff6b7a; }
-        .btn.warn { background: #ffa502; }
+        .btn.danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ff6b7a, #e74c3c);
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+        }
+        .btn.warn { background: #ffa502; color: #0f0c29; }
         .btn.warn:hover:not(:disabled) { background: #ffbe4d; }
         .btn.secondary {
             background: rgba(255, 255, 255, 0.1);
@@ -236,53 +326,68 @@
         }
         .btn.secondary:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
         }
         .btn.small {
-            padding: 6px 14px;
-            font-size: 0.85rem;
+            padding: 7px 14px;
+            font-size: 0.82rem;
+            border-radius: 8px;
         }
         .btn-group {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            margin-top: 6px;
+            margin-top: 8px;
         }
 
+        /* ═══ BAN TABLE ═══ */
+        .ban-table-wrap {
+            overflow-x: auto;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+        }
         .ban-table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 800px;
         }
         .ban-table th,
         .ban-table td {
-            padding: 12px 10px;
+            padding: 14px 12px;
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             vertical-align: top;
         }
         .ban-table th {
             color: #9999bb;
-            font-weight: 600;
-            font-size: 0.82rem;
+            font-weight: 700;
+            font-size: 0.78rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
         .ban-table tr:hover { background: rgba(255, 255, 255, 0.03); }
-        .ban-table .reason-cell {
-            max-width: 220px;
-            word-break: break-word;
-        }
         .ban-table .id-cell {
-            font-family: monospace;
+            font-family: 'JetBrains Mono', monospace;
             color: #2ed573;
             font-size: 0.82rem;
         }
+        .ban-table .reason-cell {
+            max-width: 200px;
+            word-break: break-word;
+            color: #ffa502;
+        }
+
         .tag {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 8px;
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 700;
             white-space: nowrap;
         }
         .tag.temp {
@@ -295,27 +400,34 @@
             color: #ff6b7a;
             border: 1px solid rgba(255, 71, 87, 0.3);
         }
+
         .empty {
             text-align: center;
-            padding: 40px;
+            padding: 50px 20px;
             color: #9999bb;
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
         .empty-icon {
-            font-size: 3rem;
+            font-size: 4rem;
             display: block;
-            margin-bottom: 12px;
-            opacity: 0.5;
+            margin-bottom: 14px;
+            opacity: 0.6;
         }
 
+        /* ═══ ALERT ═══ */
         .alert {
-            padding: 14px 18px;
+            padding: 14px 20px;
             border-radius: 12px;
             margin-bottom: 16px;
-            font-weight: 500;
+            font-weight: 600;
             display: none;
+            align-items: center;
+            gap: 10px;
         }
-        .alert.show { display: block; }
+        .alert.show {
+            display: flex;
+            animation: slideDown 0.3s ease;
+        }
         .alert.success {
             background: rgba(46, 213, 115, 0.15);
             border: 1px solid rgba(46, 213, 115, 0.4);
@@ -326,29 +438,40 @@
             border: 1px solid rgba(255, 71, 87, 0.4);
             color: #ff6b7a;
         }
+        .alert.warn {
+            background: rgba(255, 165, 2, 0.15);
+            border: 1px solid rgba(255, 165, 2, 0.4);
+            color: #ffbe4d;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
+        /* ═══ SELECTED INFO ═══ */
         .selected-info {
-            background: rgba(46, 213, 115, 0.1);
-            border: 1px solid rgba(46, 213, 115, 0.3);
-            border-radius: 10px;
-            padding: 12px 16px;
+            background: rgba(231, 76, 60, 0.12);
+            border: 1px solid rgba(231, 76, 60, 0.4);
+            border-radius: 12px;
+            padding: 14px 18px;
             margin-bottom: 16px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             display: none;
         }
         .selected-info.show { display: block; }
-        .selected-info b { color: #2ed573; }
+        .selected-info b { color: #ff6b7a; font-size: 1.1rem; }
 
+        /* ═══ LOADING ═══ */
         .loading {
             text-align: center;
-            padding: 40px;
+            padding: 50px 20px;
             color: #9999bb;
         }
         .spinner {
             display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 3px solid rgba(255, 255, 255, 0.2);
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255, 255, 255, 0.15);
             border-top-color: #2ed573;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
@@ -357,15 +480,63 @@
             to { transform: rotate(360deg); }
         }
 
+        /* ═══ STATS ROW ═══ */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .stat-box .icon {
+            font-size: 2rem;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(231, 76, 60, 0.15);
+            border-radius: 12px;
+        }
+        .stat-box .info h4 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .stat-box .info p {
+            font-size: 0.8rem;
+            color: #9999bb;
+            font-weight: 600;
+        }
+
+        /* ═══ COUNTDOWN ═══ */
+        .countdown {
+            font-family: 'JetBrains Mono', monospace;
+            color: #ffbe4d;
+            font-weight: 700;
+        }
+
+        /* ═══ MOBILE ═══ */
         @media (max-width: 640px) {
+            body { padding: 16px 12px; }
+            h1 { font-size: 1.6rem; }
             .row, .custom-row.show {
                 grid-template-columns: 1fr;
             }
-            .ban-table { font-size: 0.8rem; }
-            .ban-table th, .ban-table td {
-                padding: 8px 6px;
-            }
-            .ban-table .reason-cell { max-width: 120px; }
+            .tabs { flex-direction: column; }
+            .tab { width: 100%; justify-content: center; }
+            .btn-group { flex-direction: column; }
+            .btn { width: 100%; }
         }
     </style>
 </head>
@@ -374,26 +545,35 @@
         <a href="{{ url_for('admin_panel') }}" class="back">← Về Admin Panel</a>
         <h1>🚫 Quản lý cấm chơi game</h1>
 
+        <!-- TABS -->
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('ban')">🚫 Cấm game</div>
-            <div class="tab" onclick="switchTab('list')">📋 Danh sách bị cấm (<span id="total-banned">0</span>)</div>
+            <div class="tab active" id="tab-ban" onclick="switchTab('ban')">
+                🚫 Cấm game
+            </div>
+            <div class="tab" id="tab-list" onclick="switchTab('list')">
+                📋 Danh sách bị cấm
+                <span class="tab-badge" id="tab-badge-count">0</span>
+            </div>
         </div>
 
-        <!-- ============ PANEL 1: CẤM GAME ============ -->
+        <!-- ═══════════ PANEL 1: CẤM GAME ═══════════ -->
         <div class="panel active" id="panel-ban">
             <div class="alert" id="alert-box"></div>
 
             <!-- Chọn user -->
             <div class="card">
-                <h2>1. Chọn user cần cấm</h2>
+                <h2>1️⃣ Chọn user cần cấm</h2>
 
                 <div class="search-box">
-                    <input type="text" id="search-input" placeholder="🔍 Tìm user theo tên hoặc ID...">
+                    <input type="text" id="search-input"
+                           placeholder="🔍 Tìm user theo username hoặc ID...">
                 </div>
 
                 <div class="select-all-row">
                     <input type="checkbox" id="select-all">
-                    <label for="select-all">Chọn tất cả user đang hiển thị</label>
+                    <label for="select-all">
+                        Chọn tất cả user đang hiển thị
+                    </label>
                 </div>
 
                 <div class="user-list" id="user-list">
@@ -407,34 +587,35 @@
 
             <!-- Cấu hình cấm -->
             <div class="card">
-                <h2>2. Cấu hình cấm</h2>
+                <h2>2️⃣ Cấu hình cấm</h2>
 
                 <div class="form-group">
                     <label for="reason">📝 Lý do cấm *</label>
-                    <textarea id="reason" placeholder="Ví dụ: Spam game, gian lận, thoát game liên tục...">Vi phạm quy định game</textarea>
+                    <textarea id="reason"
+                              placeholder="Ví dụ: Spam game, gian lận, thoát game liên tục, phá hoại trải nghiệm...">Vi phạm quy định game</textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="duration">⏱️ Thời gian cấm</label>
                     <select id="duration" onchange="toggleCustom()">
-                        <option value="1h">1 giờ</option>
-                        <option value="6h">6 giờ</option>
-                        <option value="12h">12 giờ</option>
-                        <option value="1day">1 ngày</option>
-                        <option value="3days">3 ngày</option>
-                        <option value="7days">7 ngày</option>
-                        <option value="30days">30 ngày</option>
-                        <option value="permanent">🚫 Vĩnh viễn</option>
-                        <option value="custom">⚙️ Tùy chỉnh</option>
+                        <option value="1h">⚡ 1 giờ</option>
+                        <option value="6h">🕕 6 giờ</option>
+                        <option value="12h">🕛 12 giờ</option>
+                        <option value="1day">📅 1 ngày</option>
+                        <option value="3days">📆 3 ngày</option>
+                        <option value="7days">🗓️ 7 ngày</option>
+                        <option value="30days">📅 30 ngày</option>
+                        <option value="permanent">♾️ Vĩnh viễn</option>
+                        <option value="custom">⚙️ Tùy chỉnh thời gian...</option>
                     </select>
                 </div>
 
                 <div class="custom-row" id="custom-row">
-                    <div class="form-group">
-                        <label for="custom-value">Giá trị</label>
+                    <div class="form-group" style="margin: 0;">
+                        <label for="custom-value">Số lượng</label>
                         <input type="number" id="custom-value" min="1" max="3650" value="1">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="margin: 0;">
                         <label for="custom-unit">Đơn vị</label>
                         <select id="custom-unit">
                             <option value="minutes">Phút</option>
@@ -449,16 +630,47 @@
                         🚫 Cấm game
                     </button>
                     <button class="btn secondary" onclick="clearSelection()">
-                        🔄 Bỏ chọn
+                        🔄 Bỏ chọn tất cả
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- ============ PANEL 2: DANH SÁCH BỊ CẤM ============ -->
+        <!-- ═══════════ PANEL 2: DANH SÁCH ═══════════ -->
         <div class="panel" id="panel-list">
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="icon">🚫</div>
+                    <div class="info">
+                        <h4 id="stat-total-banned">0</h4>
+                        <p>Đang bị cấm game</p>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="icon">⏰</div>
+                    <div class="info">
+                        <h4 id="stat-temp-banned">0</h4>
+                        <p>Cấm tạm thời</p>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="icon">♾️</div>
+                    <div class="info">
+                        <h4 id="stat-perm-banned">0</h4>
+                        <p>Cấm vĩnh viễn</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
-                <h2>📋 User đang bị cấm chơi game</h2>
+                <h2 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <span>📋 User đang bị cấm chơi game</span>
+                    <button class="btn small secondary" onclick="loadBanList()">
+                        🔄 Làm mới
+                    </button>
+                </h2>
+
                 <div id="ban-list-container">
                     <div class="loading"><div class="spinner"></div></div>
                 </div>
@@ -467,80 +679,115 @@
     </div>
 
     <script>
+        // ═══════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════
         let allUsers = [];
         let selectedUsernames = new Set();
+        let currentTab = 'ban';
 
-        // ============ TAB ============
+        // ═══════════════════════════════════════
+        // TABS
+        // ═══════════════════════════════════════
         function switchTab(name) {
+            currentTab = name;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+
             if (name === 'ban') {
-                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('tab-ban').classList.add('active');
                 document.getElementById('panel-ban').classList.add('active');
             } else {
-                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('tab-list').classList.add('active');
                 document.getElementById('panel-list').classList.add('active');
                 loadBanList();
             }
         }
 
-        // ============ ALERT ============
-        function showAlert(msg, type) {
+        // ═══════════════════════════════════════
+        // ALERT
+        // ═══════════════════════════════════════
+        function showAlert(msg, type = 'success') {
             const box = document.getElementById('alert-box');
             box.textContent = msg;
             box.className = 'alert show ' + type;
             setTimeout(() => { box.classList.remove('show'); }, 5000);
         }
 
-        // ============ TOGGLE CUSTOM ============
+        // ═══════════════════════════════════════
+        // TOGGLE CUSTOM DURATION
+        // ═══════════════════════════════════════
         function toggleCustom() {
             const v = document.getElementById('duration').value;
             const row = document.getElementById('custom-row');
             row.classList.toggle('show', v === 'custom');
         }
 
-        // ============ LOAD USERS ============
+        // ═══════════════════════════════════════
+        // LOAD USERS (để cấm)
+        // ═══════════════════════════════════════
         async function loadUsers(q = '') {
             const list = document.getElementById('user-list');
             list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
             try {
                 const res = await fetch('/api/admin/game-ban-search?q=' + encodeURIComponent(q));
                 const data = await res.json();
+
                 if (!data.success) {
-                    list.innerHTML = '<div class="empty">Lỗi: ' + (data.error || 'Không rõ') + '</div>';
+                    list.innerHTML = '<div class="empty">❌ Lỗi: ' + (data.error || 'Không rõ') + '</div>';
                     return;
                 }
+
                 allUsers = data.users || [];
                 renderUsers();
             } catch (e) {
-                list.innerHTML = '<div class="empty">Lỗi kết nối!</div>';
+                list.innerHTML = '<div class="empty">❌ Lỗi kết nối!</div>';
             }
         }
 
         function renderUsers() {
             const list = document.getElementById('user-list');
+
             if (allUsers.length === 0) {
-                list.innerHTML = '<div class="empty"><span class="empty-icon">👤</span>Không có user nào</div>';
+                list.innerHTML = `
+                    <div class="empty">
+                        <span class="empty-icon">👤</span>
+                        Không có user nào
+                    </div>
+                `;
                 return;
             }
+
             list.innerHTML = allUsers.map(u => {
                 const selected = selectedUsernames.has(u.username);
-                const badge = u.is_banned
-                    ? '<span class="badge">🚫 Đang bị cấm</span>'
-                    : '';
+                const checked = selected ? 'checked' : '';
+
+                let statusBadge = '';
+                if (u.is_banned) {
+                    statusBadge = '<span class="badge">🚫 Đang bị cấm game</span>';
+                } else if (u.status === 'banned') {
+                    statusBadge = '<span class="badge status-banned">🚫 Bị ban TK</span>';
+                } else if (u.status === 'warned') {
+                    statusBadge = '<span class="badge status-warned">⚠️ Cảnh báo</span>';
+                } else if (u.status === 'pending_delete') {
+                    statusBadge = '<span class="badge status-pending">🗑️ Chờ xóa</span>';
+                }
+
                 return `
                     <div class="user-item ${selected ? 'selected' : ''}"
-                         onclick="toggleUser('${u.username}', event)">
-                        <input type="checkbox" ${selected ? 'checked' : ''}
-                               onclick="event.stopPropagation(); toggleUser('${u.username}')">
+                         onclick="toggleUser('${escapeJs(u.username)}', event)">
+                        <input type="checkbox" ${checked}
+                               onclick="event.stopPropagation(); toggleUser('${escapeJs(u.username)}')">
                         <div class="info">
                             <div class="name">${escapeHtml(u.display_name)}</div>
-                            <div class="meta">${escapeHtml(u.username)} · ID: ${escapeHtml(u.user_id)}</div>
+                            <div class="meta">@${escapeHtml(u.username)} · ID: ${escapeHtml(u.user_id)}</div>
                         </div>
-                        ${badge}
+                        ${statusBadge}
                     </div>
                 `;
             }).join('');
+
             updateSelectedInfo();
         }
 
@@ -552,9 +799,16 @@
             }[c]));
         }
 
-        // ============ SELECTION ============
+        function escapeJs(s) {
+            return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        // ═══════════════════════════════════════
+        // SELECTION
+        // ═══════════════════════════════════════
         function toggleUser(username, evt) {
             if (evt) evt.stopPropagation();
+
             if (selectedUsernames.has(username)) {
                 selectedUsernames.delete(username);
             } else {
@@ -565,6 +819,7 @@
 
         function clearSelection() {
             selectedUsernames.clear();
+            document.getElementById('select-all').checked = false;
             renderUsers();
         }
 
@@ -575,24 +830,34 @@
             info.classList.toggle('show', selectedUsernames.size > 0);
         }
 
-        // ============ SELECT ALL ============
+        // ═══════════════════════════════════════
+        // SELECT ALL
+        // ═══════════════════════════════════════
         document.getElementById('select-all').addEventListener('change', (e) => {
             if (e.target.checked) {
-                allUsers.forEach(u => selectedUsernames.add(u.username));
+                allUsers.forEach(u => {
+                    if (!u.is_banned) selectedUsernames.add(u.username);
+                });
             } else {
                 selectedUsernames.clear();
             }
             renderUsers();
         });
 
-        // ============ SEARCH ============
+        // ═══════════════════════════════════════
+        // SEARCH
+        // ═══════════════════════════════════════
         let searchTimer;
         document.getElementById('search-input').addEventListener('input', (e) => {
             clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => loadUsers(e.target.value.trim()), 300);
+            searchTimer = setTimeout(() => {
+                loadUsers(e.target.value.trim());
+            }, 300);
         });
 
-        // ============ BAN ============
+        // ═══════════════════════════════════════
+        // DO BAN
+        // ═══════════════════════════════════════
         async function doBan() {
             const btn = document.getElementById('btn-ban');
 
@@ -603,7 +868,7 @@
 
             const reason = document.getElementById('reason').value.trim();
             if (!reason) {
-                showAlert('⚠️ Chưa nhập lý do!', 'error');
+                showAlert('⚠️ Chưa nhập lý do cấm!', 'error');
                 return;
             }
 
@@ -616,21 +881,24 @@
             };
 
             if (duration === 'custom') {
-                payload.custom_value = parseInt(document.getElementById('custom-value').value);
-                payload.custom_unit = document.getElementById('custom-unit').value;
-                if (!payload.custom_value || payload.custom_value <= 0) {
+                const cv = parseInt(document.getElementById('custom-value').value);
+                const cu = document.getElementById('custom-unit').value;
+                if (!cv || cv <= 0) {
                     showAlert('⚠️ Giá trị thời gian không hợp lệ!', 'error');
                     return;
                 }
+                payload.custom_value = cv;
+                payload.custom_unit = cu;
             }
 
             btn.disabled = true;
+            const originalText = btn.textContent;
             btn.textContent = '⏳ Đang xử lý...';
 
             try {
                 const res = await fetch('/api/admin/game-ban', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
@@ -644,6 +912,7 @@
                     selectedUsernames.clear();
                     document.getElementById('select-all').checked = false;
                     loadUsers(document.getElementById('search-input').value.trim());
+                    updateTabBadge();
                 } else {
                     showAlert('❌ ' + (data.error || 'Có lỗi xảy ra!'), 'error');
                 }
@@ -652,21 +921,210 @@
             }
 
             btn.disabled = false;
-            btn.textContent = '🚫 Cấm game';
+            btn.textContent = originalText;
         }
 
-        // ============ BAN LIST ============
+        // ═══════════════════════════════════════
+        // LOAD BAN LIST
+        // ═══════════════════════════════════════
         async function loadBanList() {
             const container = document.getElementById('ban-list-container');
             container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
             try {
                 const res = await fetch('/api/admin/game-ban-list');
                 const data = await res.json();
+
                 if (!data.success) {
-                    container.innerHTML = '<div class="empty">Lỗi: ' + (data.error || '') + '</div>';
+                    container.innerHTML = '<div class="empty">❌ Lỗi: ' + (data.error || '') + '</div>';
                     return;
                 }
-                document.getElementById('total-banned').textContent = data.total;
+
+                updateStats(data.users);
+                updateTabBadge(data.total);
 
                 if (data.users.length === 0) {
-                    container.innerHTML = '<div class="empty"><
+                    container.innerHTML = `
+                        <div class="empty">
+                            <span class="empty-icon">✅</span>
+                            Không có user nào bị cấm chơi game
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="ban-table-wrap">
+                        <table class="ban-table">
+                            <thead>
+                                <tr>
+                                    <th>👤 User</th>
+                                    <th>🆔 User ID</th>
+                                    <th>📝 Lý do</th>
+                                    <th>⏱️ Thời hạn</th>
+                                    <th>👑 Cấm bởi</th>
+                                    <th>🕐 Cấm lúc</th>
+                                    <th>⚙️ Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.users.map(u => `
+                                    <tr>
+                                        <td>
+                                            <strong>${escapeHtml(u.display_name)}</strong>
+                                            <div style="color:#9999bb; font-size:0.78rem; margin-top:2px;">
+                                                @${escapeHtml(u.username)}
+                                            </div>
+                                        </td>
+                                        <td class="id-cell">${escapeHtml(u.user_id)}</td>
+                                        <td class="reason-cell" title="${escapeHtml(u.reason || '')}">
+                                            ${escapeHtml(u.reason || '—')}
+                                        </td>
+                                        <td>
+                                            <span class="tag ${u.is_temp ? 'temp' : 'perm'}">
+                                                ${u.is_temp ? '⏰' : '♾️'} ${escapeHtml(u.duration_label)}
+                                            </span>
+                                            ${u.is_temp && u.ban_until ? `
+                                                <div style="margin-top:6px; font-size:0.75rem; color:#9999bb;">
+                                                    Hết hạn: <span class="countdown" data-until="${escapeHtml(u.ban_until)}">...</span>
+                                                </div>
+                                            ` : ''}
+                                        </td>
+                                        <td>${escapeHtml(u.banned_by || '—')}</td>
+                                        <td style="font-size:0.82rem; color:#9999bb;">
+                                            ${formatTime(u.banned_at)}
+                                        </td>
+                                        <td>
+                                            <button class="btn small"
+                                                    style="background:linear-gradient(135deg,#27ae60,#16a085); color:#fff;"
+                                                    onclick="unbanOne('${escapeJs(u.username)}')">
+                                                ✅ Bỏ cấm
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                startCountdowns();
+            } catch (e) {
+                container.innerHTML = '<div class="empty">❌ Lỗi kết nối!</div>';
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // UNBAN 1 USER
+        // ═══════════════════════════════════════
+        async function unbanOne(username) {
+            if (!confirm(`✅ Bỏ cấm chơi game cho "${username}"?`)) return;
+
+            try {
+                const res = await fetch('/api/admin/game-unban', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usernames: [username] })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    loadBanList();
+                    updateTabBadge();
+                } else {
+                    alert('❌ ' + (data.error || 'Lỗi!'));
+                }
+            } catch (e) {
+                alert('❌ Lỗi kết nối!');
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // UPDATE STATS
+        // ═══════════════════════════════════════
+        function updateStats(users) {
+            const total = users.length;
+            const temp = users.filter(u => u.is_temp).length;
+            const perm = total - temp;
+
+            document.getElementById('stat-total-banned').textContent = total;
+            document.getElementById('stat-temp-banned').textContent = temp;
+            document.getElementById('stat-perm-banned').textContent = perm;
+        }
+
+        async function updateTabBadge(count = null) {
+            if (count === null) {
+                try {
+                    const res = await fetch('/api/admin/game-ban-list');
+                    const data = await res.json();
+                    if (data.success) count = data.total;
+                } catch (e) { return; }
+            }
+            document.getElementById('tab-badge-count').textContent = count || 0;
+        }
+
+        // ═══════════════════════════════════════
+        // COUNTDOWN
+        // ═══════════════════════════════════════
+        function startCountdowns() {
+            document.querySelectorAll('.countdown[data-until]').forEach(el => {
+                const iso = el.getAttribute('data-until');
+                if (!iso) return;
+
+                const update = () => {
+                    try {
+                        const until = new Date(iso);
+                        const diff = until - new Date();
+
+                        if (diff <= 0) {
+                            el.textContent = 'Đã hết hạn';
+                            el.style.color = '#7bed9f';
+                            return;
+                        }
+
+                        const d = Math.floor(diff / 86400000);
+                        const h = Math.floor((diff % 86400000) / 3600000);
+                        const m = Math.floor((diff % 3600000) / 60000);
+                        const s = Math.floor((diff % 60000) / 1000);
+
+                        let str = '';
+                        if (d) str += d + 'd ';
+                        if (h) str += h + 'h ';
+                        if (m) str += m + 'm ';
+                        str += s + 's';
+                        el.textContent = str;
+                    } catch (e) {
+                        el.textContent = iso;
+                    }
+                };
+
+                update();
+                setInterval(update, 1000);
+            });
+        }
+
+        // ═══════════════════════════════════════
+        // FORMAT TIME
+        // ═══════════════════════════════════════
+        function formatTime(iso) {
+            if (!iso) return '—';
+            try {
+                return new Date(iso).toLocaleString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch { return iso; }
+        }
+
+        // ═══════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════
+        loadUsers();
+        updateTabBadge();
+    </script>
+</body>
+</html>
