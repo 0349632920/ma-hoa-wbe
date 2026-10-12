@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚫 Quản lý cấm chơi game</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 30px; font-size: 2.2rem; }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #c8c8e0;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        .back:hover { color: #2ed573; }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 10px 22px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        .tab:hover { background: rgba(255, 255, 255, 0.15); }
+        .tab.active {
+            background: #2ed573;
+            color: #0f0c29;
+            border-color: #2ed573;
+        }
+
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .card {
+            background: rgba(15, 15, 25, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: #2ed573;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+        }
+        .search-box input:focus { border-color: #2ed573; }
+
+        .user-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .user-item:last-child { border-bottom: none; }
+        .user-item:hover { background: rgba(255, 255, 255, 0.05); }
+        .user-item.selected { background: rgba(46, 213, 115, 0.15); }
+        .user-item input[type="checkbox"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #2ed573;
+            flex-shrink: 0;
+        }
+        .user-item .info { flex: 1; min-width: 0; }
+        .user-item .name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-item .meta {
+            color: #9999bb;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+        .user-item .badge {
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff6b7a;
+            border: 1px solid rgba(255, 71, 87, 0.4);
+            flex-shrink: 0;
+        }
+        .user-item .badge.admin-badge {
+            background: rgba(46, 213, 115, 0.2);
+            color: #7bed9f;
+            border-color: rgba(46, 213, 115, 0.4);
+        }
+
+        .select-all-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 8px 0;
+        }
+        .select-all-row input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #2ed573;
+        }
+        .select-all-row label {
+            cursor: pointer;
+            color: #c8c8e0;
+            font-size: 0.9rem;
+        }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #c8c8e0;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #2ed573;
+        }
+        .form-group select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .custom-row { display: none; }
+        .custom-row.show {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            background: #2ed573;
+            color: #0f0c29;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .btn:hover:not(:disabled) {
+            background: #7bed9f;
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn.danger { background: #ff4757; color: #fff; }
+        .btn.danger:hover:not(:disabled) { background: #ff6b7a; }
+        .btn.warn { background: #ffa502; }
+        .btn.warn:hover:not(:disabled) { background: #ffbe4d; }
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn.secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .btn.small {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .ban-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .ban-table th,
+        .ban-table td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.9rem;
+            vertical-align: top;
+        }
+        .ban-table th {
+            color: #9999bb;
+            font-weight: 600;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .ban-table tr:hover { background: rgba(255, 255, 255, 0.03); }
+        .ban-table .reason-cell {
+            max-width: 220px;
+            word-break: break-word;
+        }
+        .ban-table .id-cell {
+            font-family: monospace;
+            color: #2ed573;
+            font-size: 0.82rem;
+        }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .tag.temp {
+            background: rgba(255, 165, 2, 0.2);
+            color: #ffbe4d;
+            border: 1px solid rgba(255, 165, 2, 0.3);
+        }
+        .tag.perm {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff6b7a;
+            border: 1px solid rgba(255, 71, 87, 0.3);
+        }
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #9999bb;
+            font-size: 0.95rem;
+        }
+        .empty-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .alert {
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-weight: 500;
+            display: none;
+        }
+        .alert.show { display: block; }
+        .alert.success {
+            background: rgba(46, 213, 115, 0.15);
+            border: 1px solid rgba(46, 213, 115, 0.4);
+            color: #7bed9f;
+        }
+        .alert.error {
+            background: rgba(255, 71, 87, 0.15);
+            border: 1px solid rgba(255, 71, 87, 0.4);
+            color: #ff6b7a;
+        }
+
+        .selected-info {
+            background: rgba(46, 213, 115, 0.1);
+            border: 1px solid rgba(46, 213, 115, 0.3);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .selected-info.show { display: block; }
+        .selected-info b { color: #2ed573; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #9999bb;
+        }
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #2ed573;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 640px) {
+            .row, .custom-row.show {
+                grid-template-columns: 1fr;
+            }
+            .ban-table { font-size: 0.8rem; }
+            .ban-table th, .ban-table td {
+                padding: 8px 6px;
+            }
+            .ban-table .reason-cell { max-width: 120px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('admin_panel') }}" class="back">← Về Admin Panel</a>
+        <h1>🚫 Quản lý cấm chơi game</h1>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('ban')">🚫 Cấm game</div>
+            <div class="tab" onclick="switchTab('list')">📋 Danh sách bị cấm (<span id="total-banned">0</span>)</div>
+        </div>
+
+        <!-- ============ PANEL 1: CẤM GAME ============ -->
+        <div class="panel active" id="panel-ban">
+            <div class="alert" id="alert-box"></div>
+
+            <!-- Chọn user -->
+            <div class="card">
+                <h2>1. Chọn user cần cấm</h2>
+
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="🔍 Tìm user theo tên hoặc ID...">
+                </div>
+
+                <div class="select-all-row">
+                    <input type="checkbox" id="select-all">
+                    <label for="select-all">Chọn tất cả user đang hiển thị</label>
+                </div>
+
+                <div class="user-list" id="user-list">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+
+                <div class="selected-info" id="selected-info">
+                    Đã chọn: <b id="selected-count">0</b> user
+                </div>
+            </div>
+
+            <!-- Cấu hình cấm -->
+            <div class="card">
+                <h2>2. Cấu hình cấm</h2>
+
+                <div class="form-group">
+                    <label for="reason">📝 Lý do cấm *</label>
+                    <textarea id="reason" placeholder="Ví dụ: Spam game, gian lận, thoát game liên tục...">Vi phạm quy định game</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="duration">⏱️ Thời gian cấm</label>
+                    <select id="duration" onchange="toggleCustom()">
+                        <option value="1h">1 giờ</option>
+                        <option value="6h">6 giờ</option>
+                        <option value="12h">12 giờ</option>
+                        <option value="1day">1 ngày</option>
+                        <option value="3days">3 ngày</option>
+                        <option value="7days">7 ngày</option>
+                        <option value="30days">30 ngày</option>
+                        <option value="permanent">🚫 Vĩnh viễn</option>
+                        <option value="custom">⚙️ Tùy chỉnh</option>
+                    </select>
+                </div>
+
+                <div class="custom-row" id="custom-row">
+                    <div class="form-group">
+                        <label for="custom-value">Giá trị</label>
+                        <input type="number" id="custom-value" min="1" max="3650" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-unit">Đơn vị</label>
+                        <select id="custom-unit">
+                            <option value="minutes">Phút</option>
+                            <option value="hours" selected>Giờ</option>
+                            <option value="days">Ngày</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn danger" id="btn-ban" onclick="doBan()">
+                        🚫 Cấm game
+                    </button>
+                    <button class="btn secondary" onclick="clearSelection()">
+                        🔄 Bỏ chọn
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ PANEL 2: DANH SÁCH BỊ CẤM ============ -->
+        <div class="panel" id="panel-list">
+            <div class="card">
+                <h2>📋 User đang bị cấm chơi game</h2>
+                <div id="ban-list-container">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allUsers = [];
+        let selectedUsernames = new Set();
+
+        // ============ TAB ============
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            if (name === 'ban') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('panel-ban').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('panel-list').classList.add('active');
+                loadBanList();
+            }
+        }
+
+        // ============ ALERT ============
+        function showAlert(msg, type) {
+            const box = document.getElementById('alert-box');
+            box.textContent = msg;
+            box.className = 'alert show ' + type;
+            setTimeout(() => { box.classList.remove('show'); }, 5000);
+        }
+
+        // ============ TOGGLE CUSTOM ============
+        function toggleCustom() {
+            const v = document.getElementById('duration').value;
+            const row = document.getElementById('custom-row');
+            row.classList.toggle('show', v === 'custom');
+        }
+
+        // ============ LOAD USERS ============
+        async function loadUsers(q = '') {
+            const list = document.getElementById('user-list');
+            list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            try {
+                const res = await fetch('/api/admin/game-ban-search?q=' + encodeURIComponent(q));
+                const data = await res.json();
+                if (!data.success) {
+                    list.innerHTML = '<div class="empty">Lỗi: ' + (data.error || 'Không rõ') + '</div>';
+                    return;
+                }
+                allUsers = data.users || [];
+                renderUsers();
+            } catch (e) {
+                list.innerHTML = '<div class="empty">Lỗi kết nối!</div>';
+            }
+        }
+
+        function renderUsers() {
+            const list = document.getElementById('user-list');
+            if (allUsers.length === 0) {
+                list.innerHTML = '<div class="empty"><span class="empty-icon">👤</span>Không có user nào</div>';
+                return;
+            }
+            list.innerHTML = allUsers.map(u => {
+                const selected = selectedUsernames.has(u.username);
+                const badge = u.is_banned
+                    ? '<span class="badge">🚫 Đang bị cấm</span>'
+                    : '';
+                return `
+                    <div class="user-item ${selected ? 'selected' : ''}"
+                         onclick="toggleUser('${u.username}', event)">
+                        <input type="checkbox" ${selected ? 'checked' : ''}
+                               onclick="event.stopPropagation(); toggleUser('${u.username}')">
+                        <div class="info">
+                            <div class="name">${escapeHtml(u.display_name)}</div>
+                            <div class="meta">${escapeHtml(u.username)} · ID: ${escapeHtml(u.user_id)}</div>
+                        </div>
+                        ${badge}
+                    </div>
+                `;
+            }).join('');
+            updateSelectedInfo();
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        // ============ SELECTION ============
+        function toggleUser(username, evt) {
+            if (evt) evt.stopPropagation();
+            if (selectedUsernames.has(username)) {
+                selectedUsernames.delete(username);
+            } else {
+                selectedUsernames.add(username);
+            }
+            renderUsers();
+        }
+
+        function clearSelection() {
+            selectedUsernames.clear();
+            renderUsers();
+        }
+
+        function updateSelectedInfo() {
+            const info = document.getElementById('selected-info');
+            const count = document.getElementById('selected-count');
+            count.textContent = selectedUsernames.size;
+            info.classList.toggle('show', selectedUsernames.size > 0);
+        }
+
+        // ============ SELECT ALL ============
+        document.getElementById('select-all').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                allUsers.forEach(u => selectedUsernames.add(u.username));
+            } else {
+                selectedUsernames.clear();
+            }
+            renderUsers();
+        });
+
+        // ============ SEARCH ============
+        let searchTimer;
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => loadUsers(e.target.value.trim()), 300);
+        });
+
+        // ============ BAN ============
+        async function doBan() {
+            const btn = document.getElementById('btn-ban');
+
+            if (selectedUsernames.size === 0) {
+                showAlert('⚠️ Chưa chọn user nào!', 'error');
+                return;
+            }
+
+            const reason = document.getElementById('reason').value.trim();
+            if (!reason) {
+                showAlert('⚠️ Chưa nhập lý do!', 'error');
+                return;
+            }
+
+            const duration = document.getElementById('duration').value;
+
+            const payload = {
+                usernames: Array.from(selectedUsernames),
+                reason: reason,
+                duration: duration
+            };
+
+            if (duration === 'custom') {
+                payload.custom_value = parseInt(document.getElementById('custom-value').value);
+                payload.custom_unit = document.getElementById('custom-unit').value;
+                if (!payload.custom_value || payload.custom_value <= 0) {
+                    showAlert('⚠️ Giá trị thời gian không hợp lệ!', 'error');
+                    return;
+                }
+            }
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Đang xử lý...';
+
+            try {
+                const res = await fetch('/api/admin/game-ban', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    let msg = `✅ Đã cấm game ${data.banned_count} user (${data.duration_label})`;
+                    if (data.skipped_count > 0) {
+                        msg += ` — bỏ qua ${data.skipped_count} user`;
+                    }
+                    showAlert(msg, 'success');
+                    selectedUsernames.clear();
+                    document.getElementById('select-all').checked = false;
+                    loadUsers(document.getElementById('search-input').value.trim());
+                } else {
+                    showAlert('❌ ' + (data.error || 'Có lỗi xảy ra!'), 'error');
+                }
+            } catch (e) {
+                showAlert('❌ Lỗi kết nối!', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🚫 Cấm game';
+        }
+
+        // ============ BAN LIST ============
+        async function loadBanList() {
+            const container = document.getElementById('ban-list-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            try {
+                const res = await fetch('/api/admin/game-ban-list');
+                const data = await res.json();
+                if (!data.success) {
+                    container.innerHTML = '<div class="empty">Lỗi: ' + (data.error || '') + '</div>';
+                    return;
+                }
+                document.getElementById('total-banned').textContent = data.total;
+
+                if (data.users.length === 0) {
+                    container.innerHTML = '<div class="empty"><
