@@ -2435,6 +2435,27 @@ def api_2fa_regenerate_backup():
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
 # ============================================================
+# VÒNG QUAY NGẪU NHIÊN
+# ============================================================
+@app.route('/wheel')
+@login_required
+def wheel_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('wheel.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+# ============================================================
 # CHẾ TÊN — AI (GROQ) + FALLBACK TỪ ĐIỂN
 # ============================================================
 @app.route('/ten')
