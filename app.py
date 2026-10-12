@@ -1176,7 +1176,222 @@ def api_history():
     users = load_users()
     user = users.get(session['username'], {})
     return jsonify({'success': True, 'history': user.get('history', [])})
+# ============================================================
+# GAME HUB (CHỈ CÒN 2 GAME: ĐOÁN SỐ + RẮN SĂN MỒI)
+# ============================================================
+@app.route('/game')
+@login_required
+def game_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+    return render_template('game.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
 
+
+# ============================================================
+# GAME 1: ĐOÁN SỐ
+# ============================================================
+@app.route('/game/guess')
+@login_required
+def game_guess_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    session['guess_secret'] = random.randint(1, 100)
+    session['guess_count'] = 0
+    return render_template('game_guess.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+
+@app.route('/api/game/guess/check', methods=['POST'])
+@login_required
+def api_guess_check():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    data = request.get_json() or {}
+    try:
+        guess = int(data.get('guess', 0))
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Vui lòng nhập số hợp lệ!'}), 400
+
+    if guess < 1 or guess > 100:
+        return jsonify({'success': False, 'error': 'Số phải từ 1 đến 100!'}), 400
+
+    secret = session.get('guess_secret')
+    if secret is None:
+        return jsonify({'success': False, 'error': 'Phiên chơi hết hạn, tải lại trang!'}), 400
+
+    session['guess_count'] = session.get('guess_count', 0) + 1
+    count = session['guess_count']
+
+    if guess == secret:
+        if count <= 3:    points = 50
+        elif count <= 6:  points = 30
+        elif count <= 10: points = 15
+        else:             points = 5
+
+        # Lưu điểm cao nhất
+        user = users[username]
+        game = user.setdefault('game', {})
+        best = game.get('guess_best_count')  # số lần đoán ít nhất
+        if best is None or count < best:
+            game['guess_best_count'] = count
+        game['guess_total_wins'] = game.get('guess_total_wins', 0) + 1
+        game['points'] = game.get('points', 0) + points
+        users[username] = user
+        save_user(username, user)
+
+        session.pop('guess_secret', None)
+        return jsonify({
+            'success': True, 'result': 'correct',
+            'message': f'🎉 Chính xác! Đoán đúng sau {count} lần. +{points} điểm!',
+            'count': count, 'points_earned': points,
+        })
+    elif guess < secret:
+        return jsonify({
+            'success': True, 'result': 'low',
+            'message': '⬆️ Số bí mật LỚN HƠN!', 'count': count
+        })
+    else:
+        return jsonify({
+            'success': True, 'result': 'high',
+            'message': '⬇️ Số bí mật NHỎ HƠN!', 'count': count
+        })
+
+
+@app.route('/api/game/guess/reset', methods=['POST'])
+@login_required
+def api_guess_reset():
+    session['guess_secret'] = random.randint(1, 100)
+    session['guess_count'] = 0
+    return jsonify({'success': True, 'message': 'Đã tạo số mới!'})
+
+
+# ============================================================
+# GAME 2: RẮN SĂN MỒI
+# ============================================================
+@app.route('/game/snake')
+@login_required
+def game_snake_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('game_snake.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+
+@app.route('/api/game/snake/score', methods=['POST'])
+@login_required
+def api_snake_score():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    data = request.get_json() or {}
+    try:
+        score = int(data.get('score', 0))
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Điểm không hợp lệ!'}), 400
+
+    if score < 0 or score > 100000:
+        return jsonify({'success': False, 'error': 'Điểm không hợp lệ!'}), 400
+
+    user = users[username]
+    game = user.setdefault('game', {})
+    best = game.get('snake_best', 0)
+    is_new_record = score > best
+
+    if is_new_record:
+        game['snake_best'] = score
+        bonus_points = score // 10
+        if bonus_points > 0:
+            game['points'] = game.get('points', 0) + bonus_points
+
+    users[username] = user
+    save_user(username, user)
+
+    return jsonify({
+        'success': True,
+        'best': game.get('snake_best', 0),
+        'is_new_record': is_new_record,
+        'points_earned': (score // 10) if is_new_record else 0,
+    })
+
+
+@app.route('/api/game/snake/best')
+@login_required
+def api_snake_best():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    game = users[username].get('game', {})
+    return jsonify({'success': True, 'best': game.get('snake_best', 0)})
+
+# ============================================================
+# LEADERBOARD ĐƠN GIẢN (2 GAME MỚI)
+# ============================================================
+@app.route('/api/game/leaderboard')
+@login_required
+def api_leaderboard():
+    users = load_users()
+    board = []
+    for uname, udata in users.items():
+        game = udata.get('game', {})
+        points = game.get('points', 0)
+        snake_best = game.get('snake_best', 0)
+        guess_best = game.get('guess_best_count')
+        if points > 0 or snake_best > 0 or guess_best:
+            board.append({
+                'username': udata.get('display_name', uname),
+                'real_username': uname,
+                'user_id': udata.get('user_id', '—'),
+                'points': points,
+                'snake_best': snake_best,
+                'guess_best_count': guess_best,  # None nếu chưa chơi
+                'is_super_admin': is_super_admin(uname),
+            })
+    board.sort(key=lambda x: -x['points'])
+    for i, u in enumerate(board):
+        u['rank'] = i + 1
+        if i == 0: u['medal'] = '🥇'
+        elif i == 1: u['medal'] = '🥈'
+        elif i == 2: u['medal'] = '🥉'
+        else: u['medal'] = f'#{i+1}'
+    return jsonify({'success': True, 'leaderboard': board[:50]})
+    
 # ============================================================
 # ADMIN PANEL
 # ============================================================
