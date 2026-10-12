@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, make_response
 from crypto_utils import (
     process, METHODS, ONE_WAY_ONLY,
     translate, to_english, to_vietnamese, auto_translate, detect_language,
