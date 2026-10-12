@@ -2601,6 +2601,174 @@ def health():
 def ping():
     return 'pong', 200
 
+# ============================================================
+# CHẾ THƠ AI + BÓI VUI
+# ============================================================
+@app.route('/tho')
+@login_required
+def tho_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('tho.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+
+@app.route('/api/tho/generate', methods=['POST'])
+@login_required
+def api_tho_generate():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return jsonify({'success': False, 'error': 'Bạn đã bị ban!', 'redirect': '/banned'}), 403
+
+    data = request.get_json() or {}
+    chu_de = (data.get('chu_de') or '').strip()
+    chu_de_type = (data.get('chu_de_type') or 'tinh_yeu').strip()
+    phong_cach = (data.get('phong_cach') or 'tho_bay').strip()
+
+    if not chu_de:
+        return jsonify({'success': False, 'error': 'Vui lòng nhập chủ đề!'}), 400
+    if len(chu_de) > 200:
+        return jsonify({'success': False, 'error': 'Chủ đề quá dài (tối đa 200 ký tự)!'}), 400
+
+    # Thử AI trước
+    if groq_client:
+        try:
+            result = _generate_tho_with_ai(chu_de, chu_de_type, phong_cach)
+            return jsonify({'success': True, 'data': result, 'ai': True})
+        except Exception as e:
+            print(f"⚠️ Groq error: {e}")
+
+    # Fallback
+    try:
+        result = tho_fallback(chu_de_type)
+        result['chu_de'] = chu_de
+        return jsonify({'success': True, 'data': result, 'ai': False})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+def _generate_tho_with_ai(chu_de, chu_de_type, phong_cach):
+    """Gọi Groq AI để làm thơ."""
+    system_prompt = """Bạn là nhà thơ Việt Nam tài ba.
+Trả về JSON hợp lệ, KHÔNG thêm text khác, KHÔNG dùng markdown."""
+
+    phong_cach_map = {
+        'tho_bay': 'thơ 7 chữ (thất ngôn), mỗi câu 7 chữ',
+        'tho_luc_bat': 'thơ lục bát (câu 6 chữ xen câu 8 chữ)',
+        'tho_tu_do': 'thơ tự do, không gò bó số chữ',
+        'tho_duong': 'thơ Đường luật, 8 câu 7 chữ, có niêm luật',
+    }
+
+    pc = phong_cach_map.get(phong_cach, phong_cach_map['tho_bay'])
+
+    user_prompt = f"""Viết một bài thơ về chủ đề: "{chu_de}"
+
+Phong cách: {pc}
+Yêu cầu:
+- Bài thơ phải HAY, có cảm xúc
+- Vần điệu hài hòa
+- Có thể dùng hình ảnh ẩn dụ, so sánh
+- Độ dài: 4-8 câu (tùy phong cách)
+
+Trả về JSON:
+{{
+  "chu_de": "{chu_de}",
+  "loai": "{pc}",
+  "bai_tho": "Bài thơ đầy đủ, dùng \\n để xuống dòng",
+  "y_nghia": "1-2 câu giải thích ý nghĩa bài thơ"
+}}"""
+
+    chat_completion = groq_client.chat.completions.create(
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        model="llama-3.3-70b-versatile",
+        temperature=1.0,
+        max_tokens=1000,
+        response_format={"type": "json_object"}
+    )
+
+    response_text = chat_completion.choices[0].message.content.strip()
+
+    if response_text.startswith('```'):
+        parts = response_text.split('```')
+        if len(parts) >= 2:
+            response_text = parts[1]
+            if response_text.startswith('json'):
+                response_text = response_text[4:]
+    response_text = response_text.strip()
+
+    import json as _json
+    result = _json.loads(response_text)
+
+    result.setdefault('chu_de', chu_de)
+    result.setdefault('bai_tho', '')
+    result.setdefault('y_nghia', '')
+
+    return result
+
+
+@app.route('/boi')
+@login_required
+def boi_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('boi.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+
+@app.route('/api/boi', methods=['POST'])
+@login_required
+def api_boi():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return jsonify({'success': False, 'error': 'Bạn đã bị ban!', 'redirect': '/banned'}), 403
+
+    data = request.get_json() or {}
+    ten = (data.get('ten') or '').strip()
+    chu_de = (data.get('chu_de') or 'tinh_duyen').strip()
+
+    if len(ten) > 100:
+        return jsonify({'success': False, 'error': 'Tên quá dài (tối đa 100 ký tự)!'}), 400
+    if chu_de not in ('tinh_duyen', 'su_nghiep', 'tai_loc', 'suc_khoe', 'hoc_tap'):
+        chu_de = 'tinh_duyen'
+
+    try:
+        result = boi_vui(chu_de=chu_de, ten=ten)
+        return jsonify({'success': True, 'data': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
 # ============================================================
 # KHỞI ĐỘNG
