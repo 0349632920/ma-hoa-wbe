@@ -30,6 +30,32 @@ from psycopg2.extras import Json, RealDictCursor
 
 load_dotenv()
 
+# ═══════════════════════════════════════════════════════════
+# GROQ AI — Import an toàn, không crash nếu thiếu key/package
+# ═══════════════════════════════════════════════════════════
+groq_client = None
+try:
+    from groq import Groq
+    GROQ_API_KEY = os.getenv('GROQ_API_KEY', '').strip()
+    if GROQ_API_KEY:
+        groq_client = Groq(api_key=GROQ_API_KEY)
+        print("✅ Groq AI đã sẵn sàng")
+    else:
+        print("⚠️ Chưa có GROQ_API_KEY — dùng fallback từ điển")
+except ImportError:
+    print("⚠️ Chưa cài groq — dùng fallback từ điển")
+except Exception as e:
+    print(f"⚠️ Lỗi khởi tạo Groq: {e}")
+
+# ═══ Import ten_utils (fallback) ═══
+try:
+    from ten_utils import generate_name
+    print("✅ ten_utils đã sẵn sàng")
+except ImportError:
+    print("⚠️ Chưa có ten_utils.py — không có fallback!")
+    def generate_name(name, mode='nghiem'):
+        return {'error': 'Chưa có ten_utils.py'}
+
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'change-me-in-production')
 app.permanent_session_lifetime = timedelta(days=7)
