@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎮 Trò chơi giải trí</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
-            /* Nền tối hơn để chữ trắng nổi bật */
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             color: #fff;
             padding: 40px 20px;
@@ -23,13 +22,11 @@
             text-align: center;
         }
 
-        /* ═══ TIÊU ĐỀ CÓ NỀN ═══ */
         .hub h1 {
             font-size: 2.6rem;
             margin-bottom: 16px;
             display: inline-block;
             padding: 12px 32px;
-            /* Nền đen mờ cho chữ */
             background: rgba(0, 0, 0, 0.35);
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -38,7 +35,6 @@
             letter-spacing: 1px;
         }
 
-        /* ═══ DÒNG CHÀO CÓ NỀN ═══ */
         .sub {
             color: #e0e0ff;
             margin-bottom: 40px;
@@ -54,7 +50,6 @@
             font-weight: 700;
         }
 
-        /* ═══ GRID GAME ═══ */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -62,9 +57,7 @@
             margin-bottom: 40px;
         }
 
-        /* ═══ CARD GAME — MÀU ĐEN NHẠT ═══ */
         .card {
-            /* Đen nhạt (dark slate) thay vì trắng mờ */
             background: rgba(15, 15, 25, 0.75);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 20px;
@@ -76,9 +69,9 @@
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
             position: relative;
             overflow: hidden;
+            display: block;
         }
 
-        /* Hiệu ứng hover — sáng lên nhẹ */
         .card:hover {
             transform: translateY(-8px);
             background: rgba(25, 25, 40, 0.9);
@@ -86,7 +79,6 @@
             box-shadow: 0 20px 45px rgba(46, 213, 115, 0.35);
         }
 
-        /* Viền sáng chạy quanh khi hover */
         .card::before {
             content: '';
             position: absolute;
@@ -96,14 +88,11 @@
             transition: left 0.5s;
         }
 
-        .card:hover::before {
-            left: 100%;
-        }
+        .card:hover::before { left: 100%; }
 
         .icon {
             font-size: 4.5rem;
             margin-bottom: 16px;
-            /* Nền nhẹ sau icon */
             display: inline-block;
             padding: 12px;
             border-radius: 16px;
@@ -114,7 +103,6 @@
         .card h2 {
             font-size: 1.6rem;
             margin-bottom: 10px;
-            /* Nền chữ cho tiêu đề card */
             display: inline-block;
             padding: 6px 16px;
             background: rgba(0, 0, 0, 0.35);
@@ -126,7 +114,6 @@
             color: #c8c8e0;
             font-size: 0.95rem;
             line-height: 1.6;
-            /* Nền chữ cho mô tả */
             display: inline-block;
             padding: 8px 14px;
             background: rgba(0, 0, 0, 0.2);
@@ -134,7 +121,6 @@
             margin-top: 4px;
         }
 
-        /* ═══ NÚT QUAY LẠI ═══ */
         .back {
             color: #e0e0ff;
             text-decoration: none;
@@ -155,7 +141,6 @@
             transform: translateX(-4px);
         }
 
-        /* ═══ MOBILE ═══ */
         @media (max-width: 480px) {
             .hub h1 { font-size: 1.9rem; padding: 10px 20px; }
             .icon { font-size: 3.5rem; }
@@ -184,5 +169,8 @@
 
         <a class="back" href="{{ url_for('index') }}">← Về trang chủ</a>
     </div>
+
+    <!-- ⭐ POLLING PHÁT HIỆN CẤM/GỠ CẤM GAME -->
+    <script src="{{ url_for('static', filename='game_polling.js') }}"></script>
 </body>
 </html>
