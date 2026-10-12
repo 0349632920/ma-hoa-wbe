@@ -1497,30 +1497,23 @@ def api_snake_score():
 @app.route('/api/game/check-ban')
 @login_required
 def api_game_check_ban():
-    """Kiểm tra trạng thái cấm game của user hiện tại (dùng cho polling)."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
 
-    # Check ban tài khoản
     user = check_and_auto_unban(username)
     if user.get('status') == 'banned' and not is_super_admin(username):
         return jsonify({
-            'success': True,
-            'account_banned': True,
+            'success': True, 'account_banned': True,
             'redirect': f'/banned?user={username}'
         })
-
-    # Check pending delete
     if user.get('status') == 'pending_delete':
         return jsonify({
-            'success': True,
-            'pending_delete': True,
+            'success': True, 'pending_delete': True,
             'redirect': '/deleted'
         })
 
-    # Check cấm game
     user = check_and_auto_unban_game(username)
     banned, gb = is_game_banned(user)
 
