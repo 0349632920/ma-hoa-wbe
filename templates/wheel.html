@@ -270,7 +270,6 @@
             pointer-events: none;
         }
 
-        /* ⭐ LABEL — hỗ trợ xuống dòng, không bị ngược */
         .wheel-label {
             position: absolute;
             left: 50%;
@@ -295,7 +294,6 @@
             padding: 2px 4px;
         }
 
-        /* Kim chỉ */
         .wheel-pointer {
             position: absolute;
             top: -22px;
@@ -310,7 +308,6 @@
             z-index: 10;
         }
 
-        /* Nút trung tâm */
         .wheel-center {
             position: absolute;
             top: 50%;
@@ -372,7 +369,6 @@
             cursor: not-allowed;
         }
 
-        /* ═══ EMPTY ═══ */
         .empty {
             position: absolute;
             inset: 0;
@@ -605,29 +601,14 @@
 
         /* ═══ RESPONSIVE ═══ */
         @media (max-width: 900px) {
-            .layout {
-                grid-template-columns: 1fr;
-            }
-            .sidebar {
-                position: static;
-                max-height: none;
-            }
-            .wheel-container {
-                width: 400px;
-                height: 400px;
-            }
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { position: static; max-height: none; }
+            .wheel-container { width: 400px; height: 400px; }
         }
         @media (max-width: 480px) {
-            .wheel-container {
-                width: 320px;
-                height: 320px;
-            }
+            .wheel-container { width: 320px; height: 320px; }
             .wheel-label { font-size: 0.75rem; max-width: 110px; max-height: 60px; }
-            .wheel-center {
-                width: 70px;
-                height: 70px;
-                font-size: 0.9rem;
-            }
+            .wheel-center { width: 70px; height: 70px; font-size: 0.9rem; }
             .modal-value { font-size: 1.5rem; }
         }
     </style>
@@ -637,7 +618,7 @@
         <div class="top-bar">
             <a href="{{ url_for('index') }}" class="back">← Về trang chủ</a>
             <div class="top-actions">
-                <button class="top-btn" id="soundToggle" onclick="toggleSound()" title="Bật/tắt âm thanh">
+                <button class="top-btn" id="soundToggle" onclick="toggleSound()">
                     🔊 Âm thanh
                 </button>
                 <button class="top-btn" onclick="openHistory()">
@@ -653,7 +634,6 @@
         </div>
 
         <div class="layout">
-            <!-- ═══ SIDEBAR ═══ -->
             <div class="sidebar">
                 <h3>📝 Danh sách mục</h3>
                 <textarea id="namesInput" placeholder="Ví dụ:&#10;Hùng&#10;Dương&#10;Minh&#10;Ngọc&#10;Châu"></textarea>
@@ -668,7 +648,6 @@
                     </button>
                 </div>
 
-                <!-- ═══ SETTINGS ═══ -->
                 <div class="setting-group">
                     <h3>⚙️ Cài đặt</h3>
 
@@ -710,7 +689,6 @@
                 </div>
             </div>
 
-            <!-- ═══ MAIN AREA ═══ -->
             <div class="main-area">
                 <div class="wheel-container">
                     <div class="wheel-pointer"></div>
@@ -733,7 +711,6 @@
         </div>
     </div>
 
-    <!-- ═══ RESULT MODAL ═══ -->
     <div class="modal-overlay" id="resultModal">
         <div class="modal">
             <div class="modal-icon">🎉</div>
@@ -746,7 +723,6 @@
         </div>
     </div>
 
-    <!-- ═══ HISTORY PANEL ═══ -->
     <div class="history-panel" id="historyPanel">
         <div class="history-header">
             <h3>📜 Lịch sử quay</h3>
@@ -760,7 +736,6 @@
         </div>
     </div>
 
-    <!-- ═══ CONFETTI ═══ -->
     <div class="confetti-container" id="confettiContainer"></div>
 
     <div class="toast" id="toast"></div>
@@ -780,6 +755,38 @@
             '#2ed573', '#1e90ff', '#ffa502', '#ff4757',
             '#a55eea', '#26de81', '#fd9644', '#45aaf2'
         ];
+
+        // ═══════════════════════════════════════════════════════════
+        //  ⭐ RANDOM 100% — crypto.getRandomValues()
+        // ═══════════════════════════════════════════════════════════
+        function secureRandomInt(max) {
+            /**
+             * Random integer từ 0 đến max-1 (không bao gồm max)
+             * Dùng crypto.getRandomValues() — chuẩn cryptographic
+             * Rejection sampling → không bị bias, phân phối đều 100%
+             */
+            if (max <= 0) return 0;
+            if (max === 1) return 0;
+
+            // Fallback nếu browser cũ không hỗ trợ crypto
+            if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
+                const t = Date.now() * 1000 + performance.now() * 1000000;
+                return Math.floor((Math.random() + (t % 1)) * max) % max;
+            }
+
+            const range = 4294967296; // 2^32
+            const limit = Math.floor(range / max) * max;
+            const randomBuffer = new Uint32Array(1);
+            let value;
+
+            // Rejection sampling — loại bỏ giá trị gây bias
+            do {
+                crypto.getRandomValues(randomBuffer);
+                value = randomBuffer[0];
+            } while (value >= limit);
+
+            return value % max;
+        }
 
         // ═══════════════════════════════════════════════════════════
         //  LOCALSTORAGE
@@ -847,7 +854,6 @@
             const n = items.length;
             const anglePerItem = 360 / n;
 
-            // Tạo conic-gradient
             let gradientStops = [];
             for (let i = 0; i < n; i++) {
                 const color = COLORS[i % COLORS.length];
@@ -857,12 +863,11 @@
             }
             wheel.style.background = `conic-gradient(${gradientStops.join(', ')})`;
 
-            // Đặt labels
             labelsContainer.innerHTML = '';
             const fontSize = parseInt(document.getElementById('fontSize').value) || 14;
             const radius = wheel.offsetWidth / 2;
 
-            // Điều chỉnh font size theo số mục
+            // Auto font size theo số mục
             let finalFontSize = fontSize;
             if (n > 6) finalFontSize = Math.max(9, fontSize - Math.floor((n - 6) / 2));
             if (n > 15) finalFontSize = Math.max(8, fontSize - 6);
@@ -875,14 +880,11 @@
                 label.textContent = items[i];
                 label.style.fontSize = finalFontSize + 'px';
 
-                // Đặt ở giữa ô, cách tâm 55% bán kính
                 const dist = radius * 0.55;
 
-                // ⭐ Xác định góc xoay — tránh chữ ngược
+                // Tránh chữ ngược
                 let rotation = angle - 90;
                 const normalizedAngle = ((angle % 360) + 360) % 360;
-
-                // Nếu ô nằm ở nửa dưới (90° < angle < 270°) → chữ ngược → lật lại
                 const flip = (normalizedAngle > 90 && normalizedAngle < 270);
 
                 if (flip) {
@@ -893,14 +895,12 @@
                 }
 
                 label.style.transformOrigin = '0 0';
-                // ⭐ Max width cho phép chữ xuống dòng
                 label.style.maxWidth = Math.min(140, radius * 0.5) + 'px';
                 label.style.maxHeight = Math.min(70, radius * 0.28) + 'px';
 
                 labelsContainer.appendChild(label);
             }
 
-            // Reset rotation
             wheel.style.transition = 'none';
             wheel.style.transform = 'rotate(0deg)';
             currentRotation = 0;
@@ -930,7 +930,7 @@
         }
 
         // ═══════════════════════════════════════════════════════════
-        //  QUAY
+        //  QUAY — RANDOM 100%
         // ═══════════════════════════════════════════════════════════
         function spin() {
             if (isSpinning) return;
@@ -945,14 +945,22 @@
 
             const n = items.length;
             const anglePerItem = 360 / n;
-            const randomIndex = Math.floor(Math.random() * n);
 
-            // Góc dừng để ô randomIndex nằm ở đỉnh (kim ở trên, 0°)
+            // ⭐ RANDOM 100% — dùng crypto.getRandomValues()
+            const randomIndex = secureRandomInt(n);
+            console.log('🎲 Random index:', randomIndex, '→ Kết quả:', items[randomIndex]);
+
+            // Góc để ô randomIndex nằm ở đỉnh
             const targetAngle = 360 - (randomIndex * anglePerItem + anglePerItem / 2);
 
-            const extraSpins = 5 + Math.floor(Math.random() * 4);
+            // Số vòng quay thêm — random 6-10 vòng
+            const extraSpins = 6 + secureRandomInt(5);
+
+            // Offset ngẫu nhiên nhỏ trong ô (tránh dừng đúng giữa)
+            const angleOffset = (secureRandomInt(100) - 50) * (anglePerItem * 0.007);
+
             const currentMod = currentRotation % 360;
-            const deltaToTarget = ((targetAngle - currentMod) + 360) % 360;
+            const deltaToTarget = ((targetAngle - currentMod + angleOffset) + 360) % 360;
             const totalRotation = currentRotation + (extraSpins * 360) + deltaToTarget;
 
             currentRotation = totalRotation;
@@ -998,7 +1006,6 @@
             if (document.getElementById('showConfetti').checked) {
                 createConfetti();
             }
-
             if (soundEnabled) playWinSound();
 
             if (document.getElementById('showResultModal').checked) {
@@ -1189,8 +1196,9 @@
                 showToast('⚠️ Cần ít nhất 2 mục!', true);
                 return;
             }
+            // Fisher-Yates shuffle
             for (let i = items.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
+                const j = secureRandomInt(i + 1);
                 [items[i], items[j]] = [items[j], items[i]];
             }
             document.getElementById('namesInput').value = items.join('\n');
