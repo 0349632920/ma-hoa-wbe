@@ -86,7 +86,7 @@
             gap: 20px;
         }
 
-        /* ═══ CỘT TRÁI — INPUT ═══ */
+        /* ═══ SIDEBAR ═══ */
         .sidebar {
             background: rgba(15, 15, 25, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.12);
@@ -229,7 +229,7 @@
             border-color: #2ed573;
         }
 
-        /* ═══ CỘT PHẢI — WHEEL ═══ */
+        /* ═══ MAIN AREA ═══ */
         .main-area {
             background: rgba(15, 15, 25, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.12);
@@ -270,6 +270,7 @@
             pointer-events: none;
         }
 
+        /* ⭐ LABEL — hỗ trợ xuống dòng, không bị ngược */
         .wheel-label {
             position: absolute;
             left: 50%;
@@ -279,21 +280,19 @@
             font-size: 0.95rem;
             color: #fff;
             text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-            white-space: nowrap;
             pointer-events: none;
-            max-width: 180px;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            text-align: center;
+            line-height: 1.2;
+            max-width: 140px;
+            max-height: 70px;
             overflow: hidden;
-            text-overflow: ellipsis;
             display: flex;
             align-items: center;
-            gap: 4px;
-        }
-
-        .wheel-label img {
-            width: 18px;
-            height: 18px;
-            object-fit: cover;
-            border-radius: 4px;
+            justify-content: center;
+            padding: 2px 4px;
         }
 
         /* Kim chỉ */
@@ -347,7 +346,6 @@
             opacity: 0.6;
         }
 
-        /* Nút quay lớn */
         .spin-btn {
             padding: 18px 50px;
             border: none;
@@ -372,38 +370,6 @@
         .spin-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-        }
-
-        /* ═══ KẾT QUẢ ═══ */
-        .result-box {
-            margin-top: 20px;
-            padding: 20px 30px;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 16px;
-            border: 2px solid rgba(46, 213, 115, 0.4);
-            text-align: center;
-            display: none;
-            animation: resultIn 0.5s ease;
-        }
-        .result-box.show { display: block; }
-        @keyframes resultIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to   { opacity: 1; transform: scale(1); }
-        }
-        .result-box .label {
-            font-size: 0.8rem;
-            color: #9999bb;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-        .result-box .value {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #2ed573;
-            word-break: break-word;
-            text-shadow: 0 2px 20px rgba(46, 213, 115, 0.5);
         }
 
         /* ═══ EMPTY ═══ */
@@ -656,7 +622,7 @@
                 width: 320px;
                 height: 320px;
             }
-            .wheel-label { font-size: 0.8rem; max-width: 130px; }
+            .wheel-label { font-size: 0.75rem; max-width: 110px; max-height: 60px; }
             .wheel-center {
                 width: 70px;
                 height: 70px;
@@ -798,18 +764,17 @@
     <div class="confetti-container" id="confettiContainer"></div>
 
     <div class="toast" id="toast"></div>
+
     <script>
-        
-// ═══════════════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
+        //  STATE
+        // ═══════════════════════════════════════════════════════════
         let items = [];
         let isSpinning = false;
         let currentRotation = 0;
         let soundEnabled = true;
         let history = [];
 
-        // Bảng màu đẹp (12 màu)
         const COLORS = [
             '#667eea', '#764ba2', '#f093fb', '#f5576c',
             '#2ed573', '#1e90ff', '#ffa502', '#ff4757',
@@ -882,7 +847,7 @@
             const n = items.length;
             const anglePerItem = 360 / n;
 
-            // ═══ Tạo conic-gradient ═══
+            // Tạo conic-gradient
             let gradientStops = [];
             for (let i = 0; i < n; i++) {
                 const color = COLORS[i % COLORS.length];
@@ -892,10 +857,15 @@
             }
             wheel.style.background = `conic-gradient(${gradientStops.join(', ')})`;
 
-            // ═══ Đặt labels ═══
+            // Đặt labels
             labelsContainer.innerHTML = '';
             const fontSize = parseInt(document.getElementById('fontSize').value) || 14;
             const radius = wheel.offsetWidth / 2;
+
+            // Điều chỉnh font size theo số mục
+            let finalFontSize = fontSize;
+            if (n > 6) finalFontSize = Math.max(9, fontSize - Math.floor((n - 6) / 2));
+            if (n > 15) finalFontSize = Math.max(8, fontSize - 6);
 
             for (let i = 0; i < n; i++) {
                 const angle = i * anglePerItem + anglePerItem / 2;
@@ -903,25 +873,41 @@
                 const label = document.createElement('div');
                 label.className = 'wheel-label';
                 label.textContent = items[i];
-                label.style.fontSize = fontSize + 'px';
+                label.style.fontSize = finalFontSize + 'px';
 
-                // Đặt ở giữa ô, cách tâm 40% bán kính
-                const dist = radius * 0.65;
-                label.style.transform = `rotate(${angle - 90}deg) translate(${dist}px, -50%)`;
+                // Đặt ở giữa ô, cách tâm 55% bán kính
+                const dist = radius * 0.55;
+
+                // ⭐ Xác định góc xoay — tránh chữ ngược
+                let rotation = angle - 90;
+                const normalizedAngle = ((angle % 360) + 360) % 360;
+
+                // Nếu ô nằm ở nửa dưới (90° < angle < 270°) → chữ ngược → lật lại
+                const flip = (normalizedAngle > 90 && normalizedAngle < 270);
+
+                if (flip) {
+                    rotation = rotation + 180;
+                    label.style.transform = `rotate(${rotation}deg) translate(-${dist}px, -50%)`;
+                } else {
+                    label.style.transform = `rotate(${rotation}deg) translate(${dist}px, -50%)`;
+                }
+
                 label.style.transformOrigin = '0 0';
-                label.style.maxWidth = Math.min(180, radius * 0.55) + 'px';
+                // ⭐ Max width cho phép chữ xuống dòng
+                label.style.maxWidth = Math.min(140, radius * 0.5) + 'px';
+                label.style.maxHeight = Math.min(70, radius * 0.28) + 'px';
 
                 labelsContainer.appendChild(label);
             }
 
-            // Reset rotation để khớp với vòng mới
+            // Reset rotation
             wheel.style.transition = 'none';
             wheel.style.transform = 'rotate(0deg)';
             currentRotation = 0;
         }
 
         // ═══════════════════════════════════════════════════════════
-        //  ÁP DỤNG DANH SÁCH TỪ TEXTAREA
+        //  ÁP DỤNG DANH SÁCH
         // ═══════════════════════════════════════════════════════════
         function applyChanges() {
             const text = document.getElementById('namesInput').value;
@@ -959,19 +945,12 @@
 
             const n = items.length;
             const anglePerItem = 360 / n;
-
-            // Random chỉ số kết quả
             const randomIndex = Math.floor(Math.random() * n);
 
-            // Góc để ô randomIndex nằm ở đỉnh (kim ở trên cùng, 0°)
-            // Ô i chiếm từ i*anglePerItem đến (i+1)*anglePerItem
-            // Muốn ô đó nằm ở 0°, cần quay vòng: -(i*anglePerItem + anglePerItem/2)
+            // Góc dừng để ô randomIndex nằm ở đỉnh (kim ở trên, 0°)
             const targetAngle = 360 - (randomIndex * anglePerItem + anglePerItem / 2);
 
-            // Số vòng quay thêm
             const extraSpins = 5 + Math.floor(Math.random() * 4);
-
-            // Tính rotation mới = rotation hiện tại + nhiều vòng + góc dừng
             const currentMod = currentRotation % 360;
             const deltaToTarget = ((targetAngle - currentMod) + 360) % 360;
             const totalRotation = currentRotation + (extraSpins * 360) + deltaToTarget;
@@ -983,12 +962,8 @@
             wheel.style.transition = `transform ${duration}s cubic-bezier(0.17, 0.67, 0.12, 0.99)`;
             wheel.style.transform = `rotate(${currentRotation}deg)`;
 
-            // ═══ Phát âm thanh tick trong lúc quay ═══
-            if (soundEnabled) {
-                playTickSound(duration);
-            }
+            if (soundEnabled) playTickSound(duration);
 
-            // ═══ Sau khi quay xong ═══
             setTimeout(() => {
                 isSpinning = false;
                 document.getElementById('spinBtn').disabled = false;
@@ -996,7 +971,6 @@
 
                 const winner = items[randomIndex];
 
-                // Lưu lịch sử
                 history.unshift({
                     name: winner,
                     time: new Date().toISOString()
@@ -1004,14 +978,11 @@
                 history = history.slice(0, 50);
                 saveToStorage();
 
-                // Hiện kết quả
                 showResult(winner);
 
-                // Xóa sau khi quay
                 if (document.getElementById('removeAfterSpin').checked) {
                     items.splice(randomIndex, 1);
                     document.getElementById('namesInput').value = items.join('\n');
-                    // Không render lại ngay, đợi 500ms để modal hiện đã
                     setTimeout(() => {
                         renderWheel();
                         saveToStorage();
@@ -1024,17 +995,12 @@
         //  HIỆN KẾT QUẢ
         // ═══════════════════════════════════════════════════════════
         function showResult(winner) {
-            // Confetti
             if (document.getElementById('showConfetti').checked) {
                 createConfetti();
             }
 
-            // Âm thanh chiến thắng
-            if (soundEnabled) {
-                playWinSound();
-            }
+            if (soundEnabled) playWinSound();
 
-            // Modal
             if (document.getElementById('showResultModal').checked) {
                 document.getElementById('resultValue').textContent = winner;
                 document.getElementById('resultModal').classList.add('show');
@@ -1066,13 +1032,10 @@
             if (!ctx) return;
 
             const volume = (parseInt(document.getElementById('volumeSlider').value) || 50) / 100;
-
-            // Tick giảm dần theo thời gian (chậm dần)
-            let totalTicks = 40;
             let elapsed = 0;
             let delay = 0.05;
 
-            for (let i = 0; i < totalTicks; i++) {
+            for (let i = 0; i < 40; i++) {
                 if (elapsed >= duration - 0.3) break;
 
                 setTimeout(() => {
@@ -1090,7 +1053,6 @@
                     } catch (e) {}
                 }, elapsed * 1000);
 
-                // Chậm dần
                 elapsed += delay;
                 delay *= 1.08;
             }
@@ -1101,7 +1063,7 @@
             if (!ctx) return;
 
             const volume = (parseInt(document.getElementById('volumeSlider').value) || 50) / 100;
-            const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+            const notes = [523, 659, 784, 1047];
 
             notes.forEach((freq, i) => {
                 try {
@@ -1141,7 +1103,6 @@
                     const confetti = document.createElement('div');
                     confetti.className = 'confetti';
 
-                    // Random vị trí, màu, kích thước
                     confetti.style.left = Math.random() * 100 + '%';
                     confetti.style.top = '-20px';
                     confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
@@ -1149,7 +1110,6 @@
                     confetti.style.height = (6 + Math.random() * 10) + 'px';
                     confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
 
-                    // Animation
                     const duration = 2000 + Math.random() * 2000;
                     const rotate = Math.random() * 720 - 360;
                     const translateX = (Math.random() - 0.5) * 400;
@@ -1163,7 +1123,6 @@
                     });
 
                     container.appendChild(confetti);
-
                     setTimeout(() => confetti.remove(), duration + 100);
                 }, i * 20);
             }
@@ -1194,7 +1153,7 @@
                 return;
             }
 
-            list.innerHTML = history.map((h, i) => {
+            list.innerHTML = history.map((h) => {
                 const date = new Date(h.time);
                 const timeStr = date.toLocaleString('vi-VN', {
                     day: '2-digit',
@@ -1211,14 +1170,6 @@
                     </div>
                 `;
             }).join('');
-        }
-
-        function clearHistory() {
-            if (!confirm('Xóa toàn bộ lịch sử?')) return;
-            history = [];
-            saveToStorage();
-            renderHistory();
-            showToast('🗑️ Đã xóa lịch sử');
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -1278,26 +1229,21 @@
         // ═══════════════════════════════════════════════════════════
         //  EVENTS
         // ═══════════════════════════════════════════════════════════
-
-        // Click ngoài modal để đóng
         document.getElementById('resultModal').addEventListener('click', (e) => {
             if (e.target.id === 'resultModal') closeResult();
         });
 
-        // Escape để đóng modal/history
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeResult();
                 closeHistory();
             }
-            // Space để quay (nếu không focus vào input)
             if (e.key === ' ' && document.activeElement.tagName !== 'TEXTAREA') {
                 e.preventDefault();
                 spin();
             }
         });
 
-        // Ctrl+Enter để apply
         document.getElementById('namesInput').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
@@ -1305,14 +1251,12 @@
             }
         });
 
-        // Auto-apply khi gõ (debounce 500ms)
         let applyTimer;
         document.getElementById('namesInput').addEventListener('input', () => {
             clearTimeout(applyTimer);
             applyTimer = setTimeout(applyChanges, 500);
         });
 
-        // Settings change → lưu
         ['removeAfterSpin', 'showConfetti', 'showResultModal', 'spinDuration', 'volumeSlider', 'fontSize'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
@@ -1323,7 +1267,6 @@
             }
         });
 
-        // Resize → render lại labels
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
@@ -1338,19 +1281,11 @@
         function init() {
             loadFromStorage();
 
-            // Set trạng thái âm thanh
             const soundBtn = document.getElementById('soundToggle');
             soundBtn.textContent = soundEnabled ? '🔊 Âm thanh' : '🔇 Tắt tiếng';
             soundBtn.classList.toggle('active', soundEnabled);
 
-            // Render nếu có items
-            if (items.length > 0) {
-                renderWheel();
-            } else {
-                renderWheel(); // hiện empty state
-            }
-
-            console.log('🎡 Wheel initialized with', items.length, 'items');
+            renderWheel();
         }
 
         init();
