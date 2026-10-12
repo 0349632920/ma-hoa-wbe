@@ -180,14 +180,29 @@
     .admin-title h1 { font-size: 26px; color: #333; font-weight: 800; }
     .admin-title p { color: #888; font-size: 14px; margin-top: 3px; }
     .header-right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .btn-back, .btn-logout {
+    .btn-back, .btn-logout, .btn-game-ban, .btn-2fa {
       padding: 11px 22px; border: none; border-radius: 10px;
       font-family: inherit; font-size: 14px; font-weight: 600;
       cursor: pointer; color: white; transition: 0.3s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .btn-back { background: linear-gradient(135deg, #667eea, #764ba2); }
     .btn-logout { background: linear-gradient(135deg, #fa709a, #fee140); }
-    .btn-back:hover, .btn-logout:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+    .btn-game-ban {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      box-shadow: 0 4px 12px rgba(231,76,60,0.3);
+    }
+    .btn-2fa {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      box-shadow: 0 4px 12px rgba(17,153,142,0.3);
+    }
+    .btn-back:hover, .btn-logout:hover, .btn-game-ban:hover, .btn-2fa:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
 
     .stats-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -212,6 +227,7 @@
     .stat-icon.red { background: #ffebee; }
     .stat-icon.purple { background: #f0e5ff; }
     .stat-icon.orange { background: #ffe5e0; }
+    .stat-icon.pink { background: #ffe0f0; }
     .stat-info h3 { font-size: 26px; color: #333; font-weight: 800; line-height: 1; margin-bottom: 4px; }
     .stat-info p { font-size: 13px; color: #888; font-weight: 600; }
 
@@ -263,6 +279,7 @@
     .users-table tbody tr:hover { background: #fafbff; }
     .users-table tbody tr.banned-row { background: #fff5f5; }
     .users-table tbody tr.warned-row { background: #fffbf0; }
+    .users-table tbody tr.game-banned-row { background: #fff8f0; }
 
     .user-cell { display: flex; align-items: center; gap: 10px; }
     .user-avatar-sm {
@@ -286,6 +303,7 @@
     .badge.banned { background: #ffebee; color: #c0392b; }
     .badge.temp-ban { background: #ffedd5; color: #c2410c; }
     .badge.pending-delete { background: #f3e5f5; color: #8e44ad; }
+    .badge.game-banned { background: #ffe0e0; color: #c0392b; }
 
     .super-admin-badge {
       display: inline-flex; align-items: center; gap: 4px;
@@ -326,6 +344,8 @@
     .action-btn.delete { background: #95a5a6; }
     .action-btn.detail { background: #667eea; }
     .action-btn.refresh { background: linear-gradient(135deg, #16a085, #1abc9c); }
+    .action-btn.game-ban { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .action-btn.game-unban { background: linear-gradient(135deg, #27ae60, #16a085); }
 
     /* ============================================
        NÚT LOADING — VÒNG XOAY CHÍNH GIỮA (ROBLOX)
@@ -737,6 +757,14 @@
         </div>
       </div>
       <div class="header-right">
+        {% if is_super_admin %}
+        <a href="{{ url_for('admin_game_ban_page') }}" class="btn-game-ban">
+          🚫 Quản lý cấm game
+        </a>
+        {% endif %}
+        <a href="{{ url_for('admin_2fa_page') }}" class="btn-2fa">
+          🔐 2FA
+        </a>
         <button class="btn-back" onclick="window.location.href='/'">🔐 Về trang chính</button>
         <button class="btn-logout" onclick="openLogoutAdminModal()">🚪 Đăng xuất</button>
       </div>
@@ -766,6 +794,10 @@
       <div class="stat-card">
         <div class="stat-icon orange">🔍</div>
         <div class="stat-info"><h3 id="statSuspicious">-</h3><p>Nghi ngờ</p></div>
+      </div>
+      <div class="stat-card" onclick="window.location.href='{{ url_for('admin_game_ban_page') }}'">
+        <div class="stat-icon pink">🎮</div>
+        <div class="stat-info"><h3 id="statGameBanned">-</h3><p>Cấm chơi game</p></div>
       </div>
     </div>
 
@@ -1275,6 +1307,8 @@
         document.getElementById('statBanned').textContent = s.banned;
         document.getElementById('statAdmins').textContent = s.admins;
         document.getElementById('statSuspicious').textContent = s.suspicious;
+        const gb = document.getElementById('statGameBanned');
+        if (gb) gb.textContent = s.game_banned || 0;
       }
       renderUsers();
     }
@@ -1308,6 +1342,8 @@
           document.getElementById('statBanned').textContent = data.stats.banned;
           document.getElementById('statAdmins').textContent = data.stats.admins;
           document.getElementById('statSuspicious').textContent = data.stats.suspicious;
+          const gb = document.getElementById('statGameBanned');
+          if (gb) gb.textContent = data.stats.game_banned || 0;
         }
       } catch (e) { console.error(e); }
     }
@@ -1343,7 +1379,8 @@
 
       tbody.innerHTML = filtered.map(u => {
         const rowClass = u.status === 'banned' ? 'banned-row' :
-                        u.status === 'warned' ? 'warned-row' : '';
+                        u.status === 'warned' ? 'warned-row' :
+                        u.is_game_banned ? 'game-banned-row' : '';
 
         let roleBadge;
         if (u.is_super_admin) {
@@ -1369,6 +1406,13 @@
           statusBadge = '<span class="badge warned">⚠️ Cảnh báo</span>';
         } else {
           statusBadge = '<span class="badge active">✅ Hoạt động</span>';
+        }
+
+        // Badge cấm game
+        if (u.is_game_banned) {
+          const gbInfo = u.game_ban || {};
+          const gbDuration = gbInfo.duration_label || 'Vĩnh viễn';
+          statusBadge += ` <span class="badge game-banned" title="${escapeHtml(gbInfo.reason || '')}">🎮 Cấm game (${gbDuration})</span>`;
         }
 
         let actions = '';
@@ -1499,15 +1543,12 @@
       document.getElementById('banTargetName').textContent = username;
       document.getElementById('banReason').value = '';
 
-      // Reset về vĩnh viễn
       const permanentRadio = document.querySelector('input[name="banDuration"][value="permanent"]');
       if (permanentRadio) permanentRadio.checked = true;
 
-      // Ẩn custom box
       document.getElementById('customDurationBox').classList.remove('show');
       document.getElementById('customBanValue').value = '';
 
-      // Reset chọn UI
       updateDurationSelection();
       updateBanPreview();
 
@@ -1568,7 +1609,6 @@
       }
     }
 
-    // Gắn sự kiện cho radio
     document.querySelectorAll('input[name="banDuration"]').forEach(radio => {
       radio.addEventListener('change', () => {
         updateDurationSelection();
@@ -1577,7 +1617,6 @@
       });
     });
 
-    // Gắn sự kiện cho custom input
     document.getElementById('customBanValue').addEventListener('input', updateBanPreview);
     document.getElementById('customBanUnit').addEventListener('change', updateBanPreview);
 
@@ -1983,6 +2022,24 @@
           `;
         }
 
+        let gameBanHtml = '';
+        if (u.game_ban && u.game_ban.is_banned) {
+          const gb = u.game_ban;
+          const gbUntil = gb.is_temp && gb.ban_until
+            ? `<div class="detail-row"><span>Hết hạn cấm game:</span><span style="color:#e67e22;">${formatTime(gb.ban_until)}</span></div>`
+            : '';
+          gameBanHtml = `
+            <div class="detail-section">
+              <h4>🎮 Cấm chơi game ${gb.is_temp ? '(tạm thời)' : '(vĩnh viễn)'}</h4>
+              <div class="detail-row"><span>Thời hạn:</span><span style="color:#c0392b;font-weight:700;">${gb.duration_label || 'Vĩnh viễn'}</span></div>
+              <div class="detail-row"><span>Lý do:</span><span>${escapeHtml(gb.reason || '—')}</span></div>
+              <div class="detail-row"><span>Cấm bởi:</span><span>${escapeHtml(gb.banned_by || '—')}</span></div>
+              <div class="detail-row"><span>Thời gian:</span><span>${formatTime(gb.banned_at)}</span></div>
+              ${gbUntil}
+            </div>
+          `;
+        }
+
         document.getElementById('detailBody').innerHTML = `
           <div class="detail-section">
             <h4>📌 Thông tin cơ bản</h4>
@@ -1994,6 +2051,7 @@
             <div class="detail-row"><span>Số lần đăng nhập:</span><span>${u.login_count}</span></div>
           </div>
           ${banHtml}
+          ${gameBanHtml}
           <div class="detail-section">
             <h4>⚠️ Cảnh báo (${u.warnings.length})</h4>
             ${warningsHtml}
@@ -2071,7 +2129,6 @@
       }
     }, 30000);
 
-    // Init selection
     updateDurationSelection();
   </script>
 </body>
