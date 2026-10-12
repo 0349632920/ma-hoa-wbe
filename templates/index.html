@@ -98,6 +98,18 @@
               <span style="position: absolute; right: 16px; font-size: 0.7rem; background: linear-gradient(135deg, #ffa502, #e67e22); color: #fff; padding: 2px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">HOT</span>
             </button>
 
+            <!-- ⭐ NÚT CHẾ THƠ AI -->
+            <button class="dropdown-item" onclick="window.location.href='/tho'" style="background: linear-gradient(135deg, rgba(218, 112, 214, 0.15), rgba(186, 85, 211, 0.15)); color: #da70d6; font-weight: 700; position: relative;">
+              📝 Chế thơ AI
+              <span style="position: absolute; right: 16px; font-size: 0.7rem; background: linear-gradient(135deg, #da70d6, #ba55d3); color: #fff; padding: 2px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">AI</span>
+            </button>
+
+            <!-- ⭐ NÚT BÓI VUI -->
+            <button class="dropdown-item" onclick="window.location.href='/boi'" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 2, 0.15)); color: #ffa502; font-weight: 700; position: relative;">
+              🎯 Bói vui
+              <span style="position: absolute; right: 16px; font-size: 0.7rem; background: linear-gradient(135deg, #ffd700, #ffa502); color: #1a1a2e; padding: 2px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">FUN</span>
+            </button>
+
             <button class="dropdown-item game-item" onclick="window.location.href='/game'">🎮 Play Game</button>
             <button class="dropdown-item danger" onclick="logout()">🚪 Đăng xuất</button>
 
@@ -357,7 +369,7 @@
     </div>
   </div>
 
-  <!-- MODAL PHƯƠNG PHÁP — 12 TABS NHÓM -->
+  <!-- MODAL PHƯƠNG PHÁP -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <div class="modal-header">
@@ -582,9 +594,11 @@
       50%      { transform: scale(1.2); }
     }
 
-    /* ═══ NÚT CHẾ TÊN & VÒNG QUAY TRONG DROPDOWN ═══ */
+    /* ═══ NÚT ĐẶC BIỆT TRONG DROPDOWN ═══ */
     .dropdown-item[onclick*="/ten"]:hover,
-    .dropdown-item[onclick*="/wheel"]:hover {
+    .dropdown-item[onclick*="/wheel"]:hover,
+    .dropdown-item[onclick*="/tho"]:hover,
+    .dropdown-item[onclick*="/boi"]:hover {
       transform: translateX(4px);
     }
     .dropdown-item[onclick*="/ten"]:hover {
@@ -592,6 +606,12 @@
     }
     .dropdown-item[onclick*="/wheel"]:hover {
       box-shadow: 0 4px 12px rgba(255, 165, 2, 0.3);
+    }
+    .dropdown-item[onclick*="/tho"]:hover {
+      box-shadow: 0 4px 12px rgba(218, 112, 214, 0.3);
+    }
+    .dropdown-item[onclick*="/boi"]:hover {
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
     }
 
     /* ═══ UNBAN OVERLAY ═══ */
