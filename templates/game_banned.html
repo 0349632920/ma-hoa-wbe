@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚫 Cấm chơi game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2d0a0a 0%, #1a1a2e 50%, #0f0f1a 100%);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .banned-box {
+            max-width: 580px;
+            width: 100%;
+            padding: 36px;
+            background: rgba(20, 10, 15, 0.9);
+            border: 2px solid rgba(255, 71, 87, 0.5);
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 60px rgba(255, 71, 87, 0.2);
+        }
+        .icon {
+            font-size: 5rem;
+            margin-bottom: 16px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            color: #ff4757;
+            text-shadow: 0 2px 20px rgba(255, 71, 87, 0.5);
+        }
+        .subtitle {
+            color: #c8c8e0;
+            margin-bottom: 24px;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        .subtitle b { color: #fff; }
+        .info-box {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.95rem;
+            gap: 12px;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .label {
+            color: #9999bb;
+            flex-shrink: 0;
+        }
+        .info-row .value {
+            color: #fff;
+            font-weight: 600;
+            text-align: right;
+            word-break: break-word;
+        }
+        .info-row .value.reason { color: #ffa502; }
+        .info-row .value.warning { color: #ff4757; font-family: monospace; }
+        .info-row .value.id {
+            font-family: monospace;
+            color: #2ed573;
+        }
+        .note {
+            background: rgba(46, 213, 115, 0.15);
+            border: 1px solid rgba(46, 213, 115, 0.4);
+            border-radius: 12px;
+            padding: 14px 18px;
+            color: #7bed9f;
+            margin-bottom: 22px;
+            font-size: 0.92rem;
+            text-align: left;
+            line-height: 1.5;
+        }
+        .note b { color: #2ed573; }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-block;
+            padding: 13px 26px;
+            background: #2ed573;
+            color: #0f0c29;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn:hover {
+            background: #7bed9f;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 213, 115, 0.3);
+        }
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
+        }
+        .countdown-badge {
+            display: inline-block;
+            padding: 8px 18px;
+            background: rgba(255, 71, 87, 0.2);
+            border: 1px solid rgba(255, 71, 87, 0.5);
+            border-radius: 12px;
+            color: #ff6b7a;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+        @media (max-width: 480px) {
+            .banned-box { padding: 24px 18px; }
+            h1 { font-size: 1.5rem; }
+            .icon { font-size: 3.5rem; }
+            .info-row { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="banned-box">
+        <div class="icon">🚫</div>
+        <h1>Bạn đã bị cấm chơi game</h1>
+        <p class="subtitle">
+            Tài khoản <b>{{ username }}</b> không được phép truy cập<br>
+            khu vực trò chơi giải trí.
+        </p>
+
+        {% if is_temp and ban_until %}
+        <div class="countdown-badge" id="countdown-badge">
+            ⏳ Mở khóa sau: <span id="unban-time">{{ ban_until }}</span>
+        </div>
+        {% endif %}
+
+        <div class="info-box">
+            <div class="info-row">
+                <span class="label">User ID</span>
+                <span class="value id">{{ user_id }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Lý do</span>
+                <span class="value reason">{{ reason }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Cấm bởi</span>
+                <span class="value">{{ banned_by }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Thời gian cấm</span>
+                <span class="value">{{ duration_label }}</span>
+            </div>
+            {% if is_temp and ban_until %}
+            <div class="info-row">
+                <span class="label">Mở khóa lúc</span>
+                <span class="value warning" id="unban-time-iso">{{ ban_until }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="note">
+            💡 <b>Lưu ý:</b> Bạn vẫn có thể sử dụng đầy đủ các tính năng
+            <b>mã hóa</b> và <b>dịch thuật</b> của ứng dụng.
+            Việc cấm chỉ áp dụng cho khu vực trò chơi.
+        </div>
+
+        <div class="btn-group">
+            <a href="{{ url_for('index') }}" class="btn">← Về trang chủ (Mã hóa)</a>
+            <a href="{{ url_for('translate_page') }}" class="btn secondary">🌐 Dịch thuật</a>
+        </div>
+    </div>
+
+    <script>
+        // Đếm ngược thời gian mở khóa
+        const countdownEl = document.getElementById('unban-time');
+        const isoEl = document.getElementById('unban-time-iso');
+        if (countdownEl && isoEl) {
+            const iso = isoEl.textContent.trim();
+            try {
+                const until = new Date(iso);
+                if (!isNaN(until)) {
+                    const tick = () => {
+                        const diff = until - new Date();
+                        if (diff <= 0) {
+                            countdownEl.textContent = 'Đã mở khóa — tải lại trang!';
+                            return;
+                        }
+                        const d = Math.floor(diff / 86400000);
+                        const h = Math.floor((diff % 86400000) / 3600000);
+                        const m = Math.floor((diff % 3600000) / 60000);
+                        const s = Math.floor((diff % 60000) / 1000);
+                        let str = '';
+                        if (d) str += d + ' ngày ';
+                        if (h) str += h + ' giờ ';
+                        if (m) str += m + ' phút ';
+                        str += s + ' giây';
+                        countdownEl.textContent = str;
+                    };
+                    tick();
+                    setInterval(tick, 1000);
+                }
+            } catch (e) {
+                console.error('Lỗi đếm ngược:', e);
+            }
+        }
+
+        // Tự động tải lại khi hết hạn
+        {% if is_temp and ban_until %}
+        (function autoReload() {
+            const until = new Date('{{ ban_until }}');
+            if (isNaN(until)) return;
+            const delay = until - new Date();
+            if (delay > 0 && delay < 86400000) {
+                setTimeout(() => location.reload(), delay + 2000);
+            }
+        })();
+        {% endif %}
+    </script>
+</body>
+</html>
