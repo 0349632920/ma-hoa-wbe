@@ -2958,39 +2958,67 @@ def _generate_truyen_with_ai(the_loai, ten_nv1, ten_nv2, boi_canh, noi_dung, do_
         'dai': 'khoảng 1000-1500 chữ',
     }
 
-    # Xây dựng prompt chi tiết
-    chi_tiet = []
+    # ═══════════════════════════════════════════════════════════
+    # XÂY DỰNG DANH SÁCH NHÂN VẬT CỐ ĐỊNH (BẮT BUỘC)
+    # ═══════════════════════════════════════════════════════════
+    nhan_vat_list = []
     if ten_nv1:
-        chi_tiet.append(f"- Nhân vật chính: {ten_nv1}")
+        nhan_vat_list.append(f'"{ten_nv1}"')
     if ten_nv2:
-        chi_tiet.append(f"- Nhân vật phụ: {ten_nv2}")
-    if boi_canh:
-        chi_tiet.append(f"- Bối cảnh: {boi_canh}")
-    if noi_dung:
-        chi_tiet.append(f"- Nội dung chính: {noi_dung}")
+        nhan_vat_list.append(f'"{ten_nv2}"')
 
-    chi_tiet_str = '\n'.join(chi_tiet) if chi_tiet else '- Tự do sáng tạo nhân vật và bối cảnh'
+    if nhan_vat_list:
+        nhan_vat_str = ' và '.join(nhan_vat_list)
+        nhan_vat_rule = f"""⚠️ QUY TẮC CỨNG VỀ TÊN NHÂN VẬT (BẮT BUỘC TUÂN THỦ 100%):
+- CHỈ được dùng ĐÚNG các tên sau: {nhan_vat_str}
+- TUYỆT ĐỐI KHÔNG được bịa thêm tên khác (như Hùng, Nam, Lan, Mai...)
+- TUYỆT ĐỐI KHÔNG được đổi tên nhân vật
+- Nếu cần nhân vật phụ khác → KHÔNG đặt tên, chỉ gọi là "người bạn", "cậu ấy", "anh ấy"
+- Kiểm tra lại TẤT CẢ tên trong truyện trước khi trả về"""
+    else:
+        nhan_vat_rule = """- Bạn tự sáng tạo tên nhân vật (VD: Minh, Hùng, Lan, Mai...)"""
+
+    # ═══════════════════════════════════════════════════════════
+    # XÂY DỰNG BỐI CẢNH + NỘI DUNG
+    # ═══════════════════════════════════════════════════════════
+    chi_tiet_extra = []
+    if boi_canh:
+        chi_tiet_extra.append(f'- Bối cảnh: "{boi_canh}"')
+    if noi_dung:
+        chi_tiet_extra.append(f'- Nội dung chính: "{noi_dung}"')
+    chi_tiet_extra_str = '\n'.join(chi_tiet_extra) if chi_tiet_extra else ''
 
     system_prompt = """Bạn là nhà văn Việt Nam tài ba, chuyên viết truyện ngắn.
-QUAN TRỌNG: 
-- Nội dung phải TRONG SÁNG, phù hợp mọi lứa tuổi
-- KHÔNG viết nội dung 18+, bạo lực cực đoan
-- Trả về JSON hợp lệ, KHÔNG thêm text khác, KHÔNG dùng markdown"""
+
+QUY TẮC QUAN TRỌNG:
+1. Nội dung phải TRONG SÁNG, phù hợp mọi lứa tuổi
+2. KHÔNG viết nội dung 18+, bạo lực cực đoan
+3. TUÂN THỦ TUYỆT ĐỐI tên nhân vật được yêu cầu — KHÔNG được bịa tên mới
+4. Trả về JSON hợp lệ, KHÔNG thêm text khác, KHÔNG dùng markdown"""
 
     user_prompt = f"""Viết một truyện ngắn theo thể loại: {the_loai_prompts.get(the_loai, the_loai)}
 
-Thông tin:
-{chi_tiet_str}
+{nhan_vat_rule}
+
+{chi_tiet_extra_str}
 
 Độ dài: {do_dai_prompts.get(do_dai, 'khoảng 300-500 chữ')}
 
 Yêu cầu:
 - Có cốt truyện rõ ràng (mở đầu, diễn biến, kết thúc)
-- Nhân vật có tên và tính cách riêng
+- Nhân vật có tính cách riêng (nhưng PHẢI giữ đúng tên)
 - Có twist hoặc bài học ý nghĩa ở cuối
 - Ngôn ngữ tự nhiên, cảm xúc, cuốn hút
 - Dùng \\n\\n để phân cách các đoạn văn
 - Mỗi đoạn ngắn gọn (2-4 câu)
+
+VÍ DỤ ĐÚNG (nếu nhân vật là "Dương" và "Minh"):
+✅ "Dương và Minh gặp nhau ở thư viện. Dương hỏi Minh về cuốn sách..."
+✅ "Minh nhìn Dương, tim đập nhanh hơn..."
+
+VÍ DỤ SAI (KHÔNG ĐƯỢC LÀM):
+❌ "Dương và Hùng gặp nhau..." (sai — Hùng không được nhập)
+❌ "Minh và Nam..." (sai — Nam không được nhập)
 
 Trả về JSON:
 {{
@@ -3005,7 +3033,7 @@ Trả về JSON:
             {"role": "user", "content": user_prompt}
         ],
         model="llama-3.3-70b-versatile",
-        temperature=1.0,
+        temperature=0.7,  # ⭐ GIẢM từ 1.0 xuống 0.7 để AI ít bịa hơn
         max_tokens=2500,
         response_format={"type": "json_object"}
     )
@@ -3028,6 +3056,90 @@ Trả về JSON:
     result.setdefault('truyen', '')
     result.setdefault('bai_hoc', '')
     result['loai'] = 'ai'
+
+    # ═══════════════════════════════════════════════════════════
+    # KIỂM TRA TÊN — Nếu AI trả về tên sai → gọi lại 1 lần
+    # ═══════════════════════════════════════════════════════════
+    if ten_nv1 or ten_nv2:
+        truyen_text = result.get('truyen', '')
+        # Danh sách tên bị cấm (nếu user không nhập)
+        forbidden_names = ['Hùng', 'Nam', 'Lan', 'Mai', 'Anh', 'Em', 'Hùng', 'Dũng', 'Tuấn', 'Linh', 'Ngọc', 'Châu']
+
+        # Bỏ các tên đã nhập khỏi danh sách cấm
+        if ten_nv1:
+            forbidden_names = [n for n in forbidden_names if n.lower() != ten_nv1.lower()]
+        if ten_nv2:
+            forbidden_names = [n for n in forbidden_names if n.lower() != ten_nv2.lower()]
+
+        # Đếm tên sai
+        wrong_names = []
+        for name in forbidden_names:
+            # Chỉ check tên đứng độc lập (không phải 1 phần của từ khác)
+            if name in truyen_text:
+                # Kiểm tra thêm: tên này có xuất hiện như 1 nhân vật không?
+                # (VD: "Hùng" xuất hiện ≥2 lần → coi là nhân vật)
+                if truyen_text.count(name) >= 2:
+                    wrong_names.append(name)
+
+        # Nếu có tên sai → gọi lại
+        if wrong_names:
+            print(f"⚠️ AI dùng sai tên: {wrong_names}. Gọi lại...")
+
+            # Gọi lại với prompt mạnh hơn
+            retry_prompt = f"""Viết lại truyện ngắn sau ĐÚNG với các nhân vật đã chỉ định.
+
+⚠️ CẢNH BÁO: Lần trước bạn đã viết SAI TÊN. Lần này PHẢI TUÂN THỦ NGHIÊM NGẶT:
+- CHỈ dùng tên: {' và '.join([f'"{t}"' for t in [ten_nv1, ten_nv2] if t])}
+- KHÔNG được xuất hiện các tên: {', '.join(wrong_names)}
+
+Thể loại: {the_loai_prompts.get(the_loai, the_loai)}
+{f'- Bối cảnh: "{boi_canh}"' if boi_canh else ''}
+{f'- Nội dung: "{noi_dung}"' if noi_dung else ''}
+Độ dài: {do_dai_prompts.get(do_dai, 'khoảng 300-500 chữ')}
+
+Trả về JSON:
+{{
+  "tieu_de": "Tiêu đề truyện",
+  "truyen": "Nội dung truyện (dùng \\n\\n giữa các đoạn)",
+  "bai_hoc": "Bài học"
+}}"""
+
+            try:
+                retry_completion = groq_client.chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": retry_prompt}
+                    ],
+                    model="llama-3.3-70b-versatile",
+                    temperature=0.5,  # ⭐ Càng thấp càng tuân thủ
+                    max_tokens=2500,
+                    response_format={"type": "json_object"}
+                )
+
+                retry_text = retry_completion.choices[0].message.content.strip()
+
+                if retry_text.startswith('```'):
+                    parts = retry_text.split('```')
+                    if len(parts) >= 2:
+                        retry_text = parts[1]
+                        if retry_text.startswith('json'):
+                            retry_text = retry_text[4:]
+                retry_text = retry_text.strip()
+
+                retry_result = _json.loads(retry_text)
+                retry_result.setdefault('the_loai', the_loai)
+                retry_result.setdefault('tieu_de', result.get('tieu_de', 'Truyện không tên'))
+                retry_result.setdefault('truyen', '')
+                retry_result.setdefault('bai_hoc', result.get('bai_hoc', ''))
+                retry_result['loai'] = 'ai'
+
+                print(f"✅ Gọi lại thành công")
+                return retry_result
+
+            except Exception as e:
+                print(f"⚠️ Gọi lại thất bại: {e}")
+                # Trả về kết quả cũ
+                pass
 
     return result
     
