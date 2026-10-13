@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👤 Trang cá nhân</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 50%, #0f0f1a 100%);
+            color: #fff;
+            padding: 30px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(218, 112, 214, 0.12) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            color: #c8c8e0;
+            text-decoration: none;
+            padding: 10px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .back:hover {
+            color: #667eea;
+            border-color: #667eea;
+            transform: translateX(-4px);
+        }
+
+        /* ═══ HEADER ═══ */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(218, 112, 214, 0.1));
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 24px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2, #da70d6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5),
+                        inset 0 0 20px rgba(255, 255, 255, 0.1);
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .role-badge {
+            font-size: 0.72rem;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .role-super {
+            background: linear-gradient(135deg, #ffd700, #ffa502);
+            color: #1a1a2e;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+        }
+
+        .role-admin {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        .role-user {
+            background: rgba(255, 255, 255, 0.1);
+            color: #c8c8e0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .profile-meta {
+            color: #b8b8d1;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .profile-meta .id {
+            font-family: 'JetBrains Mono', monospace;
+            color: #2ed573;
+            font-weight: 700;
+            background: rgba(46, 213, 115, 0.1);
+            padding: 2px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(46, 213, 115, 0.2);
+        }
+
+        .profile-joined {
+            color: #9999bb;
+            font-size: 0.82rem;
+        }
+
+        /* ═══ STATS GRID ═══ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            padding: 20px 16px;
+            background: rgba(15, 15, 25, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            text-align: center;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(102, 126, 234, 0.4);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #667eea, #da70d6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #9999bb;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        /* ═══ SECTIONS ═══ */
+        .section {
+            background: rgba(15, 15, 25, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(12px);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+
+        .section-title .emoji {
+            font-size: 1.3rem;
+        }
+
+        .section-subtitle {
+            color: #9999bb;
+            font-size: 0.85rem;
+        }
+
+        /* ═══ CHANGE PASSWORD FORM ═══ */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #c8c8e0;
+            margin-bottom: 8px;
+        }
+
+        .form-group .input-wrap {
+            position: relative;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 48px 12px 16px;
+            border-radius: 12px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        }
+
+        .form-group input::placeholder { color: #666; }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #9999bb;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .toggle-password:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+        /* Password strength */
+        .strength-meter {
+            height: 4px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 6px;
+            display: none;
+        }
+        .strength-meter.show { display: block; }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s;
+            border-radius: 2px;
+        }
+
+        .strength-text {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            font-weight: 600;
+            display: none;
+        }
+        .strength-text.show { display: block; }
+
+        /* Button */
+        .btn-primary {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(102, 126, 234, 0.5);
+        }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary.loading { color: transparent; pointer-events: none; }
+        .btn-primary.loading::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.35);
+        }
+        .btn-danger:hover:not(:disabled) {
+            box-shadow: 0 12px 28px rgba(231, 76, 60, 0.5);
+        }
+
+        /* ═══ WARNINGS ═══ */
+        .warning-item {
+            padding: 14px 18px;
+            background: rgba(255, 165, 2, 0.08);
+            border-left: 4px solid #ffa502;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #ffbe4d;
+        }
+        .warning-item strong { color: #fff; }
+        .warning-item small {
+            display: block;
+            color: #9999bb;
+            margin-top: 4px;
+            font-size: 0.8rem;
+        }
+
+        .no-warnings {
+            text-align: center;
+            padding: 20px;
+            color: #7bed9f;
+            font-size: 0.95rem;
+        }
+
+        /* ═══ HISTORY LIST ═══ */
+        .history-list {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 12px;
+        }
+
+        .history-list::-webkit-scrollbar { width: 8px; }
+        .history-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+        .history-list::-webkit-scrollbar-thumb { background: rgba(102, 126, 234, 0.4); border-radius: 4px; }
+
+        .history-item {
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #667eea;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            transition: all 0.15s;
+        }
+
+        .history-item:hover {
+            background: rgba(0, 0, 0, 0.35);
+            transform: translateX(4px);
+        }
+
+        .history-item.decrypt { border-left-color: #f5576c; }
+
+        .history-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .history-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .history-action {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .history-action .method {
+            color: #2ed573;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            background: rgba(46, 213, 115, 0.1);
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-left: 6px;
+        }
+
+        .history-preview {
+            font-size: 0.8rem;
+            color: #9999bb;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-time {
+            font-size: 0.75rem;
+            color: #666;
+            flex-shrink: 0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9999bb;
+        }
+        .empty-history .icon { font-size: 3rem; display: block; margin-bottom: 12px; opacity: 0.5; }
+
+        /* ═══ TOAST ═══ */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #27ae60;
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: all 0.4s;
+            pointer-events: none;
+            z-index: 9999;
+            max-width: 90vw;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.error { background: #e74c3c; }
+
+        /* ═══ LOADING ═══ */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9999bb;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(102, 126, 234, 0.2);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 640px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 24px 20px;
+            }
+            .profile-name { font-size: 1.4rem; justify-content: center; }
+            .profile-meta { justify-content: center; }
+            .avatar { width: 80px; height: 80px; font-size: 2.2rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-value { font-size: 1.5rem; }
+            .section { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back">← Về trang chủ</a>
+
+        <!-- PROFILE HEADER -->
+        <div class="profile-header">
+            <div class="avatar" id="avatar">{{ username[0]|upper }}</div>
+            <div class="profile-info">
+                <div class="profile-name">
+                    <span id="displayName">{{ username }}</span>
+                    <span class="role-badge" id="roleBadge">User</span>
+                </div>
+                <div class="profile-meta">
+                    <span>🆔 <span class="id" id="userId">{{ user_id }}</span></span>
+                    <span id="statusText">● Đang hoạt động</span>
+                </div>
+                <div class="profile-joined" id="joinedText">📅 Đang tải...</div>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <span class="stat-icon">🔒</span>
+                <div class="stat-value" id="statEncrypt">-</div>
+                <div class="stat-label">Mã hóa</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">🔓</span>
+                <div class="stat-value" id="statDecrypt">-</div>
+                <div class="stat-label">Giải mã</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">⚙️</span>
+                <div class="stat-value" id="statMethods">-</div>
+                <div class="stat-label">Methods dùng</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">📅</span>
+                <div class="stat-value" id="statDays">-</div>
+                <div class="stat-label">Ngày hoạt động</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">🔑</span>
+                <div class="stat-value" id="statLogin">-</div>
+                <div class="stat-label">Lần đăng nhập</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">🏆</span>
+                <div class="stat-value" id="statPoints">-</div>
+                <div class="stat-label">Điểm game</div>
+            </div>
+        </div>
+
+        <!-- ĐỔI MẬT KHẨU -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="emoji">🔑</span>
+                    Đổi mật khẩu
+                </div>
+            </div>
+
+            <form id="changePasswordForm" onsubmit="changePassword(event)">
+                <div class="form-group">
+                    <label>Mật khẩu cũ</label>
+                    <div class="input-wrap">
+                        <input type="password" id="oldPassword" placeholder="Nhập mật khẩu hiện tại..." autocomplete="current-password">
+                        <button type="button" class="toggle-password" onclick="togglePw('oldPassword', this)">👁️</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mật khẩu mới</label>
+                    <div class="input-wrap">
+                        <input type="password" id="newPassword" placeholder="Tối thiểu 6 ký tự..." autocomplete="new-password" oninput="checkStrength()">
+                        <button type="button" class="toggle-password" onclick="togglePw('newPassword', this)">👁️</button>
+                    </div>
+                    <div class="strength-meter" id="strengthMeter">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <div class="strength-text" id="strengthText"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nhập lại mật khẩu mới</label>
+                    <div class="input-wrap">
+                        <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu mới..." autocomplete="new-password">
+                        <button type="button" class="toggle-password" onclick="togglePw('confirmPassword', this)">👁️</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="changePwBtn">
+                    🔑 Đổi mật khẩu
+                </button>
+            </form>
+        </div>
+
+        <!-- CẢNH BÁO -->
+        <div class="section" id="warningsSection" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="emoji">⚠️</span>
+                    Cảnh báo từ Admin
+                </div>
+                <span class="section-subtitle" id="warnCountText">0</span>
+            </div>
+            <div id="warningsList"></div>
+        </div>
+
+        <!-- LỊCH SỬ -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="emoji">📜</span>
+                    Lịch sử hoạt động
+                </div>
+                <span class="section-subtitle" id="historyCount">Đang tải...</span>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ĐĂNG XUẤT TẤT CẢ -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="emoji">🚪</span>
+                    Đăng xuất
+                </div>
+            </div>
+            <p style="color:#9999bb;font-size:0.9rem;margin-bottom:16px;line-height:1.6;">
+                Đăng xuất khỏi <strong style="color:#ff4757;">TẤT CẢ</strong> thiết bị đang đăng nhập. Bạn sẽ cần đăng nhập lại.
+            </p>
+            <button class="btn-primary btn-danger" onclick="logoutAll()">
+                🚪 Đăng xuất tất cả thiết bị
+            </button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ═══════════════════════════════════════
+        //  LOAD PROFILE
+        // ═══════════════════════════════════════
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/profile/stats');
+                if (res.status === 401) { window.location.href = '/login'; return; }
+
+                const data = await res.json();
+                if (!data.success) {
+                    if (data.redirect) window.location.href = data.redirect;
+                    return;
+                }
+
+                renderProfile(data);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderProfile(data) {
+            const u = data.user;
+            const s = data.stats;
+
+            // Header
+            document.getElementById('displayName').textContent = u.display_name || u.username;
+            document.getElementById('userId').textContent = u.user_id || '—';
+
+            // Role badge
+            const roleBadge = document.getElementById('roleBadge');
+            if (u.is_super_admin) {
+                roleBadge.textContent = '👑 SUPER ADMIN';
+                roleBadge.className = 'role-badge role-super';
+            } else if (u.role === 'admin') {
+                roleBadge.textContent = '👑 Admin';
+                roleBadge.className = 'role-badge role-admin';
+            } else {
+                roleBadge.textContent = '👤 User';
+                roleBadge.className = 'role-badge role-user';
+            }
+
+            // Status
+            const statusMap = {
+                'active': '● Đang hoạt động',
+                'warned': '⚠️ Đang bị cảnh báo',
+                'banned': '🚫 Đã bị ban',
+                'pending_delete': '🗑️ Chờ xóa',
+            };
+            document.getElementById('statusText').textContent = statusMap[u.status] || u.status;
+
+            // Joined
+            if (u.created_at) {
+                const d = new Date(u.created_at);
+                document.getElementById('joinedText').textContent = `📅 Tham gia: ${d.toLocaleDateString('vi-VN')}`;
+            }
+
+            // Stats
+            document.getElementById('statEncrypt').textContent = s.encrypt_count || 0;
+            document.getElementById('statDecrypt').textContent = s.decrypt_count || 0;
+            document.getElementById('statMethods').textContent = s.unique_methods || 0;
+            document.getElementById('statDays').textContent = s.active_days || 0;
+            document.getElementById('statLogin').textContent = u.login_count || 0;
+            document.getElementById('statPoints').textContent = s.game_points || 0;
+
+            // Warnings
+            if (data.warnings && data.warnings.length > 0) {
+                document.getElementById('warningsSection').style.display = 'block';
+                document.getElementById('warnCountText').textContent = data.warnings.length + ' cảnh báo';
+                renderWarnings(data.warnings);
+            }
+        }
+
+        function renderWarnings(warnings) {
+            const list = document.getElementById('warningsList');
+            list.innerHTML = warnings.slice().reverse().map(w => {
+                const time = w.time ? new Date(w.time).toLocaleString('vi-VN') : '';
+                return `
+                    <div class="warning-item">
+                        <strong>⚠️ ${escapeHtml(w.reason || 'Cảnh báo')}</strong>
+                        <small>${time} — bởi ${escapeHtml(w.by || 'Admin')}</small>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ═══════════════════════════════════════
+        //  HISTORY
+        // ═══════════════════════════════════════
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/profile/history');
+                const data = await res.json();
+                if (!data.success) return;
+
+                const list = document.getElementById('historyList');
+                const history = data.history || [];
+
+                document.getElementById('historyCount').textContent = `${history.length} lần gần nhất`;
+
+                if (history.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-history">
+                            <span class="icon">📭</span>
+                            Chưa có hoạt động nào
+                        </div>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = history.map(h => {
+                    const isDecrypt = h.action === 'decrypt';
+                    const icon = isDecrypt ? '🔓' : '🔒';
+                    const action = isDecrypt ? 'Giải mã' : 'Mã hóa';
+                    const time = h.time ? new Date(h.time).toLocaleString('vi-VN') : '';
+
+                    return `
+                        <div class="history-item ${isDecrypt ? 'decrypt' : ''}">
+                            <span class="history-icon">${icon}</span>
+                            <div class="history-content">
+                                <div class="history-action">
+                                    ${action}
+                                    <span class="method">${escapeHtml(h.method || '?')}</span>
+                                </div>
+                                <div class="history-preview">
+                                    📝 ${escapeHtml((h.input_preview || '').substring(0, 40))}${(h.input_preview || '').length > 40 ? '...' : ''}
+                                </div>
+                            </div>
+                            <div class="history-time">${time}</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  CHANGE PASSWORD
+        // ═══════════════════════════════════════
+        function togglePw(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+
+        function checkStrength() {
+            const pw = document.getElementById('newPassword').value;
+            const meter = document.getElementById('strengthMeter');
+            const fill = document.getElementById('strengthFill');
+            const text = document.getElementById('strengthText');
+
+            if (!pw) {
+                meter.classList.remove('show');
+                text.classList.remove('show');
+                return;
+            }
+
+            meter.classList.add('show');
+            text.classList.add('show');
+
+            let score = 0;
+            if (pw.length >= 6) score++;
+            if (pw.length >= 10) score++;
+            if (/[a-z]/.test(pw)) score++;
+            if (/[A-Z]/.test(pw)) score++;
+            if (/[0-9]/.test(pw)) score++;
+            if (/[^a-zA-Z0-9]/.test(pw)) score++;
+
+            let pct, color, label;
+            if (score <= 2) { pct = 25; color = '#e74c3c'; label = '🔴 Yếu'; }
+            else if (score <= 3) { pct = 50; color = '#ffa502'; label = '🟠 Trung bình'; }
+            else if (score <= 4) { pct = 75; color = '#2ed573'; label = '🟢 Khá mạnh'; }
+            else { pct = 100; color = '#2ed573'; label = '💪 Rất mạnh'; }
+
+            fill.style.width = pct + '%';
+            fill.style.background = color;
+            text.textContent = label;
+            text.style.color = color;
+        }
+
+        async function changePassword(e) {
+            e.preventDefault();
+
+            const oldPw = document.getElementById('oldPassword').value;
+            const newPw = document.getElementById('newPassword').value;
+            const confirmPw = document.getElementById('confirmPassword').value;
+
+            if (!oldPw || !newPw || !confirmPw) {
+                showToast('⚠️ Vui lòng nhập đầy đủ!', true);
+                return;
+            }
+
+            if (newPw.length < 6) {
+                showToast('⚠️ Mật khẩu mới phải từ 6 ký tự!', true);
+                return;
+            }
+
+            if (newPw !== confirmPw) {
+                showToast('⚠️ Mật khẩu xác nhận không khớp!', true);
+                return;
+            }
+
+            const btn = document.getElementById('changePwBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/profile/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        old_password: oldPw,
+                        new_password: newPw,
+                        confirm_password: confirmPw,
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                    document.getElementById('changePasswordForm').reset();
+                    document.getElementById('strengthMeter').classList.remove('show');
+                    document.getElementById('strengthText').classList.remove('show');
+                } else {
+                    showToast('❌ ' + data.error, true);
+                }
+            } catch (e) {
+                showToast('❌ Lỗi kết nối!', true);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  LOGOUT ALL
+        // ═══════════════════════════════════════
+        async function logoutAll() {
+            if (!confirm('Bạn có chắc muốn đăng xuất khỏi TẤT CẢ thiết bị?')) return;
+
+            try {
+                const res = await fetch('/api/profile/logout-all', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/login';
+                    }, 1500);
+                }
+            } catch (e) {
+                showToast('❌ Lỗi kết nối!', true);
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  UTILS
+        // ═══════════════════════════════════════
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        // ═══════════════════════════════════════
+        //  INIT
+        // ═══════════════════════════════════════
+        loadProfile();
+        loadHistory();
+    </script>
+</body>
+</html>
