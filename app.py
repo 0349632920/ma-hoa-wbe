@@ -3108,6 +3108,268 @@ def api_logout_all():
     return jsonify({'success': True, 'message': 'Đã đăng xuất tất cả thiết bị', 'redirect': '/login'})
 
 # ============================================================
+# CHAT — TIN NHẮN (POLLING)
+# ============================================================
+@app.route('/chat')
+@login_required
+def chat_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('chat.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+
+@app.route('/api/chat/conversations')
+@login_required
+def api_chat_conversations():
+    """Lấy danh sách cuộc trò chuyện (người đã chat)."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = users[username]
+    messages = user.get('messages', [])
+
+    # Nhóm theo người chat
+    conversations = {}
+    for msg in messages:
+        partner = msg.get('to') if msg.get('from') == username else msg.get('from')
+        if not partner or partner == username:
+            continue
+
+        if partner not in conversations:
+            conversations[partner] = {
+                'username': partner,
+                'last_message': '',
+                'last_time': '',
+                'unread': 0,
+            }
+
+        # Cập nhật tin nhắn cuối
+        msg_time = msg.get('time', '')
+        if msg_time > conversations[partner]['last_time']:
+            conversations[partner]['last_message'] = msg.get('content', '')[:50]
+            conversations[partner]['last_time'] = msg_time
+
+        # Đếm tin chưa đọc (gửi đến mình)
+        if msg.get('to') == username and not msg.get('read', False):
+            conversations[partner]['unread'] += 1
+
+    # Sắp xếp theo thời gian
+    result = []
+    for partner_name, conv in conversations.items():
+        partner_data = users.get(partner_name, {})
+        conv['display_name'] = partner_data.get('display_name', partner_name)
+        conv['user_id'] = partner_data.get('user_id', '—')
+        conv['online'] = False  # TODO: check last_active
+        conv['is_super_admin'] = is_super_admin(partner_name)
+        result.append(conv)
+
+    result.sort(key=lambda x: x.get('last_time', ''), reverse=True)
+
+    return jsonify({'success': True, 'conversations': result})
+
+
+@app.route('/api/chat/search')
+@login_required
+def api_chat_search():
+    """Tìm user để bắt đầu chat."""
+    q = (request.args.get('q') or '').strip().lower()
+    if not q or len(q) < 1:
+        return jsonify({'success': True, 'users': []})
+
+    username = session.get('username', '')
+    users = load_users()
+    result = []
+
+    for uname, udata in users.items():
+        if uname == username:
+            continue
+        if usernames_match(uname, SUPER_ADMIN_USERNAME) and not is_super_admin(username):
+            # Không cho chat với super admin nếu mình không phải
+            pass
+        if q in uname.lower() or q in udata.get('display_name', '').lower():
+            result.append({
+                'username': uname,
+                'display_name': udata.get('display_name', uname),
+                'user_id': udata.get('user_id', '—'),
+                'is_super_admin': is_super_admin(uname),
+            })
+
+    return jsonify({'success': True, 'users': result[:20]})
+
+
+@app.route('/api/chat/messages/<partner>')
+@login_required
+def api_chat_messages(partner):
+    """Lấy tin nhắn giữa mình và partner."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    if partner not in users:
+        return jsonify({'success': False, 'error': 'Người dùng không tồn tại!'}), 404
+
+    user = users[username]
+    messages = user.get('messages', [])
+
+    # Lọc tin nhắn giữa 2 người
+    conversation = [
+        m for m in messages
+        if (m.get('from') == username and m.get('to') == partner) or
+           (m.get('from') == partner and m.get('to') == username)
+    ]
+
+    # Sắp xếp theo thời gian
+    conversation.sort(key=lambda x: x.get('time', ''))
+
+    # Đánh dấu đã đọc
+    changed = False
+    for m in messages:
+        if m.get('from') == partner and m.get('to') == username and not m.get('read', False):
+            m['read'] = True
+            changed = True
+
+    if changed:
+        user['messages'] = messages
+        users[username] = user
+        save_user(username, user)
+
+    # Format
+    result = []
+    for m in conversation[-100:]:  # 100 tin gần nhất
+        partner_data = users.get(m.get('from'), {})
+        result.append({
+            'id': m.get('id', ''),
+            'from': m.get('from', ''),
+            'from_display': partner_data.get('display_name', m.get('from', '')),
+            'content': m.get('content', ''),
+            'time': m.get('time', ''),
+            'is_me': m.get('from') == username,
+            'read': m.get('read', False),
+        })
+
+    partner_data = users.get(partner, {})
+    return jsonify({
+        'success': True,
+        'messages': result,
+        'partner': {
+            'username': partner,
+            'display_name': partner_data.get('display_name', partner),
+            'user_id': partner_data.get('user_id', '—'),
+            'is_super_admin': is_super_admin(partner),
+        }
+    })
+
+
+@app.route('/api/chat/send', methods=['POST'])
+@login_required
+def api_chat_send():
+    """Gửi tin nhắn."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return jsonify({'success': False, 'error': 'Bạn đã bị ban!'}), 403
+
+    data = request.get_json() or {}
+    to_user = (data.get('to') or '').strip()
+    content = (data.get('content') or '').strip()
+
+    if not to_user or not content:
+        return jsonify({'success': False, 'error': 'Thiếu thông tin!'}), 400
+    if len(content) > 1000:
+        return jsonify({'success': False, 'error': 'Tin nhắn quá dài (tối đa 1000 ký tự)!'}), 400
+    if to_user not in users:
+        return jsonify({'success': False, 'error': 'Người nhận không tồn tại!'}), 404
+    if to_user == username:
+        return jsonify({'success': False, 'error': 'Không thể tự nhắn cho mình!'}), 400
+
+    # Tạo tin nhắn
+    msg = {
+        'id': secrets.token_hex(8),
+        'from': username,
+        'to': to_user,
+        'content': content,
+        'time': datetime.now().isoformat(),
+        'read': False,
+    }
+
+    # Lưu vào user hiện tại
+    user_msgs = user.get('messages', [])
+    user_msgs.append(msg)
+    # Giữ 500 tin gần nhất
+    user['messages'] = user_msgs[-500:]
+    users[username] = user
+    save_user(username, user)
+
+    return jsonify({'success': True, 'message': msg})
+
+
+@app.route('/api/chat/delete/<msg_id>', methods=['POST'])
+@login_required
+def api_chat_delete(msg_id):
+    """Xóa tin nhắn."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = users[username]
+    messages = user.get('messages', [])
+
+    # Tìm và xóa tin nhắn
+    new_messages = []
+    deleted = False
+    for m in messages:
+        if m.get('id') == msg_id and m.get('from') == username:
+            deleted = True
+            continue
+        new_messages.append(m)
+
+    if not deleted:
+        return jsonify({'success': False, 'error': 'Không tìm thấy tin nhắn!'}), 404
+
+    user['messages'] = new_messages
+    users[username] = user
+    save_user(username, user)
+
+    return jsonify({'success': True, 'message': 'Đã xóa tin nhắn'})
+
+
+@app.route('/api/chat/unread-count')
+@login_required
+def api_chat_unread_count():
+    """Đếm số tin nhắn chưa đọc."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = users[username]
+    messages = user.get('messages', [])
+
+    unread = sum(1 for m in messages
+                 if m.get('to') == username and not m.get('read', False))
+
+    return jsonify({'success': True, 'unread': unread})
+
+# ============================================================
 # KHỞI ĐỘNG
 # ============================================================
 init_db()
