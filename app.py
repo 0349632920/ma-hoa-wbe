@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
 from poi_utils import boi_vui, tho_fallback, LOI_KHUYEN
 from ten_utils import generate_name
+from truyen_utils import get_truyen_fallback
 from music_utils import list_music_files, get_file_info, stream_file, has_google_api
 from crypto_utils import (
     process, METHODS, ONE_WAY_ONLY,
@@ -2870,6 +2871,166 @@ def api_music_stream(file_id):
     response.headers['Cache-Control'] = 'no-cache'
     return response
 
+# ============================================================
+# TẠO TRUYỆN — AI
+# ============================================================
+@app.route('/truyen')
+@login_required
+def truyen_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('truyen.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+
+@app.route('/api/truyen/generate', methods=['POST'])
+@login_required
+def api_truyen_generate():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return jsonify({'success': False, 'error': 'Bạn đã bị ban!', 'redirect': '/banned'}), 403
+
+    data = request.get_json() or {}
+    the_loai = (data.get('the_loai') or 'boylove').strip()
+    ten_nv1 = (data.get('ten_nv1') or '').strip()
+    ten_nv2 = (data.get('ten_nv2') or '').strip()
+    boi_canh = (data.get('boi_canh') or '').strip()
+    noi_dung = (data.get('noi_dung') or '').strip()
+    do_dai = (data.get('do_dai') or 'ngan').strip()
+
+    valid_the_loai = ['boylove', 'girllove', 'tinh_cam', 'vo_hiep', 'co_dai',
+                      'hoc_duong', 'huyen_huyen', 'kinh_di', 'hai_huoc', 'scifi']
+    if the_loai not in valid_the_loai:
+        the_loai = 'boylove'
+
+    if len(ten_nv1) > 50 or len(ten_nv2) > 50:
+        return jsonify({'success': False, 'error': 'Tên nhân vật quá dài!'}), 400
+    if len(boi_canh) > 200 or len(noi_dung) > 300:
+        return jsonify({'success': False, 'error': 'Nội dung quá dài!'}), 400
+
+    # Thử AI trước
+    if groq_client:
+        try:
+            result = _generate_truyen_with_ai(the_loai, ten_nv1, ten_nv2, boi_canh, noi_dung, do_dai)
+            return jsonify({'success': True, 'data': result, 'ai': True})
+        except Exception as e:
+            print(f"⚠️ Groq truyen error: {e}")
+
+    # Fallback
+    result = get_truyen_fallback(the_loai)
+    return jsonify({'success': True, 'data': result, 'ai': False})
+
+
+def _generate_truyen_with_ai(the_loai, ten_nv1, ten_nv2, boi_canh, noi_dung, do_dai):
+    """Gọi Groq AI để viết truyện."""
+
+    the_loai_prompts = {
+        'boylove': 'truyện tình cảm Boylove (nam-nam) trong sáng, nhẹ nhàng, không có nội dung 18+. Tập trung vào cảm xúc, sự quan tâm, và tình cảm chân thành.',
+        'girllove': 'truyện tình cảm Girllove (nữ-nữ) trong sáng, nhẹ nhàng. Tập trung vào tình bạn đẹp chuyển thành tình yêu.',
+        'tinh_cam': 'truyện tình cảm nam-nữ lãng mạn, cảm động. Có thể có twist bất ngờ.',
+        'vo_hiep': 'truyện võ hiệp, kiếm hiệp giang hồ. Có đấu võ, có tình nghĩa huynh đệ, có bài học về đạo làm người.',
+        'co_dai': 'truyện cổ đại cung đình, hoàng tộc. Có công chúa, hoàng tử, thư sinh, và tình yêu vượt rào cản.',
+        'hoc_duong': 'truyện học đường tuổi học trò. Có tình bạn, tình cảm trong sáng, kỷ niệm đẹp.',
+        'huyen_huyen': 'truyện huyền huyễn tu tiên. Có phép thuật, tu luyện, và bài học về sức mạnh nội tâm.',
+        'kinh_di': 'truyện kinh dị, hồi hộp, ám ảnh. Có yếu tố siêu nhiên, nhưng kết thúc có ý nghĩa nhân văn.',
+        'hai_huoc': 'truyện hài hước, vui nhộn. Có twist bất ngờ, kết thúc gây cười.',
+        'scifi': 'truyện khoa học viễn tưởng. Có công nghệ tương lai, không gian, và bài học về nhân loại.',
+    }
+
+    do_dai_prompts = {
+        'ngan': 'khoảng 300-500 chữ',
+        'vua': 'khoảng 600-900 chữ',
+        'dai': 'khoảng 1000-1500 chữ',
+    }
+
+    # Xây dựng prompt chi tiết
+    chi_tiet = []
+    if ten_nv1:
+        chi_tiet.append(f"- Nhân vật chính: {ten_nv1}")
+    if ten_nv2:
+        chi_tiet.append(f"- Nhân vật phụ: {ten_nv2}")
+    if boi_canh:
+        chi_tiet.append(f"- Bối cảnh: {boi_canh}")
+    if noi_dung:
+        chi_tiet.append(f"- Nội dung chính: {noi_dung}")
+
+    chi_tiet_str = '\n'.join(chi_tiet) if chi_tiet else '- Tự do sáng tạo nhân vật và bối cảnh'
+
+    system_prompt = """Bạn là nhà văn Việt Nam tài ba, chuyên viết truyện ngắn.
+QUAN TRỌNG: 
+- Nội dung phải TRONG SÁNG, phù hợp mọi lứa tuổi
+- KHÔNG viết nội dung 18+, bạo lực cực đoan
+- Trả về JSON hợp lệ, KHÔNG thêm text khác, KHÔNG dùng markdown"""
+
+    user_prompt = f"""Viết một truyện ngắn theo thể loại: {the_loai_prompts.get(the_loai, the_loai)}
+
+Thông tin:
+{chi_tiet_str}
+
+Độ dài: {do_dai_prompts.get(do_dai, 'khoảng 300-500 chữ')}
+
+Yêu cầu:
+- Có cốt truyện rõ ràng (mở đầu, diễn biến, kết thúc)
+- Nhân vật có tên và tính cách riêng
+- Có twist hoặc bài học ý nghĩa ở cuối
+- Ngôn ngữ tự nhiên, cảm xúc, cuốn hút
+- Dùng \\n\\n để phân cách các đoạn văn
+- Mỗi đoạn ngắn gọn (2-4 câu)
+
+Trả về JSON:
+{{
+  "tieu_de": "Tiêu đề truyện (hay, hấp dẫn, 3-8 từ)",
+  "truyen": "Nội dung truyện đầy đủ (dùng \\n\\n giữa các đoạn)",
+  "bai_hoc": "Bài học rút ra (1-2 câu ngắn)"
+}}"""
+
+    chat_completion = groq_client.chat.completions.create(
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        model="llama-3.3-70b-versatile",
+        temperature=1.0,
+        max_tokens=2500,
+        response_format={"type": "json_object"}
+    )
+
+    response_text = chat_completion.choices[0].message.content.strip()
+
+    if response_text.startswith('```'):
+        parts = response_text.split('```')
+        if len(parts) >= 2:
+            response_text = parts[1]
+            if response_text.startswith('json'):
+                response_text = response_text[4:]
+    response_text = response_text.strip()
+
+    import json as _json
+    result = _json.loads(response_text)
+
+    result.setdefault('the_loai', the_loai)
+    result.setdefault('tieu_de', 'Truyện không tên')
+    result.setdefault('truyen', '')
+    result.setdefault('bai_hoc', '')
+    result['loai'] = 'ai'
+
+    return result
+    
 # ============================================================
 # KHỞI ĐỘNG
 # ============================================================
