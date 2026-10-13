@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
 from poi_utils import boi_vui, tho_fallback, LOI_KHUYEN
+from ten_utils import generate_name
+from music_utils import list_music_files, get_file_info, stream_file, has_google_api
 from crypto_utils import (
     process, METHODS, ONE_WAY_ONLY,
     translate, to_english, to_vietnamese, auto_translate, detect_language,
@@ -2770,6 +2772,103 @@ def api_boi():
         return jsonify({'success': True, 'data': result})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+# ============================================================
+# NHẠC FUNK — GOOGLE DRIVE
+# ============================================================
+@app.route('/nhac')
+@login_required
+def nhac_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('nhac.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'),
+        has_api=has_google_api())
+
+
+@app.route('/api/music/list')
+@login_required
+def api_music_list():
+    """Lấy danh sách file nhạc từ Google Drive."""
+    force = request.args.get('refresh', '').lower() == 'true'
+    result = list_music_files(force_refresh=force)
+    return jsonify(result)
+
+
+@app.route('/api/music/stream/<file_id>')
+@login_required
+def api_music_stream(file_id):
+    """Stream file nhạc từ Google Drive (hỗ trợ Range request để seek)."""
+    # Lấy size file
+    info = get_file_info(file_id)
+    if not info.get('success'):
+        return jsonify({'error': 'File không tồn tại'}), 404
+
+    file_data = info['file']
+    file_size = int(file_data.get('size', 0))
+
+    # Range request
+    range_header = request.headers.get('Range')
+
+    drive_res = stream_file(file_id, range_header=range_header)
+    if not drive_res:
+        return jsonify({'error': 'Không thể tải file'}), 500
+
+    # Nếu client yêu cầu Range
+    if range_header and drive_res.status_code == 206:
+        try:
+            byte_range = range_header.replace('bytes=', '').split('-')
+            start = int(byte_range[0]) if byte_range[0] else 0
+            end = int(byte_range[1]) if len(byte_range) > 1 and byte_range[1] else file_size - 1
+            length = end - start + 1
+
+            def generate():
+                for chunk in drive_res.iter_content(chunk_size=64 * 1024):
+                    if chunk:
+                        yield chunk
+
+            response = Response(
+                generate(),
+                status=206,
+                mimetype='audio/mpeg',
+                direct_passthrough=True,
+            )
+            response.headers['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+            response.headers['Accept-Ranges'] = 'bytes'
+            response.headers['Content-Length'] = str(length)
+            response.headers['Content-Type'] = 'audio/mpeg'
+            response.headers['Cache-Control'] = 'no-cache'
+            return response
+        except Exception as e:
+            print(f'⚠️ Range error: {e}')
+
+    # Full file
+    def generate():
+        for chunk in drive_res.iter_content(chunk_size=64 * 1024):
+            if chunk:
+                yield chunk
+
+    response = Response(
+        generate(),
+        status=200,
+        mimetype='audio/mpeg',
+        direct_passthrough=True,
+    )
+    response.headers['Accept-Ranges'] = 'bytes'
+    response.headers['Content-Length'] = str(file_size)
+    response.headers['Content-Type'] = 'audio/mpeg'
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
 
 # ============================================================
 # KHỞI ĐỘNG
