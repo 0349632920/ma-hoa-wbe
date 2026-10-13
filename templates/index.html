@@ -85,31 +85,6 @@
             {% endif %}
             <button class="dropdown-item" onclick="showHistory()">🕐 Lịch sử gần đây</button>
             <button class="dropdown-item" onclick="window.location.href='/translate'">🌐 Dịch thuật</button>
-
-            <!-- ⭐ NÚT CHẾ TÊN AI -->
-            <button class="dropdown-item" onclick="window.location.href='/ten'" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15)); color: #667eea; font-weight: 700; position: relative;">
-              🎭 Chế tên AI
-              <span style="position: absolute; right: 16px; font-size: 0.7rem; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 2px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">AI</span>
-            </button>
-
-            <!-- ⭐ NÚT VÒNG QUAY -->
-            <button class="dropdown-item" onclick="window.location.href='/wheel'" style="background: linear-gradient(135deg, rgba(255, 165, 2, 0.15), rgba(230, 126, 34, 0.15)); color: #e67e22; font-weight: 700; position: relative;">
-              🎡 Vòng quay
-              <span style="position: absolute; right: 16px; font-size: 0.7rem; background: linear-gradient(135deg, #ffa502, #e67e22); color: #fff; padding: 2px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">HOT</span>
-            </button>
-
-            <!-- ⭐ NÚT CHẾ THƠ AI -->
-            <button class="dropdown-item" onclick="window.location.href='/tho'" style="background: linear-gradient(135deg, rgba(218, 112, 214, 0.15), rgba(186, 85, 211, 0.15)); color: #da70d6; font-weight: 700; position: relative;">
-              📝 Chế thơ AI
-              <span style="position: absolute; right: 16px; font-size: 0.7rem; background: linear-gradient(135deg, #da70d6, #ba55d3); color: #fff; padding: 2px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">AI</span>
-            </button>
-
-            <!-- ⭐ NÚT BÓI VUI -->
-            <button class="dropdown-item" onclick="window.location.href='/boi'" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 2, 0.15)); color: #ffa502; font-weight: 700; position: relative;">
-              🎯 Bói vui
-              <span style="position: absolute; right: 16px; font-size: 0.7rem; background: linear-gradient(135deg, #ffd700, #ffa502); color: #1a1a2e; padding: 2px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">FUN</span>
-            </button>
-
             <button class="dropdown-item game-item" onclick="window.location.href='/game'">🎮 Play Game</button>
             <button class="dropdown-item danger" onclick="logout()">🚪 Đăng xuất</button>
 
@@ -231,6 +206,62 @@
       <button class="btn game" onclick="window.location.href='/game'">🎮 Play Game</button>
       <button class="btn translate" onclick="goToTranslate()">🌐 Dịch</button>
       <button class="btn clear" onclick="clearAll()">🗑️ Xóa</button>
+    </div>
+
+    <!-- ⭐ SECTION TÍNH NĂNG VUI -->
+    <div class="feature-section">
+      <div class="feature-title">
+        <span class="feature-line"></span>
+        <h2>✨ Khám phá tính năng</h2>
+        <span class="feature-line"></span>
+      </div>
+      <p class="feature-subtitle">Những tính năng thú vị đang chờ bạn!</p>
+
+      <div class="feature-grid">
+        <!-- Chế tên AI -->
+        <a href="/ten" class="feature-card feature-ten">
+          <div class="feature-icon-wrap">
+            <span class="feature-icon">🎭</span>
+            <span class="feature-badge">AI</span>
+          </div>
+          <h3>Chế tên AI</h3>
+          <p>Nhập tên → AI giải nghĩa & chế ý nghĩa thú vị</p>
+          <span class="feature-arrow">Khám phá →</span>
+        </a>
+
+        <!-- Vòng quay -->
+        <a href="/wheel" class="feature-card feature-wheel">
+          <div class="feature-icon-wrap">
+            <span class="feature-icon">🎡</span>
+            <span class="feature-badge feature-badge-hot">HOT</span>
+          </div>
+          <h3>Vòng quay</h3>
+          <p>Nhập danh sách → quay ngẫu nhiên 100%</p>
+          <span class="feature-arrow">Khám phá →</span>
+        </a>
+
+        <!-- Chế thơ AI -->
+        <a href="/tho" class="feature-card feature-tho">
+          <div class="feature-icon-wrap">
+            <span class="feature-icon">📝</span>
+            <span class="feature-badge">AI</span>
+          </div>
+          <h3>Chế thơ AI</h3>
+          <p>Nhập chủ đề → AI làm thơ cho bạn</p>
+          <span class="feature-arrow">Khám phá →</span>
+        </a>
+
+        <!-- Bói vui -->
+        <a href="/boi" class="feature-card feature-boi">
+          <div class="feature-icon-wrap">
+            <span class="feature-icon">🎯</span>
+            <span class="feature-badge feature-badge-fun">FUN</span>
+          </div>
+          <h3>Bói vui</h3>
+          <p>Xem vận may, tình duyên, sự nghiệp...</p>
+          <span class="feature-arrow">Khám phá →</span>
+        </a>
+      </div>
     </div>
 
     <footer class="page-footer">
@@ -594,26 +625,6 @@
       50%      { transform: scale(1.2); }
     }
 
-    /* ═══ NÚT ĐẶC BIỆT TRONG DROPDOWN ═══ */
-    .dropdown-item[onclick*="/ten"]:hover,
-    .dropdown-item[onclick*="/wheel"]:hover,
-    .dropdown-item[onclick*="/tho"]:hover,
-    .dropdown-item[onclick*="/boi"]:hover {
-      transform: translateX(4px);
-    }
-    .dropdown-item[onclick*="/ten"]:hover {
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-    .dropdown-item[onclick*="/wheel"]:hover {
-      box-shadow: 0 4px 12px rgba(255, 165, 2, 0.3);
-    }
-    .dropdown-item[onclick*="/tho"]:hover {
-      box-shadow: 0 4px 12px rgba(218, 112, 214, 0.3);
-    }
-    .dropdown-item[onclick*="/boi"]:hover {
-      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-    }
-
     /* ═══ UNBAN OVERLAY ═══ */
     .unban-reload-overlay {
       position: fixed;
@@ -694,20 +705,6 @@
       color: #fff;
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
-
-    .method-group-tab[data-group="classical"].active  { background: linear-gradient(135deg, #d4a373, #a67c52); box-shadow: 0 4px 12px rgba(212, 163, 115, 0.4); }
-    .method-group-tab[data-group="math"].active       { background: linear-gradient(135deg, #4a90e2, #2c5faa); box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4); }
-    .method-group-tab[data-group="hash"].active       { background: linear-gradient(135deg, #e74c3c, #c0392b); box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); }
-    .method-group-tab[data-group="symmetric"].active  { background: linear-gradient(135deg, #27ae60, #1e8449); box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4); }
-    .method-group-tab[data-group="asymmetric"].active { background: linear-gradient(135deg, #8e44ad, #6c3483); box-shadow: 0 4px 12px rgba(142, 68, 173, 0.4); }
-    .method-group-tab[data-group="special"].active    { background: linear-gradient(135deg, #16a085, #0e6655); box-shadow: 0 4px 12px rgba(22, 160, 133, 0.4); }
-    .method-group-tab[data-group="game"].active       { background: linear-gradient(135deg, #e84393, #b03070); box-shadow: 0 4px 12px rgba(232, 67, 147, 0.4); }
-    .method-group-tab[data-group="language"].active   { background: linear-gradient(135deg, #f39c12, #b9770e); box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4); }
-    .method-group-tab[data-group="encoding"].active   { background: linear-gradient(135deg, #3498db, #2471a3); box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4); }
-    .method-group-tab[data-group="protocol"].active   { background: linear-gradient(135deg, #9b59b6, #7d3c98); box-shadow: 0 4px 12px rgba(155, 89, 182, 0.4); }
-    .method-group-tab[data-group="machines"].active   { background: linear-gradient(135deg, #e67e22, #ca6f1e); box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4); }
-    .method-group-tab[data-group="emoji"].active      { background: linear-gradient(135deg, #ffd700, #d4ac0d); color: #1a1a2e; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4); }
-    .method-group-tab[data-group="all"].active        { background: linear-gradient(135deg, #667eea, #764ba2); }
 
     .method-btn.hidden { display: none !important; }
 
@@ -942,6 +939,183 @@
       }
       .random-result-banner { padding: 20px 28px; }
       .random-result-banner .random-result-name { font-size: 1.3rem; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       FEATURE SECTION — 4 TÍNH NĂNG VUI
+       ═══════════════════════════════════════════════════════════ */
+    .feature-section {
+      margin: 30px 0 20px;
+      padding: 0 4px;
+    }
+
+    .feature-title {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .feature-title h2 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #333;
+      white-space: nowrap;
+      letter-spacing: -0.3px;
+    }
+
+    .feature-line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #c0c0d0, transparent);
+      border-radius: 2px;
+    }
+
+    .feature-subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      position: relative;
+      display: block;
+      padding: 24px 20px;
+      border-radius: 20px;
+      text-decoration: none;
+      color: #fff;
+      overflow: hidden;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      isolation: isolate;
+    }
+
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.6s ease;
+      pointer-events: none;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+    }
+
+    .feature-card:hover::after {
+      left: 100%;
+    }
+
+    .feature-ten { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .feature-wheel { background: linear-gradient(135deg, #ffa502 0%, #e67e22 100%); }
+    .feature-tho { background: linear-gradient(135deg, #da70d6 0%, #ba55d3 100%); }
+    .feature-boi { background: linear-gradient(135deg, #ffd700 0%, #ff6b9d 100%); }
+
+    .feature-icon-wrap {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 14px;
+    }
+
+    .feature-icon {
+      font-size: 2.8rem;
+      display: inline-block;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+      transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover .feature-icon {
+      transform: scale(1.15) rotate(-8deg);
+    }
+
+    .feature-badge {
+      position: absolute;
+      top: -6px;
+      right: -20px;
+      font-size: 0.62rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 8px;
+      background: #fff;
+      color: #667eea;
+      letter-spacing: 0.8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+
+    .feature-badge-hot {
+      background: linear-gradient(135deg, #ff4757, #ff6b9d);
+      color: #fff;
+    }
+
+    .feature-badge-fun {
+      background: #1a1a2e;
+      color: #ffd700;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.1); }
+    }
+
+    .feature-card h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+      letter-spacing: -0.2px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .feature-card p {
+      font-size: 0.85rem;
+      opacity: 0.92;
+      line-height: 1.5;
+      margin-bottom: 14px;
+      min-height: 42px;
+    }
+
+    .feature-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      opacity: 0.85;
+      transition: all 0.25s ease;
+    }
+
+    .feature-card:hover .feature-arrow {
+      opacity: 1;
+      transform: translateX(6px);
+    }
+
+    @media (max-width: 640px) {
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+      .feature-card {
+        padding: 20px 18px;
+      }
+      .feature-icon {
+        font-size: 2.4rem;
+      }
+      .feature-title h2 {
+        font-size: 1.1rem;
+      }
     }
   </style>
 
