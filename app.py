@@ -2934,6 +2934,178 @@ def api_truyen_generate():
     # Fallback
     result = get_truyen_fallback(the_loai)
     return jsonify({'success': True, 'data': result, 'ai': False})
+    
+# ============================================================
+# TRANG CÁ NHÂN — PROFILE
+# ============================================================
+@app.route('/profile')
+@login_required
+def profile_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('profile.html',
+        username=user.get('display_name', username),
+        real_username=username,
+        user_id=user.get('user_id', '—'))
+
+
+@app.route('/api/profile/stats')
+@login_required
+def api_profile_stats():
+    """Lấy thông tin + thống kê cá nhân."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return jsonify({'success': False, 'error': 'Bạn đã bị ban!', 'redirect': '/banned'}), 403
+
+    history = user.get('history', [])
+    game = user.get('game', {})
+
+    # Đếm số lần mã hóa/giải mã
+    encrypt_count = sum(1 for h in history if h.get('action') == 'encrypt')
+    decrypt_count = sum(1 for h in history if h.get('action') == 'decrypt')
+
+    # Đếm số methods đã dùng
+    unique_methods = set(h.get('method') for h in history if h.get('method'))
+
+    # Đếm số ngày active (dựa vào history)
+    active_days = set()
+    for h in history:
+        try:
+            date = h.get('time', '')[:10]
+            if date:
+                active_days.add(date)
+        except:
+            pass
+
+    warnings = user.get('warnings', [])
+
+    return jsonify({
+        'success': True,
+        'user': {
+            'username': username,
+            'display_name': user.get('display_name', username),
+            'user_id': user.get('user_id', '—'),
+            'role': user.get('role', 'user'),
+            'status': user.get('status', 'active'),
+            'created_at': user.get('created_at'),
+            'last_login': user.get('last_login'),
+            'login_count': user.get('login_count', 0),
+            'is_super_admin': is_super_admin(username),
+        },
+        'stats': {
+            'encrypt_count': encrypt_count,
+            'decrypt_count': decrypt_count,
+            'total_actions': len(history),
+            'unique_methods': len(unique_methods),
+            'active_days': len(active_days),
+            'game_points': game.get('points', 0),
+            'snake_best': game.get('snake_best', 0),
+            'guess_best': game.get('guess_best_count'),
+            'warnings_count': len(warnings),
+        },
+        'warnings': warnings,
+    })
+
+
+@app.route('/api/profile/history')
+@login_required
+def api_profile_history():
+    """Lấy lịch sử đầy đủ (100 lần gần nhất)."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = users[username]
+    history = user.get('history', [])[:100]
+
+    return jsonify({'success': True, 'history': history})
+
+
+@app.route('/api/profile/change-password', methods=['POST'])
+@login_required
+def api_change_password():
+    """Đổi mật khẩu."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = users[username]
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return jsonify({'success': False, 'error': 'Bạn đã bị ban!'}), 403
+
+    data = request.get_json() or {}
+    old_password = data.get('old_password', '')
+    new_password = data.get('new_password', '')
+    confirm_password = data.get('confirm_password', '')
+
+    # Validate
+    if not old_password or not new_password or not confirm_password:
+        return jsonify({'success': False, 'error': 'Vui lòng nhập đầy đủ!'}), 400
+
+    if not verify_password(old_password, user.get('password', '')):
+        return jsonify({'success': False, 'error': 'Mật khẩu cũ không đúng!'}), 401
+
+    if len(new_password) < 6:
+        return jsonify({'success': False, 'error': 'Mật khẩu mới phải từ 6 ký tự!'}), 400
+
+    if new_password != confirm_password:
+        return jsonify({'success': False, 'error': 'Mật khẩu xác nhận không khớp!'}), 400
+
+    if new_password == old_password:
+        return jsonify({'success': False, 'error': 'Mật khẩu mới phải khác mật khẩu cũ!'}), 400
+
+    # Cập nhật
+    user['password'] = hash_password(new_password)
+    log = user.get('activity_log', [])
+    log.insert(0, {
+        'action': 'change_password',
+        'detail': 'Đổi mật khẩu thành công',
+        'time': datetime.now().isoformat()
+    })
+    user['activity_log'] = log[:50]
+    users[username] = user
+    save_user(username, user)
+
+    return jsonify({'success': True, 'message': '✅ Đổi mật khẩu thành công!'})
+
+
+@app.route('/api/profile/logout-all', methods=['POST'])
+@login_required
+def api_logout_all():
+    """Đăng xuất tất cả thiết bị (xóa session hiện tại)."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = users[username]
+    log = user.get('activity_log', [])
+    log.insert(0, {
+        'action': 'logout_all',
+        'detail': 'Đăng xuất tất cả thiết bị',
+        'time': datetime.now().isoformat()
+    })
+    user['activity_log'] = log[:50]
+    save_user(username, user)
+
+    session.clear()
+    return jsonify({'success': True, 'message': 'Đã đăng xuất tất cả thiết bị', 'redirect': '/login'})
 
 # ============================================================
 # KHỞI ĐỘNG
