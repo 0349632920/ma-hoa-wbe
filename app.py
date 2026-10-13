@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
-import requests
 from poi_utils import boi_vui, tho_fallback, LOI_KHUYEN
 from crypto_utils import (
     process, METHODS, ONE_WAY_ONLY,
@@ -22,6 +21,7 @@ from functools import wraps
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 import unicodedata
+import requests
 import os
 import json
 import hashlib
