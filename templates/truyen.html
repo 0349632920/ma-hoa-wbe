@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📖 Tạo truyện AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <title>🚫 Tính năng đã bị xóa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 50%, #1a1a2e 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 50%, #0f0f1a 100%);
             color: #fff;
-            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
             position: relative;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         body::before {
@@ -23,708 +26,224 @@
             position: fixed;
             inset: 0;
             background:
-                radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(218, 112, 214, 0.12) 0%, transparent 50%);
+                radial-gradient(circle at 20% 30%, rgba(255, 71, 87, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
             pointer-events: none;
-            z-index: 0;
         }
 
         .container {
-            max-width: 760px;
-            margin: 0 auto;
+            max-width: 560px;
+            width: 100%;
+            background: rgba(20, 15, 30, 0.9);
+            border: 2px solid rgba(255, 71, 87, 0.35);
+            border-radius: 24px;
+            padding: 40px 32px;
+            text-align: center;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6),
+                        0 0 0 1px rgba(255, 255, 255, 0.05);
             position: relative;
             z-index: 1;
+            animation: fadeIn 0.5s ease;
         }
 
-        .back {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 20px;
-            color: #c8c8e0;
-            text-decoration: none;
-            padding: 10px 18px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 10px;
-            transition: all 0.2s;
-            font-weight: 600;
-            font-size: 0.9rem;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .back:hover {
-            color: #667eea;
-            border-color: #667eea;
-            transform: translateX(-4px);
+
+        .icon-wrap {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 24px;
+        }
+
+        .icon {
+            font-size: 5rem;
+            display: inline-block;
+            animation: shake 2s ease-in-out infinite;
+            filter: drop-shadow(0 8px 20px rgba(255, 71, 87, 0.4));
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25%      { transform: rotate(-8deg) scale(1.05); }
+            75%      { transform: rotate(8deg) scale(1.05); }
+        }
+
+        .icon-ring {
+            position: absolute;
+            inset: -20px;
+            border: 3px solid rgba(255, 71, 87, 0.4);
+            border-radius: 50%;
+            animation: ringPulse 2s ease-out infinite;
+        }
+
+        .icon-ring.ring-2 { animation-delay: 1s; }
+
+        @keyframes ringPulse {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.6); opacity: 0; }
         }
 
         h1 {
-            text-align: center;
-            margin-bottom: 12px;
-            font-size: 2.4rem;
+            font-size: 1.8rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #667eea, #764ba2, #da70d6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            margin-bottom: 12px;
+            color: #ff4757;
+            text-shadow: 0 2px 20px rgba(255, 71, 87, 0.4);
+            letter-spacing: -0.5px;
         }
 
         .subtitle {
-            text-align: center;
-            color: #d0c0e0;
-            margin-bottom: 30px;
-            font-size: 0.95rem;
+            color: #c8c8e0;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 28px;
         }
 
-        .subtitle .ai-glow {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 10px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25));
-            border: 1px solid rgba(102, 126, 234, 0.4);
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #b8b8ff;
-            margin-left: 6px;
+        .subtitle b {
+            color: #fff;
+            background: rgba(255, 71, 87, 0.2);
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
         }
 
-        .card {
-            background: rgba(30, 20, 45, 0.85);
-            border: 1px solid rgba(102, 126, 234, 0.15);
-            border-radius: 20px;
-            padding: 28px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        .info-box {
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 28px;
+            text-align: left;
+            border-left: 4px solid #ffa502;
         }
 
-        .form-group { margin-bottom: 20px; }
-
-        .form-group label {
-            display: block;
+        .info-box h3 {
+            font-size: 0.85rem;
+            color: #ffa502;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
             margin-bottom: 10px;
             font-weight: 700;
-            font-size: 0.95rem;
-            color: #e0d0f0;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 0.95rem;
-            border-radius: 12px;
-            border: 2px solid rgba(102, 126, 234, 0.2);
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            outline: none;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-        input[type="text"]:focus, textarea:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
-        }
-        input::placeholder, textarea::placeholder { color: #8a7a9a; }
-
-        textarea {
-            resize: vertical;
-            min-height: 70px;
+        .info-box p {
+            font-size: 0.92rem;
+            color: #c8c8e0;
             line-height: 1.6;
         }
 
-        /* ═══ THỂ LOẠI GRID ═══ */
-        .the-loai-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-            gap: 10px;
-        }
-
-        .tl-btn {
-            padding: 14px 8px;
-            border-radius: 14px;
-            border: 2px solid rgba(102, 126, 234, 0.2);
-            background: rgba(0, 0, 0, 0.25);
-            color: #fff;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-        .tl-btn:hover {
-            background: rgba(102, 126, 234, 0.1);
-            transform: translateY(-3px);
-        }
-        .tl-btn.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-color: transparent;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-        }
-        .tl-icon { font-size: 1.6rem; }
-        .tl-label { font-weight: 700; font-size: 0.8rem; }
-
-        /* Đặc biệt cho BL */
-        .tl-btn[data-tl="boylove"].active {
-            background: linear-gradient(135deg, #667eea, #da70d6);
-            box-shadow: 0 8px 25px rgba(218, 112, 214, 0.5);
-        }
-        .tl-btn[data-tl="girllove"].active {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
-        }
-
-        /* ═══ ĐỘ DÀI ═══ */
-        .do-dai-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        .dd-btn {
-            padding: 10px;
-            border-radius: 10px;
-            border: 2px solid rgba(102, 126, 234, 0.2);
-            background: rgba(0, 0, 0, 0.25);
-            color: #fff;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-align: center;
-        }
-        .dd-btn:hover {
-            background: rgba(102, 126, 234, 0.1);
-            transform: translateY(-2px);
-        }
-        .dd-btn.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-color: transparent;
-            box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4);
-        }
-
-        /* ═══ GENERATE BUTTON ═══ */
-        .generate-btn {
-            width: 100%;
-            padding: 18px;
-            border: none;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #667eea, #764ba2, #da70d6);
-            background-size: 200% 200%;
-            color: #fff;
-            font-weight: 800;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: inherit;
-            margin-top: 8px;
-            position: relative;
-            overflow: hidden;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            animation: gradientShift 3s ease infinite;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50%      { background-position: 100% 50%; }
-        }
-        .generate-btn:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
-        }
-        .generate-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .generate-btn.loading {
-            color: transparent;
-            pointer-events: none;
-        }
-        .generate-btn.loading::before {
-            content: '';
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-        }
-        .generate-btn.loading::after {
-            content: '📖 AI đang viết truyện...';
-            position: absolute;
-            bottom: -32px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.85rem;
-            color: #b8b8ff;
-            white-space: nowrap;
-            animation: aiPulse 1.5s ease-in-out infinite;
-            font-weight: 600;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes aiPulse {
-            0%, 100% { opacity: 0.5; }
-            50%      { opacity: 1; }
-        }
-
-        /* ═══ KẾT QUẢ ═══ */
-        .result-card {
-            display: none;
-            animation: slideUp 0.5s ease;
-        }
-        .result-card.show { display: block; }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .truyen-header {
-            text-align: center;
-            margin-bottom: 24px;
-            padding-bottom: 20px;
-            border-bottom: 2px dashed rgba(102, 126, 234, 0.3);
-        }
-
-        .ai-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 12px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .info-box .reason {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(255, 165, 2, 0.1);
             border-radius: 8px;
-            font-size: 0.72rem;
-            font-weight: 800;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            margin-bottom: 16px;
-        }
-
-        .truyen-tieu-de {
-            font-family: 'Lora', 'Georgia', serif;
-            font-size: 1.6rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #fff, #b8b8ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1.3;
-            margin-bottom: 8px;
-        }
-
-        .truyen-the-loai {
-            display: inline-block;
-            padding: 3px 12px;
-            background: rgba(102, 126, 234, 0.15);
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #b8b8ff;
-        }
-
-        .truyen-noi-dung {
-            font-family: 'Lora', 'Georgia', serif;
-            font-size: 1.05rem;
-            line-height: 1.9;
-            color: #e8e0f0;
-            white-space: pre-line;
-            text-align: justify;
-            padding: 0 8px;
-            margin-bottom: 24px;
-        }
-
-        .truyen-noi-dung::first-letter {
-            font-size: 3rem;
-            font-weight: 800;
-            float: left;
-            line-height: 0.9;
-            margin: 6px 12px 0 0;
-            background: linear-gradient(135deg, #667eea, #da70d6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-family: 'Lora', serif;
-        }
-
-        .bai-hoc-box {
-            margin-top: 24px;
-            padding: 18px 22px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.12), rgba(218, 112, 214, 0.08));
-            border-left: 4px solid #da70d6;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            color: #e0d0f0;
-            line-height: 1.6;
-        }
-
-        .bai-hoc-box strong {
-            color: #da70d6;
-            display: block;
-            margin-bottom: 6px;
             font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            color: #ffbe4d;
+            font-style: italic;
         }
 
-        .result-actions {
+        .actions {
             display: flex;
             gap: 10px;
-            margin-top: 24px;
             justify-content: center;
             flex-wrap: wrap;
         }
 
-        .result-btn {
-            padding: 12px 22px;
+        .btn {
+            padding: 13px 28px;
+            border: none;
             border-radius: 12px;
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            background: rgba(102, 126, 234, 0.1);
-            color: #b8b8ff;
             font-family: inherit;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.2s;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-        }
-        .result-btn:hover {
-            background: rgba(102, 126, 234, 0.25);
-            transform: translateY(-2px);
-        }
-
-        /* ═══ TOAST ═══ */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #667eea;
+            gap: 8px;
             color: #fff;
-            padding: 14px 28px;
-            border-radius: 30px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
-            opacity: 0;
-            transition: all 0.4s;
-            pointer-events: none;
-            z-index: 9999;
-            max-width: 90vw;
         }
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-        .toast.error { background: #e74c3c; }
 
-        @media (max-width: 640px) {
-            h1 { font-size: 1.7rem; }
-            .card { padding: 20px; }
-            .form-row { grid-template-columns: 1fr; }
-            .the-loai-grid { grid-template-columns: repeat(3, 1fr); }
-            .truyen-tieu-de { font-size: 1.3rem; }
-            .truyen-noi-dung { font-size: 0.98rem; }
+        .btn.primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .footer-note {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.85rem;
+            color: #9999bb;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 30px 22px; }
+            h1 { font-size: 1.4rem; }
+            .icon { font-size: 4rem; }
+            .actions { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="{{ url_for('index') }}" class="back">← Về trang chủ</a>
+        <div class="icon-wrap">
+            <span class="icon">🚫</span>
+            <div class="icon-ring"></div>
+            <div class="icon-ring ring-2"></div>
+        </div>
 
-        <h1>📖 Tạo truyện AI</h1>
+        <h1>Tính năng đã bị xóa</h1>
         <p class="subtitle">
-            Chọn thể loại — AI sẽ viết truyện cho bạn
-            <span class="ai-glow">🤖 Powered by Llama 3</span>
+            Trang <b>{{ feature_path or '/truyen' }}</b> đã bị gỡ khỏi hệ thống.
         </p>
 
-        <div class="card">
-            <div class="form-group">
-                <label>🎭 Chọn thể loại truyện</label>
-                <div class="the-loai-grid" id="theLoaiGrid">
-                    <button class="tl-btn active" data-tl="boylove" onclick="selectTL('boylove')">
-                        <span class="tl-icon">💕</span>
-                        <span class="tl-label">Boylove</span>
-                    </button>
-                    <button class="tl-btn" data-tl="girllove" onclick="selectTL('girllove')">
-                        <span class="tl-icon">💗</span>
-                        <span class="tl-label">Girllove</span>
-                    </button>
-                    <button class="tl-btn" data-tl="tinh_cam" onclick="selectTL('tinh_cam')">
-                        <span class="tl-icon">💑</span>
-                        <span class="tl-label">Tình cảm</span>
-                    </button>
-                    <button class="tl-btn" data-tl="vo_hiep" onclick="selectTL('vo_hiep')">
-                        <span class="tl-icon">🗡️</span>
-                        <span class="tl-label">Võ hiệp</span>
-                    </button>
-                    <button class="tl-btn" data-tl="co_dai" onclick="selectTL('co_dai')">
-                        <span class="tl-icon">🏰</span>
-                        <span class="tl-label">Cổ đại</span>
-                    </button>
-                    <button class="tl-btn" data-tl="hoc_duong" onclick="selectTL('hoc_duong')">
-                        <span class="tl-icon">🌸</span>
-                        <span class="tl-label">Học đường</span>
-                    </button>
-                    <button class="tl-btn" data-tl="huyen_huyen" onclick="selectTL('huyen_huyen')">
-                        <span class="tl-icon">⚡</span>
-                        <span class="tl-label">Huyền huyễn</span>
-                    </button>
-                    <button class="tl-btn" data-tl="kinh_di" onclick="selectTL('kinh_di')">
-                        <span class="tl-icon">🎭</span>
-                        <span class="tl-label">Kinh dị</span>
-                    </button>
-                    <button class="tl-btn" data-tl="hai_huoc" onclick="selectTL('hai_huoc')">
-                        <span class="tl-icon">😂</span>
-                        <span class="tl-label">Hài hước</span>
-                    </button>
-                    <button class="tl-btn" data-tl="scifi" onclick="selectTL('scifi')">
-                        <span class="tl-icon">🚀</span>
-                        <span class="tl-label">Sci-fi</span>
-                    </button>
-                </div>
+        <div class="info-box">
+            <h3>📋 Thông tin</h3>
+            <p>
+                <strong>{{ feature_name or 'Tính năng này' }}</strong> đã bị xóa bởi Admin.
+                Bạn không thể truy cập tính năng này nữa.
+            </p>
+            {% if reason %}
+            <div class="reason">
+                💬 <strong>Lý do:</strong> {{ reason }}
             </div>
-
-            <div class="form-group">
-                <label>👥 Nhân vật (tùy chọn)</label>
-                <div class="form-row">
-                    <input type="text" id="tenNv1" placeholder="Nhân vật chính (VD: Minh)" maxlength="50">
-                    <input type="text" id="tenNv2" placeholder="Nhân vật phụ (VD: Hùng)" maxlength="50">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>🏙️ Bối cảnh (tùy chọn)</label>
-                <input type="text" id="boiCanh" placeholder="VD: Trường đại học, Làng quê, Cung điện..." maxlength="200">
-            </div>
-
-            <div class="form-group">
-                <label>💭 Nội dung chính (tùy chọn)</label>
-                <textarea id="noiDung" placeholder="VD: Tình cảm thầm kín giữa hai người bạn thân..." maxlength="300"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>📏 Độ dài</label>
-                <div class="do-dai-grid">
-                    <button class="dd-btn active" data-dd="ngan" onclick="selectDD('ngan')">
-                        ⚡ Ngắn (300-500 chữ)
-                    </button>
-                    <button class="dd-btn" data-dd="vua" onclick="selectDD('vua')">
-                        📖 Vừa (600-900 chữ)
-                    </button>
-                    <button class="dd-btn" data-dd="dai" onclick="selectDD('dai')">
-                        📚 Dài (1000-1500 chữ)
-                    </button>
-                </div>
-            </div>
-
-            <button class="generate-btn" id="generateBtn" onclick="generate()">
-                <span>📖 Viết truyện ngay</span>
-            </button>
+            {% endif %}
         </div>
 
-        <div class="card result-card" id="resultCard">
-            <div class="truyen-header">
-                <span class="ai-badge" id="resultBadge">🤖 AI</span>
-                <h2 class="truyen-tieu-de" id="truyenTieuDe">—</h2>
-                <span class="truyen-the-loai" id="truyenTheLoai">—</span>
-            </div>
-
-            <div class="truyen-noi-dung" id="truyenNoiDung">—</div>
-
-            <div class="bai-hoc-box" id="baiHocBox" style="display: none;">
-                <strong>💡 Bài học</strong>
-                <span id="baiHocText"></span>
-            </div>
-
-            <div class="result-actions">
-                <button class="result-btn" onclick="copyTruyen()">
-                    📋 Sao chép
-                </button>
-                <button class="result-btn" onclick="downloadTruyen()">
-                    📥 Tải về
-                </button>
-                <button class="result-btn" onclick="generate()">
-                    🔄 Viết lại
-                </button>
-            </div>
+        <div class="actions">
+            <a href="{{ url_for('index') }}" class="btn primary">
+                ← Về trang chủ
+            </a>
+            <a href="/game" class="btn secondary">
+                🎮 Chơi game
+            </a>
         </div>
+
+        <p class="footer-note">
+            💡 Nếu bạn cho rằng đây là nhầm lẫn, hãy liên hệ Admin để được hỗ trợ.
+        </p>
     </div>
-
-    <div class="toast" id="toast"></div>
-
-    <script>
-        let currentTL = 'boylove';
-        let currentDD = 'ngan';
-
-        const theLoaiNames = {
-            'boylove': '💕 Boylove',
-            'girllove': '💗 Girllove',
-            'tinh_cam': '💑 Tình cảm',
-            'vo_hiep': '🗡️ Võ hiệp',
-            'co_dai': '🏰 Cổ đại',
-            'hoc_duong': '🌸 Học đường',
-            'huyen_huyen': '⚡ Huyền huyễn',
-            'kinh_di': '🎭 Kinh dị',
-            'hai_huoc': '😂 Hài hước',
-            'scifi': '🚀 Sci-fi',
-        };
-
-        function selectTL(tl) {
-            currentTL = tl;
-            document.querySelectorAll('.tl-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.tl === tl);
-            });
-        }
-
-        function selectDD(dd) {
-            currentDD = dd;
-            document.querySelectorAll('.dd-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.dd === dd);
-            });
-        }
-
-        async function generate() {
-            const btn = document.getElementById('generateBtn');
-            btn.classList.add('loading');
-            btn.disabled = true;
-
-            const tenNv1 = document.getElementById('tenNv1').value.trim();
-            const tenNv2 = document.getElementById('tenNv2').value.trim();
-            const boiCanh = document.getElementById('boiCanh').value.trim();
-            const noiDung = document.getElementById('noiDung').value.trim();
-
-            try {
-                const res = await fetch('/api/truyen/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        the_loai: currentTL,
-                        ten_nv1: tenNv1,
-                        ten_nv2: tenNv2,
-                        boi_canh: boiCanh,
-                        noi_dung: noiDung,
-                        do_dai: currentDD,
-                    })
-                });
-
-                if (res.status === 401) { window.location.href = '/login'; return; }
-
-                const data = await res.json();
-
-                if (data.redirect) { window.location.href = data.redirect; return; }
-
-                if (!data.success) {
-                    showToast('❌ ' + (data.error || 'Có lỗi xảy ra!'), true);
-                    return;
-                }
-
-                renderResult(data.data, data.ai);
-                showToast(data.ai ? '🤖 AI đã viết truyện xong!' : '📖 Đã lấy truyện mẫu!');
-            } catch (e) {
-                showToast('❌ Lỗi kết nối!', true);
-            } finally {
-                btn.classList.remove('loading');
-                btn.disabled = false;
-            }
-        }
-
-        function renderResult(data, isAI) {
-            const card = document.getElementById('resultCard');
-            card.classList.remove('show');
-            void card.offsetWidth;
-            card.classList.add('show');
-
-            document.getElementById('resultBadge').innerHTML = isAI ? '🤖 AI' : '📖 Mẫu';
-
-            // Tiêu đề
-            let tieuDe = data.tieu_de || 'Truyện không tên';
-            if (!data.tieu_de && data.truyen) {
-                // Nếu không có tiêu đề → lấy 5 từ đầu
-                const firstLine = data.truyen.split('\n')[0];
-                tieuDe = firstLine.substring(0, 50) + (firstLine.length > 50 ? '...' : '');
-            }
-            document.getElementById('truyenTieuDe').textContent = tieuDe;
-
-            // Thể loại
-            document.getElementById('truyenTheLoai').textContent = theLoaiNames[data.the_loai] || data.the_loai;
-
-            // Nội dung
-            document.getElementById('truyenNoiDung').textContent = data.truyen || '—';
-
-            // Bài học
-            const baiHocBox = document.getElementById('baiHocBox');
-            if (data.bai_hoc) {
-                document.getElementById('baiHocText').textContent = data.bai_hoc;
-                baiHocBox.style.display = 'block';
-            } else {
-                baiHocBox.style.display = 'none';
-            }
-
-            setTimeout(() => {
-                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 200);
-        }
-
-        function copyTruyen() {
-            const tieuDe = document.getElementById('truyenTieuDe').textContent;
-            const noiDung = document.getElementById('truyenNoiDung').textContent;
-            const baiHoc = document.getElementById('baiHocText').textContent;
-
-            let text = `📖 ${tieuDe}\n\n${noiDung}`;
-            if (baiHoc) text += `\n\n💡 Bài học: ${baiHoc}`;
-
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('📋 Đã sao chép truyện!');
-            }).catch(() => {
-                showToast('❌ Không thể sao chép!', true);
-            });
-        }
-
-        function downloadTruyen() {
-            const tieuDe = document.getElementById('truyenTieuDe').textContent;
-            const noiDung = document.getElementById('truyenNoiDung').textContent;
-            const baiHoc = document.getElementById('baiHocText').textContent;
-
-            let text = `${tieuDe}\n${'='.repeat(40)}\n\n${noiDung}`;
-            if (baiHoc) text += `\n\n${'─'.repeat(40)}\n💡 Bài học: ${baiHoc}`;
-            text += `\n\n${'─'.repeat(40)}\n© Mã Hóa Tool — Tạo truyện AI`;
-
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${tieuDe.replace(/[^\w\u00C0-\u1EF9\s]/g, '').trim()}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            showToast('📥 Đã tải truyện!');
-        }
-
-        function showToast(msg, isError = false) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.className = 'toast show' + (isError ? ' error' : '');
-            setTimeout(() => t.classList.remove('show'), 2500);
-        }
-    </script>
 </body>
 </html>
