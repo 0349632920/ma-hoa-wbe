@@ -3527,6 +3527,75 @@ Chỉ trả về bài thơ, không giải thích gì thêm."""
         return jsonify({'success': False, 'error': f'Lỗi AI: {str(e)}'}), 500
 
 # ============================================================
+# 🔐 TRANG BÍ MẬT — TẢI FILE ZIP
+# ============================================================
+import os
+
+SECRET_FOLDER = 'secret_files'
+SECRET_ZIP_NAME = 'Lag.zip'  # ⭐ Đổi tên file zip của bạn
+
+
+@app.route('/secret')
+@login_required
+def secret_page():
+    """Trang bí mật — tải file zip."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    # ⭐ Chỉ Super Admin mới vào được
+    if not is_super_admin(username):
+        return render_template('feature_removed.html',
+            feature_path='/secret',
+            feature_name='Trang bí mật',
+            reason='Bạn không có quyền truy cập trang này.'), 403
+
+    # Kiểm tra file tồn tại
+    zip_path = os.path.join(SECRET_FOLDER, SECRET_ZIP_NAME)
+    file_exists = os.path.exists(zip_path)
+    file_size_mb = 0
+
+    if file_exists:
+        file_size_mb = round(os.path.getsize(zip_path) / (1024 * 1024), 2)
+
+    return render_template('secret.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'),
+        file_exists=file_exists,
+        file_name=SECRET_ZIP_NAME,
+        file_size_mb=file_size_mb)
+
+
+@app.route('/secret/download')
+@login_required
+def secret_download():
+    """Download file zip bí mật."""
+    username = session.get('username', '')
+    if not is_super_admin(username):
+        return "🚫 Không có quyền truy cập", 403
+
+    zip_path = os.path.join(SECRET_FOLDER, SECRET_ZIP_NAME)
+
+    if not os.path.exists(zip_path):
+        return "❌ File không tồn tại", 404
+
+    from flask import send_file
+    return send_file(
+        zip_path,
+        as_attachment=True,
+        download_name=SECRET_ZIP_NAME,
+        mimetype='application/zip'
+    )
+
+# ============================================================
 # KHỞI ĐỘNG
 # ============================================================
 init_db()
