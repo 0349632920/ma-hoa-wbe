@@ -3390,11 +3390,10 @@ def write_page():
         username=user.get('display_name', username),
         user_id=user.get('user_id', '—'))
 
-
 @app.route('/api/write', methods=['POST'])
 @login_required
 def api_write():
-    """Viết văn bằng Groq AI — đơn giản."""
+    """Viết văn/thơ bằng Groq AI."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3407,6 +3406,7 @@ def api_write():
     data = request.get_json() or {}
     de_bai = (data.get('de_bai') or '').strip()
     so_cau = data.get('so_cau', 10)
+    loai = (data.get('loai') or 'doan_van').strip()  # 'doan_van' hoặc 'bai_tho'
 
     if not de_bai:
         return jsonify({'success': False, 'error': 'Vui lòng nhập đề bài!'}), 400
@@ -3422,6 +3422,9 @@ def api_write():
     if so_cau > 50:
         so_cau = 50
 
+    if loai not in ('doan_van', 'bai_tho'):
+        loai = 'doan_van'
+
     if not groq_client:
         return jsonify({
             'success': False,
@@ -3429,37 +3432,91 @@ def api_write():
         }), 500
 
     try:
-        # Gọi Groq API
-        prompt = f"""Viết một bài văn theo đề bài sau:
+        if loai == 'doan_van':
+            prompt = f"""Viết một ĐOẠN VĂN LIỀN MẠCH theo đề bài sau:
 
 ĐỀ BÀI: {de_bai}
 
 Yêu cầu:
 - Viết khoảng {so_cau} câu
+- Viết LIỀN MẠCH, KHÔNG chia đoạn, KHÔNG xuống dòng giữa chừng
 - Văn phong tự nhiên, có cảm xúc
-- Bố cục rõ ràng (mở bài, thân bài, kết bài)
 - Có thể dùng biện pháp tu từ để sinh động
+- Không cần mở bài/kết bài riêng
 
-Chỉ trả về nội dung bài văn, không giải thích gì thêm."""
+Chỉ trả về nội dung đoạn văn, không giải thích gì thêm."""
 
-        chat_completion = groq_client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": "Bạn là giáo viên Ngữ văn Việt Nam. Viết văn hay, có cảm xúc."},
-                {"role": "user", "content": prompt}
-            ],
-            model="openai/gpt-oss-120b",
-            temperature=0.8,
-            max_tokens=3000,
-        )
+            chat_completion = groq_client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": "Bạn là giáo viên Ngữ văn Việt Nam. Viết văn hay, có cảm xúc."},
+                    {"role": "user", "content": prompt}
+                ],
+                model="openai/gpt-oss-120b",
+                temperature=0.8,
+                max_tokens=3000,
+            )
 
-        result = chat_completion.choices[0].message.content.strip()
+            result = chat_completion.choices[0].message.content.strip()
+
+        else:  # bai_tho
+            prompt = f"""Viết một BÀI THƠ theo đề bài sau:
+
+ĐỀ BÀI: {de_bai}
+
+Yêu cầu:
+- Viết khoảng {so_cau} câu thơ (mỗi câu là 1 dòng thơ)
+- Chia thành 3 phần rõ ràng:
+
+**PHẦN 1: MỞ ĐẦU** (1-2 câu thơ)
+- Giới thiệu chủ đề, cảm xúc ban đầu
+
+**PHẦN 2: NỘI DUNG CHÍNH** (phần lớn số câu)
+- Triển khai ý chính
+- Có thể dùng hình ảnh, biện pháp tu từ
+
+**PHẦN 3: KẾT** (1-2 câu thơ)
+- Tổng kết, để lại cảm xúc
+
+Định dạng trả về:
+PHẦN 1: MỞ ĐẦU
+[câu thơ 1]
+[câu thơ 2]
+
+PHẦN 2: NỘI DUNG
+[câu thơ 3]
+[câu thơ 4]
+...
+
+PHẦN 3: KẾT
+[câu thơ cuối 1]
+[câu thơ cuối 2]
+
+Chỉ trả về bài thơ, không giải thích gì thêm."""
+
+            chat_completion = groq_client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": "Bạn là nhà thơ Việt Nam tài ba. Thơ hay, có cảm xúc, có vần điệu."},
+                    {"role": "user", "content": prompt}
+                ],
+                model="openai/gpt-oss-120b",
+                temperature=0.9,
+                max_tokens=3000,
+            )
+
+            result = chat_completion.choices[0].message.content.strip()
 
         # Đếm số câu thực tế
-        actual_sentences = len([s for s in result.replace('!', '.').replace('?', '.').split('.') if s.strip()])
+        if loai == 'bai_tho':
+            # Đếm số dòng thơ (bỏ qua dòng trống và header)
+            lines = [l.strip() for l in result.split('\n') if l.strip() and not l.strip().startswith('PHẦN')]
+            actual_sentences = len(lines)
+        else:
+            actual_sentences = len([s for s in result.replace('!', '.').replace('?', '.').split('.') if s.strip()])
 
         return jsonify({
             'success': True,
             'de_bai': de_bai,
+            'loai': loai,
             'so_cau_yeu_cau': so_cau,
             'so_cau_thuc_te': actual_sentences,
             'noi_dung': result,
