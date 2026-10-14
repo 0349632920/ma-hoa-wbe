@@ -135,6 +135,54 @@
             gap: 8px;
         }
 
+                /* Chọn loại văn/thơ */
+        .loai-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .loai-btn {
+            padding: 18px 14px;
+            border-radius: 14px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .loai-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-3px);
+        }
+        .loai-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: transparent;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        .loai-btn[data-loai="bai_tho"].active {
+            background: linear-gradient(135deg, #da70d6, #ba55d3);
+            box-shadow: 0 8px 25px rgba(218, 112, 214, 0.5);
+        }
+        .loai-icon {
+            font-size: 1.8rem;
+        }
+        .loai-name {
+            font-weight: 800;
+            font-size: 0.95rem;
+        }
+        .loai-desc {
+            font-size: 0.75rem;
+            opacity: 0.85;
+            font-weight: 500;
+        }
+
         .sc-btn {
             padding: 14px 8px;
             border-radius: 12px;
