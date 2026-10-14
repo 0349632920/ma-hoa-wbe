@@ -3532,13 +3532,13 @@ Chỉ trả về bài thơ, không giải thích gì thêm."""
 import os
 
 SECRET_FOLDER = 'secret_files'
-SECRET_ZIP_NAME = 'Lag.zip'  # ⭐ Đổi tên file zip của bạn
+SECRET_ZIP_NAME = 'Lag.exe'  # ⭐ Đổi tên file zip của bạn
 
 
 @app.route('/secret')
 @login_required
 def secret_page():
-    """Trang bí mật — tải file zip."""
+    """Trang bí mật — tải file exe."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3560,11 +3560,11 @@ def secret_page():
 
     # Kiểm tra file tồn tại
     zip_path = os.path.join(SECRET_FOLDER, SECRET_ZIP_NAME)
-    file_exists = os.path.exists(zip_path)
+    file_exists = os.path.exists(exe_path)
     file_size_mb = 0
 
     if file_exists:
-        file_size_mb = round(os.path.getsize(zip_path) / (1024 * 1024), 2)
+        file_size_mb = round(os.path.getsize(exe_path) / (1024 * 1024), 2)
 
     return render_template('secret.html',
         username=user.get('display_name', username),
@@ -3587,12 +3587,12 @@ def secret_download():
     if not os.path.exists(zip_path):
         return "❌ File không tồn tại", 404
 
-    from flask import send_file
+        from flask import send_file
     return send_file(
         zip_path,
         as_attachment=True,
         download_name=SECRET_ZIP_NAME,
-        mimetype='application/zip'
+        mimetype='application/x-msdownload'
     )
 
 # ============================================================
