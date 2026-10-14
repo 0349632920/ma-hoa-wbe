@@ -372,6 +372,22 @@
                 <textarea id="deBai" placeholder="Ví dụ: Tả cảnh mùa thu Hà Nội&#10;Hoặc: Kể lại một kỷ niệm đáng nhớ của em&#10;Hoặc: Nghị luận về ý nghĩa của việc học tập..." maxlength="500"></textarea>
             </div>
 
+                        <div class="form-group">
+                <label>📚 Chọn loại</label>
+                <div class="loai-grid">
+                    <button class="loai-btn active" data-loai="doan_van" onclick="selectLoai('doan_van')">
+                        <span class="loai-icon">📝</span>
+                        <span class="loai-name">Đoạn văn</span>
+                        <span class="loai-desc">Viết liền mạch</span>
+                    </button>
+                    <button class="loai-btn" data-loai="bai_tho" onclick="selectLoai('bai_tho')">
+                        <span class="loai-icon">📖</span>
+                        <span class="loai-name">Bài thơ</span>
+                        <span class="loai-desc">3 phần đầy đủ</span>
+                    </button>
+                </div>
+            </div>
+            
             <div class="form-group">
                 <label>📏 Số câu</label>
                 <div class="so-cau-grid" id="soCauGrid">
