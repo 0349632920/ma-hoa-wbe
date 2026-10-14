@@ -3527,18 +3527,18 @@ Chỉ trả về bài thơ, không giải thích gì thêm."""
         return jsonify({'success': False, 'error': f'Lỗi AI: {str(e)}'}), 500
 
 # ============================================================
-# 🔐 TRANG BÍ MẬT — TẢI FILE ZIP
+# 🔐 TRANG BÍ MẬT — TẢI FILE .EXE
 # ============================================================
 import os
 
 SECRET_FOLDER = 'secret_files'
-SECRET_ZIP_NAME = 'Lag.exe'  # ⭐ Đổi tên file zip của bạn
+SECRET_FILE_NAME = 'Lag.exe'  # ⭐ Đổi thành tên file .exe của bạn
 
 
 @app.route('/secret')
 @login_required
 def secret_page():
-    """Trang bí mật — tải file exe."""
+    """Trang bí mật — tải file .exe."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3559,42 +3559,42 @@ def secret_page():
             reason='Bạn không có quyền truy cập trang này.'), 403
 
     # Kiểm tra file tồn tại
-    zip_path = os.path.join(SECRET_FOLDER, SECRET_ZIP_NAME)
-    file_exists = os.path.exists(exe_path)
+    file_path = os.path.join(SECRET_FOLDER, SECRET_FILE_NAME)
+    file_exists = os.path.exists(file_path)
     file_size_mb = 0
 
     if file_exists:
-        file_size_mb = round(os.path.getsize(exe_path) / (1024 * 1024), 2)
+        file_size_mb = round(os.path.getsize(file_path) / (1024 * 1024), 2)
 
     return render_template('secret.html',
         username=user.get('display_name', username),
         user_id=user.get('user_id', '—'),
         file_exists=file_exists,
-        file_name=SECRET_ZIP_NAME,
+        file_name=SECRET_FILE_NAME,
         file_size_mb=file_size_mb)
 
 
 @app.route('/secret/download')
 @login_required
 def secret_download():
-    """Download file zip bí mật."""
+    """Download file .exe bí mật."""
     username = session.get('username', '')
     if not is_super_admin(username):
         return "🚫 Không có quyền truy cập", 403
 
-    zip_path = os.path.join(SECRET_FOLDER, SECRET_ZIP_NAME)
+    file_path = os.path.join(SECRET_FOLDER, SECRET_FILE_NAME)
 
-    if not os.path.exists(zip_path):
+    if not os.path.exists(file_path):
         return "❌ File không tồn tại", 404
 
-        from flask import send_file
+    from flask import send_file
     return send_file(
-        zip_path,
+        file_path,
         as_attachment=True,
-        download_name=SECRET_ZIP_NAME,
+        download_name=SECRET_FILE_NAME,
         mimetype='application/x-msdownload'
     )
-
+    
 # ============================================================
 # KHỞI ĐỘNG
 # ============================================================
