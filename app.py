@@ -2557,7 +2557,7 @@ Trả về JSON:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ],
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         temperature=0.9,
         max_tokens=800,
         response_format={"type": "json_object"}
@@ -2702,7 +2702,7 @@ Trả về JSON:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ],
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         temperature=1.0,
         max_tokens=1000,
         response_format={"type": "json_object"}
@@ -3447,7 +3447,7 @@ Chỉ trả về nội dung bài văn, không giải thích gì thêm."""
                 {"role": "system", "content": "Bạn là giáo viên Ngữ văn Việt Nam. Viết văn hay, có cảm xúc."},
                 {"role": "user", "content": prompt}
             ],
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",
             temperature=0.8,
             max_tokens=3000,
         )
