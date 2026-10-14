@@ -128,14 +128,7 @@
         }
         textarea::placeholder { color: #8a7a9a; }
 
-        /* Số câu */
-        .so-cau-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-
-                /* Chọn loại văn/thơ */
+        /* ═══ CHỌN LOẠI VĂN/THƠ ═══ */
         .loai-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -183,6 +176,13 @@
             font-weight: 500;
         }
 
+        /* ═══ CHỌN SỐ CÂU ═══ */
+        .so-cau-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
         .sc-btn {
             padding: 14px 8px;
             border-radius: 12px;
@@ -213,7 +213,30 @@
             margin-top: 3px;
         }
 
-        /* Nút viết */
+        /* Custom number input */
+        .custom-input-wrap {
+            grid-column: 1 / -1;
+            margin-top: 4px;
+        }
+        .custom-input-wrap input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .custom-input-wrap input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        }
+        .custom-input-wrap input::placeholder { color: #8a7a9a; }
+
+        /* ═══ NÚT VIẾT ═══ */
         .write-btn {
             width: 100%;
             padding: 18px;
@@ -281,7 +304,7 @@
             50%      { opacity: 1; }
         }
 
-        /* Kết quả */
+        /* ═══ KẾT QUẢ ═══ */
         .result-card {
             display: none;
             animation: slideUp 0.5s ease;
@@ -331,7 +354,8 @@
             padding: 0 8px;
         }
 
-        .result-content::first-letter {
+        /* Đoạn văn - drop cap */
+        .result-content.doan_van::first-letter {
             font-size: 3.2rem;
             font-weight: 800;
             float: left;
@@ -342,6 +366,25 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             font-family: 'Lora', serif;
+        }
+
+        /* Bài thơ - căn giữa, in nghiêng */
+        .result-content.bai_tho {
+            text-align: center;
+            font-style: italic;
+            font-size: 1.15rem;
+            line-height: 2.1;
+            letter-spacing: 0.3px;
+        }
+
+        .result-content.bai_tho::first-letter {
+            font-size: inherit;
+            font-weight: inherit;
+            float: none;
+            margin: 0;
+            color: inherit;
+            -webkit-text-fill-color: inherit;
+            background: none;
         }
 
         .result-actions {
@@ -372,7 +415,7 @@
             transform: translateY(-2px);
         }
 
-        /* Toast */
+        /* ═══ TOAST ═══ */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -396,11 +439,14 @@
         }
         .toast.error { background: #e74c3c; }
 
+        /* ═══ RESPONSIVE ═══ */
         @media (max-width: 480px) {
             h1 { font-size: 1.6rem; }
             .card { padding: 20px; }
-            .so-cau-grid { grid-template-columns: repeat(3, 1fr); }
+            .loai-grid { grid-template-columns: 1fr; }
+            .so-cau-grid { grid-template-columns: repeat(2, 1fr); }
             .result-content { font-size: 1rem; }
+            .result-content.bai_tho { font-size: 1.05rem; }
         }
     </style>
 </head>
@@ -416,11 +462,6 @@
 
         <div class="card">
             <div class="form-group">
-                <label>📝 Đề bài</label>
-                <textarea id="deBai" placeholder="Ví dụ: Tả cảnh mùa thu Hà Nội&#10;Hoặc: Kể lại một kỷ niệm đáng nhớ của em&#10;Hoặc: Nghị luận về ý nghĩa của việc học tập..." maxlength="500"></textarea>
-            </div>
-
-                        <div class="form-group">
                 <label>📚 Chọn loại</label>
                 <div class="loai-grid">
                     <button class="loai-btn active" data-loai="doan_van" onclick="selectLoai('doan_van')">
@@ -435,7 +476,12 @@
                     </button>
                 </div>
             </div>
-            
+
+            <div class="form-group">
+                <label>📝 Đề bài</label>
+                <textarea id="deBai" placeholder="Ví dụ: Tả cảnh mùa thu Hà Nội&#10;Hoặc: Kể lại một kỷ niệm đáng nhớ của em&#10;Hoặc: Nghị luận về ý nghĩa của việc học tập..." maxlength="500"></textarea>
+            </div>
+
             <div class="form-group">
                 <label>📏 Số câu</label>
                 <div class="so-cau-grid" id="soCauGrid">
@@ -457,23 +503,23 @@
                     <button class="sc-btn" data-sc="50" onclick="selectSC(50)">
                         50<small>câu</small>
                     </button>
-                    <div style="grid-column: 1 / -1;">
-                        <input type="number" id="soCauCustom" min="3" max="50" placeholder="Hoặc nhập số câu tùy chỉnh (3-50)"
-                               style="width:100%; padding:12px 16px; border-radius:12px; border:2px solid rgba(102,126,234,0.2); background:rgba(0,0,0,0.3); color:#fff; font-family:inherit; font-size:0.95rem; outline:none;"
+                    <div class="custom-input-wrap">
+                        <input type="number" id="soCauCustom" min="3" max="50"
+                               placeholder="Hoặc nhập số câu tùy chỉnh (3-50)"
                                oninput="selectCustomSC()">
                     </div>
                 </div>
             </div>
 
             <button class="write-btn" id="writeBtn" onclick="writeVan()">
-                <span>✍️ Viết văn ngay</span>
+                <span>✍️ Viết ngay</span>
             </button>
         </div>
 
         <div class="card result-card" id="resultCard">
             <div class="result-header">
-                <div class="result-title">
-                    <span>📄</span> Bài văn
+                <div class="result-title" id="resultTitle">
+                    <span>📄</span> Kết quả
                 </div>
                 <div class="result-stats" id="resultStats">—</div>
             </div>
@@ -498,7 +544,33 @@
 
     <script>
         let currentSC = 10;
+        let currentLoai = 'doan_van';
 
+        // ═══════════════════════════════════════
+        //  CHỌN LOẠI
+        // ═══════════════════════════════════════
+        function selectLoai(loai) {
+            currentLoai = loai;
+            document.querySelectorAll('.loai-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.loai === loai);
+            });
+
+            // Đổi placeholder theo loại
+            const deBai = document.getElementById('deBai');
+            if (loai === 'bai_tho') {
+                deBai.placeholder = 'Ví dụ: Mùa thu Hà Nội\nHoặc: Tình yêu tuổi học trò\nHoặc: Quê hương...';
+            } else {
+                deBai.placeholder = 'Ví dụ: Tả cảnh mùa thu Hà Nội\nHoặc: Kể lại một kỷ niệm đáng nhớ\nHoặc: Nghị luận về ý nghĩa của việc học tập...';
+            }
+
+            // Đổi text nút
+            const btn = document.getElementById('writeBtn');
+            btn.querySelector('span').textContent = loai === 'bai_tho' ? '✍️ Làm thơ' : '✍️ Viết văn';
+        }
+
+        // ═══════════════════════════════════════
+        //  CHỌN SỐ CÂU
+        // ═══════════════════════════════════════
         function selectSC(sc) {
             currentSC = sc;
             document.getElementById('soCauCustom').value = '';
@@ -515,6 +587,9 @@
             }
         }
 
+        // ═══════════════════════════════════════
+        //  VIẾT
+        // ═══════════════════════════════════════
         async function writeVan() {
             const deBai = document.getElementById('deBai').value.trim();
 
@@ -535,6 +610,7 @@
                     body: JSON.stringify({
                         de_bai: deBai,
                         so_cau: currentSC,
+                        loai: currentLoai,
                     })
                 });
 
@@ -548,7 +624,7 @@
                 }
 
                 renderResult(data);
-                showToast('✅ AI đã viết xong!');
+                showToast(currentLoai === 'bai_tho' ? '✅ AI đã làm thơ xong!' : '✅ AI đã viết xong!');
             } catch (e) {
                 showToast('❌ Lỗi kết nối!', true);
             } finally {
@@ -563,16 +639,31 @@
             void card.offsetWidth;
             card.classList.add('show');
 
-            document.getElementById('resultStats').textContent =
-                `📏 Yêu cầu: ${data.so_cau_yeu_cau} câu · Thực tế: ~${data.so_cau_thuc_te} câu`;
+            const isTho = data.loai === 'bai_tho';
 
-            document.getElementById('resultContent').textContent = data.noi_dung || '—';
+            // Tiêu đề
+            document.getElementById('resultTitle').innerHTML = isTho
+                ? '<span>📖</span> Bài thơ'
+                : '<span>📄</span> Đoạn văn';
+
+            // Stats
+            const loaiLabel = isTho ? '📖 Bài thơ' : '📝 Đoạn văn';
+            document.getElementById('resultStats').textContent =
+                `${loaiLabel} · Yêu cầu: ${data.so_cau_yeu_cau} câu · Thực tế: ~${data.so_cau_thuc_te} câu`;
+
+            // Content — đổi class theo loại
+            const content = document.getElementById('resultContent');
+            content.className = 'result-content ' + (isTho ? 'bai_tho' : 'doan_van');
+            content.textContent = data.noi_dung || '—';
 
             setTimeout(() => {
                 card.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 200);
         }
 
+        // ═══════════════════════════════════════
+        //  COPY / DOWNLOAD
+        // ═══════════════════════════════════════
         function copyVan() {
             const text = document.getElementById('resultContent').textContent;
             if (!text || text === '—') return;
@@ -587,15 +678,16 @@
         function downloadVan() {
             const deBai = document.getElementById('deBai').value.trim();
             const noiDung = document.getElementById('resultContent').textContent;
+            const isTho = currentLoai === 'bai_tho';
 
             let text = `ĐỀ BÀI: ${deBai}\n${'='.repeat(50)}\n\n${noiDung}`;
-            text += `\n\n${'─'.repeat(50)}\n© Mã Hóa Tool — Viết văn AI`;
+            text += `\n\n${'─'.repeat(50)}\n© Mã Hóa Tool — ${isTho ? 'Làm thơ AI' : 'Viết văn AI'}`;
 
             const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `bai-van-${Date.now()}.txt`;
+            a.download = `${isTho ? 'bai-tho' : 'bai-van'}-${Date.now()}.txt`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -604,6 +696,9 @@
             showToast('📥 Đã tải về!');
         }
 
+        // ═══════════════════════════════════════
+        //  UTILS
+        // ═══════════════════════════════════════
         function showToast(msg, isError = false) {
             const t = document.getElementById('toast');
             t.textContent = msg;
