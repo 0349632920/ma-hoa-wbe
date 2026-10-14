@@ -3370,6 +3370,106 @@ def api_chat_unread_count():
     return jsonify({'success': True, 'unread': unread})
 
 # ============================================================
+# VIẾT VĂN AI — ĐƠN GIẢN
+# ============================================================
+@app.route('/write')
+@login_required
+def write_page():
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        session.clear()
+        return redirect(url_for('login_page'))
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return redirect(url_for('banned_page', user=username))
+    if user.get('status') == 'pending_delete':
+        return redirect(url_for('deleted_page'))
+
+    return render_template('write.html',
+        username=user.get('display_name', username),
+        user_id=user.get('user_id', '—'))
+
+
+@app.route('/api/write', methods=['POST'])
+@login_required
+def api_write():
+    """Viết văn bằng Groq AI — đơn giản."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = check_and_auto_unban(username)
+    if user.get('status') == 'banned' and not is_super_admin(username):
+        return jsonify({'success': False, 'error': 'Bạn đã bị ban!'}), 403
+
+    data = request.get_json() or {}
+    de_bai = (data.get('de_bai') or '').strip()
+    so_cau = data.get('so_cau', 10)
+
+    if not de_bai:
+        return jsonify({'success': False, 'error': 'Vui lòng nhập đề bài!'}), 400
+    if len(de_bai) > 500:
+        return jsonify({'success': False, 'error': 'Đề bài quá dài (tối đa 500 ký tự)!'}), 400
+
+    try:
+        so_cau = int(so_cau)
+    except:
+        so_cau = 10
+    if so_cau < 3:
+        so_cau = 3
+    if so_cau > 50:
+        so_cau = 50
+
+    if not groq_client:
+        return jsonify({
+            'success': False,
+            'error': 'Chưa cấu hình Groq API. Liên hệ admin.'
+        }), 500
+
+    try:
+        # Gọi Groq API
+        prompt = f"""Viết một bài văn theo đề bài sau:
+
+ĐỀ BÀI: {de_bai}
+
+Yêu cầu:
+- Viết khoảng {so_cau} câu
+- Văn phong tự nhiên, có cảm xúc
+- Bố cục rõ ràng (mở bài, thân bài, kết bài)
+- Có thể dùng biện pháp tu từ để sinh động
+
+Chỉ trả về nội dung bài văn, không giải thích gì thêm."""
+
+        chat_completion = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "Bạn là giáo viên Ngữ văn Việt Nam. Viết văn hay, có cảm xúc."},
+                {"role": "user", "content": prompt}
+            ],
+            model="llama-3.3-70b-versatile",
+            temperature=0.8,
+            max_tokens=3000,
+        )
+
+        result = chat_completion.choices[0].message.content.strip()
+
+        # Đếm số câu thực tế
+        actual_sentences = len([s for s in result.replace('!', '.').replace('?', '.').split('.') if s.strip()])
+
+        return jsonify({
+            'success': True,
+            'de_bai': de_bai,
+            'so_cau_yeu_cau': so_cau,
+            'so_cau_thuc_te': actual_sentences,
+            'noi_dung': result,
+        })
+
+    except Exception as e:
+        print(f"⚠️ Groq write error: {e}")
+        return jsonify({'success': False, 'error': f'Lỗi AI: {str(e)}'}), 500
+
+# ============================================================
 # KHỞI ĐỘNG
 # ============================================================
 init_db()
