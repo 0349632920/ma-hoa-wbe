@@ -3527,18 +3527,18 @@ Chỉ trả về bài thơ, không giải thích gì thêm."""
         return jsonify({'success': False, 'error': f'Lỗi AI: {str(e)}'}), 500
 
 # ============================================================
-# 🔐 TRANG BÍ MẬT — TẢI FILE .EXE
+# 🔐 TRANG BÍ MẬT — TẢI FILE ZIP
 # ============================================================
 import os
 
 SECRET_FOLDER = 'secret_files'
-SECRET_FILE_NAME = 'Lag.exe'  # ⭐ Đổi thành tên file .exe của bạn
+SECRET_FILE_NAME = 'Lag.zip'  # ⭐ Đổi thành tên file zip của bạn
 
 
 @app.route('/secret')
 @login_required
 def secret_page():
-    """Trang bí mật — tải file .exe."""
+    """Trang bí mật — tải file zip."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3577,7 +3577,7 @@ def secret_page():
 @app.route('/secret/download')
 @login_required
 def secret_download():
-    """Download file .exe bí mật."""
+    """Download file zip bí mật."""
     username = session.get('username', '')
     if not is_super_admin(username):
         return "🚫 Không có quyền truy cập", 403
@@ -3592,9 +3592,9 @@ def secret_download():
         file_path,
         as_attachment=True,
         download_name=SECRET_FILE_NAME,
-        mimetype='application/x-msdownload'
+        mimetype='application/zip'
     )
-    
+
 # ============================================================
 # KHỞI ĐỘNG
 # ============================================================
