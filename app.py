@@ -797,7 +797,6 @@ def register():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
-
 @app.route('/api/login', methods=['POST'])
 def login():
     try:
@@ -805,6 +804,7 @@ def login():
         username = data.get('username', '').strip()
         password = data.get('password', '')
         remember = data.get('remember', False)
+        next_url = data.get('next', '')  # ⭐ Lấy next_url từ client
 
         if not username or not password:
             return jsonify({'success': False, 'error': 'Vui lòng nhập đầy đủ!'}), 400
@@ -869,6 +869,7 @@ def login():
                 'need_2fa': True,
                 'username': found_user,
                 'message': 'Nhập mã 2FA từ Google Authenticator',
+                'next': next_url  # ⭐ Truyền next_url qua bước 2FA
             }), 202
 
         users = load_users()
@@ -885,6 +886,7 @@ def login():
         session['login_time'] = now
 
         warnings = users[found_user].get('warnings', [])
+        
         return jsonify({
             'success': True,
             'message': f'Chào mừng trở lại, {users[found_user].get("display_name", found_user)}!',
@@ -893,11 +895,11 @@ def login():
             'role': users[found_user].get('role', 'user'),
             'is_super_admin': is_super_admin(found_user),
             'has_warnings': len(warnings) > 0,
-            'warnings_count': len(warnings)
+            'warnings_count': len(warnings),
+            'redirect': next_url if next_url else '/'  # ⭐ Trả về URL chuyển hướng
         })
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
-
 
 @app.route('/api/login/2fa', methods=['POST'])
 def login_2fa():
@@ -905,6 +907,7 @@ def login_2fa():
         data = request.get_json()
         username = data.get('username', '').strip()
         code = data.get('code', '').strip()
+        next_url = data.get('next', '') # ⭐ Lấy next_url
 
         if not username or not code:
             return jsonify({'success': False, 'error': 'Thiếu username hoặc mã!'}), 400
@@ -926,6 +929,9 @@ def login_2fa():
 
         secret = user.get('totp_secret', '')
         backup_hashes = user.get('totp_backup_codes', [])
+        
+        # ⭐ Trả về đích đến
+        redirect_url = next_url if next_url else '/'
 
         if verify_code(secret, code):
             session.permanent = True
@@ -946,7 +952,7 @@ def login_2fa():
                 'success': True,
                 'message': '✅ Đăng nhập thành công!',
                 'username': found_user,
-                'redirect': '/',
+                'redirect': redirect_url, # ⭐ Chuyển hướng
             })
 
         matched_hash = verify_backup_code(code, backup_hashes)
@@ -964,7 +970,7 @@ def login_2fa():
                 'success': True,
                 'message': f'✅ Đăng nhập bằng backup code! Còn {len(backup_hashes)} mã.',
                 'username': found_user,
-                'redirect': '/',
+                'redirect': redirect_url, # ⭐ Chuyển hướng
             })
 
         return jsonify({'success': False, 'error': 'Mã 2FA không đúng!'}), 401
