@@ -666,7 +666,12 @@ def login_required(f):
         if 'username' not in session:
             if request.path.startswith('/api/'):
                 return jsonify({'success': False, 'error': 'Chưa đăng nhập!', 'need_login': True}), 401
-            return redirect(url_for('login_page'))
+            
+            # ⭐ Lưu lại URL hiện tại để sau khi login quay lại
+            next_url = request.full_path if request.query_string else request.path
+            if next_url.endswith('?'):
+                next_url = next_url[:-1]
+            return redirect(url_for('login_page', next=next_url))
         return f(*args, **kwargs)
     return wrapper
 
