@@ -1,675 +1,696 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🔐 Đăng nhập — Mã Hóa Tool</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      color: #fff;
-      overflow-x: hidden;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Đăng nhập</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Background emoji floating */
-    .bg-emoji {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 0;
-    }
-    .bg-emoji span {
-      position: absolute;
-      font-size: 40px;
-      opacity: 0.15;
-      animation: floatEmoji 8s ease-in-out infinite;
-    }
-    @keyframes floatEmoji {
-      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
-      50%      { transform: translateY(-30px) rotate(15deg); opacity: 0.25; }
-    }
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
 
-    /* Card login */
-    .login-card {
-      position: relative;
-      z-index: 2;
-      width: 100%;
-      max-width: 420px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 2px solid rgba(102, 126, 234, 0.3);
-      border-radius: 24px;
-      padding: 40px 32px;
-      backdrop-filter: blur(20px);
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
-      animation: cardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    @keyframes cardIn {
-      0%   { opacity: 0; transform: translateY(30px) scale(0.95); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
+        /* Nền động */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(218, 112, 214, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
 
-    .logo-wrap {
-      text-align: center;
-      margin-bottom: 28px;
-    }
-    .logo-icon {
-      font-size: 64px;
-      display: inline-block;
-      animation: logoPop 2s ease-in-out infinite;
-    }
-    @keyframes logoPop {
-      0%, 100% { transform: scale(1); }
-      50%      { transform: scale(1.08); }
-    }
-    .logo-title {
-      font-size: 26px;
-      font-weight: 800;
-      margin-top: 8px;
-      background: linear-gradient(135deg, #667eea, #764ba2, #ffd700);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .logo-sub {
-      font-size: 13px;
-      color: #999;
-      margin-top: 6px;
-    }
+        /* Splash Screen */
+        .splash {
+            position: fixed; inset: 0; z-index: 9999;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .splash.hide { opacity: 0; visibility: hidden; }
+        .splash-icon {
+            font-size: 5rem;
+            animation: bounce 1.5s ease infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .splash h2 { font-weight: 800; font-size: 1.8rem; margin-bottom: 10px; }
+        .splash p { color: #c8c8e0; }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-top: 30px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Tabs đăng nhập / đăng ký */
-    .auth-tabs {
-      display: flex;
-      gap: 8px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 12px;
-      padding: 4px;
-      margin-bottom: 24px;
-    }
-    .auth-tab {
-      flex: 1;
-      padding: 12px;
-      background: transparent;
-      border: none;
-      color: #999;
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: 0.25s;
-    }
-    .auth-tab.active {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
+        /* Login Form */
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            background: rgba(20, 15, 35, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px 32px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .login-container.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-    /* Form */
-    .form-group {
-      margin-bottom: 18px;
-    }
-    .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #b8b8c8;
-      margin-bottom: 8px;
-    }
-    .form-input {
-      width: 100%;
-      padding: 14px 16px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 2px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      color: #fff;
-      font-family: inherit;
-      font-size: 15px;
-      outline: none;
-      transition: 0.2s;
-    }
-    .form-input:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
-    }
-    .form-input::placeholder { color: #666; }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header .logo {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: inline-block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .login-header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #b8b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+        .login-header p { color: #9999bb; font-size: 0.95rem; }
 
-    /* Nhập OTP */
-    .otp-input {
-      text-align: center;
-      font-size: 26px;
-      letter-spacing: 12px;
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      padding: 18px 16px;
-    }
+        /* Notice if redirected */
+        .redirect-notice {
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: #b8b8ff;
+            text-align: center;
+            display: none;
+        }
+        .redirect-notice.show { display: block; }
 
-    /* Buttons */
-    .btn {
-      width: 100%;
-      padding: 15px;
-      border: none;
-      border-radius: 12px;
-      font-family: inherit;
-      font-size: 15px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: 0.25s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
-      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-    }
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
-    }
-    .btn-primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .btn-ghost {
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-    .btn-ghost:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #9999bb;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
 
-    /* Spinner */
-    .spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+        /* Form inputs */
+        .form-group {
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #c8c8e0;
+            margin-bottom: 8px;
+        }
+        .input-wrap {
+            position: relative;
+        }
+        .input-wrap input {
+            width: 100%;
+            padding: 14px 16px 14px 44px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .input-wrap input:focus {
+            border-color: #667eea;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        }
+        .input-wrap input::placeholder { color: #666; }
+        
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+            opacity: 0.6;
+            pointer-events: none;
+        }
 
-    /* Alert */
-    .alert {
-      padding: 12px 16px;
-      border-radius: 10px;
-      font-size: 14px;
-      margin-bottom: 16px;
-      display: none;
-      align-items: center;
-      gap: 8px;
-      animation: shake 0.4s;
-    }
-    .alert.show { display: flex; }
-    .alert-error {
-      background: rgba(231, 76, 60, 0.15);
-      border: 1px solid #e74c3c;
-      color: #f87171;
-    }
-    .alert-success {
-      background: rgba(39, 174, 96, 0.15);
-      border: 1px solid #27ae60;
-      color: #4ade80;
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25%      { transform: translateX(-6px); }
-      75%      { transform: translateX(6px); }
-    }
+        .toggle-pw {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #9999bb;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .toggle-pw:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
 
-    /* 2FA Step */
-    .twofa-box {
-      display: none;
-      animation: fadeIn 0.4s;
-    }
-    .twofa-box.show { display: block; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+        /* Checkbox */
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .remember-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
+        .remember-row label {
+            font-size: 0.85rem;
+            color: #c8c8e0;
+            cursor: pointer;
+            user-select: none;
+        }
 
-    .twofa-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: rgba(102, 126, 234, 0.15);
-      border: 1px solid rgba(102, 126, 234, 0.4);
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #a0c4ff;
-      margin-bottom: 12px;
-    }
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn.loading {
+            color: transparent;
+            pointer-events: none;
+        }
+        .btn.loading::before {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
 
-    .twofa-info {
-      text-align: center;
-      color: #999;
-      font-size: 13px;
-      margin-bottom: 16px;
-      line-height: 1.6;
-    }
+        /* 2FA Section */
+        .tfa-section {
+            display: none;
+            text-align: center;
+        }
+        .tfa-section.show { display: block; }
+        .tfa-icon { font-size: 3rem; margin-bottom: 16px; display: block; }
+        .tfa-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; }
+        .tfa-subtitle { font-size: 0.85rem; color: #9999bb; margin-bottom: 24px; line-height: 1.5; }
+        .tfa-input {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            font-size: 1.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 8px;
+            text-align: center;
+            outline: none;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+        .tfa-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        }
+        .tfa-back {
+            background: transparent;
+            border: none;
+            color: #9999bb;
+            font-size: 0.85rem;
+            margin-top: 16px;
+            cursor: pointer;
+            font-family: inherit;
+            text-decoration: underline;
+        }
+        .tfa-back:hover { color: #fff; }
 
-    .twofa-info strong {
-      color: #ffd700;
-    }
-
-    /* Footer */
-    .login-footer {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 12px;
-      color: #666;
-    }
-
-    /* Mobile */
-    @media (max-width: 480px) {
-      .login-card { padding: 30px 20px; }
-      .logo-icon { font-size: 52px; }
-      .logo-title { font-size: 22px; }
-      .otp-input { font-size: 22px; letter-spacing: 8px; }
-    }
-  </style>
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #27ae60;
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: all 0.4s;
+            pointer-events: none;
+            z-index: 10000;
+            max-width: 90vw;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.error { background: #e74c3c; }
+    </style>
 </head>
 <body>
 
-  <!-- BG Emoji -->
-  <div class="bg-emoji">
-    <span style="top:10%;left:8%;animation-delay:0s">🔐</span>
-    <span style="top:20%;right:12%;animation-delay:1s">🔒</span>
-    <span style="bottom:15%;left:15%;animation-delay:2s">🔑</span>
-    <span style="top:60%;right:8%;animation-delay:0.5s">🛡️</span>
-    <span style="bottom:25%;right:25%;animation-delay:1.5s">💻</span>
-    <span style="top:40%;left:5%;animation-delay:2.5s">⚡</span>
-    <span style="top:75%;right:40%;animation-delay:0.8s">🎯</span>
-    <span style="bottom:8%;left:45%;animation-delay:1.8s">✨</span>
-  </div>
-
-  <!-- Login Card -->
-  <div class="login-card">
-    <div class="logo-wrap">
-      <div class="logo-icon">🔐</div>
-      <div class="logo-title">Mã Hóa Tool</div>
-      <div class="logo-sub">Công cụ mã hóa & giải mã đa phương pháp</div>
+    <!-- SPLASH SCREEN -->
+    <div class="splash" id="splash">
+        <div class="splash-icon">🔐</div>
+        <h2>Mã Hóa Tool</h2>
+        <p>Đang chuẩn bị hệ thống...</p>
+        <div class="spinner"></div>
     </div>
 
-    <!-- Tabs -->
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">🔓 Đăng nhập</button>
-      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">✍️ Đăng ký</button>
+    <!-- LOGIN CONTAINER -->
+    <div class="login-container" id="loginContainer">
+        
+        <!-- CHẾ ĐỘ 1: ĐĂNG NHẬP / ĐĂNG KÝ -->
+        <div id="authSection">
+            <div class="login-header">
+                <div class="logo">🔐</div>
+                <h1 id="authTitle">Đăng nhập</h1>
+                <p id="authSubtitle">Chào mừng bạn trở lại!</p>
+            </div>
+
+            <!-- Thông báo chuyển hướng (nếu có ?next=) -->
+            <div class="redirect-notice" id="redirectNotice">
+                🔒 Trang bạn muốn vào yêu cầu đăng nhập.
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" id="tabLogin" onclick="switchAuthMode('login')">🔓 Đăng nhập</div>
+                <div class="tab" id="tabRegister" onclick="switchAuthMode('register')">✍️ Đăng ký</div>
+            </div>
+
+            <!-- Form Login -->
+            <form id="loginForm" onsubmit="doLogin(event)">
+                <div class="form-group">
+                    <label>Tên đăng nhập</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="username" placeholder="Nhập tên đăng nhập..." autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔑</span>
+                        <input type="password" id="password" placeholder="Nhập mật khẩu..." autocomplete="current-password">
+                        <button type="button" class="toggle-pw" onclick="togglePw('password', this)">👁️</button>
+                    </div>
+                </div>
+
+                <div class="remember-row">
+                    <input type="checkbox" id="remember">
+                    <label for="remember">Ghi nhớ đăng nhập</label>
+                </div>
+
+                <button type="submit" class="btn" id="loginBtn">
+                    🔓 Đăng nhập
+                </button>
+            </form>
+
+            <!-- Form Register -->
+            <form id="registerForm" style="display: none;" onsubmit="doRegister(event)">
+                <div class="form-group">
+                    <label>Tên đăng nhập</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="regUsername" placeholder="Tối thiểu 3 ký tự..." autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔑</span>
+                        <input type="password" id="regPassword" placeholder="Tối thiểu 6 ký tự..." autocomplete="new-password">
+                        <button type="button" class="toggle-pw" onclick="togglePw('regPassword', this)">👁️</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nhập lại mật khẩu</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔑</span>
+                        <input type="password" id="regConfirm" placeholder="Nhập lại mật khẩu..." autocomplete="new-password">
+                        <button type="button" class="toggle-pw" onclick="togglePw('regConfirm', this)">👁️</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="regBtn" style="margin-top: 8px;">
+                    ✍️ Tạo tài khoản
+                </button>
+            </form>
+        </div>
+
+        <!-- CHẾ ĐỘ 2: 2FA -->
+        <div id="tfaSection" class="tfa-section">
+            <span class="tfa-icon">🔒</span>
+            <h2 class="tfa-title">Xác thực 2 lớp</h2>
+            <p class="tfa-subtitle">
+                Nhập mã 6 số từ <b>Google Authenticator</b><br>
+                hoặc backup code của bạn
+            </p>
+
+            <input type="text" id="tfaCode" class="tfa-input" placeholder="000000" maxlength="6" autocomplete="one-time-code">
+
+            <button class="btn" id="tfaBtn" onclick="do2FA()">
+                ✅ Xác nhận
+            </button>
+            
+            <button class="tfa-back" onclick="cancel2FA()">
+                ← Quay lại đăng nhập
+            </button>
+        </div>
+
     </div>
 
-    <!-- Alert -->
-    <div class="alert" id="alertBox">
-      <span id="alertIcon">⚠️</span>
-      <span id="alertText"></span>
-    </div>
+    <div class="toast" id="toast"></div>
 
-    <!-- LOGIN FORM -->
-    <form id="loginForm" onsubmit="handleLogin(event)">
-      <div class="form-group">
-        <label class="form-label">👤 Tên đăng nhập</label>
-        <input type="text" id="loginUsername" class="form-input" 
-               placeholder="Nhập username..." autocomplete="username" required>
-      </div>
+    <script>
+        // ═══════════════════════════════════════
+        //  BIẾN TOÀN CỤC
+        // ═══════════════════════════════════════
+        let current2faUser = '';
+        
+        // ⭐ Lấy next_url từ Flask (nếu có)
+        const nextUrl = "{{ next_url|safe }}";
+        
+        // Hiện thông báo nếu có next_url
+        if (nextUrl && nextUrl !== '' && nextUrl !== '/') {
+            document.getElementById('redirectNotice').classList.add('show');
+        }
 
-      <div class="form-group">
-        <label class="form-label">🔑 Mật khẩu</label>
-        <input type="password" id="loginPassword" class="form-input" 
-               placeholder="Nhập mật khẩu..." autocomplete="current-password" required>
-      </div>
-
-      <button type="submit" class="btn btn-primary" id="loginBtn">
-        <span>🔓</span> Đăng nhập
-      </button>
-    </form>
-
-    <!-- 2FA FORM (ẩn mặc định) -->
-    <div class="twofa-box" id="twofaBox">
-      <div class="twofa-badge">
-        <span>🔒</span> XÁC THỰC 2 LỚP
-      </div>
-      <p class="twofa-info">
-        Nhập mã 6 số từ <strong>Google Authenticator</strong><br>
-        hoặc backup code của bạn
-      </p>
-
-      <div class="form-group">
-        <input type="text" id="twofaCode" class="form-input otp-input" 
-               placeholder="000000" maxlength="9" 
-               inputmode="numeric" autocomplete="one-time-code">
-      </div>
-
-      <button class="btn btn-primary" id="twofaBtn" onclick="verify2FA()">
-        <span>✅</span> Xác nhận
-      </button>
-
-      <button class="btn btn-ghost" onclick="backToLogin()" style="margin-top:10px;">
-        ← Quay lại đăng nhập
-      </button>
-    </div>
-
-    <!-- REGISTER FORM (ẩn mặc định) -->
-    <form id="registerForm" onsubmit="handleRegister(event)" style="display:none;">
-      <div class="form-group">
-        <label class="form-label">👤 Tên đăng nhập</label>
-        <input type="text" id="regUsername" class="form-input" 
-               placeholder="3-30 ký tự..." autocomplete="username" required>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">🔑 Mật khẩu</label>
-        <input type="password" id="regPassword" class="form-input" 
-               placeholder="Ít nhất 6 ký tự..." autocomplete="new-password" required>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">🔑 Nhập lại mật khẩu</label>
-        <input type="password" id="regPassword2" class="form-input" 
-               placeholder="Nhập lại mật khẩu..." autocomplete="new-password" required>
-      </div>
-
-      <button type="submit" class="btn btn-primary" id="regBtn">
-        <span>✍️</span> Đăng ký
-      </button>
-    </form>
-
-    <div class="login-footer">
-      © 2026 <strong>Mã Hóa Tool</strong> — Made with ❤️
-    </div>
-  </div>
-
-  <script>
-    // ══════════════════════════════════════════════════════════
-    //  STATE
-    // ══════════════════════════════════════════════════════════
-    let pending2FAUsername = '';
-    let pending2FAPassword = '';
-
-    // ══════════════════════════════════════════════════════════
-    //  ALERT
-    // ══════════════════════════════════════════════════════════
-    function showAlert(message, type = 'error') {
-      const box = document.getElementById('alertBox');
-      const icon = document.getElementById('alertIcon');
-      const text = document.getElementById('alertText');
-
-      box.className = 'alert alert-' + type + ' show';
-      icon.textContent = type === 'error' ? '⚠️' : '✅';
-      text.textContent = message;
-
-      setTimeout(() => {
-        box.classList.remove('show');
-      }, 5000);
-    }
-
-    function hideAlert() {
-      document.getElementById('alertBox').classList.remove('show');
-    }
-
-    // ══════════════════════════════════════════════════════════
-    //  TABS
-    // ══════════════════════════════════════════════════════════
-    function switchTab(tab) {
-      hideAlert();
-      const tabLogin = document.getElementById('tabLogin');
-      const tabRegister = document.getElementById('tabRegister');
-      const loginForm = document.getElementById('loginForm');
-      const registerForm = document.getElementById('registerForm');
-      const twofaBox = document.getElementById('twofaBox');
-
-      if (tab === 'login') {
-        tabLogin.classList.add('active');
-        tabRegister.classList.remove('active');
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-        twofaBox.classList.remove('show');
-      } else {
-        tabLogin.classList.remove('active');
-        tabRegister.classList.add('active');
-        loginForm.style.display = 'none';
-        registerForm.style.display = 'block';
-        twofaBox.classList.remove('show');
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════
-    //  LOGIN
-    // ══════════════════════════════════════════════════════════
-    async function handleLogin(e) {
-      e.preventDefault();
-      hideAlert();
-
-      const username = document.getElementById('loginUsername').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      const btn = document.getElementById('loginBtn');
-
-      if (!username || !password) {
-        showAlert('Vui lòng nhập đầy đủ!', 'error');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerHTML = '<div class="spinner"></div> Đang xử lý...';
-
-      try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ username, password })
+        // Hiệu ứng Splash Screen
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('splash').classList.add('hide');
+                document.getElementById('loginContainer').classList.add('show');
+            }, 800); // 0.8s
         });
 
-        const data = await res.json();
+        // ═══════════════════════════════════════
+        //  CHUYỂN TAB ĐĂNG NHẬP / ĐĂNG KÝ
+        // ═══════════════════════════════════════
+        function switchAuthMode(mode) {
+            const tabLogin = document.getElementById('tabLogin');
+            const tabRegister = document.getElementById('tabRegister');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const authTitle = document.getElementById('authTitle');
+            const authSubtitle = document.getElementById('authSubtitle');
 
-        // ⚡ Bị ban
-        if (data.banned) {
-          showAlert('🚫 Tài khoản đã bị BAN!', 'error');
-          setTimeout(() => {
-            window.location.href = data.redirect || ('/banned?user=' + username);
-          }, 2000);
-          return;
+            if (mode === 'login') {
+                tabLogin.classList.add('active');
+                tabRegister.classList.remove('active');
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                authTitle.textContent = 'Đăng nhập';
+                authSubtitle.textContent = 'Chào mừng bạn trở lại!';
+            } else {
+                tabLogin.classList.remove('active');
+                tabRegister.classList.add('active');
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                authTitle.textContent = 'Đăng ký';
+                authSubtitle.textContent = 'Tạo tài khoản mới!';
+            }
         }
 
-        // 🗑️ Bị xóa
-        if (data.pending_delete) {
-          showAlert('🗑️ Tài khoản đã bị đánh dấu XÓA!', 'error');
-          setTimeout(() => {
-            window.location.href = data.redirect || '/deleted';
-          }, 2000);
-          return;
+        function togglePw(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
         }
 
-        // 🔒 Cần 2FA
-        if (data.need_2fa) {
-          pending2FAUsername = data.username || username;
-          pending2FAPassword = password;
+        // ═══════════════════════════════════════
+        //  XỬ LÝ ĐĂNG NHẬP
+        // ═══════════════════════════════════════
+        async function doLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
 
-          document.getElementById('loginForm').style.display = 'none';
-          document.getElementById('twofaBox').classList.add('show');
-          document.getElementById('twofaCode').value = '';
-          setTimeout(() => document.getElementById('twofaCode').focus(), 200);
+            if (!username || !password) {
+                showToast('⚠️ Vui lòng nhập đầy đủ!', true);
+                return;
+            }
 
-          showAlert('🔒 Nhập mã 2FA từ Google Authenticator', 'success');
-          return;
+            const btn = document.getElementById('loginBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        username, 
+                        password, 
+                        remember,
+                        next: nextUrl // ⭐ Gửi next_url
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/'; // ⭐ Chuyển hướng
+                    }, 800);
+                } 
+                else if (data.need_2fa) {
+                    // Chuyển sang màn 2FA
+                    current2faUser = data.username;
+                    document.getElementById('authSection').style.display = 'none';
+                    document.getElementById('tfaSection').classList.add('show');
+                    document.getElementById('tfaCode').focus();
+                    showToast('🔐 Nhập mã 2FA để tiếp tục');
+                } 
+                else if (data.banned) {
+                    showToast('🚫 ' + data.error, true);
+                    setTimeout(() => window.location.href = data.redirect, 1500);
+                } 
+                else if (data.pending_delete) {
+                    showToast('🗑️ ' + data.error, true);
+                    setTimeout(() => window.location.href = data.redirect, 1500);
+                } 
+                else {
+                    showToast('❌ ' + data.error, true);
+                }
+            } catch (e) {
+                showToast('❌ Lỗi kết nối!', true);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
         }
 
-        // ✅ Đăng nhập thành công
-        if (data.success) {
-          showAlert('✅ Đăng nhập thành công!', 'success');
-          setTimeout(() => {
-            window.location.href = data.redirect || '/';
-          }, 500);
-          return;
+        // ═══════════════════════════════════════
+        //  XỬ LÝ 2FA
+        // ═══════════════════════════════════════
+        async function do2FA() {
+            const code = document.getElementById('tfaCode').value.trim();
+            if (!code) {
+                showToast('⚠️ Nhập mã 2FA!', true);
+                return;
+            }
+
+            const btn = document.getElementById('tfaBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/login/2fa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        username: current2faUser, 
+                        code: code,
+                        next: nextUrl // ⭐ Gửi next_url qua bước 2FA
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/'; // ⭐ Chuyển hướng
+                    }, 800);
+                } else {
+                    showToast('❌ ' + data.error, true);
+                    document.getElementById('tfaCode').value = '';
+                    document.getElementById('tfaCode').focus();
+                }
+            } catch (e) {
+                showToast('❌ Lỗi kết nối!', true);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
         }
 
-        showAlert(data.error || 'Đăng nhập thất bại!', 'error');
+        function cancel2FA() {
+            document.getElementById('tfaSection').classList.remove('show');
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('tfaCode').value = '';
+            document.getElementById('password').value = '';
+        }
 
-      } catch (err) {
-        showAlert('❌ Lỗi kết nối: ' + err.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>🔓</span> Đăng nhập';
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════
-    //  VERIFY 2FA
-    // ══════════════════════════════════════════════════════════
-    async function verify2FA() {
-      hideAlert();
-
-      const code = document.getElementById('twofaCode').value.trim();
-      const btn = document.getElementById('twofaBtn');
-
-      if (!code) {
-        showAlert('Nhập mã 2FA!', 'error');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerHTML = '<div class="spinner"></div> Đang xác thực...';
-
-      try {
-        const res = await fetch('/api/login/2fa', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({
-            username: pending2FAUsername,
-            code: code
-          })
+        // Nhập đủ 6 số tự động gửi
+        document.getElementById('tfaCode').addEventListener('input', (e) => {
+            if (e.target.value.length === 6) do2FA();
         });
 
-        const data = await res.json();
+        // ═══════════════════════════════════════
+        //  XỬ LÝ ĐĂNG KÝ
+        // ═══════════════════════════════════════
+        async function doRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
 
-        if (data.success) {
-          showAlert('✅ Xác thực thành công!', 'success');
-          setTimeout(() => {
-            window.location.href = data.redirect || '/';
-          }, 500);
-          return;
+            if (!username || !password || !confirm) {
+                showToast('⚠️ Vui lòng nhập đầy đủ!', true);
+                return;
+            }
+            if (password !== confirm) {
+                showToast('⚠️ Mật khẩu xác nhận không khớp!', true);
+                return;
+            }
+
+            const btn = document.getElementById('regBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('✅ Đăng ký thành công!');
+                    setTimeout(() => {
+                        window.location.href = nextUrl || '/'; // ⭐ Đăng ký xong cũng chuyển hướng
+                    }, 800);
+                } else {
+                    showToast('❌ ' + data.error, true);
+                }
+            } catch (e) {
+                showToast('❌ Lỗi kết nối!', true);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
         }
 
-        showAlert(data.error || 'Mã 2FA không đúng!', 'error');
-        document.getElementById('twofaCode').value = '';
-        document.getElementById('twofaCode').focus();
-
-      } catch (err) {
-        showAlert('❌ Lỗi: ' + err.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>✅</span> Xác nhận';
-      }
-    }
-
-    function backToLogin() {
-      hideAlert();
-      pending2FAUsername = '';
-      pending2FAPassword = '';
-      document.getElementById('twofaBox').classList.remove('show');
-      document.getElementById('loginForm').style.display = 'block';
-      document.getElementById('loginPassword').value = '';
-      setTimeout(() => document.getElementById('loginPassword').focus(), 200);
-    }
-
-    // Nhập OTP tự động submit khi đủ 6 số
-    document.getElementById('twofaCode').addEventListener('input', (e) => {
-      e.target.value = e.target.value.replace(/[^0-9A-Za-z-]/g, '').toUpperCase();
-      if (e.target.value.length === 6 && /^\d{6}$/.test(e.target.value)) {
-        setTimeout(verify2FA, 200);
-      }
-    });
-
-    document.getElementById('twofaCode').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        verify2FA();
-      }
-    });
-
-    // ══════════════════════════════════════════════════════════
-    //  REGISTER
-    // ══════════════════════════════════════════════════════════
-    async function handleRegister(e) {
-      e.preventDefault();
-      hideAlert();
-
-      const username = document.getElementById('regUsername').value.trim();
-      const password = document.getElementById('regPassword').value;
-      const password2 = document.getElementById('regPassword2').value;
-      const btn = document.getElementById('regBtn');
-
-      if (!username || !password || !password2) {
-        showAlert('Vui lòng nhập đầy đủ!', 'error');
-        return;
-      }
-      if (password !== password2) {
-        showAlert('Mật khẩu nhập lại không khớp!', 'error');
-        return;
-      }
-      if (password.length < 6) {
-        showAlert('Mật khẩu phải có ít nhất 6 ký tự!', 'error');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerHTML = '<div class="spinner"></div> Đang đăng ký...';
-
-      try {
-        const res = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ username, password })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          showAlert('✅ Đăng ký thành công! Đang vào...', 'success');
-          setTimeout(() => {
-            window.location.href = data.redirect || '/';
-          }, 800);
-          return;
+        // ═══════════════════════════════════════
+        //  TOAST
+        // ═══════════════════════════════════════
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => t.classList.remove('show'), 2500);
         }
-
-        showAlert(data.error || 'Đăng ký thất bại!', 'error');
-
-      } catch (err) {
-        showAlert('❌ Lỗi: ' + err.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>✍️</span> Đăng ký';
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════
-    //  INIT
-    // ══════════════════════════════════════════════════════════
-    window.addEventListener('load', () => {
-      document.getElementById('loginUsername').focus();
-    });
-
-    // Enter để submit
-    document.getElementById('loginUsername').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('loginPassword').focus();
-      }
-    });
-  </script>
+    </script>
 </body>
 </html>
