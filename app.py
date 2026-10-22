@@ -725,8 +725,16 @@ def login_page():
             return redirect(url_for('banned_page', user=uname))
         if user.get('status') == 'pending_delete':
             return redirect(url_for('deleted_page'))
+        
+        # ⭐ Nếu đã đăng nhập rồi mà có ?next=, chuyển thẳng tới đó
+        next_url = request.args.get('next')
+        if next_url:
+            return redirect(next_url)
         return redirect(url_for('index'))
-    return render_template('login.html')
+    
+    # Lấy next_url từ thanh địa chỉ (VD: /login?next=/nhac)
+    next_url = request.args.get('next', '')
+    return render_template('login.html', next_url=next_url)
 
 
 @app.route('/api/register', methods=['POST'])
