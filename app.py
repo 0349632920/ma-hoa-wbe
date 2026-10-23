@@ -3669,6 +3669,50 @@ def api_music_download(file_id):
     return response
 
 # ============================================================
+# API LƯU TRẠNG THÁI NHẠC (KHÓA / ẨN)
+# ============================================================
+@app.route('/api/music/settings', methods=['GET'])
+@login_required
+def api_music_settings_get():
+    """Lấy danh sách nhạc bị khóa/ẩn của user."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    user = users[username]
+    settings = user.get('music_settings', {})
+    
+    return jsonify({
+        'success': True,
+        'hidden': settings.get('hidden', []),
+        'locked': settings.get('locked', [])
+    })
+
+@app.route('/api/music/settings', methods=['POST'])
+@login_required
+def api_music_settings_save():
+    """Lưu danh sách nhạc bị khóa/ẩn của user."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+
+    data = request.get_json() or {}
+    hidden = data.get('hidden', [])
+    locked = data.get('locked', [])
+
+    user = users[username]
+    user['music_settings'] = {
+        'hidden': hidden,
+        'locked': locked
+    }
+    users[username] = user
+    save_user(username, user)
+
+    return jsonify({'success': True, 'message': 'Đã lưu cài đặt nhạc'})
+
+# ============================================================
 # KHỞI ĐỘNG
 # ============================================================
 init_db()
