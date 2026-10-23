@@ -1,38 +1,1442 @@
-@app.route('/api/music/settings', methods=['GET'])
-@login_required
-def api_music_settings_get():
-    users = load_users()
-    username = session.get('username', '')
-    if username not in users:
-        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 Nhạc Funk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    user = users[username]
-    settings = user.get('music_settings', {})
-    
-    return jsonify({
-        'success': True,
-        'hidden': settings.get('hidden', []),
-        'locked': settings.get('locked', [])
-    })
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 50%, #0f0f1a 100%);
+            color: #fff;
+            padding: 20px 15px 130px;
+        }
 
-@app.route('/api/music/settings', methods=['POST'])
-@login_required
-def api_music_settings_save():
-    users = load_users()
-    username = session.get('username', '')
-    if username not in users:
-        return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
+        /* ═══════════════════════════════════════════════════════════
+           MUSIC SPLASH LOADING
+           ═══════════════════════════════════════════════════════════ */
+        .music-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 50%, #0f0f1a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
 
-    data = request.get_json() or {}
-    hidden = data.get('hidden', [])
-    locked = data.get('locked', [])
+        .music-splash.hide {
+            opacity: 0;
+            visibility: hidden;
+        }
 
-    user = users[username]
-    user['music_settings'] = {
-        'hidden': hidden,
-        'locked': locked
-    }
-    users[username] = user
-    save_user(username, user)
+        .music-splash-bg {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
 
-    return jsonify({'success': True, 'message': 'Đã lưu cài đặt nhạc'})
+        .music-note {
+            position: absolute;
+            left: var(--x);
+            top: var(--y);
+            font-size: 2.5rem;
+            opacity: 0.15;
+            animation: noteFloat 5s ease-in-out infinite;
+            animation-delay: var(--delay);
+            filter: drop-shadow(0 4px 10px rgba(255, 107, 157, 0.3));
+        }
+
+        @keyframes noteFloat {
+            0%, 100% { transform: translateY(0) rotate(-10deg); }
+            50%      { transform: translateY(-25px) rotate(15deg); }
+        }
+
+        .music-splash-content {
+            text-align: center;
+            color: #fff;
+            max-width: 480px;
+            width: 100%;
+            padding: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .music-splash-icon {
+            margin: 0 auto 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .music-disc {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .music-disc-inner {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b9d, #f5576c, #f093fb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow:
+                0 0 40px rgba(255, 107, 157, 0.6),
+                0 0 80px rgba(240, 147, 251, 0.4),
+                inset 0 0 20px rgba(0, 0, 0, 0.3);
+            animation: discSpin 3s linear infinite;
+            z-index: 2;
+            position: relative;
+        }
+
+        .music-disc-inner::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1a1a2e;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.8);
+        }
+
+        @keyframes discSpin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        .music-disc-ring {
+            position: absolute;
+            inset: 0;
+            border: 3px solid rgba(255, 107, 157, 0.6);
+            border-radius: 50%;
+            animation: ringExpand 2s ease-out infinite;
+        }
+
+        .music-disc-ring.ring-2 {
+            animation-delay: 1s;
+        }
+
+        @keyframes ringExpand {
+            0% {
+                transform: scale(0.8);
+                opacity: 1;
+                border-color: rgba(255, 107, 157, 0.8);
+            }
+            100% {
+                transform: scale(1.6);
+                opacity: 0;
+                border-color: rgba(255, 107, 157, 0);
+            }
+        }
+
+        .music-splash-title {
+            font-size: 2.4rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+            animation: titleSlide 0.6s ease 0.2s both;
+        }
+
+        .music-splash-title .gradient {
+            background: linear-gradient(135deg, #ff6b9d, #f093fb, #f5576c);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientMove 3s ease infinite;
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50%      { background-position: 100% 50%; }
+        }
+
+        @keyframes titleSlide {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .music-splash-subtitle {
+            color: #c8c8e0;
+            font-size: 1rem;
+            margin-bottom: 30px;
+            animation: titleSlide 0.6s ease 0.4s both;
+        }
+
+        .music-splash-progress {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            animation: titleSlide 0.6s ease 0.6s both;
+        }
+
+        .music-splash-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff6b9d, #f093fb, #f5576c);
+            background-size: 200% 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease-out;
+            box-shadow: 0 0 15px rgba(255, 107, 157, 0.8);
+            animation: progressShine 1.5s linear infinite;
+        }
+
+        @keyframes progressShine {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .music-splash-status {
+            font-size: 0.9rem;
+            color: #9999bb;
+            margin-bottom: 24px;
+            animation: titleSlide 0.6s ease 0.8s both;
+            transition: color 0.3s;
+        }
+
+        .music-splash-equalizer {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 5px;
+            height: 40px;
+            animation: titleSlide 0.6s ease 1s both;
+        }
+
+        .music-splash-equalizer span {
+            width: 6px;
+            background: linear-gradient(180deg, #ff6b9d, #f093fb);
+            border-radius: 3px;
+            animation: eqBounce 1.2s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
+        }
+
+        .music-splash-equalizer span:nth-child(1) { animation-delay: 0s;    height: 60%; }
+        .music-splash-equalizer span:nth-child(2) { animation-delay: 0.1s;  height: 80%; }
+        .music-splash-equalizer span:nth-child(3) { animation-delay: 0.2s;  height: 100%; }
+        .music-splash-equalizer span:nth-child(4) { animation-delay: 0.3s;  height: 70%; }
+        .music-splash-equalizer span:nth-child(5) { animation-delay: 0.4s;  height: 90%; }
+        .music-splash-equalizer span:nth-child(6) { animation-delay: 0.5s;  height: 60%; }
+        .music-splash-equalizer span:nth-child(7) { animation-delay: 0.6s;  height: 80%; }
+        .music-splash-equalizer span:nth-child(8) { animation-delay: 0.7s;  height: 70%; }
+        .music-splash-equalizer span:nth-child(9) { animation-delay: 0.8s;  height: 50%; }
+
+        @keyframes eqBounce {
+            0%, 100% { transform: scaleY(0.4); }
+            50%      { transform: scaleY(1); }
+        }
+
+        /* ═══ CONTAINER ═══ */
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            color: #c8c8e0;
+            text-decoration: none;
+            padding: 10px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .back:hover {
+            color: #ff6b9d;
+            border-color: #ff6b9d;
+            transform: translateX(-4px);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b9d, #f093fb, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-refresh {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-refresh:hover {
+            background: rgba(255, 107, 157, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* ═══ MUSIC LIST ═══ */
+        .music-list {
+            background: rgba(15, 15, 25, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(12px);
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+        }
+
+        .music-list::-webkit-scrollbar { width: 8px; }
+        .music-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+        .music-list::-webkit-scrollbar-thumb { background: rgba(255, 107, 157, 0.4); border-radius: 4px; }
+        .music-list::-webkit-scrollbar-thumb:hover { background: rgba(255, 107, 157, 0.6); }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .list-header h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ff6b9d;
+        }
+
+        .total-badge {
+            padding: 4px 12px;
+            background: rgba(255, 107, 157, 0.15);
+            border: 1px solid rgba(255, 107, 157, 0.3);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #ff6b9d;
+        }
+
+        .music-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            gap: 12px;
+            margin-bottom: 4px;
+            border: 2px solid transparent;
+        }
+
+        .music-item:hover {
+            background: rgba(255, 107, 157, 0.08);
+            transform: translateX(4px);
+        }
+
+        .music-item.playing {
+            background: rgba(255, 107, 157, 0.15);
+            border-color: rgba(255, 107, 157, 0.4);
+        }
+
+        .music-item.playing .music-name {
+            color: #ff6b9d;
+            font-weight: 800;
+        }
+
+        /* ⭐ TRẠNG THÁI KHÓA */
+        .music-item.locked {
+            background: rgba(255, 71, 87, 0.1);
+            border-color: rgba(255, 71, 87, 0.3);
+            opacity: 0.7;
+        }
+        .music-item.locked:hover {
+            background: rgba(255, 71, 87, 0.15);
+        }
+        .music-item.locked .music-name {
+            color: #ff4757 !important;
+            text-decoration: line-through;
+        }
+        .music-item.locked .music-index {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .music-index {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #9999bb;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .music-item.playing .music-index {
+            background: linear-gradient(135deg, #ff6b9d, #f5576c);
+            color: #fff;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.1); }
+        }
+
+        .music-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .music-name {
+            font-weight: 600;
+            font-size: 0.92rem;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .music-meta {
+            font-size: 0.75rem;
+            color: #9999bb;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ⭐ CÁC NÚT THAO TÁC */
+        .music-action-btn {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 4px;
+        }
+
+        .music-lock-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        .music-lock-btn.locked {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .music-delete-btn:hover {
+            background: linear-gradient(135deg, #ff4757, #c0392b);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+        }
+
+        .music-download-btn:hover {
+            background: linear-gradient(135deg, #ffa502, #e67e22);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 165, 2, 0.4);
+        }
+
+        .music-play-btn {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .music-item:hover .music-play-btn,
+        .music-item.playing .music-play-btn {
+            background: linear-gradient(135deg, #ff6b9d, #f5576c);
+        }
+
+        /* ═══ PLAYER BAR ═══ */
+        .player-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(15, 15, 26, 0.98));
+            border-top: 2px solid rgba(255, 107, 157, 0.3);
+            backdrop-filter: blur(20px);
+            padding: 16px 20px;
+            z-index: 999;
+            display: none;
+        }
+
+        .player-bar.show { display: block; }
+
+        .player-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .player-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ff6b9d, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            animation: rotate 8s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        .player-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .player-time-small {
+            font-size: 0.75rem;
+            color: #9999bb;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ctrl-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ctrl-btn:hover {
+            background: rgba(255, 107, 157, 0.25);
+            transform: scale(1.1);
+        }
+
+        .ctrl-btn.active {
+            background: rgba(255, 107, 157, 0.35);
+            color: #ff6b9d;
+        }
+
+        .ctrl-btn.play-btn {
+            width: 54px;
+            height: 54px;
+            background: linear-gradient(135deg, #ff6b9d, #f5576c);
+            font-size: 1.2rem;
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.4);
+        }
+
+        .ctrl-btn.play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 28px rgba(255, 107, 157, 0.6);
+        }
+
+        .player-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .volume-slider {
+            width: 100px;
+            accent-color: #ff6b9d;
+        }
+
+        .progress-container {
+            max-width: 1200px;
+            margin: 12px auto 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .time-label {
+            font-size: 0.75rem;
+            color: #9999bb;
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 42px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            transition: height 0.2s;
+        }
+
+        .progress-bar:hover { height: 8px; }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b9d, #f5576c);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s linear;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(255, 107, 157, 0.8);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .progress-bar:hover .progress-fill::after { opacity: 1; }
+
+        /* ═══ LOADING / EMPTY ═══ */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9999bb;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 107, 157, 0.2);
+            border-top-color: #ff6b9d;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty, .error-box {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9999bb;
+        }
+
+        .empty .icon, .error-box .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            display: block;
+            opacity: 0.5;
+        }
+
+        .error-box {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            border-radius: 16px;
+            color: #ff6b7a;
+            padding: 40px 24px;
+        }
+
+        .error-box code {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 14px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #ffbe4d;
+        }
+
+        /* ═══ LOADING DOWNLOAD ═══ */
+        .download-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .download-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .download-box {
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
+            border: 2px solid rgba(255, 107, 157, 0.4);
+            border-radius: 20px;
+            padding: 30px 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            min-width: 280px;
+        }
+
+        .download-overlay.show .download-box {
+            transform: scale(1);
+        }
+
+        .download-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 107, 157, 0.2);
+            border-top-color: #ff6b9d;
+            border-radius: 50%;
+            animation: spinDownload 0.8s linear infinite;
+            margin: 0 auto 16px;
+            box-shadow: 0 0 20px rgba(255, 107, 157, 0.3);
+        }
+
+        @keyframes spinDownload {
+            to { transform: rotate(360deg); }
+        }
+
+        .download-text {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .download-file {
+            font-size: 0.82rem;
+            color: #ff6b9d;
+            max-width: 220px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0 auto;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ═══ TOAST ═══ */
+        .toast {
+            position: fixed;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #ff6b9d;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: all 0.4s;
+            pointer-events: none;
+            z-index: 10000;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 768px) {
+            .player-content {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                text-align: center;
+            }
+            .player-info { justify-content: center; }
+            .player-right { justify-content: center; }
+            .volume-slider { width: 80px; }
+            .player-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+            .ctrl-btn.play-btn { width: 46px; height: 46px; }
+            h1 { font-size: 1.5rem; }
+            .music-list { max-height: calc(100vh - 380px); }
+        }
+
+        @media (max-width: 480px) {
+            .music-splash-title { font-size: 1.8rem; }
+            .music-disc { width: 110px; height: 110px; }
+            .music-disc-inner { width: 80px; height: 80px; font-size: 2.2rem; }
+            .music-note { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ⭐ SPLASH LOADING -->
+    <div class="music-splash" id="musicSplash">
+        <div class="music-splash-bg">
+            <span class="music-note" style="--x:10%;--y:20%;--delay:0s">🎵</span>
+            <span class="music-note" style="--x:80%;--y:15%;--delay:0.5s">🎶</span>
+            <span class="music-note" style="--x:20%;--y:75%;--delay:1s">🎼</span>
+            <span class="music-note" style="--x:75%;--y:80%;--delay:1.5s">🎤</span>
+            <span class="music-note" style="--x:50%;--y:10%;--delay:0.8s">🎧</span>
+            <span class="music-note" style="--x:15%;--y:50%;--delay:1.2s">💿</span>
+            <span class="music-note" style="--x:85%;--y:45%;--delay:0.3s">🔊</span>
+            <span class="music-note" style="--x:55%;--y:85%;--delay:1.7s">🎹</span>
+        </div>
+
+        <div class="music-splash-content">
+            <div class="music-splash-icon">
+                <div class="music-disc">
+                    <div class="music-disc-inner">🎵</div>
+                    <div class="music-disc-ring"></div>
+                    <div class="music-disc-ring ring-2"></div>
+                </div>
+            </div>
+
+            <h1 class="music-splash-title">
+                Nhạc <span class="gradient">Funk</span>
+            </h1>
+            <p class="music-splash-subtitle">Đang tải danh sách nhạc...</p>
+
+            <div class="music-splash-progress">
+                <div class="music-splash-progress-fill" id="musicProgressFill"></div>
+            </div>
+
+            <p class="music-splash-status" id="musicSplashStatus">
+                🎧 Đang kết nối Google Drive...
+            </p>
+
+            <div class="music-splash-equalizer">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back">← Về trang chủ</a>
+
+        <div class="header">
+            <h1>🎵 Nhạc Funk</h1>
+            <button class="btn-refresh" onclick="loadMusic(true)">🔄 Làm mới</button>
+        </div>
+
+        {% if not has_api %}
+        <div class="error-box">
+            <span class="icon">⚠️</span>
+            <h3>Chưa cấu hình Google Drive API</h3>
+            <p style="margin-top: 12px;">Cần thêm biến môi trường trên Render:</p>
+            <code>GOOGLE_API_KEY=AIzaSy...</code>
+        </div>
+        {% else %}
+        <div class="music-list" id="musicList">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Đang tải danh sách nhạc...</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="player-bar" id="playerBar">
+        <div class="player-content">
+            <div class="player-info">
+                <div class="player-icon">💿</div>
+                <div style="min-width: 0; flex: 1;">
+                    <div class="player-name" id="playerName">—</div>
+                    <div class="player-time-small" id="playerMeta">—</div>
+                </div>
+            </div>
+
+            <div class="player-controls">
+                <button class="ctrl-btn" id="shuffleBtn" onclick="toggleShuffle()" title="Ngẫu nhiên">🔀</button>
+                <button class="ctrl-btn" onclick="playPrev()" title="Bài trước">⏮️</button>
+                <button class="ctrl-btn play-btn" id="playPauseBtn" onclick="togglePlay()" title="Play/Pause">▶️</button>
+                <button class="ctrl-btn" onclick="playNext()" title="Bài tiếp">⏭️</button>
+                <button class="ctrl-btn" id="repeatBtn" onclick="toggleRepeat()" title="Lặp lại">🔁</button>
+            </div>
+
+            <div class="player-right">
+                <span style="font-size: 1.1rem;">🔊</span>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <span class="time-label" id="currentTime">0:00</span>
+            <div class="progress-bar" id="progressBar" onclick="seekAudio(event)">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span class="time-label" id="duration">0:00</span>
+        </div>
+    </div>
+
+    <audio id="audioElement"></audio>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- ⭐ LOADING KHI TẢI NHẠC -->
+    <div class="download-overlay" id="downloadOverlay">
+        <div class="download-box">
+            <div class="download-spinner"></div>
+            <div class="download-text">Đang chuẩn bị tải...</div>
+            <div class="download-file" id="downloadFileName"></div>
+        </div>
+    </div>
+
+    <script>
+        let musicFiles = [];
+        let currentIndex = -1;
+        let isPlaying = false;
+        let isShuffle = false;
+        let isRepeat = false;
+        
+        // ⭐ Lưu trạng thái khóa/ẩn của user (lấy từ Database)
+        let userHiddenFiles = [];
+        let userLockedFiles = [];
+
+        const audio = document.getElementById('audioElement');
+        const playerBar = document.getElementById('playerBar');
+        const playerName = document.getElementById('playerName');
+        const playerMeta = document.getElementById('playerMeta');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const progressFill = document.getElementById('progressFill');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const repeatBtn = document.getElementById('repeatBtn');
+
+        // ═══════════════════════════════════════
+        //  SPLASH LOADING
+        // ═══════════════════════════════════════
+        const splashSteps = [
+            { pct: 15, text: '🎧 Đang kết nối Google Drive...' },
+            { pct: 40, text: '📀 Đang lấy danh sách file...' },
+            { pct: 65, text: '🎵 Đang sắp xếp bài hát...' },
+            { pct: 85, text: '✨ Sắp xong rồi...' },
+            { pct: 100, text: '🎉 Sẵn sàng!' }
+        ];
+
+        function updateSplashProgress(pct, text) {
+            const fill = document.getElementById('musicProgressFill');
+            const status = document.getElementById('musicSplashStatus');
+            if (fill) fill.style.width = pct + '%';
+            if (status && text) status.textContent = text;
+        }
+
+        function hideSplash() {
+            updateSplashProgress(100, '🎉 Sẵn sàng!');
+            setTimeout(() => {
+                const splash = document.getElementById('musicSplash');
+                if (splash) {
+                    splash.classList.add('hide');
+                    setTimeout(() => splash.remove(), 700);
+                }
+            }, 400);
+        }
+
+        // ═══════════════════════════════════════
+        //  LOAD MUSIC & SETTINGS
+        // ═══════════════════════════════════════
+        async function loadMusic(refresh = false) {
+            if (!refresh) {
+                updateSplashProgress(0, splashSteps[0].text);
+                splashSteps.forEach((step, i) => {
+                    setTimeout(() => {
+                        if (document.getElementById('musicSplash')) {
+                            updateSplashProgress(step.pct, step.text);
+                        }
+                    }, i * 250);
+                });
+            }
+
+            const listEl = document.getElementById('musicList');
+            if (listEl) {
+                listEl.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Đang tải danh sách nhạc...</p>
+                    </div>
+                `;
+            }
+
+            // ⭐ Tải cài đặt ẩn/khóa của user
+            try {
+                const setRes = await fetch('/api/music/settings');
+                const setData = await setRes.json();
+                if (setData.success) {
+                    userHiddenFiles = setData.hidden || [];
+                    userLockedFiles = setData.locked || [];
+                }
+            } catch (e) {
+                console.error('Lỗi tải cài đặt nhạc:', e);
+            }
+
+            try {
+                const url = '/api/music/list' + (refresh ? '?refresh=true' : '');
+                const res = await fetch(url);
+
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (!data.success) {
+                    if (listEl) {
+                        listEl.innerHTML = `
+                            <div class="error-box">
+                                <span class="icon">❌</span>
+                                <h3>Không thể tải nhạc</h3>
+                                <p style="margin-top: 8px;">${escapeHtml(data.error || 'Lỗi không xác định')}</p>
+                            </div>
+                        `;
+                    }
+                    if (!refresh) hideSplash();
+                    return;
+                }
+
+                musicFiles = data.files || [];
+
+                if (musicFiles.length === 0) {
+                    if (listEl) {
+                        listEl.innerHTML = `
+                            <div class="empty">
+                                <span class="icon">🎵</span>
+                                <h3>Chưa có bài nhạc nào</h3>
+                            </div>
+                        `;
+                    }
+                    if (!refresh) hideSplash();
+                    return;
+                }
+
+                renderMusicList();
+
+                if (!refresh) {
+                    setTimeout(() => hideSplash(), 500);
+                } else {
+                    showToast(`✅ Đã làm mới ${musicFiles.length} bài`);
+                }
+
+            } catch (e) {
+                if (listEl) {
+                    listEl.innerHTML = `
+                        <div class="error-box">
+                            <span class="icon">❌</span>
+                            <h3>Lỗi kết nối</h3>
+                            <p style="margin-top: 8px;">${escapeHtml(e.message)}</p>
+                        </div>
+                    `;
+                }
+                if (!refresh) hideSplash();
+            }
+        }
+
+        function renderMusicList() {
+            const listEl = document.getElementById('musicList');
+            
+            // ⭐ Lọc bỏ những bài đã ẩn
+            const visibleFiles = musicFiles.filter(f => !userHiddenFiles.includes(f.id));
+
+            if (visibleFiles.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty">
+                        <span class="icon">📭</span>
+                        <h3>Danh sách trống</h3>
+                        <p style="margin-top: 8px; color: #9999bb; font-size: 0.9rem;">
+                            Tất cả bài hát đã bị ẩn.<br>
+                            <button onclick="restoreAllMusic()" style="margin-top:10px; padding:6px 12px; background:#667eea; color:#fff; border:none; border-radius:8px; cursor:pointer;">Khôi phục tất cả</button>
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = `
+                <div class="list-header">
+                    <h2>📀 Danh sách bài hát</h2>
+                    <span class="total-badge">${visibleFiles.length} bài</span>
+                </div>
+                ${visibleFiles.map((f, i) => {
+                    const isLocked = userLockedFiles.includes(f.id);
+                    const lockedClass = isLocked ? 'locked' : '';
+                    
+                    return `
+                    <div class="music-item ${lockedClass}" data-id="${f.id}" onclick="playAt('${f.id}')">
+                        <div class="music-index">${i + 1}</div>
+                        <div class="music-info">
+                            <div class="music-name" title="${escapeHtml(f.name)}">${escapeHtml(cleanName(f.name))}</div>
+                            <div class="music-meta">${f.size_mb} MB</div>
+                        </div>
+                        
+                        <!-- ⭐ NÚT KHÓA -->
+                        <button class="music-action-btn music-lock-btn ${lockedClass}" onclick="event.stopPropagation(); toggleLock('${f.id}')" title="${isLocked ? 'Mở khóa' : 'Khóa bài hát'}">
+                            ${isLocked ? '🔒' : '🔓'}
+                        </button>
+                        
+                        <!-- ⭐ NÚT XÓA KHỎI DANH SÁCH -->
+                        <button class="music-action-btn music-delete-btn" onclick="event.stopPropagation(); hideMusic('${f.id}', '${escapeJs(cleanName(f.name))}')" title="Xóa khỏi danh sách">
+                            🗑️
+                        </button>
+                        
+                        <!-- ⭐ NÚT TẢI NHẠC -->
+                        <button class="music-action-btn music-download-btn" onclick="event.stopPropagation(); downloadMusic('${f.id}', '${escapeJs(cleanName(f.name))}')" title="Tải nhạc">
+                            📥
+                        </button>
+                        
+                        <button class="music-play-btn" onclick="event.stopPropagation(); playAt('${f.id}')">▶</button>
+                    </div>
+                `}).join('')}
+            `;
+        }
+
+        function cleanName(name) {
+            return name.replace(/\.(mp3|m4a|wav|ogg)$/i, '');
+        }
+
+        // ═══════════════════════════════════════
+        //  ẨN / KHÔI PHỤC BÀI HÁT (LƯU DB)
+        // ═══════════════════════════════════════
+        async function hideMusic(id, name) {
+            if (!confirm(`Ẩn bài hát "${name}" khỏi danh sách?`)) return;
+            
+            if (!userHiddenFiles.includes(id)) {
+                userHiddenFiles.push(id);
+            }
+            
+            if (audio.src.includes(id)) {
+                audio.pause();
+                playerBar.classList.remove('show');
+                currentIndex = -1;
+            }
+
+            renderMusicList();
+            showToast('🗑️ Đã xóa khỏi danh sách');
+
+            await fetch('/api/music/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ hidden: userHiddenFiles, locked: userLockedFiles })
+            });
+        }
+
+        async function restoreAllMusic() {
+            if (!confirm('Khôi phục tất cả bài hát đã ẩn?')) return;
+            userHiddenFiles = [];
+            renderMusicList();
+            showToast('✅ Đã khôi phục danh sách');
+            
+            await fetch('/api/music/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ hidden: userHiddenFiles, locked: userLockedFiles })
+            });
+        }
+
+        // ═══════════════════════════════════════
+        //  KHÓA / MỞ KHÓA BÀI HÁT (LƯU DB)
+        // ═══════════════════════════════════════
+        async function toggleLock(id) {
+            const isCurrentlyLocked = userLockedFiles.includes(id);
+
+            if (isCurrentlyLocked) {
+                userLockedFiles = userLockedFiles.filter(x => x !== id);
+                showToast('🔓 Đã mở khóa bài hát');
+            } else {
+                userLockedFiles.push(id);
+                showToast('🔒 Đã khóa bài hát');
+                
+                if (audio.src.includes(id)) {
+                    audio.pause();
+                    showToast('⏸️ Bài hát đang phát đã bị khóa');
+                }
+            }
+
+            renderMusicList();
+
+            await fetch('/api/music/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ hidden: userHiddenFiles, locked: userLockedFiles })
+            });
+        }
+
+        // ═══════════════════════════════════════
+        //  TẢI NHẠC CÓ LOADING 0.9s
+        // ═══════════════════════════════════════
+        function downloadMusic(fileId, fileName) {
+            const overlay = document.getElementById('downloadOverlay');
+            const fileText = document.getElementById('downloadFileName');
+            
+            fileText.textContent = fileName + '.mp3';
+            overlay.classList.add('show');
+
+            setTimeout(() => {
+                const a = document.createElement('a');
+                a.href = `/api/music/download/${fileId}`;
+                a.download = fileName + '.mp3';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                overlay.classList.remove('show');
+                showToast('📥 Đang tải: ' + fileName);
+            }, 900);
+        }
+
+        // ═══════════════════════════════════════
+        //  PLAY
+        // ═══════════════════════════════════════
+        function playAt(fileId) {
+            // ⭐ KIỂM TRA XEM BÀI HÁT CÓ BỊ KHÓA KHÔNG
+            if (userLockedFiles.includes(fileId)) {
+                showToast('🔒 Bài hát này đã bị khóa, không thể phát!', true);
+                return;
+            }
+
+            const index = musicFiles.findIndex(f => f.id === fileId);
+            if (index === -1) return;
+
+            const file = musicFiles[index];
+            currentIndex = index;
+
+            playerBar.classList.add('show');
+            playerName.textContent = cleanName(file.name);
+            playerMeta.textContent = `${file.size_mb} MB`;
+
+            audio.src = `/api/music/stream/${file.id}`;
+            audio.load();
+            audio.play().then(() => {
+                isPlaying = true;
+                updatePlayBtn();
+                highlightCurrent();
+            }).catch(err => {
+                showToast('❌ Không thể phát: ' + err.message);
+            });
+        }
+
+        function togglePlay() {
+            if (currentIndex === -1 && musicFiles.length > 0) {
+                playAt(0);
+                return;
+            }
+
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+            } else {
+                audio.play();
+                isPlaying = true;
+            }
+            updatePlayBtn();
+        }
+
+        function updatePlayBtn() {
+            playPauseBtn.textContent = isPlaying ? '⏸️' : '▶️';
+        }
+
+        function playNext() {
+            if (musicFiles.length === 0) return;
+
+            let nextIdx;
+            if (isShuffle) {
+                nextIdx = Math.floor(Math.random() * musicFiles.length);
+                if (musicFiles.length > 1) {
+                    while (nextIdx === currentIndex) {
+                        nextIdx = Math.floor(Math.random() * musicFiles.length);
+                    }
+                }
+            } else {
+                nextIdx = (currentIndex + 1) % musicFiles.length;
+            }
+            playAt(nextIdx);
+        }
+
+        function playPrev() {
+            if (musicFiles.length === 0) return;
+
+            if (audio.currentTime > 3) {
+                audio.currentTime = 0;
+                return;
+            }
+
+            let prevIdx = (currentIndex - 1 + musicFiles.length) % musicFiles.length;
+            playAt(prevIdx);
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            shuffleBtn.classList.toggle('active', isShuffle);
+            showToast(isShuffle ? '🔀 Bật ngẫu nhiên' : '➡️ Tắt ngẫu nhiên');
+        }
+
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            repeatBtn.classList.toggle('active', isRepeat);
+            audio.loop = isRepeat;
+            showToast(isRepeat ? '🔁 Bật lặp lại' : '➡️ Tắt lặp lại');
+        }
+
+        function highlightCurrent() {
+            const curId = musicFiles[currentIndex]?.id;
+            document.querySelectorAll('.music-item').forEach(el => {
+                el.classList.toggle('playing', el.dataset.id === curId);
+            });
+            const cur = document.querySelector(`.music-item[data-id="${curId}"]`);
+            if (cur) cur.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // AUDIO EVENTS
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const pct = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = pct + '%';
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+            }
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+            durationEl.textContent = formatTime(audio.duration);
+        });
+
+        audio.addEventListener('ended', () => {
+            if (!isRepeat) playNext();
+        });
+
+        audio.addEventListener('error', (e) => {
+            if (currentIndex !== -1) showToast('❌ Lỗi phát nhạc');
+        });
+
+        audio.addEventListener('play', () => { isPlaying = true; updatePlayBtn(); });
+        audio.addEventListener('pause', () => { isPlaying = false; updatePlayBtn(); });
+
+        // VOLUME
+        volumeSlider.addEventListener('input', (e) => {
+            audio.volume = e.target.value / 100;
+        });
+        audio.volume = 0.7;
+
+        // SEEK
+        function seekAudio(e) {
+            if (!audio.duration) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const pct = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = pct * audio.duration;
+        }
+
+        // KEYBOARD
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT') return;
+
+            if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+            else if (e.key === 'ArrowRight' && e.ctrlKey) { playNext(); }
+            else if (e.key === 'ArrowLeft' && e.ctrlKey) { playPrev(); }
+        });
+
+        function formatTime(sec) {
+            if (!sec || isNaN(sec)) return '0:00';
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}:${String(s).padStart(2, '0')}`;
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function escapeJs(s) {
+            return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = isError ? '#e74c3c' : '#ff6b9d';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        // INIT
+        {% if has_api %}
+        loadMusic();
+        {% endif %}
+    </script>
+</body>
+</html>
