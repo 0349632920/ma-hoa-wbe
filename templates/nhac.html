@@ -419,22 +419,7 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        .music-play-btn {
-            flex-shrink: 0;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
+        /* ⭐ NÚT TẢI NHẠC */
         .music-download-btn {
             flex-shrink: 0;
             width: 36px;
@@ -456,6 +441,22 @@
             background: linear-gradient(135deg, #ffa502, #e67e22);
             transform: scale(1.1);
             box-shadow: 0 4px 12px rgba(255, 165, 2, 0.4);
+        }
+
+        .music-play-btn {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .music-item:hover .music-play-btn,
@@ -690,6 +691,75 @@
             color: #ffbe4d;
         }
 
+        /* ═══ LOADING DOWNLOAD ═══ */
+        .download-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .download-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .download-box {
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
+            border: 2px solid rgba(255, 107, 157, 0.4);
+            border-radius: 20px;
+            padding: 30px 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            min-width: 280px;
+        }
+
+        .download-overlay.show .download-box {
+            transform: scale(1);
+        }
+
+        .download-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 107, 157, 0.2);
+            border-top-color: #ff6b9d;
+            border-radius: 50%;
+            animation: spinDownload 0.8s linear infinite;
+            margin: 0 auto 16px;
+            box-shadow: 0 0 20px rgba(255, 107, 157, 0.3);
+        }
+
+        @keyframes spinDownload {
+            to { transform: rotate(360deg); }
+        }
+
+        .download-text {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .download-file {
+            font-size: 0.82rem;
+            color: #ff6b9d;
+            max-width: 220px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0 auto;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         /* ═══ TOAST ═══ */
         .toast {
             position: fixed;
@@ -842,6 +912,15 @@
 
     <div class="toast" id="toast"></div>
 
+    <!-- ⭐ LOADING KHI TẢI NHẠC -->
+    <div class="download-overlay" id="downloadOverlay">
+        <div class="download-box">
+            <div class="download-spinner"></div>
+            <div class="download-text">Đang chuẩn bị tải...</div>
+            <div class="download-file" id="downloadFileName"></div>
+        </div>
+    </div>
+
     <script>
         let musicFiles = [];
         let currentIndex = -1;
@@ -894,7 +973,6 @@
         //  LOAD MUSIC
         // ═══════════════════════════════════════
         async function loadMusic(refresh = false) {
-            // Hiện splash khi load lần đầu
             if (!refresh) {
                 updateSplashProgress(0, splashSteps[0].text);
                 splashSteps.forEach((step, i) => {
@@ -978,7 +1056,7 @@
             }
         }
 
-                function renderMusicList() {
+        function renderMusicList() {
             const listEl = document.getElementById('musicList');
             listEl.innerHTML = `
                 <div class="list-header">
@@ -992,10 +1070,9 @@
                             <div class="music-name" title="${escapeHtml(f.name)}">${escapeHtml(cleanName(f.name))}</div>
                             <div class="music-meta">${f.size_mb} MB</div>
                         </div>
-                        <!-- ⭐ Nút Tải xuống -->
-                        <a href="/api/music/download/${f.id}" class="music-download-btn" onclick="event.stopPropagation();" title="Tải nhạc" download>
+                        <button class="music-download-btn" onclick="event.stopPropagation(); downloadMusic('${f.id}', '${escapeJs(cleanName(f.name))}')" title="Tải nhạc">
                             📥
-                        </a>
+                        </button>
                         <button class="music-play-btn" onclick="event.stopPropagation(); playAt(${i})">▶</button>
                     </div>
                 `).join('')}
@@ -1004,6 +1081,29 @@
 
         function cleanName(name) {
             return name.replace(/\.(mp3|m4a|wav|ogg)$/i, '');
+        }
+
+        // ═══════════════════════════════════════
+        //  TẢI NHẠC CÓ LOADING 0.9s
+        // ═══════════════════════════════════════
+        function downloadMusic(fileId, fileName) {
+            const overlay = document.getElementById('downloadOverlay');
+            const fileText = document.getElementById('downloadFileName');
+            
+            fileText.textContent = fileName + '.mp3';
+            overlay.classList.add('show');
+
+            setTimeout(() => {
+                const a = document.createElement('a');
+                a.href = `/api/music/download/${fileId}`;
+                a.download = fileName + '.mp3';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                overlay.classList.remove('show');
+                showToast('📥 Đang tải: ' + fileName);
+            }, 900);
         }
 
         // ═══════════════════════════════════════
@@ -1160,6 +1260,10 @@
                 '&': '&amp;', '<': '&lt;', '>': '&gt;',
                 '"': '&quot;', "'": '&#39;'
             }[c]));
+        }
+
+        function escapeJs(s) {
+            return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         }
 
         function showToast(msg) {
