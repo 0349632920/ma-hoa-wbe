@@ -434,6 +434,29 @@
             align-items: center;
             justify-content: center;
         }
+        
+        .music-download-btn {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            margin-right: 4px;
+        }
+        .music-download-btn:hover {
+            background: linear-gradient(135deg, #ffa502, #e67e22);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 165, 2, 0.4);
+        }
 
         .music-item:hover .music-play-btn,
         .music-item.playing .music-play-btn {
@@ -955,7 +978,7 @@
             }
         }
 
-        function renderMusicList() {
+                function renderMusicList() {
             const listEl = document.getElementById('musicList');
             listEl.innerHTML = `
                 <div class="list-header">
@@ -969,6 +992,10 @@
                             <div class="music-name" title="${escapeHtml(f.name)}">${escapeHtml(cleanName(f.name))}</div>
                             <div class="music-meta">${f.size_mb} MB</div>
                         </div>
+                        <!-- ⭐ Nút Tải xuống -->
+                        <a href="/api/music/download/${f.id}" class="music-download-btn" onclick="event.stopPropagation();" title="Tải nhạc" download>
+                            📥
+                        </a>
                         <button class="music-play-btn" onclick="event.stopPropagation(); playAt(${i})">▶</button>
                     </div>
                 `).join('')}
