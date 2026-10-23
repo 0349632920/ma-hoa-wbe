@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Không tìm thấy trang</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: #0d1117; /* Màu nền tối giống GitHub */
+            color: #c9d1d9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        /* Hình minh họa */
+        .illustration {
+            font-size: 8rem;
+            line-height: 1;
+            margin-bottom: 20px;
+            animation: float 4s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #8b949e;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: #238636; /* Xanh lá GitHub */
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            border: 1px solid rgba(240,246,252,0.1);
+        }
+
+        .btn:hover {
+            background: #2ea043;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(35,134,54,0.4);
+        }
+
+        .links {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #8b949e;
+        }
+
+        .links a {
+            color: #58a6ff;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .illustration { font-size: 6rem; }
+            h1 { font-size: 2.2rem; }
+            p { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="illustration">👾</div>
+        <h1>404</h1>
+        <p>Trang bạn tìm kiếm không tồn tại.<br>Có thể nó đã bị xóa hoặc đường dẫn bị sai.</p>
+        
+        <a href="/" class="btn">
+            🏠 Về trang chủ
+        </a>
+
+        <div class="links">
+            Hoặc thử: 
+            <a href="/game">🎮 Chơi Game</a>
+            <a href="/nhac">🎵 Nghe Nhạc</a>
+            <a href="/chat">💬 Chat</a>
+        </div>
+    </div>
+</body>
+</html>
