@@ -3615,6 +3615,18 @@ def secret_download():
     )
 
 # ============================================================
+# XỬ LÝ LỖI 404 — KHÔNG TÌM THẤY TRANG
+# ============================================================
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    # Bạn có thể tạo thêm file templates/500.html nếu muốn
+    return render_template('404.html'), 500
+
+# ============================================================
 # KHỞI ĐỘNG
 # ============================================================
 init_db()
