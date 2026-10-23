@@ -1311,30 +1311,62 @@
         function playNext() {
             if (musicFiles.length === 0) return;
 
-            let nextIdx;
+            // Lấy danh sách các bài ĐANG HIỂN THỊ (không bị ẩn)
+            const visibleFiles = musicFiles.filter(f => !userHiddenFiles.includes(f.id));
+            if (visibleFiles.length === 0) return;
+
+            let nextFile;
+            const currentFile = musicFiles[currentIndex];
+
             if (isShuffle) {
-                nextIdx = Math.floor(Math.random() * musicFiles.length);
-                if (musicFiles.length > 1) {
-                    while (nextIdx === currentIndex) {
-                        nextIdx = Math.floor(Math.random() * musicFiles.length);
-                    }
-                }
+                // Chế độ ngẫu nhiên
+                do {
+                    nextFile = visibleFiles[Math.floor(Math.random() * visibleFiles.length)];
+                } while (visibleFiles.length > 1 && nextFile.id === currentFile.id);
             } else {
-                nextIdx = (currentIndex + 1) % musicFiles.length;
+                // Chế độ phát lần lượt
+                const currentVisibleIndex = visibleFiles.findIndex(f => f.id === currentFile.id);
+                
+                if (currentVisibleIndex === -1 || currentVisibleIndex === visibleFiles.length - 1) {
+                    // Nếu đang ở bài cuối cùng -> Quay lại bài đầu tiên
+                    nextFile = visibleFiles[0];
+                } else {
+                    nextFile = visibleFiles[currentVisibleIndex + 1];
+                }
             }
-            playAt(nextIdx);
+
+            // Phát bài tiếp theo bằng ID (tránh lỗi index)
+            if (nextFile) {
+                playAt(nextFile.id);
+            }
         }
 
         function playPrev() {
             if (musicFiles.length === 0) return;
 
+            // Nếu đang phát quá 3 giây, bấm Prev sẽ quay lại đầu bài hát
             if (audio.currentTime > 3) {
                 audio.currentTime = 0;
                 return;
             }
 
-            let prevIdx = (currentIndex - 1 + musicFiles.length) % musicFiles.length;
-            playAt(prevIdx);
+            const visibleFiles = musicFiles.filter(f => !userHiddenFiles.includes(f.id));
+            if (visibleFiles.length === 0) return;
+
+            const currentFile = musicFiles[currentIndex];
+            const currentVisibleIndex = visibleFiles.findIndex(f => f.id === currentFile.id);
+            
+            let prevFile;
+            if (currentVisibleIndex === -1 || currentVisibleIndex === 0) {
+                // Nếu đang ở bài đầu tiên -> Nhảy xuống bài cuối cùng
+                prevFile = visibleFiles[visibleFiles.length - 1];
+            } else {
+                prevFile = visibleFiles[currentVisibleIndex - 1];
+            }
+
+            if (prevFile) {
+                playAt(prevFile.id);
+            }
         }
 
         function toggleShuffle() {
@@ -1373,7 +1405,11 @@
         });
 
         audio.addEventListener('ended', () => {
-            if (!isRepeat) playNext();
+            // ⭐ Nếu đang bật lặp lại 1 bài (Repeat) thì không chuyển bài
+            if (isRepeat) return; 
+            
+            // Còn không thì tự động phát bài tiếp theo
+            playNext();
         });
 
         audio.addEventListener('error', (e) => {
@@ -1439,5 +1475,4 @@
         {% endif %}
     </script>
 </body>
-    <script src="{{ url_for('static', filename='logout-sync.js') }}"></script>
 </html>
