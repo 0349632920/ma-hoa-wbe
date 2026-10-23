@@ -3626,6 +3626,48 @@ def internal_server_error(e):
     # Bạn có thể tạo thêm file templates/500.html nếu muốn
     return render_template('404.html'), 500
 
+@app.route('/api/music/download/<file_id>')
+@login_required
+def api_music_download(file_id):
+    """Tải file nhạc từ Google Drive."""
+    users = load_users()
+    username = session.get('username', '')
+    if username not in users:
+        return "Chưa đăng nhập", 401
+
+    # Lấy thông tin file để biết tên
+    info = get_file_info(file_id)
+    if not info.get('success'):
+        return "File không tồn tại", 404
+
+    file_data = info['file']
+    file_name = file_data.get('name', f'{file_id}.mp3')
+
+    # Tải file từ Google Drive về Server
+    drive_res = stream_file(file_id)
+    if not drive_res:
+        return "Không thể tải file từ Google Drive", 500
+
+    from flask import Response
+    
+    # Stream file về client với header download
+    def generate():
+        for chunk in drive_res.iter_content(chunk_size=64 * 1024):
+            if chunk:
+                yield chunk
+
+    response = Response(
+        generate(),
+        mimetype='audio/mpeg',
+        direct_passthrough=True,
+    )
+    
+    # ⭐ Header báo cho trình duyệt tải xuống
+    response.headers['Content-Disposition'] = f'attachment; filename="{file_name}"'
+    response.headers['Content-Type'] = 'audio/mpeg'
+    
+    return response
+
 # ============================================================
 # KHỞI ĐỘNG
 # ============================================================
