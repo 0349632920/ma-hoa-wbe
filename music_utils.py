@@ -1,4 +1,4 @@
-# music_utils.py — Lấy danh sách file nhạc từ Google Drive folder
+# music_utils.py — Lấy và Stream file nhạc từ Google Drive
 import os
 import requests
 from datetime import datetime
@@ -84,7 +84,7 @@ def list_music_files(force_refresh=False):
 
 
 def get_file_info(file_id):
-    """Lấy thông tin 1 file theo ID (để biết size)."""
+    """Lấy thông tin 1 file theo ID."""
     if not has_google_api():
         return {'success': False, 'error': 'Chưa có GOOGLE_API_KEY'}
 
@@ -104,22 +104,36 @@ def get_file_info(file_id):
 def stream_file(file_id, range_header=None):
     """
     Stream file audio từ Google Drive.
-    Trả về response object của requests (để Flask stream).
+    Xử lý cả trường hợp file > 100MB (Google Drive yêu cầu xác nhận).
     """
     if not has_google_api():
         return None
 
     try:
         url = f'https://www.googleapis.com/drive/v3/files/{file_id}'
-        params = {'alt': 'media', 'key': GOOGLE_API_KEY}
+        params = {
+            'alt': 'media',
+            'key': GOOGLE_API_KEY,
+            'acknowledgeAbuse': 'true'  # ⭐ Bỏ qua cảnh báo virus cho file lớn
+        }
         headers = {}
         if range_header:
             headers['Range'] = range_header
 
+        # Tải thử 1 đoạn để kiểm tra
         res = requests.get(url, params=params, headers=headers, stream=True, timeout=30)
+        
+        # Nếu Google trả về trang HTML cảnh báo (thay vì file nhạc)
+        content_type = res.headers.get('Content-Type', '')
+        if 'text/html' in content_type:
+            print(f"⚠️ Google Drive trả về HTML (có thể do file bị chặn).")
+            return None
+
         if res.status_code in (200, 206):
             return res
-        return None
+        else:
+            print(f"⚠️ Google Drive trả về lỗi: {res.status_code}")
+            return None
     except Exception as e:
         print(f'❌ Stream error: {e}')
         return None
