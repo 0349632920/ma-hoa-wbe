@@ -100,35 +100,62 @@ def get_file_info(file_id):
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
-
 def stream_file(file_id, range_header=None):
     """
     Stream file audio từ Google Drive.
-    Xử lý cả trường hợp file > 100MB (Google Drive yêu cầu xác nhận).
+    Xử lý cả trường hợp Google chèn trang xác nhận (file lớn).
     """
     if not has_google_api():
         return None
 
     try:
+        # Bước 1: Gọi thử để lấy thông tin (có thể bị chặn bởi trang xác nhận)
         url = f'https://www.googleapis.com/drive/v3/files/{file_id}'
         params = {
             'alt': 'media',
             'key': GOOGLE_API_KEY,
-            'acknowledgeAbuse': 'true'  # ⭐ Bỏ qua cảnh báo virus cho file lớn
+            'acknowledgeAbuse': 'true'
         }
         headers = {}
         if range_header:
             headers['Range'] = range_header
 
-        # Tải thử 1 đoạn để kiểm tra
         res = requests.get(url, params=params, headers=headers, stream=True, timeout=30)
         
-        # Nếu Google trả về trang HTML cảnh báo (thay vì file nhạc)
         content_type = res.headers.get('Content-Type', '')
-        if 'text/html' in content_type:
-            print(f"⚠️ Google Drive trả về HTML (có thể do file bị chặn).")
-            return None
 
+        # Nếu Google trả về HTML (trang cảnh báo / xác nhận)
+        if 'text/html' in content_type:
+            print(f"⚠️ Google Drive trả về HTML. Thử bypass xác nhận...")
+            
+            # Lấy token xác nhận từ HTML (nếu có)
+            import re
+            html_content = res.text
+            match = re.search(r'confirm=([^&;\"\']+)', html_content)
+            
+            if match:
+                confirm_token = match.group(1)
+                print(f"🔑 Tìm thấy token xác nhận: {confirm_token}")
+                
+                # Gọi lại với token xác nhận
+                bypass_url = f'https://www.googleapis.com/drive/v3/files/{file_id}'
+                bypass_params = {
+                    'alt': 'media',
+                    'key': GOOGLE_API_KEY,
+                    'confirm': confirm_token,
+                    'acknowledgeAbuse': 'true'
+                }
+                res2 = requests.get(bypass_url, params=bypass_params, headers=headers, stream=True, timeout=30)
+                if res2.status_code in (200, 206):
+                    return res2
+                else:
+                    print(f"⚠️ Bypass thất bại: {res2.status_code}")
+                    return None
+            else:
+                print(f"❌ Không tìm thấy token xác nhận. Google có thể đã chặn hoàn toàn.")
+                return None
+
+        # Nếu là file audio bình thường
         if res.status_code in (200, 206):
             return res
         else:
