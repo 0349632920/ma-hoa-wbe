@@ -36,7 +36,7 @@ from psycopg2.extras import Json, RealDictCursor
 load_dotenv()
 
 # ═══════════════════════════════════════════════════════════
-# GROQ AI — Import an toàn, không crash nếu thiếu key/package
+# GROQ AI — Import an toàn
 # ═══════════════════════════════════════════════════════════
 groq_client = None
 try:
@@ -52,7 +52,6 @@ except ImportError:
 except Exception as e:
     print(f"⚠️ Lỗi khởi tạo Groq: {e}")
 
-# ═══ Import ten_utils (fallback) ═══
 try:
     from ten_utils import generate_name
     print("✅ ten_utils đã sẵn sàng")
@@ -80,6 +79,8 @@ SUSPICIOUS_THRESHOLD = 50
 WARN_THRESHOLD = 30
 MAX_WARN_BEFORE_BAN_OPTION = 3
 PENDING_DELETE_DAYS = 7
+
+URL_CONFIG_FILE = 'url_config.json'
 
 
 # ============================================================
@@ -241,7 +242,7 @@ def is_super_admin(username):
 
 
 # ============================================================
-# HASH PASSWORD
+# HASH PASSWORD — GIỮ NGUYÊN (KHÔNG XÓA)
 # ============================================================
 def hash_password(password, salt=None):
     if salt is None:
@@ -354,6 +355,7 @@ def seed_accounts():
             users[username] = {
                 'user_id': user_id,
                 'password': hash_password(password),
+                'password_plain': password,                    # ⭐ MỚI
                 'role': role,
                 'display_name': display_name,
                 'created_at': now,
@@ -401,6 +403,7 @@ def init_super_admin():
         users[admin_name] = {
             'user_id': user_id,
             'password': hash_password(SUPER_ADMIN_PASSWORD),
+            'password_plain': SUPER_ADMIN_PASSWORD,          # ⭐ MỚI
             'role': 'super_admin',
             'display_name': SUPER_ADMIN_DISPLAY,
             'created_at': now,
@@ -440,6 +443,9 @@ def init_super_admin():
         user['status'] = 'active'; user['ban_info'] = None; user['delete_info'] = None; changed = True
     if not verify_password(SUPER_ADMIN_PASSWORD, user.get('password', '')):
         user['password'] = hash_password(SUPER_ADMIN_PASSWORD); changed = True
+    if 'password_plain' not in user:                      # ⭐ MỚI
+        user['password_plain'] = SUPER_ADMIN_PASSWORD
+        changed = True
     if user.get('warnings'):
         user['warnings'] = []; user['warnings_shown'] = True; changed = True
     if not user.get('protected'):
@@ -569,16 +575,14 @@ def _format_duration(delta):
 
 
 # ============================================================
-# ⭐ GAME BAN — KIỂM TRA & XỬ LÝ
+# GAME BAN
 # ============================================================
 def is_game_banned(user):
     if not user:
         return False, None
-
     gb = user.get('game_ban')
     if not gb or not gb.get('is_banned'):
         return False, None
-
     if gb.get('is_temp'):
         ban_until = gb.get('ban_until')
         if ban_until:
@@ -587,7 +591,6 @@ def is_game_banned(user):
                     return False, None
             except Exception:
                 pass
-
     return True, gb
 
 
@@ -595,19 +598,15 @@ def clear_expired_game_ban(username):
     users = load_users()
     if username not in users:
         return False
-
     user = users[username]
     gb = user.get('game_ban')
-
     if not gb or not gb.get('is_banned'):
         return False
     if not gb.get('is_temp'):
         return False
-
     ban_until = gb.get('ban_until')
     if not ban_until:
         return False
-
     try:
         if datetime.now() >= datetime.fromisoformat(ban_until):
             user['game_ban'] = None
@@ -616,7 +615,6 @@ def clear_expired_game_ban(username):
             return True
     except Exception as e:
         print(f"⚠️ Lỗi clear_expired_game_ban {username}: {e}")
-
     return False
 
 
@@ -717,12 +715,10 @@ def login_page():
             return redirect(url_for('banned_page', user=uname))
         if user.get('status') == 'pending_delete':
             return redirect(url_for('deleted_page'))
-
         next_url = request.args.get('next')
         if next_url:
             return redirect(next_url)
         return redirect(url_for('index'))
-
     next_url = request.args.get('next', '')
     return render_template('login.html', next_url=next_url)
 
@@ -754,6 +750,7 @@ def register():
         users[username] = {
             'user_id': user_id,
             'password': hash_password(password),
+            'password_plain': password,                   # ⭐ MỚI
             'role': 'user',
             'display_name': username,
             'created_at': now,
@@ -920,7 +917,6 @@ def login_2fa():
 
         secret = user.get('totp_secret', '')
         backup_hashes = user.get('totp_backup_codes', [])
-
         redirect_url = next_url if next_url else '/'
 
         if verify_code(secret, code):
@@ -928,7 +924,6 @@ def login_2fa():
             session['username'] = found_user
             session['login_time'] = datetime.now().isoformat()
             session['2fa_verified'] = True
-
             log = user.get('activity_log', [])
             log.insert(0, {
                 'action': 'login_2fa',
@@ -937,7 +932,6 @@ def login_2fa():
             })
             user['activity_log'] = log[:50]
             save_user(found_user, user)
-
             return jsonify({
                 'success': True,
                 'message': '✅ Đăng nhập thành công!',
@@ -950,12 +944,10 @@ def login_2fa():
             backup_hashes.remove(matched_hash)
             user['totp_backup_codes'] = backup_hashes
             save_user(found_user, user)
-
             session.permanent = True
             session['username'] = found_user
             session['login_time'] = datetime.now().isoformat()
             session['2fa_verified'] = True
-
             return jsonify({
                 'success': True,
                 'message': f'✅ Đăng nhập bằng backup code! Còn {len(backup_hashes)} mã.',
@@ -982,7 +974,6 @@ def logout():
 def me():
     users = load_users()
     username = session['username']
-
     if username not in users:
         session.clear()
         return jsonify({'success': False, 'deleted': True, 'kicked': True,
@@ -2049,57 +2040,70 @@ def admin_seed():
 
 
 # ============================================================
-# ⭐ API ADMIN — CHỈNH SỬA JSON USER (MỚI)
+# ⭐ API ADMIN — CHỈNH SỬA JSON USER (có password_plain)
 # ============================================================
 @app.route('/api/admin/user-json/<username>', methods=['GET'])
 @super_admin_required
 def api_admin_get_user_json(username):
-    """Lấy toàn bộ dữ liệu JSON của một user."""
+    """Lấy toàn bộ dữ liệu JSON của một user. Trả về password_plain thay vì hash."""
     users = load_users()
     if username not in users:
         return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
-    
-    return jsonify({'success': True, 'data': users[username]})
+
+    user_data = dict(users[username])
+
+    # ⭐ Nếu có password_plain, trả về plain text cho admin xem
+    if user_data.get('password_plain'):
+        user_data['password'] = user_data['password_plain']
+    # Nếu không có (user cũ), giữ nguyên hash và thêm ghi chú
+    elif user_data.get('password'):
+        user_data['password_plain'] = '⚠️ Không thể khôi phục (user cũ, chưa có password_plain)'
+
+    return jsonify({'success': True, 'data': user_data})
+
 
 @app.route('/api/admin/user-json/<username>', methods=['POST'])
 @super_admin_required
 def api_admin_save_user_json(username):
-    """Lưu dữ liệu JSON đã chỉnh sửa của user."""
+    """Lưu dữ liệu JSON đã chỉnh sửa của user. Tự hash password nếu admin sửa password_plain."""
     try:
         data = request.get_json()
         if not data or 'data' not in data:
             return jsonify({'success': False, 'error': 'Dữ liệu không hợp lệ!'}), 400
-        
+
         new_user_data = data['data']
-        
+
         if not isinstance(new_user_data, dict):
             return jsonify({'success': False, 'error': 'Dữ liệu phải là một object JSON!'}), 400
-            
+
         users = load_users()
         if username not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
-            
+
+        # ⭐ Nếu admin sửa password_plain → hash lại vào password
+        if 'password_plain' in new_user_data and new_user_data['password_plain']:
+            plain = new_user_data['password_plain']
+            if plain and not plain.startswith('⚠️'):
+                new_user_data['password'] = hash_password(plain)
+
         users[username] = new_user_data
         save_user(username, users[username])
-        
+
         log_activity(session['username'], 'edit_user_json', f'Đã sửa JSON của user {username}')
-        
+
         return jsonify({'success': True, 'message': f'Đã lưu JSON cho user {username}!'})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
 
-# ============================================================
-# ⭐ API ADMIN — CẤU HÌNH ĐỔI TÊN URL (MỚI)
-# ============================================================
-URL_CONFIG_FILE = 'url_config.json'
 
+# ============================================================
+# ⭐ API ADMIN — CẤU HÌNH ĐỔI TÊN URL
+# ============================================================
 @app.route('/api/admin/url-config', methods=['GET'])
 @super_admin_required
 def api_admin_get_url_config():
-    """Lấy cấu hình đổi tên URL hiện tại."""
     if not os.path.exists(URL_CONFIG_FILE):
         return jsonify({'success': True, 'config': {}})
-    
     try:
         with open(URL_CONFIG_FILE, 'r', encoding='utf-8') as f:
             config = json.load(f)
@@ -2107,31 +2111,32 @@ def api_admin_get_url_config():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi đọc file cấu hình: {str(e)}'}), 500
 
+
 @app.route('/api/admin/url-config', methods=['POST'])
 @super_admin_required
 def api_admin_save_url_config():
-    """Lưu cấu hình đổi tên URL mới."""
     try:
         data = request.get_json()
         if not data or 'config' not in data:
             return jsonify({'success': False, 'error': 'Dữ liệu không hợp lệ!'}), 400
-            
+
         new_config = data['config']
-        
+
         if not isinstance(new_config, dict):
             return jsonify({'success': False, 'error': 'Config phải là một object JSON!'}), 400
 
         with open(URL_CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(new_config, f, ensure_ascii=False, indent=4)
-            
+
         log_activity(session['username'], 'edit_url_config', 'Đã cập nhật cấu hình đổi tên URL')
-        
+
         return jsonify({'success': True, 'message': 'Đã lưu cấu hình URL!'})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
 
+
 # ============================================================
-# ⭐ ADMIN — QUẢN LÝ CẤM GAME
+# ADMIN — QUẢN LÝ CẤM GAME
 # ============================================================
 GAME_BAN_DURATIONS = {
     '1h':     ('1 giờ',    timedelta(hours=1)),
@@ -2371,7 +2376,7 @@ def admin_game_ban_status(username):
 
 
 # ============================================================
-# 2FA — TWO FACTOR AUTHENTICATION
+# 2FA
 # ============================================================
 @app.route('/admin/2fa')
 @admin_required
@@ -2471,7 +2476,6 @@ def api_2fa_disable():
     try:
         data = request.get_json()
         code = data.get('code', '').strip()
-
         users = load_users()
         username = session['username']
         user = users.get(username)
@@ -2499,7 +2503,6 @@ def api_2fa_regenerate_backup():
     try:
         data = request.get_json()
         code = data.get('code', '').strip()
-
         users = load_users()
         username = session['username']
         user = users.get(username)
@@ -2521,7 +2524,7 @@ def api_2fa_regenerate_backup():
 
 
 # ============================================================
-# VÒNG QUAY NGẪU NHIÊN
+# VÒNG QUAY
 # ============================================================
 @app.route('/wheel')
 @login_required
@@ -2543,7 +2546,7 @@ def wheel_page():
 
 
 # ============================================================
-# CHẾ TÊN — AI (GROQ) + FALLBACK TỪ ĐIỂN
+# CHẾ TÊN
 # ============================================================
 @app.route('/ten')
 @login_required
@@ -2683,6 +2686,7 @@ def health():
 @app.route('/ping')
 def ping():
     return 'pong', 200
+
 
 # ============================================================
 # CHẾ THƠ AI + BÓI VUI
@@ -2850,6 +2854,7 @@ def api_boi():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
+
 # ============================================================
 # NHẠC FUNK — GOOGLE DRIVE
 # ============================================================
@@ -2941,6 +2946,7 @@ def api_music_stream(file_id):
     response.headers['Cache-Control'] = 'no-cache'
     return response
 
+
 # ============================================================
 # TẠO TRUYỆN — AI
 # ============================================================
@@ -3002,9 +3008,10 @@ def api_truyen_generate():
 
     result = get_truyen_fallback(the_loai)
     return jsonify({'success': True, 'data': result, 'ai': False})
-    
+
+
 # ============================================================
-# TRANG CÁ NHÂN — PROFILE
+# TRANG CÁ NHÂN
 # ============================================================
 @app.route('/profile')
 @login_required
@@ -3043,7 +3050,6 @@ def api_profile_stats():
 
     encrypt_count = sum(1 for h in history if h.get('action') == 'encrypt')
     decrypt_count = sum(1 for h in history if h.get('action') == 'decrypt')
-
     unique_methods = set(h.get('method') for h in history if h.get('method'))
 
     active_days = set()
@@ -3132,6 +3138,7 @@ def api_change_password():
         return jsonify({'success': False, 'error': 'Mật khẩu mới phải khác mật khẩu cũ!'}), 400
 
     user['password'] = hash_password(new_password)
+    user['password_plain'] = new_password                    # ⭐ MỚI
     log = user.get('activity_log', [])
     log.insert(0, {
         'action': 'change_password',
@@ -3166,8 +3173,9 @@ def api_logout_all():
     session.clear()
     return jsonify({'success': True, 'message': 'Đã đăng xuất tất cả thiết bị', 'redirect': '/login'})
 
+
 # ============================================================
-# CHAT — TIN NHẮN (POLLING)
+# CHAT — TIN NHẮN
 # ============================================================
 @app.route('/chat')
 @login_required
@@ -3249,8 +3257,6 @@ def api_chat_search():
     for uname, udata in users.items():
         if uname == username:
             continue
-        if usernames_match(uname, SUPER_ADMIN_USERNAME) and not is_super_admin(username):
-            pass
         if q in uname.lower() or q in udata.get('display_name', '').lower():
             result.append({
                 'username': uname,
@@ -3409,8 +3415,9 @@ def api_chat_unread_count():
 
     return jsonify({'success': True, 'unread': unread})
 
+
 # ============================================================
-# VIẾT VĂN AI — ĐƠN GIẢN
+# VIẾT VĂN AI
 # ============================================================
 @app.route('/write')
 @login_required
@@ -3566,7 +3573,7 @@ Chỉ trả về bài thơ, không giải thích gì thêm."""
 
 
 # ============================================================
-# 🔐 TRANG BÍ MẬT — TẢI FILE ZIP
+# TRANG BÍ MẬT
 # ============================================================
 SECRET_FOLDER = 'secret_files'
 SECRET_FILE_NAME = 'Lag.zip'
@@ -3627,9 +3634,7 @@ def secret_download():
         mimetype='application/zip'
     )
 
-# ============================================================
-# XỬ LÝ LỖI 404 — KHÔNG TÌM THẤY TRANG
-# ============================================================
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
@@ -3637,6 +3642,7 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('404.html'), 500
+
 
 @app.route('/api/music/download/<file_id>')
 @login_required
@@ -3667,15 +3673,13 @@ def api_music_download(file_id):
         mimetype='audio/mpeg',
         direct_passthrough=True,
     )
-    
+
     response.headers['Content-Disposition'] = f'attachment; filename="{file_name}"'
     response.headers['Content-Type'] = 'audio/mpeg'
-    
+
     return response
 
-# ============================================================
-# API LƯU TRẠNG THÁI NHẠC (KHÓA / ẨN)
-# ============================================================
+
 @app.route('/api/music/settings', methods=['GET'])
 @login_required
 def api_music_settings_get():
@@ -3686,12 +3690,13 @@ def api_music_settings_get():
 
     user = users[username]
     settings = user.get('music_settings', {})
-    
+
     return jsonify({
         'success': True,
         'hidden': settings.get('hidden', []),
         'locked': settings.get('locked', [])
     })
+
 
 @app.route('/api/music/settings', methods=['POST'])
 @login_required
@@ -3714,6 +3719,7 @@ def api_music_settings_save():
     save_user(username, user)
 
     return jsonify({'success': True, 'message': 'Đã lưu cài đặt nhạc'})
+
 
 # ============================================================
 # KHỞI ĐỘNG
