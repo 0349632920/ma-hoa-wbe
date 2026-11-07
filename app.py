@@ -82,6 +82,9 @@ PENDING_DELETE_DAYS = 7
 
 URL_CONFIG_FILE = 'url_config.json'
 
+# Role hợp lệ
+VALID_ROLES = ('user', 'admin', 'super_admin', 'ny')
+
 
 # ============================================================
 # DATABASE LAYER
@@ -337,7 +340,7 @@ def seed_accounts():
             if len(password) < 6:
                 failed += 1
                 continue
-            if role not in ('super_admin', 'admin', 'user'):
+            if role not in VALID_ROLES:
                 role = 'user'
 
             exists = False
@@ -471,7 +474,7 @@ def init_super_admin():
 
 
 # ============================================================
-# MIGRATION — TỰ ĐỘNG THÊM password_plain CHO USER CŨ
+# MIGRATION password_plain
 # ============================================================
 def migrate_password_plain():
     users = load_users()
@@ -573,7 +576,7 @@ def log_activity(username, action, detail=''):
         user['suspicious_score'] = len(recent)
         if (len(recent) >= SUSPICIOUS_THRESHOLD
             and user.get('status') == 'active'
-            and user.get('role') != 'super_admin'):
+            and user.get('role') not in ('super_admin', 'ny')):
             warnings = user.get('warnings', [])
             warnings.append({
                 'user_id': user.get('user_id', '—'),
@@ -1004,7 +1007,7 @@ def me():
     users = load_users()
     username = session['username']
 
-    # ⭐ KIỂM TRA FORCE LOGOUT (đặt ngay đầu)
+    # ⭐ KIỂM TRA FORCE LOGOUT
     if username in users:
         user_check = users[username]
         force_logout = user_check.get('force_logout')
@@ -1641,7 +1644,8 @@ def api_leaderboard():
                 'points': points,
                 'snake_best': snake_best,
                 'guess_best_count': guess_best,
-                'is_super_admin': is_super_admin(uname)
+                'is_super_admin': is_super_admin(uname),
+                'role': udata.get('role', 'user')
             })
     board.sort(key=lambda x: -x['points'])
     for i, u in enumerate(board):
@@ -1699,6 +1703,7 @@ def admin_users():
     def sort_key(u):
         if u['is_super_admin']: return (0, 0, 0, u['username'].lower())
         if u['role'] == 'admin': return (1, 0, 0, u['username'].lower())
+        if u['role'] == 'ny': return (1, 1, 0, u['username'].lower())
         if u['status'] == 'banned': return (2, 0, 0, u['username'].lower())
         if u['status'] == 'pending_delete': return (2, 0, 1, u['username'].lower())
         if u['status'] == 'warned': return (2, 1, 0, u['username'].lower())
@@ -1729,6 +1734,8 @@ def admin_ban():
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
         if is_super_admin(target):
             return jsonify({'success': False, 'error': '🚫 Không thể ban Super Admin!'}), 403
+        if users[target].get('role') == 'ny':
+            return jsonify({'success': False, 'error': '💕 Không thể ban Ny!'}), 403
 
         target_id = users[target].get('user_id', '—')
         now = datetime.now()
@@ -1773,7 +1780,6 @@ def admin_ban():
 
         users[target]['status'] = 'banned'
         users[target]['ban_info'] = ban_info
-        # ⭐ Tự động kick khi ban
         users[target]['force_logout'] = {
             'time': now.isoformat(),
             'by': session['username'],
@@ -1927,10 +1933,11 @@ def admin_stats():
     suspicious = sum(1 for u in users.values() if u.get('suspicious_score', 0) >= WARN_THRESHOLD)
     game_banned = sum(1 for u in users.values()
                       if u.get('game_ban') and u.get('game_ban', {}).get('is_banned'))
+    ny_count = sum(1 for u in users.values() if u.get('role') == 'ny')
     return jsonify({'success': True, 'stats': {
         'total': total, 'active': active, 'warned': warned, 'banned': banned,
         'pending_delete': pending_delete, 'admins': admins, 'suspicious': suspicious,
-        'game_banned': game_banned
+        'game_banned': game_banned, 'ny_count': ny_count
     }})
 
 
@@ -1950,6 +1957,8 @@ def admin_delete():
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
         if is_super_admin(target):
             return jsonify({'success': False, 'error': '🚫 Không thể xóa Super Admin!'}), 403
+        if users[target].get('role') == 'ny':
+            return jsonify({'success': False, 'error': '💕 Không thể xóa Ny!'}), 403
         target_id = users[target].get('user_id', '—')
         users[target]['status'] = 'pending_delete'
         users[target]['delete_info'] = {
@@ -1957,7 +1966,6 @@ def admin_delete():
             'time': datetime.now().isoformat(), 'by': session['username'],
             'expires_at': (datetime.now() + timedelta(days=PENDING_DELETE_DAYS)).isoformat()
         }
-        # ⭐ Tự động kick khi đánh dấu xóa
         users[target]['force_logout'] = {
             'time': datetime.now().isoformat(),
             'by': session['username'],
@@ -1987,6 +1995,8 @@ def admin_force_delete():
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
         if is_super_admin(target):
             return jsonify({'success': False, 'error': '🚫 Không thể xóa Super Admin!'}), 403
+        if users[target].get('role') == 'ny':
+            return jsonify({'success': False, 'error': '💕 Không thể xóa Ny!'}), 403
         target_id = users[target].get('user_id', '—')
         if confirm_text != target_id:
             return jsonify({'success': False, 'error': f'⚠️ Phải gõ chính xác ID "{target_id}"!'}), 400
@@ -2103,7 +2113,7 @@ def admin_seed():
 
 
 # ============================================================
-# ⭐ API ADMIN — KICK USER (BUỘC LOGOUT)
+# KICK USER
 # ============================================================
 @app.route('/api/admin/kick-user', methods=['POST'])
 @super_admin_required
@@ -2142,7 +2152,7 @@ def api_admin_kick_user():
 
 
 # ============================================================
-# ⭐ API ADMIN — ĐỔI ROLE NHANH (TỰ ĐỘNG KICK)
+# CHANGE ROLE
 # ============================================================
 @app.route('/api/admin/change-role', methods=['POST'])
 @super_admin_required
@@ -2154,8 +2164,8 @@ def api_admin_change_role():
 
         if not target:
             return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
-        if new_role not in ('user', 'admin', 'super_admin'):
-            return jsonify({'success': False, 'error': 'Role không hợp lệ! Chỉ chấp nhận: user, admin, super_admin'}), 400
+        if new_role not in VALID_ROLES:
+            return jsonify({'success': False, 'error': f'Role không hợp lệ! Chỉ chấp nhận: {", ".join(VALID_ROLES)}'}), 400
         if usernames_match(target, session['username']):
             return jsonify({'success': False, 'error': '🚫 Không thể đổi role của chính mình!'}), 400
 
@@ -2169,6 +2179,7 @@ def api_admin_change_role():
         if old_role == new_role:
             return jsonify({'success': False, 'error': f'User đã có role "{new_role}" rồi!'}), 400
 
+        # ⭐ CHỈ đổi role — KHÔNG đụng đến password
         users[target]['role'] = new_role
         users[target]['force_logout'] = {
             'time': datetime.now().isoformat(),
@@ -2191,21 +2202,21 @@ def api_admin_change_role():
 
 
 # ============================================================
-# ⭐ API ADMIN — CHỈNH SỬA JSON USER
+# USER JSON EDITOR — ⭐ SỬA LỖI MẤT MẬT KHẨU
 # ============================================================
 @app.route('/api/admin/user-json/<username>', methods=['GET'])
 @super_admin_required
 def api_admin_get_user_json(username):
+    """Lấy JSON user. KHÔNG thay thế password (hash) — chỉ thêm password_plain."""
     users = load_users()
     if username not in users:
         return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
 
     user_data = dict(users[username])
 
-    if user_data.get('password_plain'):
-        user_data['password'] = user_data['password_plain']
-    elif user_data.get('password'):
-        user_data['password_plain'] = '⚠️ Không thể khôi phục (user cũ, chưa có password_plain)'
+    # ⭐ FIX: Chỉ thêm password_plain nếu thiếu, KHÔNG ghi đè password
+    if not user_data.get('password_plain'):
+        user_data['password_plain'] = '⚠️ Không thể khôi phục (user cũ)'
 
     return jsonify({'success': True, 'data': user_data})
 
@@ -2213,23 +2224,22 @@ def api_admin_get_user_json(username):
 @app.route('/api/admin/user-json/<username>', methods=['POST'])
 @super_admin_required
 def api_admin_save_user_json(username):
+    """Lưu JSON user. CHỈ hash lại password nếu password_plain THỰC SỰ thay đổi."""
     try:
         data = request.get_json()
         if not data or 'data' not in data:
             return jsonify({'success': False, 'error': 'Dữ liệu không hợp lệ!'}), 400
 
         new_user_data = data['data']
-
         if not isinstance(new_user_data, dict):
             return jsonify({'success': False, 'error': 'Dữ liệu phải là một object JSON!'}), 400
 
-        # ⭐ Validate role
+        # Validate role
         if 'role' in new_user_data:
-            valid_roles = ('user', 'admin', 'super_admin')
-            if new_user_data['role'] not in valid_roles:
+            if new_user_data['role'] not in VALID_ROLES:
                 return jsonify({
                     'success': False,
-                    'error': f'Role không hợp lệ! Chỉ chấp nhận: {", ".join(valid_roles)}'
+                    'error': f'Role không hợp lệ! Chỉ chấp nhận: {", ".join(VALID_ROLES)}'
                 }), 400
 
         if is_super_admin(username) and new_user_data.get('role') != 'super_admin':
@@ -2242,14 +2252,29 @@ def api_admin_save_user_json(username):
         if username not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
 
-        # ⭐ Nếu admin sửa password_plain → hash lại vào password
-        if 'password_plain' in new_user_data and new_user_data['password_plain']:
-            plain = new_user_data['password_plain']
-            if plain and not plain.startswith('⚠️'):
-                new_user_data['password'] = hash_password(plain)
+        old_data = users[username]
+        old_plain = old_data.get('password_plain', '') or ''
+        old_hash = old_data.get('password', '') or ''
+        new_plain = new_user_data.get('password_plain', '') or ''
 
-        # ⭐ Nếu role thay đổi → tự động kick
-        old_role = users[username].get('role', 'user')
+        # ⭐⭐ CỰC KỲ QUAN TRỌNG: CHỈ hash lại nếu password_plain THAY ĐỔI thực sự
+        if (new_plain
+            and not new_plain.startswith('⚠️')
+            and new_plain != old_plain):
+            # Admin nhập mật khẩu mới thực sự → hash lại
+            new_user_data['password'] = hash_password(new_plain)
+            print(f"🔑 Admin đổi mật khẩu cho {username}")
+        else:
+            # KHÔNG đổi mật khẩu → giữ nguyên hash cũ trong DB
+            new_user_data['password'] = old_hash
+            # Khôi phục password_plain cũ (nếu có)
+            if old_plain and not old_plain.startswith('⚠️'):
+                new_user_data['password_plain'] = old_plain
+            else:
+                new_user_data['password_plain'] = old_plain or new_plain or '⚠️ Không thể khôi phục'
+
+        # Nếu role thay đổi → force logout
+        old_role = old_data.get('role', 'user')
         new_role = new_user_data.get('role', old_role)
         if old_role != new_role:
             new_user_data['force_logout'] = {
@@ -2269,7 +2294,7 @@ def api_admin_save_user_json(username):
 
 
 # ============================================================
-# ⭐ API ADMIN — CẤU HÌNH ĐỔI TÊN URL
+# URL CONFIG
 # ============================================================
 @app.route('/api/admin/url-config', methods=['GET'])
 @super_admin_required
@@ -2291,24 +2316,19 @@ def api_admin_save_url_config():
         data = request.get_json()
         if not data or 'config' not in data:
             return jsonify({'success': False, 'error': 'Dữ liệu không hợp lệ!'}), 400
-
         new_config = data['config']
-
         if not isinstance(new_config, dict):
             return jsonify({'success': False, 'error': 'Config phải là một object JSON!'}), 400
-
         with open(URL_CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(new_config, f, ensure_ascii=False, indent=4)
-
         log_activity(session['username'], 'edit_url_config', 'Đã cập nhật cấu hình đổi tên URL')
-
         return jsonify({'success': True, 'message': 'Đã lưu cấu hình URL!'})
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
 
 
 # ============================================================
-# ADMIN — QUẢN LÝ CẤM GAME
+# GAME BAN
 # ============================================================
 GAME_BAN_DURATIONS = {
     '1h':     ('1 giờ',    timedelta(hours=1)),
@@ -2394,6 +2414,9 @@ def admin_game_ban():
                 continue
             if is_super_admin(target):
                 skipped_list.append({'username': target, 'reason': 'Không thể cấm Super Admin'})
+                continue
+            if users[target].get('role') == 'ny':
+                skipped_list.append({'username': target, 'reason': 'Không thể cấm Ny'})
                 continue
 
             target_id = users[target].get('user_id', '—')
@@ -2491,6 +2514,7 @@ def admin_game_ban_list():
             'user_id': udata.get('user_id', '—'),
             'display_name': udata.get('display_name', uname),
             'is_super_admin': is_super_admin(uname),
+            'role': udata.get('role', 'user'),
             'reason': gb.get('reason'),
             'banned_at': gb.get('banned_at'),
             'banned_by': gb.get('banned_by'),
@@ -2528,6 +2552,7 @@ def admin_game_ban_search():
             'user_id': udata.get('user_id', '—'),
             'display_name': udata.get('display_name', uname),
             'status': udata.get('status', 'active'),
+            'role': udata.get('role', 'user'),
             'is_banned': is_banned,
         })
     result.sort(key=lambda x: x['username'].lower())
@@ -3028,7 +3053,7 @@ def api_boi():
 
 
 # ============================================================
-# NHẠC FUNK — GOOGLE DRIVE
+# NHẠC FUNK
 # ============================================================
 @app.route('/nhac')
 @login_required
@@ -3120,7 +3145,7 @@ def api_music_stream(file_id):
 
 
 # ============================================================
-# TẠO TRUYỆN — AI
+# TẠO TRUYỆN
 # ============================================================
 @app.route('/truyen')
 @login_required
@@ -3347,7 +3372,7 @@ def api_logout_all():
 
 
 # ============================================================
-# CHAT — TIN NHẮN
+# CHAT
 # ============================================================
 @app.route('/chat')
 @login_required
@@ -3408,10 +3433,10 @@ def api_chat_conversations():
         conv['user_id'] = partner_data.get('user_id', '—')
         conv['online'] = False
         conv['is_super_admin'] = is_super_admin(partner_name)
+        conv['role'] = partner_data.get('role', 'user')
         result.append(conv)
 
     result.sort(key=lambda x: x.get('last_time', ''), reverse=True)
-
     return jsonify({'success': True, 'conversations': result})
 
 
@@ -3435,6 +3460,7 @@ def api_chat_search():
                 'display_name': udata.get('display_name', uname),
                 'user_id': udata.get('user_id', '—'),
                 'is_super_admin': is_super_admin(uname),
+                'role': udata.get('role', 'user'),
             })
 
     return jsonify({'success': True, 'users': result[:20]})
@@ -3459,7 +3485,6 @@ def api_chat_messages(partner):
         if (m.get('from') == username and m.get('to') == partner) or
            (m.get('from') == partner and m.get('to') == username)
     ]
-
     conversation.sort(key=lambda x: x.get('time', ''))
 
     changed = False
@@ -3495,6 +3520,7 @@ def api_chat_messages(partner):
             'display_name': partner_data.get('display_name', partner),
             'user_id': partner_data.get('user_id', '—'),
             'is_super_admin': is_super_admin(partner),
+            'role': partner_data.get('role', 'user'),
         }
     })
 
@@ -3636,10 +3662,8 @@ def api_write():
         so_cau = int(so_cau)
     except:
         so_cau = 10
-    if so_cau < 3:
-        so_cau = 3
-    if so_cau > 50:
-        so_cau = 50
+    if so_cau < 3: so_cau = 3
+    if so_cau > 50: so_cau = 50
 
     if loai not in ('doan_van', 'bai_tho'):
         loai = 'doan_van'
@@ -3674,9 +3698,7 @@ Chỉ trả về nội dung đoạn văn, không giải thích gì thêm."""
                 temperature=0.8,
                 max_tokens=3000,
             )
-
             result = chat_completion.choices[0].message.content.strip()
-
         else:
             prompt = f"""Viết một BÀI THƠ theo đề bài sau:
 
@@ -3687,28 +3709,8 @@ Yêu cầu:
 - Chia thành 3 phần rõ ràng:
 
 **PHẦN 1: MỞ ĐẦU** (1-2 câu thơ)
-- Giới thiệu chủ đề, cảm xúc ban đầu
-
 **PHẦN 2: NỘI DUNG CHÍNH** (phần lớn số câu)
-- Triển khai ý chính
-- Có thể dùng hình ảnh, biện pháp tu từ
-
 **PHẦN 3: KẾT** (1-2 câu thơ)
-- Tổng kết, để lại cảm xúc
-
-Định dạng trả về:
-PHẦN 1: MỞ ĐẦU
-[câu thơ 1]
-[câu thơ 2]
-
-PHẦN 2: NỘI DUNG
-[câu thơ 3]
-[câu thơ 4]
-...
-
-PHẦN 3: KẾT
-[câu thơ cuối 1]
-[câu thơ cuối 2]
 
 Chỉ trả về bài thơ, không giải thích gì thêm."""
 
@@ -3721,7 +3723,6 @@ Chỉ trả về bài thơ, không giải thích gì thêm."""
                 temperature=0.9,
                 max_tokens=3000,
             )
-
             result = chat_completion.choices[0].message.content.strip()
 
         if loai == 'bai_tho':
@@ -3738,7 +3739,6 @@ Chỉ trả về bài thơ, không giải thích gì thêm."""
             'so_cau_thuc_te': actual_sentences,
             'noi_dung': result,
         })
-
     except Exception as e:
         print(f"⚠️ Groq write error: {e}")
         return jsonify({'success': False, 'error': f'Lỗi AI: {str(e)}'}), 500
@@ -3759,7 +3759,6 @@ def secret_page():
     if username not in users:
         session.clear()
         return redirect(url_for('login_page'))
-
     user = check_and_auto_unban(username)
     if user.get('status') == 'banned' and not is_super_admin(username):
         return redirect(url_for('banned_page', user=username))
@@ -3775,7 +3774,6 @@ def secret_page():
     file_path = os.path.join(SECRET_FOLDER, SECRET_FILE_NAME)
     file_exists = os.path.exists(file_path)
     file_size_mb = 0
-
     if file_exists:
         file_size_mb = round(os.path.getsize(file_path) / (1024 * 1024), 2)
 
@@ -3793,12 +3791,9 @@ def secret_download():
     username = session.get('username', '')
     if not is_super_admin(username):
         return "🚫 Không có quyền truy cập", 403
-
     file_path = os.path.join(SECRET_FOLDER, SECRET_FILE_NAME)
-
     if not os.path.exists(file_path):
         return "❌ File không tồn tại", 404
-
     return send_file(
         file_path,
         as_attachment=True,
@@ -3840,15 +3835,9 @@ def api_music_download(file_id):
             if chunk:
                 yield chunk
 
-    response = Response(
-        generate(),
-        mimetype='audio/mpeg',
-        direct_passthrough=True,
-    )
-
+    response = Response(generate(), mimetype='audio/mpeg', direct_passthrough=True)
     response.headers['Content-Disposition'] = f'attachment; filename="{file_name}"'
     response.headers['Content-Type'] = 'audio/mpeg'
-
     return response
 
 
@@ -3862,7 +3851,6 @@ def api_music_settings_get():
 
     user = users[username]
     settings = user.get('music_settings', {})
-
     return jsonify({
         'success': True,
         'hidden': settings.get('hidden', []),
@@ -3889,7 +3877,6 @@ def api_music_settings_save():
     }
     users[username] = user
     save_user(username, user)
-
     return jsonify({'success': True, 'message': 'Đã lưu cài đặt nhạc'})
 
 
@@ -3898,7 +3885,7 @@ def api_music_settings_save():
 # ============================================================
 init_db()
 init_super_admin()
-migrate_password_plain()   # ⭐ Migration password_plain
+migrate_password_plain()
 seed_accounts()
 auto_unban_expired()
 auto_delete_expired()
