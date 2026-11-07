@@ -801,6 +801,29 @@
       </div>
     </div>
 
+    <!-- ⭐ CẤU HÌNH CHUYỂN HƯỚNG URL (JSON EDITOR) -->
+    {% if is_super_admin %}
+    <div class="panel" style="margin-bottom: 22px;">
+      <div class="panel-header">
+        <h2>🔗 Cấu hình đổi tên URL</h2>
+        <button class="btn-refresh-all" onclick="saveUrlConfig()">
+          💾 Lưu thay đổi
+        </button>
+      </div>
+      <p style="color: #666; margin-bottom: 12px; font-size: 13px;">
+        Định dạng: <code>{"tên-cũ": "tên-mới"}</code> (VD: <code>{"nhac": "music", "anh": "photo"}</code>)
+      </p>
+      <textarea id="urlConfigEditor"
+        style="width: 100%; height: 140px; padding: 14px; border: 2px solid #e0e0e0;
+               border-radius: 10px; font-family: 'JetBrains Mono', monospace;
+               font-size: 13px; background: #f9f9fc; resize: vertical; outline: none;
+               transition: 0.3s;"
+        spellcheck="false"
+        onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102,126,234,0.1)'"
+        onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'"></textarea>
+    </div>
+    {% endif %}
+
     <div class="panel">
       <div class="panel-header">
         <h2 id="panelTitle">📋 Danh sách người dùng</h2>
@@ -1190,6 +1213,41 @@
     </div>
   </div>
 
+  <!-- ⭐ MODAL CHỈNH SỬA JSON USER -->
+  <div class="modal-overlay" id="editUserJsonModal">
+    <div class="modal" style="max-width: 720px; width: 92%;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #8e44ad, #6c3483);">
+        <div>
+          <h3>💻 Chỉnh sửa JSON Tài khoản</h3>
+          <p id="jsonTargetName">—</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('editUserJsonModal')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p style="color: #666; font-size: 13px; margin-bottom: 12px;
+                  padding: 12px 16px; background: #fff8e1; border-left: 4px solid #f39c12;
+                  border-radius: 8px;">
+          ⚠️ <b>Cảnh báo:</b> Sửa sai cấu trúc JSON có thể <b>làm hỏng tài khoản</b>.
+          Hãy chắc chắn bạn biết mình đang làm gì. Nên backup trước khi lưu.
+        </p>
+        <textarea id="userJsonEditor"
+          style="width: 100%; height: 380px; padding: 15px; border: 2px solid #e0e0e0;
+                 border-radius: 10px; font-family: 'JetBrains Mono', monospace;
+                 font-size: 13px; background: #f4f4f9; color: #333;
+                 resize: vertical; outline: none; line-height: 1.6;"
+          spellcheck="false"></textarea>
+        <div id="jsonValidationMsg" style="margin-top: 10px; font-size: 13px; font-weight: 600;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal cancel" onclick="closeModal('editUserJsonModal')">❌ Hủy</button>
+        <button class="btn-modal" id="saveJsonBtn" onclick="saveUserJson()"
+                style="background: linear-gradient(135deg, #8e44ad, #6c3483);">
+          💾 Lưu JSON
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -1311,6 +1369,7 @@
         if (gb) gb.textContent = s.game_banned || 0;
       }
       renderUsers();
+      loadUrlConfig();
     }
 
     window.addEventListener('load', () => {
@@ -1419,6 +1478,7 @@
         if (u.is_super_admin) {
           actions = `
             <button class="action-btn detail" onclick="showDetail('${u.username}')">👁️ Chi tiết</button>
+            <button class="action-btn" onclick="openEditUserJsonModal('${u.username}')" style="background:#8e44ad;" title="Sửa JSON trực tiếp">💻</button>
             <span class="protected-note">🛡️ Tự bảo vệ</span>
           `;
         } else {
@@ -1436,6 +1496,7 @@
           actions += `<button class="action-btn refresh" onclick="openRefreshModal('${u.username}')" title="Làm mới trạng thái">♻️</button>`;
           actions += `<button class="action-btn delete" onclick="openDeleteModal('${u.username}')">🗑️</button>`;
           actions += `<button class="action-btn detail" onclick="showDetail('${u.username}')">👁️</button>`;
+          actions += `<button class="action-btn" onclick="openEditUserJsonModal('${u.username}')" style="background:#8e44ad;" title="Sửa JSON trực tiếp">💻</button>`;
         }
 
         const warnHighlight = u.warnings_count >= 2
@@ -2101,6 +2162,158 @@
         });
       }
     });
+
+    // ==========================================
+    // ⭐ TÍNH NĂNG MỚI 1: CẤU HÌNH ĐỔI TÊN URL
+    // ==========================================
+    async function loadUrlConfig() {
+      const editor = document.getElementById('urlConfigEditor');
+      if (!editor) return;
+      try {
+        const res = await fetch('/api/admin/url-config');
+        const data = await res.json();
+        if (data.success) {
+          editor.value = JSON.stringify(data.config || {}, null, 4);
+        } else {
+          editor.value = '// Lỗi: ' + (data.error || 'Không tải được');
+        }
+      } catch (e) {
+        editor.value = '// Lỗi kết nối!';
+      }
+    }
+
+    async function saveUrlConfig() {
+      const editor = document.getElementById('urlConfigEditor');
+      if (!editor) return;
+
+      let configData;
+      try {
+        configData = JSON.parse(editor.value);
+      } catch (e) {
+        showToast('⚠️ Lỗi cú pháp JSON! Kiểm tra lại.', true);
+        return;
+      }
+
+      if (typeof configData !== 'object' || Array.isArray(configData) || configData === null) {
+        showToast('⚠️ Config phải là object JSON!', true);
+        return;
+      }
+
+      const btn = editor.closest('.panel').querySelector('.btn-refresh-all');
+      const originalText = btn.textContent;
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/url-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config: configData })
+        });
+        const data = await res.json();
+        await new Promise(r => setTimeout(r, 600));
+
+        if (data.success) {
+          editor.value = JSON.stringify(configData, null, 4);
+          showToast('✅ ' + (data.message || 'Đã lưu cấu hình URL!'));
+        } else {
+          showToast('❌ ' + (data.error || 'Lưu thất bại'), true);
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối server!', true);
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    // ==========================================
+    // ⭐ TÍNH NĂNG MỚI 2: CHỈNH SỬA JSON TÀI KHOẢN USER
+    // ==========================================
+    async function openEditUserJsonModal(username) {
+      document.getElementById('jsonTargetName').textContent = `@${username}`;
+      document.getElementById('editUserJsonModal').dataset.username = username;
+      document.getElementById('editUserJsonModal').classList.add('show');
+
+      const editor = document.getElementById('userJsonEditor');
+      const msg = document.getElementById('jsonValidationMsg');
+      editor.value = 'Đang tải dữ liệu...';
+      editor.disabled = true;
+      msg.textContent = '';
+
+      try {
+        const res = await fetch(`/api/admin/user-json/${username}`);
+        const data = await res.json();
+        if (data.success) {
+          editor.value = JSON.stringify(data.data, null, 4);
+          editor.disabled = false;
+          validateJsonEditor();
+        } else {
+          editor.value = '// Lỗi: ' + (data.error || 'Không tải được');
+        }
+      } catch (e) {
+        editor.value = '// Lỗi kết nối!';
+      }
+    }
+
+    function validateJsonEditor() {
+      const editor = document.getElementById('userJsonEditor');
+      const msg = document.getElementById('jsonValidationMsg');
+      if (!editor || editor.disabled) return;
+      try {
+        JSON.parse(editor.value);
+        msg.textContent = '✅ JSON hợp lệ';
+        msg.style.color = '#27ae60';
+        return true;
+      } catch (e) {
+        msg.textContent = '⚠️ Lỗi cú pháp: ' + e.message;
+        msg.style.color = '#e74c3c';
+        return false;
+      }
+    }
+
+    document.getElementById('userJsonEditor').addEventListener('input', validateJsonEditor);
+
+    async function saveUserJson() {
+      const username = document.getElementById('editUserJsonModal').dataset.username;
+      const editor = document.getElementById('userJsonEditor');
+      const btn = document.getElementById('saveJsonBtn');
+
+      let jsonData;
+      try {
+        jsonData = JSON.parse(editor.value);
+      } catch (e) {
+        showToast('⚠️ Lỗi cú pháp JSON! Không thể lưu.', true);
+        return;
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/admin/user-json/${username}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: jsonData })
+        });
+        const data = await res.json();
+        await new Promise(r => setTimeout(r, 600));
+
+        if (data.success) {
+          showToast('✅ ' + (data.message || 'Đã lưu JSON!'));
+          editor.value = JSON.stringify(jsonData, null, 4);
+          loadUsers();
+        } else {
+          showToast('❌ ' + (data.error || 'Lưu thất bại'), true);
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối!', true);
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
 
     // ==========================================
     // HELPERS
