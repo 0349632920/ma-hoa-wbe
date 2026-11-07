@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response, send_file
 from poi_utils import boi_vui, tho_fallback, LOI_KHUYEN
 from ten_utils import generate_name
 from truyen_utils import get_truyen_fallback
@@ -364,7 +364,7 @@ def seed_accounts():
                 'warnings': [],
                 'ban_info': None,
                 'delete_info': None,
-                'game_ban': None,                       # ⭐ MỚI
+                'game_ban': None,
                 'activity_log': [{'action': 'seed', 'detail': f'Tạo tự động — ID: {user_id}', 'time': now}],
                 'suspicious_score': 0,
                 'warnings_shown': True,
@@ -411,7 +411,7 @@ def init_super_admin():
             'warnings': [],
             'ban_info': None,
             'delete_info': None,
-            'game_ban': None,                            # ⭐ MỚI
+            'game_ban': None,
             'activity_log': [{'action': 'system', 'detail': f'Super Admin — ID: {user_id}', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
@@ -569,11 +569,9 @@ def _format_duration(delta):
 
 
 # ============================================================
-# ⭐ GAME BAN — KIỂM TRA & XỬ LÝ (MỚI)
+# ⭐ GAME BAN — KIỂM TRA & XỬ LÝ
 # ============================================================
 def is_game_banned(user):
-    """Kiểm tra user có bị cấm chơi game không.
-    Trả về (True, game_ban_dict) hoặc (False, None)."""
     if not user:
         return False, None
 
@@ -581,7 +579,6 @@ def is_game_banned(user):
     if not gb or not gb.get('is_banned'):
         return False, None
 
-    # Nếu là cấm tạm thời → kiểm tra hết hạn
     if gb.get('is_temp'):
         ban_until = gb.get('ban_until')
         if ban_until:
@@ -595,7 +592,6 @@ def is_game_banned(user):
 
 
 def clear_expired_game_ban(username):
-    """Nếu user có game_ban đã hết hạn → xóa khỏi DB."""
     users = load_users()
     if username not in users:
         return False
@@ -625,14 +621,12 @@ def clear_expired_game_ban(username):
 
 
 def check_and_auto_unban_game(username):
-    """Tự clear game_ban hết hạn, trả về user dict MỚI NHẤT."""
     clear_expired_game_ban(username)
     users = load_users()
     return users.get(username, {})
 
 
 def auto_unban_expired_game():
-    """Quét toàn bộ users, clear game_ban đã hết hạn (chạy lúc startup)."""
     users = load_users()
     now = datetime.now()
     count = 0
@@ -666,8 +660,6 @@ def login_required(f):
         if 'username' not in session:
             if request.path.startswith('/api/'):
                 return jsonify({'success': False, 'error': 'Chưa đăng nhập!', 'need_login': True}), 401
-            
-            # ⭐ Lưu lại URL hiện tại để sau khi login quay lại
             next_url = request.full_path if request.query_string else request.path
             if next_url.endswith('?'):
                 next_url = next_url[:-1]
@@ -725,14 +717,12 @@ def login_page():
             return redirect(url_for('banned_page', user=uname))
         if user.get('status') == 'pending_delete':
             return redirect(url_for('deleted_page'))
-        
-        # ⭐ Nếu đã đăng nhập rồi mà có ?next=, chuyển thẳng tới đó
+
         next_url = request.args.get('next')
         if next_url:
             return redirect(next_url)
         return redirect(url_for('index'))
-    
-    # Lấy next_url từ thanh địa chỉ (VD: /login?next=/nhac)
+
     next_url = request.args.get('next', '')
     return render_template('login.html', next_url=next_url)
 
@@ -774,7 +764,7 @@ def register():
             'warnings': [],
             'ban_info': None,
             'delete_info': None,
-            'game_ban': None,                       # ⭐ MỚI
+            'game_ban': None,
             'activity_log': [{'action': 'register', 'detail': f'Đăng ký — ID: {user_id}', 'time': now}],
             'suspicious_score': 0,
             'warnings_shown': True,
@@ -797,6 +787,7 @@ def register():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
+
 @app.route('/api/login', methods=['POST'])
 def login():
     try:
@@ -804,7 +795,7 @@ def login():
         username = data.get('username', '').strip()
         password = data.get('password', '')
         remember = data.get('remember', False)
-        next_url = data.get('next', '')  # ⭐ Lấy next_url từ client
+        next_url = data.get('next', '')
 
         if not username or not password:
             return jsonify({'success': False, 'error': 'Vui lòng nhập đầy đủ!'}), 400
@@ -861,7 +852,6 @@ def login():
                 'redirect': '/deleted'
             }), 403
 
-        # ═══ KIỂM TRA 2FA ═══
         totp_enabled = user.get('totp_enabled', False)
         if totp_enabled:
             return jsonify({
@@ -869,7 +859,7 @@ def login():
                 'need_2fa': True,
                 'username': found_user,
                 'message': 'Nhập mã 2FA từ Google Authenticator',
-                'next': next_url  # ⭐ Truyền next_url qua bước 2FA
+                'next': next_url
             }), 202
 
         users = load_users()
@@ -886,7 +876,7 @@ def login():
         session['login_time'] = now
 
         warnings = users[found_user].get('warnings', [])
-        
+
         return jsonify({
             'success': True,
             'message': f'Chào mừng trở lại, {users[found_user].get("display_name", found_user)}!',
@@ -896,10 +886,11 @@ def login():
             'is_super_admin': is_super_admin(found_user),
             'has_warnings': len(warnings) > 0,
             'warnings_count': len(warnings),
-            'redirect': next_url if next_url else '/'  # ⭐ Trả về URL chuyển hướng
+            'redirect': next_url if next_url else '/'
         })
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
 
 @app.route('/api/login/2fa', methods=['POST'])
 def login_2fa():
@@ -907,7 +898,7 @@ def login_2fa():
         data = request.get_json()
         username = data.get('username', '').strip()
         code = data.get('code', '').strip()
-        next_url = data.get('next', '') # ⭐ Lấy next_url
+        next_url = data.get('next', '')
 
         if not username or not code:
             return jsonify({'success': False, 'error': 'Thiếu username hoặc mã!'}), 400
@@ -929,8 +920,7 @@ def login_2fa():
 
         secret = user.get('totp_secret', '')
         backup_hashes = user.get('totp_backup_codes', [])
-        
-        # ⭐ Trả về đích đến
+
         redirect_url = next_url if next_url else '/'
 
         if verify_code(secret, code):
@@ -952,7 +942,7 @@ def login_2fa():
                 'success': True,
                 'message': '✅ Đăng nhập thành công!',
                 'username': found_user,
-                'redirect': redirect_url, # ⭐ Chuyển hướng
+                'redirect': redirect_url,
             })
 
         matched_hash = verify_backup_code(code, backup_hashes)
@@ -970,7 +960,7 @@ def login_2fa():
                 'success': True,
                 'message': f'✅ Đăng nhập bằng backup code! Còn {len(backup_hashes)} mã.',
                 'username': found_user,
-                'redirect': redirect_url, # ⭐ Chuyển hướng
+                'redirect': redirect_url,
             })
 
         return jsonify({'success': False, 'error': 'Mã 2FA không đúng!'}), 401
@@ -1322,7 +1312,7 @@ def api_history():
 
 
 # ============================================================
-# GAME HUB - CHỈ CÓ 2 GAME
+# GAME HUB
 # ============================================================
 @app.route('/game')
 @login_required
@@ -1338,7 +1328,6 @@ def game_page():
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
 
-    # ⭐ Check cấm game (tự clear nếu hết hạn)
     user = check_and_auto_unban_game(username)
     banned, gb = is_game_banned(user)
     if banned and not is_super_admin(username):
@@ -1374,7 +1363,6 @@ def game_guess_page():
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
 
-    # ⭐ Check cấm game
     user = check_and_auto_unban_game(username)
     banned, gb = is_game_banned(user)
     if banned and not is_super_admin(username):
@@ -1395,7 +1383,6 @@ def api_guess_check():
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
 
-    # ⭐ Check cấm game
     user = check_and_auto_unban_game(username)
     banned, gb = is_game_banned(user)
     if banned and not is_super_admin(username):
@@ -1481,7 +1468,6 @@ def game_snake_page():
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
 
-    # ⭐ Check cấm game
     user = check_and_auto_unban_game(username)
     banned, gb = is_game_banned(user)
     if banned and not is_super_admin(username):
@@ -1500,7 +1486,6 @@ def api_snake_score():
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
 
-    # ⭐ Check cấm game
     user = check_and_auto_unban_game(username)
     banned, gb = is_game_banned(user)
     if banned and not is_super_admin(username):
@@ -1541,9 +1526,7 @@ def api_snake_score():
         'points_earned': (score // 10) if is_new_record else 0,
     })
 
-# ============================================================
-# API CHECK BAN — DÙNG CHO POLLING TRANG GAME
-# ============================================================
+
 @app.route('/api/game/check-ban')
 @login_required
 def api_game_check_ban():
@@ -1577,6 +1560,7 @@ def api_game_check_ban():
         'username': user.get('display_name', username),
     })
 
+
 @app.route('/api/game/snake/best')
 @login_required
 def api_snake_best():
@@ -1585,7 +1569,6 @@ def api_snake_best():
     if username not in users:
         return jsonify({'success': False, 'error': 'User không tồn tại'}), 404
 
-    # ⭐ Check cấm game
     user = check_and_auto_unban_game(username)
     banned, gb = is_game_banned(user)
     if banned and not is_super_admin(username):
@@ -1669,8 +1652,8 @@ def admin_users():
             'suspicious_score': data.get('suspicious_score', 0),
             'ban_info': data.get('ban_info'),
             'delete_info': data.get('delete_info'),
-            'game_ban': data.get('game_ban'),                                       # ⭐ MỚI
-            'is_game_banned': bool(data.get('game_ban') and data.get('game_ban', {}).get('is_banned')),  # ⭐ MỚI
+            'game_ban': data.get('game_ban'),
+            'is_game_banned': bool(data.get('game_ban') and data.get('game_ban', {}).get('is_banned')),
             'protected': data.get('protected', False),
             'is_super_admin': is_super_admin(username),
             'can_ban_1_day': len(data.get('warnings', [])) >= (MAX_WARN_BEFORE_BAN_OPTION - 1)
@@ -1874,7 +1857,7 @@ def admin_user_detail(username):
             'warnings': user.get('warnings', []),
             'ban_info': user.get('ban_info'),
             'delete_info': user.get('delete_info'),
-            'game_ban': user.get('game_ban'),                        # ⭐ MỚI
+            'game_ban': user.get('game_ban'),
             'activity_log': user.get('activity_log', [])[:20],
             'history_count': len(user.get('history', [])),
             'suspicious_score': user.get('suspicious_score', 0),
@@ -1895,11 +1878,11 @@ def admin_stats():
     admins = sum(1 for u in users.values() if u.get('role') in ('admin', 'super_admin'))
     suspicious = sum(1 for u in users.values() if u.get('suspicious_score', 0) >= WARN_THRESHOLD)
     game_banned = sum(1 for u in users.values()
-                      if u.get('game_ban') and u.get('game_ban', {}).get('is_banned'))   # ⭐ MỚI
+                      if u.get('game_ban') and u.get('game_ban', {}).get('is_banned'))
     return jsonify({'success': True, 'stats': {
         'total': total, 'active': active, 'warned': warned, 'banned': banned,
         'pending_delete': pending_delete, 'admins': admins, 'suspicious': suspicious,
-        'game_banned': game_banned                                                       # ⭐ MỚI
+        'game_banned': game_banned
     }})
 
 
@@ -2066,7 +2049,89 @@ def admin_seed():
 
 
 # ============================================================
-# ⭐ ADMIN — QUẢN LÝ CẤM GAME (MỚI)
+# ⭐ API ADMIN — CHỈNH SỬA JSON USER (MỚI)
+# ============================================================
+@app.route('/api/admin/user-json/<username>', methods=['GET'])
+@super_admin_required
+def api_admin_get_user_json(username):
+    """Lấy toàn bộ dữ liệu JSON của một user."""
+    users = load_users()
+    if username not in users:
+        return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
+    
+    return jsonify({'success': True, 'data': users[username]})
+
+@app.route('/api/admin/user-json/<username>', methods=['POST'])
+@super_admin_required
+def api_admin_save_user_json(username):
+    """Lưu dữ liệu JSON đã chỉnh sửa của user."""
+    try:
+        data = request.get_json()
+        if not data or 'data' not in data:
+            return jsonify({'success': False, 'error': 'Dữ liệu không hợp lệ!'}), 400
+        
+        new_user_data = data['data']
+        
+        if not isinstance(new_user_data, dict):
+            return jsonify({'success': False, 'error': 'Dữ liệu phải là một object JSON!'}), 400
+            
+        users = load_users()
+        if username not in users:
+            return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
+            
+        users[username] = new_user_data
+        save_user(username, users[username])
+        
+        log_activity(session['username'], 'edit_user_json', f'Đã sửa JSON của user {username}')
+        
+        return jsonify({'success': True, 'message': f'Đã lưu JSON cho user {username}!'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
+
+# ============================================================
+# ⭐ API ADMIN — CẤU HÌNH ĐỔI TÊN URL (MỚI)
+# ============================================================
+URL_CONFIG_FILE = 'url_config.json'
+
+@app.route('/api/admin/url-config', methods=['GET'])
+@super_admin_required
+def api_admin_get_url_config():
+    """Lấy cấu hình đổi tên URL hiện tại."""
+    if not os.path.exists(URL_CONFIG_FILE):
+        return jsonify({'success': True, 'config': {}})
+    
+    try:
+        with open(URL_CONFIG_FILE, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        return jsonify({'success': True, 'config': config})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi đọc file cấu hình: {str(e)}'}), 500
+
+@app.route('/api/admin/url-config', methods=['POST'])
+@super_admin_required
+def api_admin_save_url_config():
+    """Lưu cấu hình đổi tên URL mới."""
+    try:
+        data = request.get_json()
+        if not data or 'config' not in data:
+            return jsonify({'success': False, 'error': 'Dữ liệu không hợp lệ!'}), 400
+            
+        new_config = data['config']
+        
+        if not isinstance(new_config, dict):
+            return jsonify({'success': False, 'error': 'Config phải là một object JSON!'}), 400
+
+        with open(URL_CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(new_config, f, ensure_ascii=False, indent=4)
+            
+        log_activity(session['username'], 'edit_url_config', 'Đã cập nhật cấu hình đổi tên URL')
+        
+        return jsonify({'success': True, 'message': 'Đã lưu cấu hình URL!'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
+
+# ============================================================
+# ⭐ ADMIN — QUẢN LÝ CẤM GAME
 # ============================================================
 GAME_BAN_DURATIONS = {
     '1h':     ('1 giờ',    timedelta(hours=1)),
@@ -2090,7 +2155,6 @@ def admin_game_ban_page():
 @app.route('/api/admin/game-ban', methods=['POST'])
 @super_admin_required
 def admin_game_ban():
-    """Cấm 1 hoặc nhiều user chơi game."""
     try:
         data = request.get_json() or {}
         targets = data.get('usernames', [])
@@ -2190,7 +2254,6 @@ def admin_game_ban():
 @app.route('/api/admin/game-unban', methods=['POST'])
 @super_admin_required
 def admin_game_unban():
-    """Bỏ cấm game cho 1 hoặc nhiều user."""
     try:
         data = request.get_json() or {}
         targets = data.get('usernames', [])
@@ -2233,7 +2296,6 @@ def admin_game_unban():
 @app.route('/api/admin/game-ban-list')
 @admin_required
 def admin_game_ban_list():
-    """Danh sách user đang bị cấm game."""
     users = load_users()
     banned_users = []
     now = datetime.now()
@@ -2266,7 +2328,6 @@ def admin_game_ban_list():
 @app.route('/api/admin/game-ban-search')
 @admin_required
 def admin_game_ban_search():
-    """Tìm user để cấm game (chỉ user thường, không phải admin/super_admin)."""
     q = (request.args.get('q') or '').strip().lower()
     users = load_users()
     result = []
@@ -2458,6 +2519,7 @@ def api_2fa_regenerate_backup():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
 
+
 # ============================================================
 # VÒNG QUAY NGẪU NHIÊN
 # ============================================================
@@ -2478,6 +2540,7 @@ def wheel_page():
     return render_template('wheel.html',
         username=user.get('display_name', username),
         user_id=user.get('user_id', '—'))
+
 
 # ============================================================
 # CHẾ TÊN — AI (GROQ) + FALLBACK TỪ ĐIỂN
@@ -2524,7 +2587,6 @@ def api_ten_generate():
     if mode not in ('nghiem', 'ngau', 'mix'):
         mode = 'nghiem'
 
-    # ═══ THỬ AI TRƯỚC ═══
     if groq_client:
         try:
             result = _generate_name_with_ai(name, mode)
@@ -2532,7 +2594,6 @@ def api_ten_generate():
         except Exception as e:
             print(f"⚠️ Groq error: {e}")
 
-    # ═══ FALLBACK TỪ ĐIỂN ═══
     try:
         result = generate_name(name, mode=mode)
         if 'error' in result:
@@ -2543,7 +2604,6 @@ def api_ten_generate():
 
 
 def _generate_name_with_ai(name, mode):
-    """Gọi Groq AI để chế tên."""
     system_prompt = """Bạn là chuyên gia phân tích tên tiếng Việt.
 Trả về JSON hợp lệ, KHÔNG thêm text khác, KHÔNG dùng markdown."""
 
@@ -2668,7 +2728,6 @@ def api_tho_generate():
     if len(chu_de) > 200:
         return jsonify({'success': False, 'error': 'Chủ đề quá dài (tối đa 200 ký tự)!'}), 400
 
-    # Thử AI trước
     if groq_client:
         try:
             result = _generate_tho_with_ai(chu_de, chu_de_type, phong_cach)
@@ -2676,7 +2735,6 @@ def api_tho_generate():
         except Exception as e:
             print(f"⚠️ Groq error: {e}")
 
-    # Fallback
     try:
         result = tho_fallback(chu_de_type)
         result['chu_de'] = chu_de
@@ -2686,7 +2744,6 @@ def api_tho_generate():
 
 
 def _generate_tho_with_ai(chu_de, chu_de_type, phong_cach):
-    """Gọi Groq AI để làm thơ."""
     system_prompt = """Bạn là nhà thơ Việt Nam tài ba.
 Trả về JSON hợp lệ, KHÔNG thêm text khác, KHÔNG dùng markdown."""
 
@@ -2819,7 +2876,6 @@ def nhac_page():
 @app.route('/api/music/list')
 @login_required
 def api_music_list():
-    """Lấy danh sách file nhạc từ Google Drive."""
     force = request.args.get('refresh', '').lower() == 'true'
     result = list_music_files(force_refresh=force)
     return jsonify(result)
@@ -2828,8 +2884,6 @@ def api_music_list():
 @app.route('/api/music/stream/<file_id>')
 @login_required
 def api_music_stream(file_id):
-    """Stream file nhạc từ Google Drive (hỗ trợ Range request để seek)."""
-    # Lấy size file
     info = get_file_info(file_id)
     if not info.get('success'):
         return jsonify({'error': 'File không tồn tại'}), 404
@@ -2837,14 +2891,12 @@ def api_music_stream(file_id):
     file_data = info['file']
     file_size = int(file_data.get('size', 0))
 
-    # Range request
     range_header = request.headers.get('Range')
 
     drive_res = stream_file(file_id, range_header=range_header)
     if not drive_res:
         return jsonify({'error': 'Không thể tải file'}), 500
 
-    # Nếu client yêu cầu Range
     if range_header and drive_res.status_code == 206:
         try:
             byte_range = range_header.replace('bytes=', '').split('-')
@@ -2872,7 +2924,6 @@ def api_music_stream(file_id):
         except Exception as e:
             print(f'⚠️ Range error: {e}')
 
-    # Full file
     def generate():
         for chunk in drive_res.iter_content(chunk_size=64 * 1024):
             if chunk:
@@ -2942,7 +2993,6 @@ def api_truyen_generate():
     if len(boi_canh) > 200 or len(noi_dung) > 300:
         return jsonify({'success': False, 'error': 'Nội dung quá dài!'}), 400
 
-    # Thử AI trước
     if groq_client:
         try:
             result = _generate_truyen_with_ai(the_loai, ten_nv1, ten_nv2, boi_canh, noi_dung, do_dai)
@@ -2950,7 +3000,6 @@ def api_truyen_generate():
         except Exception as e:
             print(f"⚠️ Groq truyen error: {e}")
 
-    # Fallback
     result = get_truyen_fallback(the_loai)
     return jsonify({'success': True, 'data': result, 'ai': False})
     
@@ -2980,7 +3029,6 @@ def profile_page():
 @app.route('/api/profile/stats')
 @login_required
 def api_profile_stats():
-    """Lấy thông tin + thống kê cá nhân."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -2993,14 +3041,11 @@ def api_profile_stats():
     history = user.get('history', [])
     game = user.get('game', {})
 
-    # Đếm số lần mã hóa/giải mã
     encrypt_count = sum(1 for h in history if h.get('action') == 'encrypt')
     decrypt_count = sum(1 for h in history if h.get('action') == 'decrypt')
 
-    # Đếm số methods đã dùng
     unique_methods = set(h.get('method') for h in history if h.get('method'))
 
-    # Đếm số ngày active (dựa vào history)
     active_days = set()
     for h in history:
         try:
@@ -3043,7 +3088,6 @@ def api_profile_stats():
 @app.route('/api/profile/history')
 @login_required
 def api_profile_history():
-    """Lấy lịch sử đầy đủ (100 lần gần nhất)."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3058,7 +3102,6 @@ def api_profile_history():
 @app.route('/api/profile/change-password', methods=['POST'])
 @login_required
 def api_change_password():
-    """Đổi mật khẩu."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3073,7 +3116,6 @@ def api_change_password():
     new_password = data.get('new_password', '')
     confirm_password = data.get('confirm_password', '')
 
-    # Validate
     if not old_password or not new_password or not confirm_password:
         return jsonify({'success': False, 'error': 'Vui lòng nhập đầy đủ!'}), 400
 
@@ -3089,7 +3131,6 @@ def api_change_password():
     if new_password == old_password:
         return jsonify({'success': False, 'error': 'Mật khẩu mới phải khác mật khẩu cũ!'}), 400
 
-    # Cập nhật
     user['password'] = hash_password(new_password)
     log = user.get('activity_log', [])
     log.insert(0, {
@@ -3107,7 +3148,6 @@ def api_change_password():
 @app.route('/api/profile/logout-all', methods=['POST'])
 @login_required
 def api_logout_all():
-    """Đăng xuất tất cả thiết bị (xóa session hiện tại)."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3151,7 +3191,6 @@ def chat_page():
 @app.route('/api/chat/conversations')
 @login_required
 def api_chat_conversations():
-    """Lấy danh sách cuộc trò chuyện (người đã chat)."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3160,7 +3199,6 @@ def api_chat_conversations():
     user = users[username]
     messages = user.get('messages', [])
 
-    # Nhóm theo người chat
     conversations = {}
     for msg in messages:
         partner = msg.get('to') if msg.get('from') == username else msg.get('from')
@@ -3175,23 +3213,20 @@ def api_chat_conversations():
                 'unread': 0,
             }
 
-        # Cập nhật tin nhắn cuối
         msg_time = msg.get('time', '')
         if msg_time > conversations[partner]['last_time']:
             conversations[partner]['last_message'] = msg.get('content', '')[:50]
             conversations[partner]['last_time'] = msg_time
 
-        # Đếm tin chưa đọc (gửi đến mình)
         if msg.get('to') == username and not msg.get('read', False):
             conversations[partner]['unread'] += 1
 
-    # Sắp xếp theo thời gian
     result = []
     for partner_name, conv in conversations.items():
         partner_data = users.get(partner_name, {})
         conv['display_name'] = partner_data.get('display_name', partner_name)
         conv['user_id'] = partner_data.get('user_id', '—')
-        conv['online'] = False  # TODO: check last_active
+        conv['online'] = False
         conv['is_super_admin'] = is_super_admin(partner_name)
         result.append(conv)
 
@@ -3203,7 +3238,6 @@ def api_chat_conversations():
 @app.route('/api/chat/search')
 @login_required
 def api_chat_search():
-    """Tìm user để bắt đầu chat."""
     q = (request.args.get('q') or '').strip().lower()
     if not q or len(q) < 1:
         return jsonify({'success': True, 'users': []})
@@ -3216,7 +3250,6 @@ def api_chat_search():
         if uname == username:
             continue
         if usernames_match(uname, SUPER_ADMIN_USERNAME) and not is_super_admin(username):
-            # Không cho chat với super admin nếu mình không phải
             pass
         if q in uname.lower() or q in udata.get('display_name', '').lower():
             result.append({
@@ -3232,7 +3265,6 @@ def api_chat_search():
 @app.route('/api/chat/messages/<partner>')
 @login_required
 def api_chat_messages(partner):
-    """Lấy tin nhắn giữa mình và partner."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3244,17 +3276,14 @@ def api_chat_messages(partner):
     user = users[username]
     messages = user.get('messages', [])
 
-    # Lọc tin nhắn giữa 2 người
     conversation = [
         m for m in messages
         if (m.get('from') == username and m.get('to') == partner) or
            (m.get('from') == partner and m.get('to') == username)
     ]
 
-    # Sắp xếp theo thời gian
     conversation.sort(key=lambda x: x.get('time', ''))
 
-    # Đánh dấu đã đọc
     changed = False
     for m in messages:
         if m.get('from') == partner and m.get('to') == username and not m.get('read', False):
@@ -3266,9 +3295,8 @@ def api_chat_messages(partner):
         users[username] = user
         save_user(username, user)
 
-    # Format
     result = []
-    for m in conversation[-100:]:  # 100 tin gần nhất
+    for m in conversation[-100:]:
         partner_data = users.get(m.get('from'), {})
         result.append({
             'id': m.get('id', ''),
@@ -3296,7 +3324,6 @@ def api_chat_messages(partner):
 @app.route('/api/chat/send', methods=['POST'])
 @login_required
 def api_chat_send():
-    """Gửi tin nhắn."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3319,7 +3346,6 @@ def api_chat_send():
     if to_user == username:
         return jsonify({'success': False, 'error': 'Không thể tự nhắn cho mình!'}), 400
 
-    # Tạo tin nhắn
     msg = {
         'id': secrets.token_hex(8),
         'from': username,
@@ -3329,10 +3355,8 @@ def api_chat_send():
         'read': False,
     }
 
-    # Lưu vào user hiện tại
     user_msgs = user.get('messages', [])
     user_msgs.append(msg)
-    # Giữ 500 tin gần nhất
     user['messages'] = user_msgs[-500:]
     users[username] = user
     save_user(username, user)
@@ -3343,7 +3367,6 @@ def api_chat_send():
 @app.route('/api/chat/delete/<msg_id>', methods=['POST'])
 @login_required
 def api_chat_delete(msg_id):
-    """Xóa tin nhắn."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3352,7 +3375,6 @@ def api_chat_delete(msg_id):
     user = users[username]
     messages = user.get('messages', [])
 
-    # Tìm và xóa tin nhắn
     new_messages = []
     deleted = False
     for m in messages:
@@ -3374,7 +3396,6 @@ def api_chat_delete(msg_id):
 @app.route('/api/chat/unread-count')
 @login_required
 def api_chat_unread_count():
-    """Đếm số tin nhắn chưa đọc."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3409,10 +3430,10 @@ def write_page():
         username=user.get('display_name', username),
         user_id=user.get('user_id', '—'))
 
+
 @app.route('/api/write', methods=['POST'])
 @login_required
 def api_write():
-    """Viết văn/thơ bằng Groq AI."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3425,7 +3446,7 @@ def api_write():
     data = request.get_json() or {}
     de_bai = (data.get('de_bai') or '').strip()
     so_cau = data.get('so_cau', 10)
-    loai = (data.get('loai') or 'doan_van').strip()  # 'doan_van' hoặc 'bai_tho'
+    loai = (data.get('loai') or 'doan_van').strip()
 
     if not de_bai:
         return jsonify({'success': False, 'error': 'Vui lòng nhập đề bài!'}), 400
@@ -3477,7 +3498,7 @@ Chỉ trả về nội dung đoạn văn, không giải thích gì thêm."""
 
             result = chat_completion.choices[0].message.content.strip()
 
-        else:  # bai_tho
+        else:
             prompt = f"""Viết một BÀI THƠ theo đề bài sau:
 
 ĐỀ BÀI: {de_bai}
@@ -3524,9 +3545,7 @@ Chỉ trả về bài thơ, không giải thích gì thêm."""
 
             result = chat_completion.choices[0].message.content.strip()
 
-        # Đếm số câu thực tế
         if loai == 'bai_tho':
-            # Đếm số dòng thơ (bỏ qua dòng trống và header)
             lines = [l.strip() for l in result.split('\n') if l.strip() and not l.strip().startswith('PHẦN')]
             actual_sentences = len(lines)
         else:
@@ -3545,19 +3564,17 @@ Chỉ trả về bài thơ, không giải thích gì thêm."""
         print(f"⚠️ Groq write error: {e}")
         return jsonify({'success': False, 'error': f'Lỗi AI: {str(e)}'}), 500
 
+
 # ============================================================
 # 🔐 TRANG BÍ MẬT — TẢI FILE ZIP
 # ============================================================
-import os
-
 SECRET_FOLDER = 'secret_files'
-SECRET_FILE_NAME = 'Lag.zip'  # ⭐ Đổi thành tên file zip của bạn
+SECRET_FILE_NAME = 'Lag.zip'
 
 
 @app.route('/secret')
 @login_required
 def secret_page():
-    """Trang bí mật — tải file zip."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3570,14 +3587,12 @@ def secret_page():
     if user.get('status') == 'pending_delete':
         return redirect(url_for('deleted_page'))
 
-    # ⭐ Chỉ Super Admin mới vào được
     if not is_super_admin(username):
         return render_template('feature_removed.html',
             feature_path='/secret',
             feature_name='Trang bí mật',
             reason='Bạn không có quyền truy cập trang này.'), 403
 
-    # Kiểm tra file tồn tại
     file_path = os.path.join(SECRET_FOLDER, SECRET_FILE_NAME)
     file_exists = os.path.exists(file_path)
     file_size_mb = 0
@@ -3596,7 +3611,6 @@ def secret_page():
 @app.route('/secret/download')
 @login_required
 def secret_download():
-    """Download file zip bí mật."""
     username = session.get('username', '')
     if not is_super_admin(username):
         return "🚫 Không có quyền truy cập", 403
@@ -3606,7 +3620,6 @@ def secret_download():
     if not os.path.exists(file_path):
         return "❌ File không tồn tại", 404
 
-    from flask import send_file
     return send_file(
         file_path,
         as_attachment=True,
@@ -3623,19 +3636,16 @@ def page_not_found(e):
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    # Bạn có thể tạo thêm file templates/500.html nếu muốn
     return render_template('404.html'), 500
 
 @app.route('/api/music/download/<file_id>')
 @login_required
 def api_music_download(file_id):
-    """Tải file nhạc từ Google Drive."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
         return "Chưa đăng nhập", 401
 
-    # Lấy thông tin file để biết tên
     info = get_file_info(file_id)
     if not info.get('success'):
         return "File không tồn tại", 404
@@ -3643,14 +3653,10 @@ def api_music_download(file_id):
     file_data = info['file']
     file_name = file_data.get('name', f'{file_id}.mp3')
 
-    # Tải file từ Google Drive về Server
     drive_res = stream_file(file_id)
     if not drive_res:
         return "Không thể tải file từ Google Drive", 500
 
-    from flask import Response
-    
-    # Stream file về client với header download
     def generate():
         for chunk in drive_res.iter_content(chunk_size=64 * 1024):
             if chunk:
@@ -3662,7 +3668,6 @@ def api_music_download(file_id):
         direct_passthrough=True,
     )
     
-    # ⭐ Header báo cho trình duyệt tải xuống
     response.headers['Content-Disposition'] = f'attachment; filename="{file_name}"'
     response.headers['Content-Type'] = 'audio/mpeg'
     
@@ -3674,7 +3679,6 @@ def api_music_download(file_id):
 @app.route('/api/music/settings', methods=['GET'])
 @login_required
 def api_music_settings_get():
-    """Lấy danh sách nhạc bị khóa/ẩn của user."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3692,7 +3696,6 @@ def api_music_settings_get():
 @app.route('/api/music/settings', methods=['POST'])
 @login_required
 def api_music_settings_save():
-    """Lưu danh sách nhạc bị khóa/ẩn của user."""
     users = load_users()
     username = session.get('username', '')
     if username not in users:
@@ -3720,7 +3723,7 @@ init_super_admin()
 seed_accounts()
 auto_unban_expired()
 auto_delete_expired()
-auto_unban_expired_game()      # ⭐ MỚI
+auto_unban_expired_game()
 
 
 if __name__ == '__main__':
