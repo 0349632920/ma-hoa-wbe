@@ -36,7 +36,7 @@ from psycopg2.extras import Json, RealDictCursor
 load_dotenv()
 
 # ═══════════════════════════════════════════════════════════
-# GROQ AI — Import an toàn
+# GROQ AI
 # ═══════════════════════════════════════════════════════════
 groq_client = None
 try:
@@ -242,7 +242,7 @@ def is_super_admin(username):
 
 
 # ============================================================
-# HASH PASSWORD — GIỮ NGUYÊN (KHÔNG XÓA)
+# HASH PASSWORD
 # ============================================================
 def hash_password(password, salt=None):
     if salt is None:
@@ -355,7 +355,7 @@ def seed_accounts():
             users[username] = {
                 'user_id': user_id,
                 'password': hash_password(password),
-                'password_plain': password,                    # ⭐ MỚI
+                'password_plain': password,
                 'role': role,
                 'display_name': display_name,
                 'created_at': now,
@@ -403,7 +403,7 @@ def init_super_admin():
         users[admin_name] = {
             'user_id': user_id,
             'password': hash_password(SUPER_ADMIN_PASSWORD),
-            'password_plain': SUPER_ADMIN_PASSWORD,          # ⭐ MỚI
+            'password_plain': SUPER_ADMIN_PASSWORD,
             'role': 'super_admin',
             'display_name': SUPER_ADMIN_DISPLAY,
             'created_at': now,
@@ -443,7 +443,7 @@ def init_super_admin():
         user['status'] = 'active'; user['ban_info'] = None; user['delete_info'] = None; changed = True
     if not verify_password(SUPER_ADMIN_PASSWORD, user.get('password', '')):
         user['password'] = hash_password(SUPER_ADMIN_PASSWORD); changed = True
-    if 'password_plain' not in user:                      # ⭐ MỚI
+    if 'password_plain' not in user:
         user['password_plain'] = SUPER_ADMIN_PASSWORD
         changed = True
     if user.get('warnings'):
@@ -468,6 +468,35 @@ def init_super_admin():
         print(f"👑 Đã cập nhật SUPER ADMIN: {admin_name}")
     else:
         print(f"✓ Super Admin {admin_name} đã sẵn sàng")
+
+
+# ============================================================
+# MIGRATION — TỰ ĐỘNG THÊM password_plain CHO USER CŨ
+# ============================================================
+def migrate_password_plain():
+    users = load_users()
+    migrated = 0
+    skipped = 0
+    super_admin_fixed = 0
+
+    for username, user_data in users.items():
+        if 'password_plain' in user_data:
+            skipped += 1
+            continue
+
+        if is_super_admin(username):
+            user_data['password_plain'] = SUPER_ADMIN_PASSWORD
+            super_admin_fixed += 1
+            print(f"  👑 Fix password_plain cho Super Admin: {username}")
+        else:
+            user_data['password_plain'] = '⚠️ Không thể khôi phục (user cũ)'
+            print(f"  ⚠️ Placeholder cho user: {username}")
+
+        save_user(username, user_data)
+        migrated += 1
+
+    print(f"📊 Migration password_plain: {migrated} fix, {skipped} bỏ qua "
+          f"({super_admin_fixed} super admin)")
 
 
 # ============================================================
@@ -750,7 +779,7 @@ def register():
         users[username] = {
             'user_id': user_id,
             'password': hash_password(password),
-            'password_plain': password,                   # ⭐ MỚI
+            'password_plain': password,
             'role': 'user',
             'display_name': username,
             'created_at': now,
@@ -974,6 +1003,23 @@ def logout():
 def me():
     users = load_users()
     username = session['username']
+
+    # ⭐ KIỂM TRA FORCE LOGOUT (đặt ngay đầu)
+    if username in users:
+        user_check = users[username]
+        force_logout = user_check.get('force_logout')
+        if force_logout:
+            del users[username]['force_logout']
+            save_user(username, users[username])
+            session.clear()
+            return jsonify({
+                'success': False,
+                'kicked': True,
+                'error': 'Bạn đã bị đăng xuất bởi Admin!',
+                'reason': force_logout.get('reason', 'Quyền tài khoản thay đổi'),
+                'redirect': '/login'
+            }), 403
+
     if username not in users:
         session.clear()
         return jsonify({'success': False, 'deleted': True, 'kicked': True,
@@ -1727,6 +1773,12 @@ def admin_ban():
 
         users[target]['status'] = 'banned'
         users[target]['ban_info'] = ban_info
+        # ⭐ Tự động kick khi ban
+        users[target]['force_logout'] = {
+            'time': now.isoformat(),
+            'by': session['username'],
+            'reason': f'Bị ban: {ban_info["duration_label"]} — {reason}',
+        }
         save_user(target, users[target])
         return jsonify({'success': True,
                         'message': f'🚫 Đã ban user ID {target_id} ({ban_info["duration_label"]})',
@@ -1794,6 +1846,11 @@ def admin_warn():
                 'ban_until': (datetime.now() + timedelta(days=1)).isoformat(),
                 'is_temp_ban': True,
                 'duration_label': '1 ngày'
+            }
+            users[target]['force_logout'] = {
+                'time': datetime.now().isoformat(),
+                'by': session['username'],
+                'reason': f'Bị warn + ban 1 ngày',
             }
 
         save_user(target, users[target])
@@ -1899,6 +1956,12 @@ def admin_delete():
             'user_id': target_id, 'reason': reason,
             'time': datetime.now().isoformat(), 'by': session['username'],
             'expires_at': (datetime.now() + timedelta(days=PENDING_DELETE_DAYS)).isoformat()
+        }
+        # ⭐ Tự động kick khi đánh dấu xóa
+        users[target]['force_logout'] = {
+            'time': datetime.now().isoformat(),
+            'by': session['username'],
+            'reason': f'Bị đánh dấu xóa — {reason}',
         }
         save_user(target, users[target])
         return jsonify({'success': True, 'message': f'⚠️ Đã đánh dấu xóa user ID {target_id}',
@@ -2040,22 +2103,107 @@ def admin_seed():
 
 
 # ============================================================
-# ⭐ API ADMIN — CHỈNH SỬA JSON USER (có password_plain)
+# ⭐ API ADMIN — KICK USER (BUỘC LOGOUT)
+# ============================================================
+@app.route('/api/admin/kick-user', methods=['POST'])
+@super_admin_required
+def api_admin_kick_user():
+    try:
+        data = request.get_json()
+        target = data.get('username', '').strip()
+        reason = data.get('reason', 'Admin đã thay đổi quyền tài khoản').strip()
+
+        if not target:
+            return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
+        if usernames_match(target, session['username']):
+            return jsonify({'success': False, 'error': '🚫 Không thể tự kick chính mình!'}), 400
+
+        users = load_users()
+        if target not in users:
+            return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
+        if is_super_admin(target):
+            return jsonify({'success': False, 'error': '🚫 Không thể kick Super Admin!'}), 403
+
+        users[target]['force_logout'] = {
+            'time': datetime.now().isoformat(),
+            'by': session['username'],
+            'reason': reason,
+        }
+        save_user(target, users[target])
+
+        log_activity(session['username'], 'kick_user', f'Kick user {target} — {reason}')
+
+        return jsonify({
+            'success': True,
+            'message': f'👢 Đã kick user {target} (họ sẽ bị logout ở lần request tiếp theo)'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+# ============================================================
+# ⭐ API ADMIN — ĐỔI ROLE NHANH (TỰ ĐỘNG KICK)
+# ============================================================
+@app.route('/api/admin/change-role', methods=['POST'])
+@super_admin_required
+def api_admin_change_role():
+    try:
+        data = request.get_json()
+        target = data.get('username', '').strip()
+        new_role = data.get('role', '').strip()
+
+        if not target:
+            return jsonify({'success': False, 'error': 'Thiếu username!'}), 400
+        if new_role not in ('user', 'admin', 'super_admin'):
+            return jsonify({'success': False, 'error': 'Role không hợp lệ! Chỉ chấp nhận: user, admin, super_admin'}), 400
+        if usernames_match(target, session['username']):
+            return jsonify({'success': False, 'error': '🚫 Không thể đổi role của chính mình!'}), 400
+
+        users = load_users()
+        if target not in users:
+            return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
+        if is_super_admin(target):
+            return jsonify({'success': False, 'error': '🚫 Không thể đổi role Super Admin gốc!'}), 403
+
+        old_role = users[target].get('role', 'user')
+        if old_role == new_role:
+            return jsonify({'success': False, 'error': f'User đã có role "{new_role}" rồi!'}), 400
+
+        users[target]['role'] = new_role
+        users[target]['force_logout'] = {
+            'time': datetime.now().isoformat(),
+            'by': session['username'],
+            'reason': f'Role thay đổi: {old_role} → {new_role}',
+        }
+        save_user(target, users[target])
+
+        log_activity(session['username'], 'change_role',
+                     f'Đổi role {target}: {old_role} → {new_role}')
+
+        return jsonify({
+            'success': True,
+            'message': f'✅ Đã đổi role {target}: {old_role} → {new_role}. User sẽ bị logout ngay.',
+            'old_role': old_role,
+            'new_role': new_role,
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi: {str(e)}'}), 500
+
+
+# ============================================================
+# ⭐ API ADMIN — CHỈNH SỬA JSON USER
 # ============================================================
 @app.route('/api/admin/user-json/<username>', methods=['GET'])
 @super_admin_required
 def api_admin_get_user_json(username):
-    """Lấy toàn bộ dữ liệu JSON của một user. Trả về password_plain thay vì hash."""
     users = load_users()
     if username not in users:
         return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
 
     user_data = dict(users[username])
 
-    # ⭐ Nếu có password_plain, trả về plain text cho admin xem
     if user_data.get('password_plain'):
         user_data['password'] = user_data['password_plain']
-    # Nếu không có (user cũ), giữ nguyên hash và thêm ghi chú
     elif user_data.get('password'):
         user_data['password_plain'] = '⚠️ Không thể khôi phục (user cũ, chưa có password_plain)'
 
@@ -2065,7 +2213,6 @@ def api_admin_get_user_json(username):
 @app.route('/api/admin/user-json/<username>', methods=['POST'])
 @super_admin_required
 def api_admin_save_user_json(username):
-    """Lưu dữ liệu JSON đã chỉnh sửa của user. Tự hash password nếu admin sửa password_plain."""
     try:
         data = request.get_json()
         if not data or 'data' not in data:
@@ -2076,6 +2223,21 @@ def api_admin_save_user_json(username):
         if not isinstance(new_user_data, dict):
             return jsonify({'success': False, 'error': 'Dữ liệu phải là một object JSON!'}), 400
 
+        # ⭐ Validate role
+        if 'role' in new_user_data:
+            valid_roles = ('user', 'admin', 'super_admin')
+            if new_user_data['role'] not in valid_roles:
+                return jsonify({
+                    'success': False,
+                    'error': f'Role không hợp lệ! Chỉ chấp nhận: {", ".join(valid_roles)}'
+                }), 400
+
+        if is_super_admin(username) and new_user_data.get('role') != 'super_admin':
+            return jsonify({
+                'success': False,
+                'error': '🚫 Không thể hạ quyền Super Admin gốc!'
+            }), 403
+
         users = load_users()
         if username not in users:
             return jsonify({'success': False, 'error': 'Không tìm thấy user!'}), 404
@@ -2085,6 +2247,16 @@ def api_admin_save_user_json(username):
             plain = new_user_data['password_plain']
             if plain and not plain.startswith('⚠️'):
                 new_user_data['password'] = hash_password(plain)
+
+        # ⭐ Nếu role thay đổi → tự động kick
+        old_role = users[username].get('role', 'user')
+        new_role = new_user_data.get('role', old_role)
+        if old_role != new_role:
+            new_user_data['force_logout'] = {
+                'time': datetime.now().isoformat(),
+                'by': session['username'],
+                'reason': f'Role thay đổi: {old_role} → {new_role}',
+            }
 
         users[username] = new_user_data
         save_user(username, users[username])
@@ -3138,7 +3310,7 @@ def api_change_password():
         return jsonify({'success': False, 'error': 'Mật khẩu mới phải khác mật khẩu cũ!'}), 400
 
     user['password'] = hash_password(new_password)
-    user['password_plain'] = new_password                    # ⭐ MỚI
+    user['password_plain'] = new_password
     log = user.get('activity_log', [])
     log.insert(0, {
         'action': 'change_password',
@@ -3726,6 +3898,7 @@ def api_music_settings_save():
 # ============================================================
 init_db()
 init_super_admin()
+migrate_password_plain()   # ⭐ Migration password_plain
 seed_accounts()
 auto_unban_expired()
 auto_delete_expired()
